@@ -71,7 +71,7 @@ public record SemanticRecord(
                                        ImmutableList<Object> fields) {
         RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
         int semanticNid = ScopedValue
-                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, Entity.getFast(patternNid))
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityHandle.get(patternNid).expectPattern().publicId())
                 .call(() -> PrimitiveData.nid(semanticUuid));
 
         SemanticRecord semanticRecord = SemanticRecordBuilder.builder()

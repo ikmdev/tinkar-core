@@ -17,8 +17,8 @@ package dev.ikm.tinkar.entity.graph;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.VertexId;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.Pattern;
@@ -26,8 +26,11 @@ import dev.ikm.tinkar.component.Semantic;
 import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.PublicIdentifierRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
@@ -52,7 +55,6 @@ import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -166,25 +168,16 @@ public class EntityVertex implements Vertex, VertexId {
 
 		if (stamp.publicId().uuidCount() > 0) {
 			int conceptNid = Entity.nid(stampPublicId);
-			if (stampPublicId.uuidCount() > 1) {
-				stampRecord = StampRecordBuilder.builder()
-						.leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
-						.mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(stampPublicId.asUuidArray(),
-                                1, stampPublicId.uuidCount())))
-                        .nid(conceptNid)
-                        .versions(stampVersions)
-                        .build();
-			} else {
-				stampRecord = StampRecordBuilder.builder()
-						.leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(conceptNid)
-                        .versions(stampVersions)
-                        .build();
-			}
+			PublicIdentifierRecord publicIdRecord = PublicIdentifierRecord.make(stampPublicId);
+			stampRecord = StampRecordBuilder.builder()
+					.leastSignificantBits(publicIdRecord.leastSignificantBits())
+					.mostSignificantBits(publicIdRecord.mostSignificantBits())
+					.additionalUuidLongs(publicIdRecord.additionalUuidLongs())
+					.nid(conceptNid)
+					.versions(stampVersions)
+					.build();
 		} else {
-			throw new IllegalStateException("missing primordial UUID");
+			throw new IllegalStateException("STAMP public id has no UUID");
 		}
 		StampVersionRecord stampVersionRecord = StampVersionRecordBuilder.builder()
                 .stateNid(EntityService.get().nidForPublicId(stamp.state().publicId()))
@@ -394,6 +387,15 @@ public class EntityVertex implements Vertex, VertexId {
 		return Optional.ofNullable(propertyFast(propertyConcept));
 	}
 
+	/** A property value that names a component — its nid or a facade — for a diagnostic message. */
+	private static String componentText(Object propertyValue) {
+		return switch (propertyValue) {
+		case Integer nid -> DiagnosticText.component(nid);
+		case EntityFacade facade -> DiagnosticText.component(facade.nid());
+		default -> String.valueOf(propertyValue);
+		};
+	}
+
 	@Override
 	public Optional<ConceptFacade> propertyAsConcept(Concept propertyConcept) {
 		Optional<?> optionalPropertyValue = property(propertyConcept);
@@ -401,19 +403,19 @@ public class EntityVertex implements Vertex, VertexId {
 		if (optionalPropertyValue.isEmpty()) {
 			return Optional.empty();
 		}
-		Optional<Entity> optionalEntityValue = switch (optionalPropertyValue.get()) {
-		case Integer nid -> EntityService.get().getEntity(nid);
-		case EntityFacade facade -> EntityService.get().getEntity(facade);
+		Optional<Entity<? extends EntityVersion>> optionalEntityValue = switch (optionalPropertyValue.get()) {
+		case Integer nid -> EntityHandle.get(nid).entity().filter(e -> !e.canceled());
+		case EntityFacade facade -> EntityHandle.get(facade).entity().filter(e -> !e.canceled());
 		case null -> throw new IllegalStateException("optionalPropertyValue is null");
             default -> throw new IllegalStateException("optionalPropertyValue is not an identifier or facade: " + optionalPropertyValue.get());
 		};
 		if (optionalEntityValue.isEmpty()) {
-            throw new IllegalStateException("Entity specified by property is not in database:: " + optionalPropertyValue.get());
+            throw new IllegalStateException("Entity specified by property is not in database:: " + componentText(optionalPropertyValue.get()));
 		}
 		if (optionalEntityValue.get() instanceof ConceptFacade conceptFacade) {
 			return Optional.of(conceptFacade);
 		}
-		throw new IllegalStateException("Cannot convert property to concept. Property: " + optionalPropertyValue.get());
+		throw new IllegalStateException("Cannot convert property to concept. Property: " + componentText(optionalPropertyValue.get()));
 	}
 
 	@Override

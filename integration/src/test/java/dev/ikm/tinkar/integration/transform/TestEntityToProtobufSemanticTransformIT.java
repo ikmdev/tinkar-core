@@ -53,9 +53,9 @@ public class TestEntityToProtobufSemanticTransformIT {
     }
 
     private SemanticRecord createSemanticWithFields(int numVersions, int fieldsPerVersion) {
-        PublicId semanticPublicId = PublicIds.newRandom();
+        UUID semanticUuid = UUID.randomUUID();
+        PublicId semanticPublicId = PublicIds.of(semanticUuid);
         int semanticNid = Entity.nid(semanticPublicId);
-        UUID semanticUuid = semanticPublicId.asUuidArray()[0];
 
         int patternNid = createAndStorePattern(conceptMap);
         int referencedComponentNid = Entity.nid(conceptMap.get(MODULE_CONCEPT_NAME).publicId());
@@ -120,9 +120,9 @@ public class TestEntityToProtobufSemanticTransformIT {
     @DisplayName("Transform a Entity Semantic Version With a Missing Stamp - requires entity service")
     public void semanticVersionTransformWithAMissingStamp() {
         assertThrows(Throwable.class, () -> {
-            PublicId semanticPublicId = PublicIds.newRandom();
+            UUID semanticUuid = UUID.randomUUID();
+            PublicId semanticPublicId = PublicIds.of(semanticUuid);
             int semanticNid = Entity.nid(semanticPublicId);
-            UUID semanticUuid = semanticPublicId.asUuidArray()[0];
 
             RecordListBuilder<SemanticVersionRecord> semanticVersions = RecordListBuilder.make();
             SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
@@ -146,9 +146,9 @@ public class TestEntityToProtobufSemanticTransformIT {
     @DisplayName("Transform a Entity Semantic Version With a Missing Field - requires entity service")
     public void semanticVersionTransformWithAMissingField() {
         assertThrows(Throwable.class, () -> {
-            PublicId semanticPublicId = PublicIds.newRandom();
+            UUID semanticUuid = UUID.randomUUID();
+            PublicId semanticPublicId = PublicIds.of(semanticUuid);
             int semanticNid = Entity.nid(semanticPublicId);
-            UUID semanticUuid = semanticPublicId.asUuidArray()[0];
 
             RecordListBuilder<SemanticVersionRecord> semanticVersions = RecordListBuilder.make();
             SemanticRecord semanticRecord = SemanticRecordBuilder.builder()

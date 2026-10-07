@@ -16,9 +16,10 @@
 package dev.ikm.tinkar.coordinate.language.calculator;
 
 
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -30,6 +31,7 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.CacheInvalidationSubscriber;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.Field;
@@ -39,7 +41,6 @@ import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -54,9 +55,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
      * The Constant LOG.
      */
     private static final Logger LOG = LoggerFactory.getLogger(LanguageCalculatorWithCache.class);
-    private static final ConcurrentReferenceHashMap<StampLangRecord, LanguageCalculatorWithCache> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final Cache<StampLangRecord, LanguageCalculatorWithCache> SINGLETONS = Caffeine.newBuilder().weakValues().build();
     final StampCalculator stampCalculator;
     final ImmutableList<LanguageCoordinateRecord> languageCoordinateList;
     private final Cache<Integer, String> preferredCache =
@@ -86,7 +85,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
      */
     public static LanguageCalculatorWithCache getCalculator(StampCoordinateRecord stampFilter,
                                                             ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
-        return SINGLETONS.computeIfAbsent(new StampLangRecord(stampFilter, languageCoordinateList),
+        return SINGLETONS.get(new StampLangRecord(stampFilter, languageCoordinateList),
                 filterKey -> new LanguageCalculatorWithCache(stampFilter, languageCoordinateList));
     }
 
@@ -101,7 +100,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     public static class CacheProvider implements CachingService {
         @Override
         public void reset() {
-            SINGLETONS.clear();
+            SINGLETONS.invalidateAll();
         }
     }
 
@@ -119,7 +118,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
 
     public Optional<String> getTextFromSemanticVersion(SemanticEntityVersion semanticEntityVersion) {
         OptionalInt optionalIndexForText = stampCalculator.getIndexForMeaning(semanticEntityVersion.patternNid(),
-                TinkarTerm.TEXT_FOR_DESCRIPTION.nid());
+                KernelTerm.TEXT_FOR_DESCRIPTION.nid());
         if (optionalIndexForText.isPresent()) {
             String text = (String) semanticEntityVersion.fieldValues().get(optionalIndexForText.getAsInt());
             return Optional.of(text);
@@ -166,11 +165,11 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
             MutableList<SemanticEntityVersion> descriptionList = Lists.mutable.empty();
             for (int descriptionPatternNid : languageCoordinate.descriptionPatternPreferenceNidList().toArray()) {
                 OptionalInt optionalTypeIndex = stampCalculator.getIndexForMeaning(descriptionPatternNid,
-                        TinkarTerm.DESCRIPTION_TYPE.nid());
+                        KernelTerm.DESCRIPTION_TYPE.nid());
                 if (optionalTypeIndex.isPresent()) {
-                    PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, descriptionPatternNid,
+                    EntityStore.current().forEachSemanticNidForComponentOfPattern(componentNid, descriptionPatternNid,
                             semanticNid -> {
-                                SemanticEntity descriptionSemantic = Entity.getFast(semanticNid);
+                                SemanticEntity descriptionSemantic = EntityHandle.get(semanticNid).expectSemantic();
                                 Latest<SemanticEntityVersion> latestDescriptionVersion =
                                         stampCalculator.latest(descriptionSemantic);
                                 latestDescriptionVersion.ifPresent(descriptionVersion -> {
@@ -231,14 +230,14 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
                 if (latestDescription.isPresent()) {
                     for (SemanticEntityVersion descriptionVersion : latestDescription.versionList()) {
                         PatternEntityVersion patternEntityVersion = stampCalculator.latestPatternEntityVersion(descriptionVersion.pattern()).get();
-                        int languageIndex = patternEntityVersion.indexForMeaning(TinkarTerm.LANGUAGE_CONCEPT_NID_FOR_DESCRIPTION);
+                        int languageIndex = patternEntityVersion.indexForMeaning(KernelTerm.LANGUAGE_CONCEPT_NID_FOR_DESCRIPTION);
                         Object languageObject = descriptionVersion.fieldValues().get(languageIndex);
-                        int descriptionTypeIndex = patternEntityVersion.indexForMeaning(TinkarTerm.DESCRIPTION_TYPE);
+                        int descriptionTypeIndex = patternEntityVersion.indexForMeaning(KernelTerm.DESCRIPTION_TYPE);
                         Object descriptionTypeObject = descriptionVersion.fieldValues().get(descriptionTypeIndex);
                         if (languageObject instanceof EntityFacade languageFacade &&
                                 descriptionTypeObject instanceof EntityFacade descriptionTypeFacade) {
                             if ((languageFacade.nid() == languageCoordinate.languageConceptNid() ||
-                                    languageCoordinate.languageConceptNid() == TinkarTerm.LANGUAGE.nid()) // any language
+                                    languageCoordinate.languageConceptNid() == KernelTerm.LANGUAGE.nid()) // any language
                                     && descriptionTypeFacade.nid() == descTypeNid) {
                                 descriptionsForLanguageOfType.add(descriptionVersion);
                             }
@@ -268,12 +267,12 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
                 if (preferredForDialect.isAbsent()) {
                     stampCalculator.latest(dialectPatternNid).ifPresent(versionObject -> {
                         if (versionObject instanceof PatternEntityVersion patternEntityVersion) {
-                            int acceptabilityIndex = patternEntityVersion.indexForPurpose(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+                            int acceptabilityIndex = patternEntityVersion.indexForPurpose(KernelTerm.DESCRIPTION_ACCEPTABILITY);
                             for (SemanticEntityVersion description : descriptionsForLanguageOfType) {
                                 stampCalculator.forEachSemanticVersionForComponentOfPattern(description.nid(), dialectPatternNid,
                                         (semanticEntityVersion, entityVersion, patternVersion) -> {
                                             if (semanticEntityVersion.fieldValues().get(acceptabilityIndex) instanceof EntityFacade accceptabilityFacade) {
-                                                if (accceptabilityFacade.nid() == TinkarTerm.PREFERRED.nid()) {
+                                                if (accceptabilityFacade.nid() == KernelTerm.PREFERRED.nid()) {
                                                     preferredForDialect.addLatest(description);
                                                 }
                                             }
@@ -352,7 +351,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     private String extractText(Latest<SemanticEntityVersion> latestDescription) {
         SemanticEntityVersion descriptionVersion = latestDescription.get();
         PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(descriptionVersion.pattern()).get();
-        String descriptionText = (String) descriptionVersion.fieldValues().get(patternVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION));
+        String descriptionText = (String) descriptionVersion.fieldValues().get(patternVersion.indexForMeaning(KernelTerm.TEXT_FOR_DESCRIPTION));
         return descriptionText;
     }
 
@@ -383,12 +382,12 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     @Override
     public Optional<String> getSemanticText(int nid) {
         Latest<Field<String>> textField = stampCalculator.getFieldForSemantic(nid,
-                TinkarTerm.TEXT_FOR_DESCRIPTION.nid(),
+                KernelTerm.TEXT_FOR_DESCRIPTION.nid(),
                 StampCalculator.FieldCriterion.MEANING);
         if (textField.isPresent()) {
             return Optional.ofNullable(textField.get().value());
         }
-        Entity entity = Entity.getFast(nid);
+        Entity entity = EntityHandle.get(nid).orNull();
         if (entity instanceof SemanticEntity semanticEntity) {
             Latest<PatternEntityVersion> latestPatternVersion = stampCalculator.latestPatternEntityVersion(semanticEntity.patternNid());
             if (latestPatternVersion.isPresent()) {

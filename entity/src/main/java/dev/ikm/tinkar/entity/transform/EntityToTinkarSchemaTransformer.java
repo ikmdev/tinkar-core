@@ -15,12 +15,14 @@
  */
 package dev.ikm.tinkar.entity.transform;
 
+import dev.ikm.tinkar.entity.changeset.SchemaIds;
 import com.google.protobuf.ByteString;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.id.PublicIdSet;
 import dev.ikm.tinkar.common.id.VertexId;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.graph.DiGraph;
@@ -32,6 +34,7 @@ import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptEntityVersion;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.FieldDefinitionRecord;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.PatternEntity;
@@ -59,7 +62,6 @@ import dev.ikm.tinkar.schema.StampVersion;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.schema.VertexUUID;
 import dev.ikm.tinkar.terms.ConceptFacade;
-import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntIntMap;
@@ -69,7 +71,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * The entityTransformer class is responsible for transformer a entity of a certain data type to a
@@ -137,7 +138,7 @@ public class EntityToTinkarSchemaTransformer {
             throw new RuntimeException("Exception thrown, Semantic Chronology can't contain zero versions");
         }
         if(semanticEntity.referencedComponent() == null){
-            throw new RuntimeException("Exception thrown, Semantic Chronology " + semanticEntity + " has null referenced component");
+            throw new RuntimeException("Exception thrown, Semantic Chronology " + EntityText.diagnostic(semanticEntity) + " has null referenced component");
         }
         return TinkarMsg.newBuilder()
                 .setSemanticChronology(SemanticChronology.newBuilder()
@@ -192,7 +193,7 @@ public class EntityToTinkarSchemaTransformer {
             case 1: stampBuilder.setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)));
                     break;
             default: throw new RuntimeException("Unexpected number of version size: " + stampEntity.versions().size() +
-                    " for stamp entity: " + stampEntity.nid());
+                    " for stamp entity: " + DiagnosticText.component(stampEntity.nid()));
         }
         return stampBuilder.build();
     }
@@ -362,11 +363,7 @@ public class EntityToTinkarSchemaTransformer {
         if (publicId.uuidCount() == 0){
             throw new RuntimeException("Exception thrown, empty Public ID is present [entity transformer].");
         }
-        return PublicId.newBuilder()
-                .addAllUuids(publicId.asUuidList().stream()
-                        .map(UUID::toString)
-                        .toList())
-                .build();
+        return SchemaIds.toSchema(publicId);
     }
 
     protected dev.ikm.tinkar.schema.PublicIdList createPBPublicIdList(PublicIdList publicIdList){
@@ -379,9 +376,11 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
+    /** A set's members in public id order, so the same set is always written the same way. */
     protected dev.ikm.tinkar.schema.PublicIdSet createPBPublicIdSet(PublicIdSet publicIdSet){
         ArrayList<PublicId> pbPublicIds = new ArrayList<>();
-        for(dev.ikm.tinkar.common.id.PublicId publicId : publicIdSet.toIdArray()){
+        for(dev.ikm.tinkar.common.id.PublicId publicId : java.util.Arrays.stream(publicIdSet.toIdArray())
+                .map(dev.ikm.tinkar.common.id.PublicId.class::cast).sorted().toList()){
             pbPublicIds.add(createPBPublicId(publicId));
         }
         return dev.ikm.tinkar.schema.PublicIdSet.newBuilder()
@@ -397,9 +396,13 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
+    /** A set's members in public id order, not nid order, so the same set is written the same way in every store. */
     protected dev.ikm.tinkar.schema.PublicIdSet createPBPublicIdSet(IntIdSet intIdSet){
+        List<dev.ikm.tinkar.common.id.PublicId> members = new ArrayList<>();
+        intIdSet.forEach(nid -> members.add(PrimitiveData.publicId(nid)));
+        members.sort(null);
         List<PublicId> pbPublicIds = new ArrayList<>();
-        intIdSet.forEach(nid -> pbPublicIds.add(createPBPublicId(PrimitiveData.publicId(nid))));
+        members.forEach(publicId -> pbPublicIds.add(createPBPublicId(publicId)));
         return dev.ikm.tinkar.schema.PublicIdSet.newBuilder()
                 .addAllPublicIds(pbPublicIds)
                 .build();
@@ -436,9 +439,15 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
+    /**
+     * A vertex, its properties in the order of their keys' public ids: a vertex keeps its
+     * properties by nid, and nids differ from store to store, so the same vertex is written
+     * the same way in every store.
+     */
     protected dev.ikm.tinkar.schema.Vertex createPBVertex(EntityVertex vertex){
         int pbVertexIndex = vertex.vertexIndex();
-        RichIterable<ConceptFacade> vertexKeys = vertex.propertyKeys();
+        List<ConceptFacade> vertexKeys = new ArrayList<>(vertex.propertyKeys().toList());
+        vertexKeys.sort(java.util.Comparator.comparing(ConceptFacade::publicId));
         ArrayList<dev.ikm.tinkar.schema.Vertex.Property> pbPropertyList = new ArrayList<>();
         vertexKeys.forEach(concept -> pbPropertyList.add(dev.ikm.tinkar.schema.Vertex.Property.newBuilder()
                 .setPublicId(createPBPublicId(concept.publicId()))
@@ -453,9 +462,7 @@ public class EntityToTinkarSchemaTransformer {
     }
 
     protected VertexUUID createPBVertexUUID(dev.ikm.tinkar.common.id.VertexId vertexId){
-        return VertexUUID.newBuilder()
-                .setUuid(vertexId.asUuid().toString())
-                .build();
+        return SchemaIds.toSchemaVertex(vertexId.asUuid());
     }
     protected List<IntToIntMap> createPBIntToIntMaps(ImmutableIntIntMap intToIntMap) {
         ArrayList<IntToIntMap> pbIntToIntMaps = new ArrayList<>();

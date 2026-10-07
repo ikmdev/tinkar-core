@@ -95,7 +95,7 @@ class FieldSerializationRoundTripTest {
     void objectArrayRoundTrips() {
         Object[] original = new Object[]{"UNINITIALIZED", Boolean.FALSE, 777_777_777, 777_777_777_777_777_777L};
 
-        Object[] readBack = roundTrip(new Object[][]{original});
+        Object[] readBack = roundTrip((Object) original);
 
         assertInstanceOf(Object[].class, readBack[0], "OBJECT_ARRAY must read back as Object[]");
         assertArrayEquals(original, (Object[]) readBack[0],

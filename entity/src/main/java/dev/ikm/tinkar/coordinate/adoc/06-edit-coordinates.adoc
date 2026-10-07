@@ -66,11 +66,11 @@ EditCoordinateRecord editCoord = Coordinates.Edit.Default();
 
 // Equivalent to:
 EditCoordinateRecord editCoord = EditCoordinateRecord.make(
-    TinkarTerm.USER.nid(),                    // Author
-    TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),    // Default module
-    TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),    // Destination module
-    TinkarTerm.DEVELOPMENT_PATH.nid(),        // Default path
-    TinkarTerm.DEVELOPMENT_PATH.nid()         // Promotion path
+    KernelTerm.USER.nid(),                    // Author
+    KernelTerm.SOLOR_OVERLAY_MODULE.nid(),    // Default module
+    KernelTerm.SOLOR_OVERLAY_MODULE.nid(),    // Destination module
+    KernelTerm.DEVELOPMENT_PATH.nid(),        // Default path
+    KernelTerm.DEVELOPMENT_PATH.nid()         // Promotion path
 );
 ----
 
@@ -133,8 +133,8 @@ public class UserEditContext {
                 userNid,
                 moduleNid,
                 moduleNid,
-                TinkarTerm.DEVELOPMENT_PATH.nid(),
-                TinkarTerm.DEVELOPMENT_PATH.nid()
+                KernelTerm.DEVELOPMENT_PATH.nid(),
+                KernelTerm.DEVELOPMENT_PATH.nid()
             );
         });
     }
@@ -149,10 +149,10 @@ public class UserEditContext {
 public EditCoordinateRecord createExtensionEditCoordinate(int authorNid) {
     return EditCoordinateRecord.make(
         authorNid,
-        TinkarTerm.EXTENSION_MODULE.nid(),      // Extensions go here
-        TinkarTerm.CORE_MODULE.nid(),           // Modularize to core
-        TinkarTerm.DEVELOPMENT_PATH.nid(),
-        TinkarTerm.MASTER_PATH.nid()
+        MyTerms.EXTENSION_MODULE.nid(),      // Extensions go here
+        MyTerms.CORE_MODULE.nid(),           // Modularize to core
+        KernelTerm.DEVELOPMENT_PATH.nid(),
+        KernelTerm.MASTER_PATH.nid()
     );
 }
 ----
@@ -226,8 +226,8 @@ public EditCoordinateRecord getUserEditCoordinate(User user) {
         user.getConceptNid(),
         user.getDefaultModule(),
         user.getDefaultModule(),
-        TinkarTerm.DEVELOPMENT_PATH.nid(),
-        TinkarTerm.DEVELOPMENT_PATH.nid()
+        KernelTerm.DEVELOPMENT_PATH.nid(),
+        KernelTerm.DEVELOPMENT_PATH.nid()
     );
 }
 ----
@@ -240,7 +240,7 @@ public EditCoordinateRecord getUserEditCoordinate(User user) {
 if (isDevelopingCore) {
     editCoord = EditCoordinateRecord.make(
         authorNid,
-        TinkarTerm.CORE_MODULE.nid(),  // Core module
+        MyTerms.CORE_MODULE.nid(),  // Core module
         ...
     );
 }
@@ -249,7 +249,7 @@ if (isDevelopingCore) {
 if (isDevelopingExtension) {
     editCoord = EditCoordinateRecord.make(
         authorNid,
-        TinkarTerm.EXTENSION_MODULE.nid(),  // Extension module
+        MyTerms.EXTENSION_MODULE.nid(),  // Extension module
         ...
     );
 }

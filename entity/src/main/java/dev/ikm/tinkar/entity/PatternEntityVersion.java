@@ -44,14 +44,14 @@ public interface PatternEntityVersion extends EntityVersion, PatternVersion {
 
     @Override
     default ConceptEntity semanticPurpose() {
-        return EntityService.get().getEntityFast(semanticPurposeNid());
+        return EntityHandle.get(semanticPurposeNid()).expectConcept();
     }
 
     int semanticPurposeNid();
 
     @Override
     default ConceptEntity semanticMeaning() {
-        return EntityService.get().getEntityFast(semanticMeaningNid());
+        return EntityHandle.get(semanticMeaningNid()).expectConcept();
     }
 
     int semanticMeaningNid();

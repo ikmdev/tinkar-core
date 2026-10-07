@@ -52,8 +52,8 @@ public class TestEntityToProtobufStampTransform {
     @DisplayName("Transform a Entity Stamp Chronology With No Versions")
     public void stampChronologyTransformWithZeroVersions() {
         // Given a StampEntity with zero versions
-        PublicId randomPublicID = PublicIds.newRandom();
-        UUID uuid = randomPublicID.asUuidArray()[0];
+        UUID uuid = UUID.randomUUID();
+        PublicId randomPublicID = PublicIds.of(uuid);
         RecordListBuilder<StampVersionRecord> emptyVersions = RecordListBuilder.make();
         emptyVersions.build();
         StampRecord stampRecord = new StampRecord(

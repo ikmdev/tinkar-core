@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import java.math.BigDecimal;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,19 +36,21 @@ import dev.ikm.elk.snomed.model.RoleGroup;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.elk.snomed.model.SnomedEntity;
 import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.DiTreeText;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
 import dev.ikm.tinkar.ext.lang.owl.IntervalUtil;
 import dev.ikm.tinkar.reasoner.service.UnsupportedReasonerProcessIncremental;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class ElkSnomedDataBuilder {
 
@@ -81,9 +84,8 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private int computeTotalCount() {
-		AtomicInteger totalCounter = new AtomicInteger();
-		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), _ -> totalCounter.incrementAndGet());
-		return totalCounter.get();
+		// Counted without reading them: the build reads them after (IKE-Network/ike-issues#1249).
+		return EntityService.get().countSemanticsOfPattern(statedAxiomPattern.nid());
 	}
 
 	public void build() throws Exception {
@@ -192,13 +194,13 @@ public class ElkSnomedDataBuilder {
 		}
 		if (data.getRoleType(nid) != null) {
 			RoleType role = data.getRoleType(nid);
-			role.setName(PrimitiveData.text(nid));
-			throw new UnsupportedReasonerProcessIncremental("Delete: " + role.getClass() + " " + role);
+			throw new UnsupportedReasonerProcessIncremental(
+					"Delete: " + role.getClass() + " " + DiagnosticText.component(nid));
 		}
 		if (data.getConcreteRoleType(nid) != null) {
 			ConcreteRoleType role = data.getConcreteRoleType(nid);
-			role.setName(PrimitiveData.text(nid));
-			throw new UnsupportedReasonerProcessIncremental("Delete: " + role.getClass() + " " + role);
+			throw new UnsupportedReasonerProcessIncremental(
+					"Delete: " + role.getClass() + " " + DiagnosticText.component(nid));
 		}
 		return null;
 	}
@@ -215,19 +217,20 @@ public class ElkSnomedDataBuilder {
 		SnomedEntity entity = processDefinition(update);
 		if (entity == null) {
 			LOG.error("\n" + PrimitiveData.text(nid) + "\n" + update);
-			throw new UnsupportedReasonerProcessIncremental("processDefinition failed: " + PrimitiveData.text(nid));
+			throw new UnsupportedReasonerProcessIncremental("processDefinition failed: " + DiagnosticText.component(nid));
 		}
 		return switch (entity) {
 		case Concept concept -> concept;
 		case RoleType role -> {
-			role.setName(PrimitiveData.text(nid));
-			throw new UnsupportedReasonerProcessIncremental("Update: " + role);
+			throw new UnsupportedReasonerProcessIncremental(
+					"Update: " + role.getClass() + " " + DiagnosticText.component(nid));
 		}
 		case ConcreteRoleType role -> {
-			role.setName(PrimitiveData.text(nid));
-			throw new UnsupportedReasonerProcessIncremental("Update: " + role);
+			throw new UnsupportedReasonerProcessIncremental(
+					"Update: " + role.getClass() + " " + DiagnosticText.component(nid));
 		}
-		default -> throw new IllegalArgumentException("Unexpected value: " + entity);
+		default -> throw new IllegalArgumentException(
+				"Unexpected value: " + entity.getClass() + " " + DiagnosticText.component(nid));
 		};
 
 	}
@@ -246,19 +249,21 @@ public class ElkSnomedDataBuilder {
 		final ImmutableList<EntityVertex> children = definition.successors(node);
 		if (children.size() != 1)
 			throw new IllegalStateException(
-					node + " can only have one child. Concept: " + conceptNid + " Definition: " + definition);
+					DiTreeText.diagnostic(node) + " can only have one child. Concept: "
+							+ DiagnosticText.component(conceptNid) + " Definition:\n" + DiTreeText.diagnostic(definition));
 		EntityVertex child = children.getFirst();
 		if (meaning != null && child.getMeaningNid() != meaning.nid())
-			throw new IllegalStateException(node + " can only have " + meaning + " for a child. Concept: " + conceptNid
-					+ " definition: " + definition);
+			throw new IllegalStateException(DiTreeText.diagnostic(node) + " can only have "
+					+ DiagnosticText.name(meaning.nid()) + " for a child. Concept: "
+					+ DiagnosticText.component(conceptNid) + " definition:\n" + DiTreeText.diagnostic(definition));
 		return child;
 	}
 
 	private void checkRoleOperator(EntityVertex node) {
-		int role_operator_nid = getNid(node, TinkarTerm.ROLE_OPERATOR);
-		if (role_operator_nid != TinkarTerm.EXISTENTIAL_RESTRICTION.nid())
+		int role_operator_nid = getNid(node, KernelTerm.ROLE_OPERATOR);
+		if (role_operator_nid != KernelTerm.EXISTENTIAL_RESTRICTION.nid())
 			throw new UnsupportedOperationException(
-					"Role: " + PrimitiveData.text(role_operator_nid) + " not supported. ");
+					"Role: " + DiagnosticText.component(role_operator_nid) + " not supported. ");
 	}
 
 	// This is just used to support the WriteTest ITs
@@ -285,7 +290,7 @@ public class ElkSnomedDataBuilder {
 				Concept concept = data.getOrCreateConcept(conceptNid);
 				Definition def = new Definition();
 				def.setDefinitionType(DefinitionType.EquivalentConcept);
-				processDefinition(def, child, definition);
+				processDefinition(conceptNid, def, child, definition);
 				concept.addDefinition(def);
 				result = concept;
 			}
@@ -293,7 +298,7 @@ public class ElkSnomedDataBuilder {
 				Concept concept = data.getOrCreateConcept(conceptNid);
 				Definition def = new Definition();
 				def.setDefinitionType(DefinitionType.SubConcept);
-				processDefinition(def, child, definition);
+				processDefinition(conceptNid, def, child, definition);
 				concept.addDefinition(def);
 				result = concept;
 			}
@@ -301,7 +306,7 @@ public class ElkSnomedDataBuilder {
 				Concept concept = data.getOrCreateConcept(conceptNid);
 				Definition def = new Definition();
 				def.setDefinitionType(DefinitionType.SubConcept);
-				processDefinition(def, child, definition);
+				processDefinition(conceptNid, def, child, definition);
 				concept.addGciDefinition(def);
 				result = concept;
 			}
@@ -329,14 +334,14 @@ public class ElkSnomedDataBuilder {
 		return ret;
 	}
 
-	private void processDefinition(Definition def, EntityVertex node, DiTreeEntity definition) {
-		EntityVertex child = getFirstChildCheck(-1, node, definition, null);
+	private void processDefinition(int conceptNid, Definition def, EntityVertex node, DiTreeEntity definition) {
+		EntityVertex child = getFirstChildCheck(conceptNid, node, definition, null);
 		switch (getMeaning(child)) {
 		case AND -> {
 			processAnd(def, child, definition);
 		}
 		case CONCEPT -> {
-			int nid = getNid(child, TinkarTerm.CONCEPT_REFERENCE);
+			int nid = getNid(child, KernelTerm.CONCEPT_REFERENCE);
 			def.addSuperConcept(data.getOrCreateConcept(nid));
 		}
 		default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
@@ -346,15 +351,15 @@ public class ElkSnomedDataBuilder {
 	private void processPropertySet(int conceptNid, EntityVertex propertySetNode, DiTreeEntity definition) {
 		if (log_property_sets)
 			LOG.info("PropertySet: " + PrimitiveData.text(conceptNid) + " " + propertySetNode + "\n" + definition);
-		EntityVertex child = getFirstChildCheck(conceptNid, propertySetNode, definition, TinkarTerm.AND);
+		EntityVertex child = getFirstChildCheck(conceptNid, propertySetNode, definition, KernelTerm.AND);
 		for (EntityVertex node : definition.successors(child)) {
 			switch (getMeaning(node)) {
 			case CONCEPT -> {
-				ConceptFacade nodeConcept = node.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
+				ConceptFacade nodeConcept = node.propertyFast(KernelTerm.CONCEPT_REFERENCE);
 				RoleType roleType = data.getOrCreateRoleType(conceptNid);
-				if (nodeConcept.nid() == TinkarTerm.TRANSITIVE_PROPERTY.nid()) {
+				if (nodeConcept.nid() == KernelTerm.TRANSITIVE_PROPERTY.nid()) {
 					roleType.setTransitive(true);
-				} else if (nodeConcept.nid() == TinkarTerm.REFLEXIVE_PROPERTY.nid()) {
+				} else if (nodeConcept.nid() == KernelTerm.REFLEXIVE_PROPERTY.nid()) {
 					roleType.setReflexive(true);
 				} else {
 					roleType.addSuperRoleType(data.getOrCreateRoleType(nodeConcept.nid()));
@@ -362,28 +367,31 @@ public class ElkSnomedDataBuilder {
 			}
 			case PROPERTY_SEQUENCE_IMPLICATION -> {
 				RoleType roleType = data.getOrCreateRoleType(conceptNid);
-				ConceptFacade ppi = node.propertyFast(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION);
+				ConceptFacade ppi = node.propertyFast(KernelTerm.PROPERTY_SEQUENCE_IMPLICATION);
 				if (ppi.nid() != conceptNid)
 					throw new IllegalStateException(
-							"Property chain malformed. Concept: " + conceptNid + " definition: " + definition);
-				IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SEQUENCE);
+							"Property chain malformed. Concept: " + DiagnosticText.component(conceptNid)
+									+ " definition:\n" + DiTreeText.diagnostic(definition));
+				IntIdList ps = node.propertyFast(KernelTerm.PROPERTY_SEQUENCE);
 				if (ps == null)
 					throw new IllegalStateException(
-							"Property chain malformed. Expected " + TinkarTerm.PROPERTY_SEQUENCE.description()
-									+ " Concept: " + conceptNid + " definition: " + definition);
+							"Property chain malformed. Expected " + DiagnosticText.name(KernelTerm.PROPERTY_SEQUENCE.nid())
+									+ " Concept: " + DiagnosticText.component(conceptNid)
+									+ " definition:\n" + DiTreeText.diagnostic(definition));
 				if (ps.size() != 2)
-					throw new IllegalStateException("Property chain " + ps.size() + " != 2. Concept: " + conceptNid
-							+ " definition: " + definition);
+					throw new IllegalStateException("Property chain " + ps.size() + " != 2. Concept: " + DiagnosticText.component(conceptNid)
+							+ " definition:\n" + DiTreeText.diagnostic(definition));
 				if (ps.get(0) != conceptNid)
 					throw new IllegalStateException(
-							"Property chain malformed. Concept: " + conceptNid + " definition: " + definition);
+							"Property chain malformed. Concept: " + DiagnosticText.component(conceptNid)
+									+ " definition:\n" + DiTreeText.diagnostic(definition));
 				RoleType prop1 = data.getOrCreateRoleType(ps.get(0));
 				RoleType prop2 = data.getOrCreateRoleType(ps.get(1));
 				if (!roleType.equals(prop1))
 					throw new IllegalStateException("This is a bug.");
 				roleType.setChained(prop2);
 			}
-			default -> throw new UnsupportedOperationException("Can't handle: " + node + " in: " + definition);
+			default -> throw new UnsupportedOperationException("Can't handle: " + DiTreeText.diagnostic(node) + " in:\n" + DiTreeText.diagnostic(definition));
 			}
 		}
 	}
@@ -391,15 +399,15 @@ public class ElkSnomedDataBuilder {
 	private void processDataPropertySet(int conceptNid, EntityVertex propertySetNode, DiTreeEntity definition) {
 		if (log_property_sets)
 			LOG.info("DataPropertySet: " + PrimitiveData.text(conceptNid) + " " + propertySetNode + "\n" + definition);
-		EntityVertex child = getFirstChildCheck(conceptNid, propertySetNode, definition, TinkarTerm.AND);
+		EntityVertex child = getFirstChildCheck(conceptNid, propertySetNode, definition, KernelTerm.AND);
 		for (EntityVertex node : definition.successors(child)) {
 			switch (getMeaning(node)) {
 			case CONCEPT -> {
-				ConceptFacade nodeConcept = node.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
+				ConceptFacade nodeConcept = node.propertyFast(KernelTerm.CONCEPT_REFERENCE);
 				ConcreteRoleType roleType = data.getOrCreateConcreteRoleType(conceptNid);
 				roleType.addSuperConcreteRoleType(data.getOrCreateConcreteRoleType(nodeConcept.nid()));
 			}
-			default -> throw new UnsupportedOperationException("Can't handle: " + node + " in: " + definition);
+			default -> throw new UnsupportedOperationException("Can't handle: " + DiTreeText.diagnostic(node) + " in:\n" + DiTreeText.diagnostic(definition));
 			}
 		}
 	}
@@ -408,13 +416,13 @@ public class ElkSnomedDataBuilder {
 		for (EntityVertex child : definition.successors(node)) {
 			switch (getMeaning(child)) {
 			case CONCEPT -> {
-				int concept_nid = getNid(child, TinkarTerm.CONCEPT_REFERENCE);
+				int concept_nid = getNid(child, KernelTerm.CONCEPT_REFERENCE);
 				def.addSuperConcept(data.getOrCreateConcept(concept_nid));
 			}
 			case ROLE -> {
 				checkRoleOperator(child);
-				int role_type_nid = getNid(child, TinkarTerm.ROLE_TYPE);
-				if (role_type_nid == TinkarTerm.ROLE_GROUP.nid()) {
+				int role_type_nid = getNid(child, KernelTerm.ROLE_TYPE);
+				if (role_type_nid == KernelTerm.ROLE_GROUP.nid()) {
 					// TODO Placeholder for now so the tests work
 //					data.getOrCreateRoleType(role_type_nid);
 					processRoleGroup(def, child, definition);
@@ -438,16 +446,16 @@ public class ElkSnomedDataBuilder {
 
 	private Role makeRole(EntityVertex node, DiTreeEntity definition) {
 		EntityVertex child = getFirstChildCheck(-1, node, definition, null);
-		int role_type_nid = getNid(node, TinkarTerm.ROLE_TYPE);
+		int role_type_nid = getNid(node, KernelTerm.ROLE_TYPE);
 		RoleType role_type = data.getOrCreateRoleType(role_type_nid);
-		int concept_nid = getNid(child, TinkarTerm.CONCEPT_REFERENCE);
+		int concept_nid = getNid(child, KernelTerm.CONCEPT_REFERENCE);
 		return new Role(role_type, data.getOrCreateConcept(concept_nid));
 	}
 
 	private ConcreteRole makeConcreteRole(EntityVertex node, DiTreeEntity definition) {
-		int role_type_nid = getNid(node, TinkarTerm.FEATURE_TYPE);
+		int role_type_nid = getNid(node, KernelTerm.FEATURE_TYPE);
 		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
-		Object value = node.propertyFast(TinkarTerm.LITERAL_VALUE);
+		Object value = node.propertyFast(KernelTerm.LITERAL_VALUE);
 		ValueType value_type = switch (value) {
 		case BigDecimal _ -> ValueType.Decimal;
 		case Double _ -> ValueType.Double;
@@ -461,7 +469,7 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private ConcreteRole makeIntervalRole(EntityVertex node, DiTreeEntity definition) {
-		int role_type_nid = getNid(node, TinkarTerm.INTERVAL_ROLE_TYPE);
+		int role_type_nid = getNid(node, KernelTerm.INTERVAL_ROLE_TYPE);
 		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
 		data.addIntervalRoleType(role_type);
 		Interval interval = IntervalUtil.makeInterval(node);

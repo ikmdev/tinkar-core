@@ -15,15 +15,19 @@
  */
 package dev.ikm.tinkar.provider.mvstore;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
 import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.common.service.SearchService;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
@@ -51,7 +55,7 @@ import java.util.function.ObjIntConsumer;
 /**
  * TODO: Maybe also consider making use of: https://blogs.oracle.com/javamagazine/creating-a-java-off-heap-in-memory-database?source=:em:nw:mt:::RC_WWMK200429P00043:NSL400123121
  */
-public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
+public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(MVStoreProvider.class);
     private static final File defaultDataDirectory = new File("target/mvstore/");
     private static final String databaseFileName = "mvstore.dat";
@@ -78,6 +82,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     public MVStoreProvider() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening MVStoreProvider");
+        NidLayout.activate(NidLayout.SEQUENTIAL);
         this.offHeap = new OffHeapStore();
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
@@ -202,12 +207,22 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        throw new UnsupportedOperationException();
+        nids.primitiveParallelStream().forEach(nid -> {
+            byte[] bytes = nidToComponentMap.get(nid);
+            if (bytes != null) {
+                action.accept(bytes, nid);
+            }
+        });
     }
 
     @Override
     public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        throw new UnsupportedOperationException();
+        nids.forEach(nid -> {
+            byte[] bytes = nidToComponentMap.get(nid);
+            if (bytes != null) {
+                action.accept(bytes, nid);
+            }
+        });
     }
 
     @Override
@@ -221,6 +236,8 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         // concurrent first merges of the same nid race.
         Integer priorPatternNid = this.nidToPatternNidMap.putIfAbsent(nid, patternNid);
         if (priorPatternNid == null) {
+            // A concept, pattern or stamp comes with the not-applicable sentinel,
+            // Integer.MAX_VALUE (Nid.NOT_APPLICABLE), as its pattern; only a semantic is indexed.
             if (patternNid != Integer.MAX_VALUE) {
                 long citationLong = IntsInLong.ints2Long(nid, patternNid);
                 this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
@@ -230,9 +247,9 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
             }
         } else if (priorPatternNid != patternNid) {
             // A nid's pattern never changes. A mismatch means two different components were
-            // given the same nid, e.g. a concept (pattern MAX_VALUE) reusing a semantic's nid.
+            // given the same nid, e.g. a concept (pattern not applicable, MAX_VALUE) reusing a semantic's nid.
             // Only collisions involving a semantic are detectable here; concepts, patterns and
-            // stamps all pass MAX_VALUE. Fail fast rather than merge unrelated bytes.
+            // stamps all pass the not-applicable sentinel, MAX_VALUE. Fail fast rather than merge unrelated bytes.
             String message = "Nid collision: nid " + nid + " already bound to pattern " + priorPatternNid
                     + " but merge supplied pattern " + patternNid + " for " + sourceObject;
             LOG.error(message);
@@ -297,9 +314,9 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
                 procedure.accept(elementNid);
             }
         } else {
-            Entity entity = Entity.getFast(patternNid);
+            Entity entity = EntityHandle.get(patternNid).orNull();
             if (entity instanceof PatternEntity == false) {
-                throw new IllegalStateException("Trying to iterate elements for entity that is not a pattern: " + entity);
+                throw new IllegalStateException("Trying to iterate elements for entity that is not a pattern: " + EntityText.diagnostic(entity));
             }
 
         }
@@ -314,22 +331,40 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachPatternNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        forEachNidOfType(PATTERN_TOKEN, procedure);
     }
 
     @Override
     public void forEachConceptNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        forEachNidOfType(CONCEPT_TOKEN, procedure);
     }
 
     @Override
     public void forEachStampNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        forEachNidOfType(STAMP_TOKEN, procedure);
     }
 
     @Override
     public void forEachSemanticNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        forEachNidOfType(SEMANTIC_TOKEN, procedure);
+    }
+
+    // The entity type token of an entity's bytes: the chronology's first byte, after the
+    // array count, the chronology's length, and the entity format (see PrimitiveDataService.merge).
+    private static final int TYPE_TOKEN_OFFSET = 9;
+    private static final byte CONCEPT_TOKEN = 1;
+    private static final byte PATTERN_TOKEN = 2;
+    private static final byte SEMANTIC_TOKEN = 3;
+    private static final byte STAMP_TOKEN = PrimitiveDataService.STAMP_DATA_TYPE;
+
+    /** Visits the nid of every entity of one type, by the type token its bytes begin with. */
+    private void forEachNidOfType(byte typeToken, IntProcedure procedure) {
+        nidToComponentMap.entrySet().forEach(entry -> {
+            byte[] bytes = entry.getValue();
+            if (bytes != null && bytes.length > TYPE_TOKEN_OFFSET && bytes[TYPE_TOKEN_OFFSET] == typeToken) {
+                procedure.accept(entry.getKey());
+            }
+        });
     }
 
     @Override

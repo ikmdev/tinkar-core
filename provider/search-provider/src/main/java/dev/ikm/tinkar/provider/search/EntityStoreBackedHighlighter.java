@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.provider.search;
 
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import org.apache.lucene.analysis.Analyzer;
@@ -24,6 +24,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.uhighlight.PassageFormatter;
 import org.apache.lucene.search.uhighlight.UnifiedHighlighter;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
@@ -45,7 +46,7 @@ import java.util.Set;
  * <ol>
  *   <li>Reads {@code nid} and {@code fieldOrdinal} from the doc's stored fields.</li>
  *   <li>Fetches the corresponding {@link SemanticEntity} via
- *       {@link EntityService#getEntityFast(int)}.</li>
+ *       {@link EntityHandle#get(int)}.</li>
  *   <li>Takes the latest version's {@code fieldValues().get(fieldOrdinal)} and
  *       returns it as the source text.</li>
  * </ol>
@@ -70,8 +71,8 @@ final class EntityStoreBackedHighlighter extends UnifiedHighlighter {
             IndexerSchema.INDEXED_FIELD_ORDINAL.name()
     );
 
-    EntityStoreBackedHighlighter(IndexSearcher searcher, Analyzer analyzer) {
-        super(searcher, analyzer);
+    EntityStoreBackedHighlighter(IndexSearcher searcher, Analyzer analyzer, PassageFormatter formatter) {
+        super(new UnifiedHighlighter.Builder(searcher, analyzer).withFormatter(formatter));
     }
 
     @Override
@@ -111,7 +112,7 @@ final class EntityStoreBackedHighlighter extends UnifiedHighlighter {
      * @return the rehydrated text, never {@code null}
      */
     private static String rehydrate(int nid, int fieldOrdinal) {
-        Entity<?> entity = EntityService.get().getEntityFast(nid);
+        Entity<?> entity = EntityHandle.get(nid).orNull();
         if (!(entity instanceof SemanticEntity<?> semantic)) {
             LOG.debug("rehydrate: nid {} is not a SemanticEntity (was {})",
                     nid, entity == null ? "null" : entity.getClass().getSimpleName());

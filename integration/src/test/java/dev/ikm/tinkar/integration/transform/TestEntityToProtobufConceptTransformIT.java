@@ -21,6 +21,7 @@ import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptRecordBuilder;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.PublicIdentifierRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.fixtures.NewEphemeralKeyValueProvider;
@@ -54,14 +55,15 @@ public class TestEntityToProtobufConceptTransformIT {
         // Given a ConceptRecord with one version that has a real stamp stored in the provider
         Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
         int conceptNid = Entity.nid(testConcept.publicId());
-        UUID uuid = testConcept.publicId().asUuidArray()[0];
+        PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(testConcept.publicId());
 
         int stampNid = createAndStoreStamp();
 
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
-                .mostSignificantBits(uuid.getMostSignificantBits())
-                .leastSignificantBits(uuid.getLeastSignificantBits())
+                .mostSignificantBits(conceptIdRecord.mostSignificantBits())
+                .leastSignificantBits(conceptIdRecord.leastSignificantBits())
+                .additionalUuidLongs(conceptIdRecord.additionalUuidLongs())
                 .nid(conceptNid)
                 .versions(versions)
                 .build();
@@ -77,7 +79,7 @@ public class TestEntityToProtobufConceptTransformIT {
         assertTrue(msg.hasConceptChronology());
         assertEquals(1, msg.getConceptChronology().getConceptVersionsCount());
         assertFalse(msg.getConceptChronology().getConceptVersions(0)
-                .getStampChronologyPublicId().getUuidsList().isEmpty(),
+                .getStampChronologyPublicId().getUuidBitsList().isEmpty(),
                 "Stamp public ID should not be empty");
     }
 
@@ -87,15 +89,16 @@ public class TestEntityToProtobufConceptTransformIT {
         // Given a ConceptRecord with two versions, each with a stored stamp
         Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
         int conceptNid = Entity.nid(testConcept.publicId());
-        UUID uuid = testConcept.publicId().asUuidArray()[0];
+        PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(testConcept.publicId());
 
         int stampNid1 = createAndStoreStamp();
         int stampNid2 = createAndStoreStamp();
 
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
-                .mostSignificantBits(uuid.getMostSignificantBits())
-                .leastSignificantBits(uuid.getLeastSignificantBits())
+                .mostSignificantBits(conceptIdRecord.mostSignificantBits())
+                .leastSignificantBits(conceptIdRecord.leastSignificantBits())
+                .additionalUuidLongs(conceptIdRecord.additionalUuidLongs())
                 .nid(conceptNid)
                 .versions(versions)
                 .build();

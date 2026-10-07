@@ -23,7 +23,6 @@ import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.terms.PatternFacade;
 
@@ -58,18 +57,6 @@ public interface ReasonerService {
 	}
 
 	boolean isIncrementalReady();
-
-	@Deprecated
-	void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater);
-
-	default void processIncremental(DiTreeEntity definition, int conceptNid) {
-		processIncremental(definition, conceptNid, new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-	}
 
 	void processIncremental(SemanticEntityVersion update, TrackingCallable<?> progressUpdater);
 
@@ -125,18 +112,5 @@ public interface ReasonerService {
 	ImmutableIntSet getChildren(int id);
 
 	LogicalExpression getNecessaryNormalForm(int id);
-
-	@Deprecated
-	ClassifierResults processResults(boolean reinferAllHierarchy, TrackingCallable<ClassifierResults> trackingCallable) throws Exception;
-
-	@Deprecated
-	default ClassifierResults processResults(boolean reinferAllHierarchy) throws Exception {
-		return processResults(reinferAllHierarchy, new TrackingCallable<ClassifierResults>() {
-			@Override
-			protected ClassifierResults compute() throws Exception {
-				return null;
-			}
-		});
-	}
 
 }

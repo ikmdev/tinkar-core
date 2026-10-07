@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.component.FeatureDefinition;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.MutableList;
 
@@ -44,7 +44,7 @@ public record PatternAnalogueBuilder(PatternRecord analogue,
         int fieldDefinitionCount = versionToAdd.fieldDefinitions().size();
         MutableList<FieldDefinitionRecord> fieldDefinitionRecords = Lists.mutable.ofInitialCapacity(versionToAdd.fieldDefinitions().size());
         for (int i = 0; i < fieldDefinitionCount; i++) {
-            FieldDefinition fieldDefinition = versionToAdd.fieldDefinitions().get(i);
+            FeatureDefinition fieldDefinition = versionToAdd.fieldDefinitions().get(i);
             if (fieldDefinition instanceof FieldDefinitionRecord fieldDefinitionRecord) {
                 fieldDefinitionRecords.add(fieldDefinitionRecord);
             } else {

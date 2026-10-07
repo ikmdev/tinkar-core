@@ -15,22 +15,26 @@
  */
 package dev.ikm.tinkar.entity.export;
 
+import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
+import dev.ikm.tinkar.entity.changeset.IdentityIndex;
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.aggregator.DefaultEntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.EntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.MembershipEntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.schema.TinkarMsg;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +65,9 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
     // Entities may be delivered concurrently (RocksProvider iterates semantics in
     // parallel), so shared state is concurrent and stream writes are serialized
     // (IKE-Network/ike-issues#1142).
-    private final Set<PublicId> moduleList = ConcurrentHashMap.newKeySet();
-    private final Set<PublicId> authorList = ConcurrentHashMap.newKeySet();
+    // The modules and authors of the exported stamps, by nid: a public id is never a hash key.
+    private final Set<Integer> moduleNids = ConcurrentHashMap.newKeySet();
+    private final Set<Integer> authorNids = ConcurrentHashMap.newKeySet();
     /** Guards writes to the zip stream and the skip tallies. */
     private final Object writeLock = new Object();
     // Per-type tallies of entities whose transform failed on a dangling reference and
@@ -112,7 +117,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
 
         try (FileOutputStream fos = new FileOutputStream(protobufFile);
              BufferedOutputStream bos = new BufferedOutputStream(fos);
-             ZipOutputStream zos = new ZipOutputStream(bos)) {
+             ZipOutputStream zos = new ZipOutputStream(bos);
+             IdentityIndex.Writer identities = new IdentityIndex.Writer(false)) {
 
             // Create a single entry
             ZipEntry zipEntry = new ZipEntry(protobufFile.getName().replace(".zip", ""));
@@ -124,15 +130,22 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                         // Store Module & Author Dependencies for Manifest
                         // Resolve via the nid->publicId map: module/author concepts need
                         // not be present as entities in the exporting store.
-                        moduleList.add(PrimitiveData.publicId(stampEntity.moduleNid()));
-                        authorList.add(PrimitiveData.publicId(stampEntity.authorNid()));
+                        moduleNids.add(stampEntity.moduleNid());
+                        authorNids.add(stampEntity.authorNid());
                     }
+                    // A committed stamp still holds the uncommitted version its commit
+                    // superseded; an exported file carries committed knowledge only.
+                    Entity<?> written = entity instanceof StampRecord stampRecord
+                            ? stampRecord.withoutSupersededUncommittedVersions()
+                            : entity;
                     // Transform concurrently; write one whole record at a time, or
                     // records from different threads interleave in the stream.
-                    TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
+                    TinkarMsg pbTinkarMsg = entityTransformer.transform(written);
                     synchronized (writeLock) {
                         pbTinkarMsg.writeDelimitedTo(zos);
                     }
+                    // After the record is written, so the index lists exactly what the file carries.
+                    identities.add(pbTinkarMsg);
                     completedUnitOfWork();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -175,6 +188,9 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             LOG.info("Data zipEntry size: " + zipEntry.getSize());
             LOG.info("Data zipEntry compressed size: " + zipEntry.getCompressedSize());
 
+            identities.writeTo(zos);
+            LOG.info("Identity index lists {} component(s)", identities.count());
+
             // Write Manifest File
             ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
             zos.putNextEntry(manifestEntry);
@@ -183,8 +199,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     entityCountSummary.semanticCount(),
                     entityCountSummary.patternCount(),
                     entityCountSummary.stampCount(),
-                    moduleList,
-                    authorList
+                    publicIds(moduleNids),
+                    publicIds(authorNids)
                 ).getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
             zos.flush();
@@ -211,11 +227,12 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                                            long semanticsCount,
                                            long patternsCount,
                                            long stampsCount,
-                                           Set<PublicId> moduleList,
-                                           Set<PublicId> authorList){
+                                           Collection<PublicId> moduleList,
+                                           Collection<PublicId> authorList){
         StringBuilder manifestContent = new StringBuilder()
+                .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.CURRENT_VERSION).append("\n")
                 // TODO: Dynamically populate this user
-                .append("Packager-Name: ").append(TinkarTerm.KOMET_USER.description()).append("\n")
+                .append("Packager-Name: ").append(KernelTerm.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
                 .append("Total-Count: ").append(entityCount).append("\n")
                 .append("Concept-Count: ").append(conceptsCount).append("\n")
@@ -228,6 +245,17 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         return manifestContent.toString();
     }
 
+    /**
+     * The public ids of components given by nid, each once: for a manifest's module and author
+     * entries, collected by nid because a public id is never a hash key.
+     *
+     * @param nids the components' nids
+     * @return their public ids, in nid order
+     */
+    public static List<PublicId> publicIds(Collection<Integer> nids) {
+        return nids.stream().sorted().map(PrimitiveData::publicId).toList();
+    }
+
     public static String idsToManifestEntry(Collection<PublicId> publicIds) {
         StringBuilder manifestEntry = new StringBuilder();
         publicIds.forEach((publicId) -> {
@@ -236,7 +264,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     .map(UUID::toString)
                     .collect(Collectors.joining(","));
             // Get Description
-            Optional<Entity<EntityVersion>> entity = EntityService.get().getEntity(PrimitiveData.nid(publicId));
+            Optional<Entity<? extends EntityVersion>> entity = EntityHandle.get(PrimitiveData.nid(publicId)).entity().filter(e -> !e.canceled());
             String manifestDescription = "Description Undefined";
             if (entity.isPresent()) {
                 manifestDescription = entity.get().description();

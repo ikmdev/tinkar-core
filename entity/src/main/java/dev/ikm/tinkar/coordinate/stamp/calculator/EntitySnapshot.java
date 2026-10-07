@@ -18,6 +18,8 @@ package dev.ikm.tinkar.coordinate.stamp.calculator;
 import dev.ikm.tinkar.common.id.IntIdCollection;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.EntityVersion;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -39,7 +41,7 @@ public class EntitySnapshot<V extends EntityVersion> {
 
 
     public EntitySnapshot(ViewCalculator viewCalculator, int nid) {
-        this(viewCalculator, Entity.provider().getEntityFast(nid));
+        this(viewCalculator, (Entity<V>) EntityHandle.get(nid).expectEntity());
     }
 
     public EntitySnapshot(ViewCalculator viewCalculator, Entity<V> entity) {
@@ -49,7 +51,7 @@ public class EntitySnapshot<V extends EntityVersion> {
             this.allStampIds = latestVersion.get().entity().stampNids();
             this.latestStampIds = latestVersion.stampNids();
         } else {
-            throw new IllegalStateException("No latest value: " + latestVersion);
+            throw new IllegalStateException("No latest value: " + EntityText.diagnostic(entity));
         }
 
         MutableList<V> uncommittedVersions = Lists.mutable.empty();

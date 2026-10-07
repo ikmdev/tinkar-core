@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -32,7 +33,6 @@ import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.junit.jupiter.api.AfterAll;
@@ -79,7 +79,7 @@ class StarterSetSectionSpikeIT {
     @BeforeAll
     static void loadUnreasonedStarterSet() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
-        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @AfterAll
@@ -94,9 +94,9 @@ class StarterSetSectionSpikeIT {
         buildTaxonomy(parentsFieldIndex);
 
         List<Integer> concepts = new ArrayList<>();
-        PrimitiveData.get().forEachConceptNid(concepts::add);
+        EntityService.get().forEachConceptEntity(concept -> concepts.add(concept.nid()));
         List<Integer> patterns = new ArrayList<>();
-        PrimitiveData.get().forEachPatternNid(patterns::add);
+        EntityService.get().forEachPatternEntity(pattern -> patterns.add(pattern.nid()));
 
         List<Integer> roots = concepts.stream()
                 .filter(nid -> !PARENTS.containsKey(nid) && CHILDREN.containsKey(nid))
@@ -180,7 +180,7 @@ class StarterSetSectionSpikeIT {
      */
     private static int statedNavigationParentsIndex() {
         PatternEntity<?> navigation =
-                EntityHandle.get(TinkarTerm.STATED_NAVIGATION_PATTERN.nid()).expectPattern();
+                EntityHandle.get(KernelTerm.STATED_NAVIGATION_PATTERN.nid()).expectPattern();
         PatternEntityVersion latest = navigation.versions().getLast();
         for (int index = 0; index < latest.fieldDefinitions().size(); index++) {
             FieldDefinitionForEntity field = latest.fieldDefinitions().get(index);
@@ -193,11 +193,10 @@ class StarterSetSectionSpikeIT {
     }
 
     private static void buildTaxonomy(int parentsFieldIndex) {
-        List<Integer> semanticNids = new ArrayList<>();
-        PrimitiveData.get().forEachSemanticNid(semanticNids::add);
-        for (Integer semanticNid : semanticNids) {
-            SemanticEntity<?> semantic = EntityHandle.get(semanticNid).expectSemantic();
-            if (semantic.patternNid() != TinkarTerm.STATED_NAVIGATION_PATTERN.nid()) {
+        List<SemanticEntity<SemanticEntityVersion>> semantics = new ArrayList<>();
+        EntityService.get().forEachSemanticEntity(semantics::add);
+        for (SemanticEntity<?> semantic : semantics) {
+            if (semantic.patternNid() != KernelTerm.STATED_NAVIGATION_PATTERN.nid()) {
                 continue;
             }
             int child = semantic.referencedComponentNid();
@@ -267,9 +266,9 @@ class StarterSetSectionSpikeIT {
     private int verbEstimate(int conceptNid) {
         int[] verbs = {1};
         EntityService.get().forEachSemanticForComponent(conceptNid, semantic -> {
-            if (semantic.patternNid() != TinkarTerm.STATED_NAVIGATION_PATTERN.nid()
-                    && semantic.patternNid() != TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid()
-                    && semantic.patternNid() != TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
+            if (semantic.patternNid() != KernelTerm.STATED_NAVIGATION_PATTERN.nid()
+                    && semantic.patternNid() != KernelTerm.INFERRED_NAVIGATION_PATTERN.nid()
+                    && semantic.patternNid() != KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
                 verbs[0] += semantic.versions().size();
             }
         });
@@ -326,32 +325,33 @@ class StarterSetSectionSpikeIT {
             }
         }
         int patternNid = semantic.patternNid();
-        if (patternNid == TinkarTerm.DESCRIPTION_PATTERN.nid()) {
+        if (patternNid == KernelTerm.DESCRIPTION_PATTERN.nid()) {
             SemanticEntityVersion latest = semantic.versions().getLast();
-            if (nidOf(latest.fieldValues().get(0)) != TinkarTerm.ENGLISH_LANGUAGE.nid()) {
+            if (nidOf(latest.fieldValues().get(0)) != KernelTerm.ENGLISH_LANGUAGE.nid()) {
                 tally("non-English descriptions");
             }
-            if (nidOf(latest.fieldValues().get(2)) != TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid()) {
+            if (nidOf(latest.fieldValues().get(2)) != KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid()) {
                 tally("non-default case significance");
             }
-        } else if (patternNid == TinkarTerm.GB_DIALECT_PATTERN.nid()) {
+        } else if (patternNid == KernelTerm.GB_DIALECT_PATTERN.nid()) {
             tally("GB dialect semantics");
-        } else if (patternNid == TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid() && onPattern) {
+        } else if (patternNid == KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid() && onPattern) {
             tally("stated-axiom semantics on PATTERN components");
         }
-        if (onPattern && patternNid == TinkarTerm.STATED_NAVIGATION_PATTERN.nid()) {
+        if (onPattern && patternNid == KernelTerm.STATED_NAVIGATION_PATTERN.nid()) {
             tally("navigation semantics on PATTERN components");
         }
     }
 
     private static boolean tupleDerived(StampEntity<?> stamp) {
-        String canonical = stamp.state().publicId().asUuidArray()[0]
+        // Mirrors Stamp.stampUuid: each dimension's least UUID.
+        String canonical = stamp.state().publicId().leastUuid()
                 + "|" + stamp.time()
-                + "|" + firstUuid(stamp.authorNid())
-                + "|" + firstUuid(stamp.moduleNid())
-                + "|" + firstUuid(stamp.pathNid());
+                + "|" + leastUuid(stamp.authorNid())
+                + "|" + leastUuid(stamp.moduleNid())
+                + "|" + leastUuid(stamp.pathNid());
         UUID tuple = UuidT5Generator.get(UuidT5Generator.STAMP_NAMESPACE, canonical);
-        return tuple.equals(stamp.publicId().asUuidArray()[0]);
+        return stamp.publicId().contains(tuple);
     }
 
     private static int nidOf(Object fieldValue) {
@@ -361,8 +361,8 @@ class StarterSetSectionSpikeIT {
         return 0;
     }
 
-    private static UUID firstUuid(int nid) {
-        return PrimitiveData.publicId(nid).asUuidArray()[0];
+    private static UUID leastUuid(int nid) {
+        return PrimitiveData.publicId(nid).leastUuid();
     }
 
     private static void tally(String dimension) {

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.spinedarray;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedByteArrayMap;
@@ -22,6 +23,7 @@ import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
@@ -79,7 +81,7 @@ import java.util.function.ObjIntConsumer;
  * TODO: consider if we remove ConcurrentUuidIntHashMap, or improve.
  * <p>MVStore performs worse when iterating over entities.
  */
-public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, PrimitiveDataRepair {
+public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, NidGenerator, PrimitiveDataRepair {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
     protected static final File defaultDataDirectory = new File("target/spinedarrays/");
 
@@ -137,6 +139,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     private SpinedArrayProvider() throws IOException, ExecutionException, InterruptedException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening SpinedArrayProvider on thread: {}", Thread.currentThread().getName());
+        NidLayout.activate(NidLayout.SEQUENTIAL);
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
         if (expectEmpty) {
@@ -183,43 +186,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                     LOG.info("Finished UUID strategy 2 in: " + uuidNidMapFromEntitiesStopwatch.durationString());
                     LOG.info(uuidNidCollector.report());
                 }
-                LOG.info("Starting virtual thread for listAndCancelUncommittedStamps");
-                int[] sortedStampNids = stampNids.stream().sorted().mapToInt(value -> (int) value).toArray();
-                Thread.ofVirtual().name("cancel-uncommitted-stamps").start(() -> {
-                    // EntityService starts in ENTITIES phase, after DATA_STORAGE where this provider starts.
-                    // Wait for it to become available rather than failing immediately.
-                    ServiceLifecycleManager lifecycleManager = ServiceLifecycleManager.get();
-                    int maxAttempts = 60;
-                    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-                        // Stop waiting if startup is no longer in progress — e.g. a
-                        // non-retryable failure (data store already open in another
-                        // process) aborted it. Without this check the loop spins out
-                        // its full budget logging "getRunningService(EntityService)
-                        // called in state DISCOVERED" once per cycle for a service
-                        // that will never appear.
-                        if (!lifecycleManager.isStartupActive()) {
-                            LOG.info("Service startup no longer in progress (state {}); skipping "
-                                            + "uncommitted stamp cancellation at startup",
-                                    lifecycleManager.getState());
-                            return;
-                        }
-                        Optional<EntityService> entityServiceOpt =
-                                lifecycleManager.getRunningService(EntityService.class);
-                        if (entityServiceOpt.isPresent()) {
-                            entityServiceOpt.get().listAndCancelUncommittedStamps(sortedStampNids);
-                            return;
-                        }
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            LOG.warn("Interrupted while waiting for EntityService");
-                            return;
-                        }
-                    }
-                    LOG.warn("EntityService not available after {}s, skipping uncommitted stamp cancellation at startup",
-                            maxAttempts / 2);
-                });
                 LOG.info("UUID loading task completed");
             }).get();
             LOG.info("UUID loading task .get() returned successfully");
@@ -285,15 +251,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                 this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
                 save();
 
-                // Check for uncommitted stamps using EntityProvider while EntityService is still available
-                // This must happen before data provider shutdown since EntityProvider needs access to entities
-                try {
-                    EntityService.get().listAndCancelUncommittedStamps(
-                        stampNids.stream().sorted().mapToInt(value -> (int) value).toArray()
-                    );
-                } catch (java.util.NoSuchElementException e) {
-                    LOG.warn("EntityService not available during shutdown, skipping uncommitted stamp check");
-                }
 
                 entityToBytesMap.close();
             } catch (Exception e) {
@@ -334,11 +291,13 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
             OptionalInt optionalNid = optionalNid(uuids);
 
+            // Integer.MAX_VALUE, which is never a nid, marks "no nid yet" until one of the UUIDs
+            // has one or the first is given a new one.
             int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
 
             for (UUID uuid : uuids) {
                 if (nid == Integer.MAX_VALUE) {
-                    nid = uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
+                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> newNid());
                 } else {
                     uuidToNidMap.put(uuid, nid);
                 }
@@ -377,6 +336,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
             OptionalInt optionalNid = optionalNid(uuidList.toArray(new UUID[uuidList.size()]));
 
+            // Integer.MAX_VALUE, which is never a nid, marks "no nid yet" until one of the UUIDs
+            // has one or the first is given a new one.
             int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
 
             for (UUID uuid : uuidList) {
@@ -451,6 +412,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             throw new IllegalStateException("NID should not be Integer.MIN_VALUE");
         }
         if (!this.entityToBytesMap.containsKey(nid)) {
+            // The pattern is stored as given, so a concept, pattern or stamp is stored with the
+            // not-applicable sentinel, Integer.MAX_VALUE (Nid.NOT_APPLICABLE), which this file
+            // keeps on disk; only a semantic is indexed under its pattern and referenced component.
             this.nidToPatternNidMap.put(nid, patternNid);
             if (patternNid != Integer.MAX_VALUE) {
                 long citationLong = IntsInLong.ints2Long(nid, patternNid);
@@ -639,6 +603,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     @Override
     public void erase(int nid) {
         this.entityToBytesMap.put(nid, null);
+        // The not-applicable sentinel: an erased nid has no pattern.
         this.nidToPatternNidMap.put(nid, Integer.MAX_VALUE);
         this.nidToCitingComponentsNidMap.put(nid, null);
         this.conceptNids.remove(nid);
@@ -667,7 +632,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     public void mergeThenErase(int nidToErase, int nidToMergeInto) {
 
 
-        byte[] mergedBytes = merge(PrimitiveData.get().getBytes(nidToMergeInto), PrimitiveData.get().getBytes(nidToErase), DataActivity.DATA_REPAIR);
+        byte[] mergedBytes = merge(getBytes(nidToMergeInto), getBytes(nidToErase), DataActivity.DATA_REPAIR);
         erase(nidToErase);
         put(nidToMergeInto, mergedBytes);
         EntityService.get().invalidateCaches(nidToErase, nidToMergeInto);

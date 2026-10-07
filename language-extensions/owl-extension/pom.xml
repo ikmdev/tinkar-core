@@ -46,6 +46,11 @@
 			<groupId>dev.ikm.elk</groupId>
 			<artifactId>elk-snomed-owl-el</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>dev.ikm.tinkar</groupId>
+			<artifactId>test-logging</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

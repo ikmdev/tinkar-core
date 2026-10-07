@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -204,7 +205,7 @@ public interface StampCoordinate
      * stamp filter.
      */
     default ImmutableSet<dev.ikm.tinkar.component.Concept> excludedModules() {
-        return excludedModuleNids().map(nid -> Entity.getFast(nid));
+        return excludedModuleNids().map(nid -> EntityHandle.get(nid).expectConcept());
     }
 
     /**
@@ -216,7 +217,7 @@ public interface StampCoordinate
      * stamp coordinate.
      */
     default ImmutableSet<dev.ikm.tinkar.component.Concept> moduleSpecifications() {
-        return moduleNids().map(nid -> Entity.getFast(nid));
+        return moduleNids().map(nid -> EntityHandle.get(nid).expectConcept());
 
     }
 
@@ -229,6 +230,6 @@ public interface StampCoordinate
      */
 
     default ImmutableList<dev.ikm.tinkar.component.Concept> modulePriorityOrderSpecifications() {
-        return modulePriorityNidList().map(nid -> Entity.getFast(nid));
+        return modulePriorityNidList().map(nid -> EntityHandle.get(nid).expectConcept());
     }
 }

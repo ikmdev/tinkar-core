@@ -8,6 +8,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Detection, constants, and codec routing for {@link NidLayout}
@@ -54,12 +55,53 @@ class NidLayoutTest {
         assertEquals(NidCodec8.encode(5, 123_456), NidLayout.EIGHT_BIT.encode(5, 123_456));
         assertNotEquals(NidLayout.SIX_BIT.encode(5, 123_456), NidLayout.EIGHT_BIT.encode(5, 123_456),
                 "the layouts pack the same sequences differently — why a database has exactly one");
-        for (NidLayout layout : NidLayout.values()) {
+        for (NidLayout layout : List.of(NidLayout.SIX_BIT, NidLayout.EIGHT_BIT)) {
             int nid = layout.encode(40, 9_999);
             assertEquals(40, layout.decodePatternSequence(nid));
             assertEquals(9_999, layout.decodeElementSequence(nid));
-            assertEquals(nid, layout.nidForLongKey(layout.longKeyForNid(nid)));
+            assertEquals(nid, layout.nidForRocksKey(layout.rocksKeyForNid(nid)));
             layout.validateNid(nid);
+        }
+    }
+
+    @Test
+    void sequentialNidsCarryNoPattern() {
+        NidLayout layout = NidLayout.SEQUENTIAL;
+        int firstNid = Integer.MIN_VALUE + 1;
+        for (int nid : new int[]{firstNid, firstNid + 41, -1, 1, 12_345, Integer.MAX_VALUE - 1}) {
+            assertEquals(0, layout.decodePatternSequence(nid));
+            assertEquals(((long) nid) - Integer.MIN_VALUE, layout.decodeElementSequence(nid));
+            assertEquals(nid, layout.encode(0, layout.decodeElementSequence(nid)));
+            assertEquals(nid, layout.nidForRocksKey(layout.rocksKeyForNid(nid)));
+            layout.validateNid(nid);
+        }
+        assertEquals(1, layout.decodeElementSequence(firstNid));
+    }
+
+    @Test
+    void sequentialAgreesWithTheSequentialEntityKey() {
+        int nid = Integer.MIN_VALUE + 1_000;
+        dev.ikm.tinkar.common.id.EntityKey key = dev.ikm.tinkar.common.id.EntityKey.ofSequentialNid(nid);
+        assertEquals(key.patternSequence(), NidLayout.SEQUENTIAL.decodePatternSequence(nid));
+        assertEquals(key.elementSequence(), NidLayout.SEQUENTIAL.decodeElementSequence(nid));
+        assertEquals(key.rocksKey(), NidLayout.SEQUENTIAL.rocksKeyForNid(nid));
+    }
+
+    @Test
+    void sequentialRefusesPatternsAndSentinels() {
+        assertThrows(IllegalArgumentException.class, () -> NidLayout.SEQUENTIAL.encode(1, 1));
+        assertThrows(IllegalArgumentException.class, () -> NidLayout.SEQUENTIAL.encode(0, 0));
+        assertThrows(IllegalArgumentException.class, () -> NidLayout.SEQUENTIAL.validateNid(0));
+        assertThrows(IllegalArgumentException.class, () -> NidLayout.SEQUENTIAL.validateNid(Integer.MIN_VALUE));
+        assertThrows(IllegalArgumentException.class, () -> NidLayout.SEQUENTIAL.validateNid(Integer.MAX_VALUE));
+        assertThrows(UnsupportedOperationException.class, NidLayout.SEQUENTIAL::patternPatternSequence);
+        assertThrows(UnsupportedOperationException.class, NidLayout.SEQUENTIAL::maxAssignablePatternSequence);
+    }
+
+    @Test
+    void everyLayoutNamesEntityFormat1() {
+        for (NidLayout layout : NidLayout.values()) {
+            assertEquals(NidLayout.ENTITY_FORMAT_1, layout.entityFormat(), layout.displayName());
         }
     }
 

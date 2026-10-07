@@ -15,13 +15,14 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.FieldDataType;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.StampFacade;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableLongList;
@@ -31,7 +32,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
-import static dev.ikm.tinkar.terms.TinkarTermV2.STAMP_PATTERN;
 
 @RecordBuilder
 public record StampRecord(
@@ -59,7 +59,7 @@ public record StampRecord(
     public static StampRecord nonExistentStamp() {
         if (nonExistentStamp == null) {
             nonExistentStamp = StampRecord.make(PrimitiveData.NONEXISTENT_STAMP_UUID, State.PRIMORDIAL,
-                    PrimitiveData.PRE_INCEPTION_TIME, TinkarTerm.AUTHOR_FOR_VERSION, TinkarTerm.UNINITIALIZED_COMPONENT, TinkarTerm.UNINITIALIZED_COMPONENT);
+                    PrimitiveData.PRE_INCEPTION_TIME, KernelTerm.AUTHOR_FOR_VERSION, KernelTerm.UNINITIALIZED_COMPONENT, KernelTerm.UNINITIALIZED_COMPONENT);
         }
         return nonExistentStamp;
     }
@@ -67,8 +67,11 @@ public record StampRecord(
     public static StampRecord make(UUID stampUuid, State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
 
+        // The stamp pattern the providers file and enumerate stamps under, as the loader
+        // does: a provider that keys nids by pattern (Rocks) otherwise files a stamp made
+        // here where forEachStampNid never looks.
         int stampNid = ScopedValue
-                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, STAMP_PATTERN)
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
                 .call(() -> PrimitiveData.nid(stampUuid));
 
         StampRecord stampEntity = new StampRecord(stampUuid.getMostSignificantBits(),
@@ -161,6 +164,34 @@ public record StampRecord(
                     version.moduleNid(), version.pathNid()));
         }
         return new StampAnalogueBuilder(analogueStampRecord, versionRecords);
+    }
+
+    /**
+     * This stamp without the uncommitted version its commit superseded. Committing a stamp
+     * adds a version at the commit time beside the uncommitted version (time
+     * {@link Long#MAX_VALUE}) its transaction began with; the store and change sets keep
+     * both, and {@link #lastVersion()} ignores the uncommitted one. An exported file holds
+     * committed knowledge, so it writes this form. A stamp with no committed version —
+     * still uncommitted, or canceled — is returned as it is.
+     *
+     * @return this stamp, or its analogue without the superseded uncommitted versions
+     */
+    public StampRecord withoutSupersededUncommittedVersions() {
+        if (versions.noneSatisfy(version -> version.time() == Long.MAX_VALUE)
+                || versions.noneSatisfy(version -> version.time() != Long.MAX_VALUE
+                        && version.time() != Long.MIN_VALUE)) {
+            return this;
+        }
+        RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
+        StampRecord analogue = new StampRecord(mostSignificantBits, leastSignificantBits, additionalUuidLongs, nid, versionRecords);
+        for (StampVersionRecord version : versions) {
+            if (version.time() != Long.MAX_VALUE) {
+                versionRecords.add(new StampVersionRecord(analogue, version.stateNid(), version.time(),
+                        version.authorNid(), version.moduleNid(), version.pathNid()));
+            }
+        }
+        versionRecords.build();
+        return analogue;
     }
 
     public StampRecord withAndBuild(StampVersionRecord versionRecord) {

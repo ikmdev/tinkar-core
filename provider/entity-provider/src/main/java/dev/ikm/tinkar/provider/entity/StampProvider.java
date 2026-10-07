@@ -79,14 +79,6 @@ public class StampProvider extends EntityProcessor<StampEntity<StampEntityVersio
                             subscribed = true;
                         }
                     }
-                    // Ensure that the non-existent stamp is always available.
-                    // Write is idempotent, so writing each time should not cause any problems.
-                    // But we don't want to prevent starting the entity service if this.putEntity
-                    // blocks for debugging or other reasons, so putting it in a virtual thread to
-                    // allow completion of the constructor.
-                    Thread.ofVirtual().start(() -> {
-                        EntityService.get().putEntity(StampRecord.nonExistentStamp(), DataActivity.INITIALIZE);
-                    });
                     //EntityService.get().forEachStampEntity(this);
                     initialized = true;
                 }

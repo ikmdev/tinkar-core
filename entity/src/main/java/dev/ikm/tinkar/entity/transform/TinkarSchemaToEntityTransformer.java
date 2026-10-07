@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.transform;
 
+import dev.ikm.tinkar.entity.changeset.SchemaIds;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
@@ -22,7 +23,6 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.*;
@@ -108,23 +108,17 @@ public class TinkarSchemaToEntityTransformer {
         int conceptNid = nidForConcept(pbConceptChronology.getPublicId());
         PublicId conceptPublicId = transformPublicId(pbConceptChronology.getPublicId());
         RecordListBuilder<ConceptVersionRecord> conceptVersions = RecordListBuilder.make();
-        ConceptRecord conceptRecord = switch (conceptPublicId.uuidCount()) {
-            case 0 -> throw new IllegalStateException("No UUIDs in PublicId.");
-            case 1 -> ConceptRecordBuilder.builder()
-                    .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
-                    .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
-                    .nid(conceptNid)
-                    .versions(conceptVersions)
-                    .build();
-            default -> ConceptRecordBuilder.builder()
-                    .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
-                    .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
-                    .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(conceptPublicId.asUuidArray(),
-                            1, conceptPublicId.uuidCount())))
-                    .nid(conceptNid)
-                    .versions(conceptVersions)
-                    .build();
-        };
+        if (conceptPublicId.uuidCount() == 0) {
+            throw new IllegalStateException("No UUIDs in PublicId.");
+        }
+        PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(conceptPublicId);
+        ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
+                .leastSignificantBits(conceptIdRecord.leastSignificantBits())
+                .mostSignificantBits(conceptIdRecord.mostSignificantBits())
+                .additionalUuidLongs(conceptIdRecord.additionalUuidLongs())
+                .nid(conceptNid)
+                .versions(conceptVersions)
+                .build();
 
         for (ConceptVersion pbConceptVersion : pbConceptChronology.getConceptVersionsList()) {
             conceptVersions.add(transformConceptVersion(pbConceptVersion, conceptRecord, stampEntityConsumer));
@@ -163,29 +157,18 @@ public class TinkarSchemaToEntityTransformer {
 
         if (semanticPublicId.uuidCount() > 0) {
             int semanticNid = nidForSemantic(patternPublicId, semanticPublicId);
-            if (semanticPublicId.uuidCount() > 1) {
-                semanticRecord = SemanticRecordBuilder.builder()
-                        .leastSignificantBits(semanticPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(semanticPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(semanticPublicId.asUuidArray(),
-                                1, semanticPublicId.uuidCount())))
-                        .nid(semanticNid)
-                        .patternNid(patternNid)
-                        .referencedComponentNid(referencedComponentNid)
-                        .versions(semanticVersions)
-                        .build();
-            } else {
-                semanticRecord = SemanticRecordBuilder.builder()
-                        .leastSignificantBits(semanticPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(semanticPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(semanticNid)
-                        .patternNid(patternNid)
-                        .referencedComponentNid(referencedComponentNid)
-                        .versions(semanticVersions)
-                        .build();
-            }
+            PublicIdentifierRecord semanticIdRecord = PublicIdentifierRecord.make(semanticPublicId);
+            semanticRecord = SemanticRecordBuilder.builder()
+                    .leastSignificantBits(semanticIdRecord.leastSignificantBits())
+                    .mostSignificantBits(semanticIdRecord.mostSignificantBits())
+                    .additionalUuidLongs(semanticIdRecord.additionalUuidLongs())
+                    .nid(semanticNid)
+                    .patternNid(patternNid)
+                    .referencedComponentNid(referencedComponentNid)
+                    .versions(semanticVersions)
+                    .build();
         } else {
-            throw new IllegalStateException("missing primordial UUID");
+            throw new IllegalStateException("No UUIDs in PublicId.");
         }
         for(SemanticVersion pbSemanticVersion : pbSemanticChronology.getSemanticVersionsList()){
             semanticVersions.add(transformSemanticVersion(pbSemanticVersion, semanticRecord, stampEntityConsumer));
@@ -219,25 +202,16 @@ public class TinkarSchemaToEntityTransformer {
         PublicId patternPublicId = transformPublicId(pbPatternChronology.getPublicId());
         PatternRecord patternRecord;
         if (patternPublicId.uuidCount() > 0) {
-            if (patternPublicId.uuidCount() > 1) {
-                patternRecord = PatternRecordBuilder.builder()
-                        .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(nidForPattern(patternPublicId))
-                        .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(patternPublicId.asUuidArray(),
-                                1, patternPublicId.uuidCount())))
-                        .versions(patternVersions)
-                        .build();
-            } else {
-                patternRecord = PatternRecordBuilder.builder()
-                        .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(nidForPattern(patternPublicId))
-                        .versions(patternVersions)
-                        .build();
-            }
+            PublicIdentifierRecord patternIdRecord = PublicIdentifierRecord.make(patternPublicId);
+            patternRecord = PatternRecordBuilder.builder()
+                    .leastSignificantBits(patternIdRecord.leastSignificantBits())
+                    .mostSignificantBits(patternIdRecord.mostSignificantBits())
+                    .additionalUuidLongs(patternIdRecord.additionalUuidLongs())
+                    .nid(nidForPattern(patternPublicId))
+                    .versions(patternVersions)
+                    .build();
         } else {
-            throw new IllegalStateException("missing primordial UUID");
+            throw new IllegalStateException("No UUIDs in PublicId.");
         }
         for(PatternVersion pbPatternVersion : pbPatternChronology.getPatternVersionsList()){
             patternVersions.add(transformPatternVersion(pbPatternVersion, patternRecord, stampEntityConsumer));
@@ -274,25 +248,16 @@ public class TinkarSchemaToEntityTransformer {
         StampRecord stampRecord;
         if (stampPublicId.uuidCount() > 0) {
             int stampNid = nidForStamp(stampChronology.getPublicId());
-            if (stampPublicId.uuidCount() > 1) {
-                stampRecord = StampRecordBuilder.builder()
-                        .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(stampPublicId.asUuidArray(),
-                                1, stampPublicId.uuidCount())))
-                        .nid(stampNid)
-                        .versions(stampVersions)
-                        .build();
-            } else {
-                stampRecord = StampRecordBuilder.builder()
-                        .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(stampNid)
-                        .versions(stampVersions)
-                        .build();
-            }
+            PublicIdentifierRecord stampIdRecord = PublicIdentifierRecord.make(stampPublicId);
+            stampRecord = StampRecordBuilder.builder()
+                    .leastSignificantBits(stampIdRecord.leastSignificantBits())
+                    .mostSignificantBits(stampIdRecord.mostSignificantBits())
+                    .additionalUuidLongs(stampIdRecord.additionalUuidLongs())
+                    .nid(stampNid)
+                    .versions(stampVersions)
+                    .build();
         } else {
-            throw new IllegalStateException("missing primordial UUID");
+            throw new IllegalStateException("No UUIDs in PublicId.");
         }
         if(stampChronology.hasFirstStampVersion()){
             stampVersions.add(transformStampVersion(stampChronology.getFirstStampVersion(), stampRecord));
@@ -388,12 +353,10 @@ public class TinkarSchemaToEntityTransformer {
         return elements;
     }
     protected PublicId transformPublicId(dev.ikm.tinkar.schema.PublicId pbPublicId){
-        if (pbPublicId == null || pbPublicId.getUuidsCount() == 0){
+        if (!SchemaIds.hasUuids(pbPublicId)){
             throw new RuntimeException("Exception thrown, null Public ID is present.");
         }
-        return PublicIds.of(pbPublicId.getUuidsList().stream()
-                .map(UUID::fromString)
-                .toList());
+        return SchemaIds.toPublicId(pbPublicId);
     }
     protected IntIdList transformPublicIdList(dev.ikm.tinkar.schema.PublicIdList pbPublicIdList) {
         if(pbPublicIdList.getPublicIdsCount() == 0){
@@ -417,7 +380,7 @@ public class TinkarSchemaToEntityTransformer {
         return IntIds.set.of(nids);
     }
     protected UUID transformVertexUUID(VertexUUID vertexUUID) {
-        return UUID.fromString(vertexUUID.getUuid());
+        return SchemaIds.toUuid(vertexUUID);
     }
     protected DiGraphEntity<EntityVertex> transformDigraph(DiGraph pbDiGraph, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer){
         List<IntToMultipleIntMap> PredecessorMapList = pbDiGraph.getPredecessorMapList();
@@ -510,25 +473,16 @@ public class TinkarSchemaToEntityTransformer {
 
         if (conceptPublicId.uuidCount() > 0) {
             int conceptNid = nidForConcept(conceptPublicId);
-            if (conceptPublicId.uuidCount() > 1) {
-                conceptRecord = ConceptRecordBuilder.builder()
-                        .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(conceptPublicId.asUuidArray(),
-                                1, conceptPublicId.uuidCount())))
-                        .nid(conceptNid)
-                        .versions(conceptVersionRecords)
-                        .build();
-            } else {
-                conceptRecord = ConceptRecordBuilder.builder()
-                        .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(conceptNid)
-                        .versions(conceptVersionRecords)
-                        .build();
-            }
+            PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(conceptPublicId);
+            conceptRecord = ConceptRecordBuilder.builder()
+                    .leastSignificantBits(conceptIdRecord.leastSignificantBits())
+                    .mostSignificantBits(conceptIdRecord.mostSignificantBits())
+                    .additionalUuidLongs(conceptIdRecord.additionalUuidLongs())
+                    .nid(conceptNid)
+                    .versions(conceptVersionRecords)
+                    .build();
         } else {
-            throw new IllegalStateException("missing primordial UUID");
+            throw new IllegalStateException("No UUIDs in PublicId.");
         }
 
 

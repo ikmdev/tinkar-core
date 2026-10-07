@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.websocket.server;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import io.activej.bytebuf.ByteBuf;
@@ -58,7 +59,7 @@ public class DataProviderWebsocketServer extends MultithreadedHttpServerLauncher
                         })
                         .then(() -> {
 
-                            byte[] data = dataService.getBytes(nid.get());
+                            byte[] data = ((EntityStore) dataService).getBytes(nid.get());
                             ByteBuf buf = ByteBufPool.allocate(data.length);
                             buf.writeInt(data.length);
                             buf.write(data);

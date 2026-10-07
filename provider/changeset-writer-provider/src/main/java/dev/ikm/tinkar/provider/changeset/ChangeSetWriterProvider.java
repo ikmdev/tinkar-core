@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.provider.changeset;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -11,14 +12,15 @@ import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.entity.ChangeSetWriterService;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.changeset.IdentityIndex;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.schema.TinkarMsg;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.multimap.MutableMultimap;
 import org.eclipse.collections.impl.factory.Multimaps;
@@ -46,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -173,7 +176,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      */
     private File newZipFile() {
         return new File(changeSetFolder,
-                TinkarTerm.USER.description() + " " +
+                KernelTerm.USER.description() + " " +
                         DateTimeUtil.nowWithZoneCompact().replace(':', '\uA789') +
                         " " + generateRandomString(3) + " ike-cs.zip");
     }
@@ -219,23 +222,23 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * narrative. Loaders must never depend on ordering for correctness.
      */
     private void startService() {
-        Thread.ofVirtual().name("ChangeSetWriterProvider-ServiceThread").start(() -> {
+        // Held until the thread has closed its file. The thread is registered before it starts,
+        // so a checkpoint that comes at once still finds it and waits for its file.
+        Semaphore changeSetWriter = new Semaphore(1);
+        changeSetWriter.acquireUninterruptibly();
+        Thread thread = Thread.ofVirtual().name("ChangeSetWriterProvider-ServiceThread").unstarted(() -> {
             LOG.trace("Starting ChangeSetWriterProvider on service thread: {}", Thread.currentThread());
-            Semaphore changeSetWriter = new Semaphore(1);
             try {
-                changeSetWriter.acquireUninterruptibly();
-                threadSemaphoreMap.put(Thread.currentThread(), changeSetWriter);
                 final MutableMultimap<Integer, Entity<EntityVersion>> uncommittedEntitiesByStamp = Multimaps.mutable.set.empty();
-                serviceThread.set(Thread.currentThread());
-                threadStateMap.put(Thread.currentThread(), STATE.RUNNING);
                 final LongAdder entityCount = new LongAdder();
                 final LongAdder conceptsCount = new LongAdder();
                 final LongAdder semanticsCount = new LongAdder();
                 final LongAdder patternsCount = new LongAdder();
                 final LongAdder stampsCount = new LongAdder();
 
-                final Set<PublicId> moduleList = new HashSet<>();
-                final Set<PublicId> authorList = new HashSet<>();
+                // By nid: a public id is never a hash key.
+                final Set<Integer> moduleList = new HashSet<>();
+                final Set<Integer> authorList = new HashSet<>();
                 final EntityToTinkarSchemaTransformer entityTransformer =
                         EntityToTinkarSchemaTransformer.getInstance();
 
@@ -243,45 +246,51 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 LOG.trace("ChangeSetWriterProvider starting new zip file: {}", zipfile.getAbsolutePath());
                 try (FileOutputStream fos = new FileOutputStream(zipfile);
                      BufferedOutputStream bos = new BufferedOutputStream(fos);
-                     ZipOutputStream zos = new ZipOutputStream(bos)) {
+                     ZipOutputStream zos = new ZipOutputStream(bos);
+                     // A component is written at each commit; the index lists it once.
+                     IdentityIndex.Writer identities = new IdentityIndex.Writer(true)) {
                     // Create a single entry for all changes in this zip file
                     final ZipEntry zipEntry = new ZipEntry("Entities");
                     zos.putNextEntry(zipEntry);
+                    // Writes one entity into this file, or holds it back while it is uncommitted.
+                    final Consumer<Entity<EntityVersion>> write = entityToWrite -> {
+                        if (entityToWrite.uncommitted()) {
+                            // We will write uncommitted versions at the end of the thread to prevent bloat from uncommitted changes,
+                            // unless they are committed before the thread stops.
+                            ImmutableIntList uncommittedStampNids = entityToWrite.uncommittedStampNids();
+                            uncommittedStampNids.forEach(stampNid -> {
+                                LOG.trace("ChangeSetWriterProvider caching uncommitted entity for stampNid {}:\n{}", stampNid, entityToWrite);
+                                uncommittedEntitiesByStamp.remove(stampNid, entityToWrite);
+                                uncommittedEntitiesByStamp.put(stampNid, entityToWrite);
+                            });
+                        } else {
+                            // Ordering contract: when a stamp commits, drain its
+                            // held-back uncommitted history first (snapshots of the
+                            // stamp itself, then the dependent concept / semantic /
+                            // pattern versions), then write the now-committed stamp.
+                            // The on-disk journal therefore reads as
+                            //   uncommitted-snapshot → dependents → commit
+                            // for every stamp that committed during the session.
+                            // Importers (LoadEntitiesFromProtobufFile) merge by
+                            // PublicId and are order-insensitive — the contract is
+                            // for human readers and downstream diagnostic tools.
+                            if (entityToWrite instanceof StampEntity stampEntity
+                                    && uncommittedEntitiesByStamp.containsKey(stampEntity.nid())) {
+                                writeStampSnapshotsThenDependents(
+                                        uncommittedEntitiesByStamp.removeAll(stampEntity.nid()),
+                                        entityCount, conceptsCount, semanticsCount, patternsCount,
+                                        stampsCount, moduleList, authorList, entityTransformer, identities, zos);
+                            }
+                            writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, identities, zos);
+                        }
+                    };
                     try {
                         AtomicLong lastWriteTimeMillis = new AtomicLong(System.currentTimeMillis());
                         while (threadStateMap.get(Thread.currentThread()) == STATE.RUNNING) {
                             final Entity<EntityVersion> entityToWrite = this.entitiesToWrite.poll(250, TimeUnit.MILLISECONDS);
                             if (entityToWrite != null) {
                                 lastWriteTimeMillis.set(System.currentTimeMillis());
-                                if (entityToWrite.uncommitted()) {
-                                    // We will write uncommitted versions at the end of the thread to prevent bloat from uncommitted changes,
-                                    // unless they are committed before the thread stops.
-                                    ImmutableIntList uncommittedStampNids = entityToWrite.uncommittedStampNids();
-                                    uncommittedStampNids.forEach(stampNid -> {
-                                        LOG.trace("ChangeSetWriterProvider caching uncommitted entity for stampNid {}:\n{}", stampNid, entityToWrite);
-                                        uncommittedEntitiesByStamp.remove(stampNid, entityToWrite);
-                                        uncommittedEntitiesByStamp.put(stampNid, entityToWrite);
-                                    });
-                                } else {
-                                    // Ordering contract: when a stamp commits, drain its
-                                    // held-back uncommitted history first (snapshots of the
-                                    // stamp itself, then the dependent concept / semantic /
-                                    // pattern versions), then write the now-committed stamp.
-                                    // The on-disk journal therefore reads as
-                                    //   uncommitted-snapshot → dependents → commit
-                                    // for every stamp that committed during the session.
-                                    // Importers (LoadEntitiesFromProtobufFile) merge by
-                                    // PublicId and are order-insensitive — the contract is
-                                    // for human readers and downstream diagnostic tools.
-                                    if (entityToWrite instanceof StampEntity stampEntity
-                                            && uncommittedEntitiesByStamp.containsKey(stampEntity.nid())) {
-                                        writeStampSnapshotsThenDependents(
-                                                uncommittedEntitiesByStamp.removeAll(stampEntity.nid()),
-                                                entityCount, conceptsCount, semanticsCount, patternsCount,
-                                                stampsCount, moduleList, authorList, entityTransformer, zos);
-                                    }
-                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, zos);
-                                }
+                                write.accept(entityToWrite);
                             }
                             if (System.currentTimeMillis() - lastWriteTimeMillis.get() > INACTIVITY_THRESHOLD_MILLIS) {
                                 LOG.info("Rotating ChangeSetWriterProvider, no activity for {} minutes.",
@@ -291,6 +300,13 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                         }
                     } catch (InterruptedException e) {
                     }
+                    // Drain: every entity queued before this checkpoint goes into this file,
+                    // so that when save() or shutdown() completes, everything written to the
+                    // changeset before it is in a closed file. The next thread starts only
+                    // after this one has closed its file (see checkpoint).
+                    List<Entity<EntityVersion>> queued = new ArrayList<>();
+                    this.entitiesToWrite.drainTo(queued);
+                    queued.forEach(write);
                     // Rollover / shutdown flush. Group held-back entities by stamp nid
                     // so each stamp's snapshot is followed by the dependent uncommitted
                     // entities that referenced it — same per-stamp shape as the on-commit
@@ -304,12 +320,15 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                         writeStampSnapshotsThenDependents(
                                 uncommittedEntitiesByStamp.removeAll(stampNid),
                                 entityCount, conceptsCount, semanticsCount, patternsCount,
-                                stampsCount, moduleList, authorList, entityTransformer, zos);
+                                stampsCount, moduleList, authorList, entityTransformer, identities, zos);
                     }
                     zos.closeEntry();
                     if (entityCount.sum() > 0) {
                         LOG.debug("Data zipEntry size: " + zipEntry.getSize());
                         LOG.debug("Data zipEntry compressed size: " + zipEntry.getCompressedSize());
+
+                        // So a store whose nids encode the pattern loads this changeset in one pass.
+                        identities.writeTo(zos);
 
                         // Write Manifest File
                         final ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
@@ -342,7 +361,10 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 threadStateMap.remove(Thread.currentThread());
             }
         });
-
+        threadSemaphoreMap.put(thread, changeSetWriter);
+        threadStateMap.put(thread, STATE.RUNNING);
+        serviceThread.set(thread);
+        thread.start();
     }
 
     /**
@@ -356,8 +378,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * @param semanticsCount the counter for the number of semantic entities processed
      * @param patternsCount the counter for the number of pattern entities processed
      * @param stampsCount the counter for the number of stamp entities processed
-     * @param moduleList the set to collect module public IDs for manifest generation
-     * @param authorList the set to collect author public IDs for manifest generation
+     * @param moduleList the set collecting the nids of modules, for manifest generation
+     * @param authorList the set collecting the nids of authors, for manifest generation
      * @param entityTransformer the transformer used to convert entities to Tinkar schema messages
      * @param zos the ZIP output stream to write the entity data into
      */
@@ -367,9 +389,10 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                     LongAdder semanticsCount,
                                     LongAdder patternsCount,
                                     LongAdder stampsCount,
-                                    Set<PublicId> moduleList,
-                                    Set<PublicId> authorList,
+                                    Set<Integer> moduleList,
+                                    Set<Integer> authorList,
                                     EntityToTinkarSchemaTransformer entityTransformer,
+                                    IdentityIndex.Writer identities,
                                     ZipOutputStream zos) {
         entityCount.increment();
         switch (entityToWrite) {
@@ -379,17 +402,18 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             case StampEntity stampEntity -> {
                 stampsCount.increment();
                 // Store Module & Author Dependencies for Manifest
-                moduleList.add(stampEntity.module().publicId());
-                authorList.add(stampEntity.author().publicId());
+                moduleList.add(stampEntity.moduleNid());
+                authorList.add(stampEntity.authorNid());
             }
             default -> {
-                throw new IllegalStateException("Unexpected value: " + entityToWrite);
+                throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entityToWrite));
             }
         }
         // Transform and write data
         try {
             TinkarMsg tinkarMsg = entityTransformer.transform(entityToWrite);
             tinkarMsg.writeDelimitedTo(zos);
+            identities.add(tinkarMsg);
             LOG.debug("ChangeSetWriterProvider wrote Entity:\n{}", entityToWrite);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -415,9 +439,10 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * @param semanticsCount    counter for semantic entities written
      * @param patternsCount     counter for pattern entities written
      * @param stampsCount       counter for stamp entities written
-     * @param moduleList        set collecting module public IDs for the manifest
+     * @param moduleList        set collecting the nids of modules, for the manifest
      * @param authorList        set collecting author public IDs for the manifest
      * @param entityTransformer transformer that produces protobuf messages
+     * @param identities        the changeset's identity index, told of each record written
      * @param zos               the open ZIP output stream
      */
     private static void writeStampSnapshotsThenDependents(
@@ -427,9 +452,10 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             LongAdder semanticsCount,
             LongAdder patternsCount,
             LongAdder stampsCount,
-            Set<PublicId> moduleList,
-            Set<PublicId> authorList,
+            Set<Integer> moduleList,
+            Set<Integer> authorList,
             EntityToTinkarSchemaTransformer entityTransformer,
+            IdentityIndex.Writer identities,
             ZipOutputStream zos) {
         List<Entity<EntityVersion>> stampSnapshots = new ArrayList<>();
         List<Entity<EntityVersion>> dependents = new ArrayList<>();
@@ -442,11 +468,11 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         }
         for (Entity<EntityVersion> e : stampSnapshots) {
             writeEntity(entityCount, e, conceptsCount, semanticsCount, patternsCount,
-                    stampsCount, moduleList, authorList, entityTransformer, zos);
+                    stampsCount, moduleList, authorList, entityTransformer, identities, zos);
         }
         for (Entity<EntityVersion> e : dependents) {
             writeEntity(entityCount, e, conceptsCount, semanticsCount, patternsCount,
-                    stampsCount, moduleList, authorList, entityTransformer, zos);
+                    stampsCount, moduleList, authorList, entityTransformer, identities, zos);
         }
     }
 
@@ -460,8 +486,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * @param semanticsCount the counter for the total number of semantics processed
      * @param patternsCount the counter for the total number of patterns processed
      * @param stampsCount the counter for the total number of stamps processed
-     * @param moduleList the set of module public IDs collected for the manifest
-     * @param authorList the set of author public IDs collected for the manifest
+     * @param moduleList the nids of the modules collected for the manifest
+     * @param authorList the nids of the authors collected for the manifest
      * @return the generated manifest content as a String
      */
     private String generateManifestContent(LongAdder entityCount,
@@ -469,15 +495,15 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                            LongAdder semanticsCount,
                                            LongAdder patternsCount,
                                            LongAdder stampsCount,
-                                           Set<PublicId> moduleList,
-                                           Set<PublicId> authorList) {
+                                           Set<Integer> moduleList,
+                                           Set<Integer> authorList) {
         return ExportEntitiesToProtobufFile.generateManifestContent(entityCount.sum(),
                 conceptsCount.sum(),
                 semanticsCount.sum(),
                 patternsCount.sum(),
                 stampsCount.sum(),
-                moduleList,
-                authorList);
+                ExportEntitiesToProtobufFile.publicIds(moduleList),
+                ExportEntitiesToProtobufFile.publicIds(authorList));
     }
 
     /**
@@ -542,18 +568,17 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             if (interruptedThread != null) {
                 LOG.trace("Stopping ChangeSetWriterProvider on service thread: {}", interruptedThread);
                 threadStateMap.put(interruptedThread, (restart?STATE.ROTATING:STATE.STOPPED));
-            }
-            if (restart) {
-                // start a new thread with a new file
-                startService();
-            }
-
-            if (interruptedThread != null) {
+                // Wait for the thread to drain the queue into its file and close it: when this
+                // future completes, everything queued before the checkpoint is in a closed file.
                 Semaphore changeSetWriter = threadSemaphoreMap.remove(interruptedThread);
                 if (changeSetWriter != null) {
                     changeSetWriter.acquireUninterruptibly();
                     LOG.trace("Stopped ChangeSetWriterProvider on service thread: {}", interruptedThread);
                 }
+            }
+            if (restart) {
+                // Only now a new thread with a new file, so it takes nothing queued before the checkpoint.
+                startService();
             }
             return null;
         }, TinkExecutor.ioThreadPool());

@@ -182,7 +182,7 @@
  * // Get description of specific type
  * Latest<SemanticEntityVersion> desc = calculator.getDescription(
  *     conceptNid,
- *     TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE
+ *     KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE
  * );
  * }</pre>
  *

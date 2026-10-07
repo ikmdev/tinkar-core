@@ -65,7 +65,7 @@ final class SessionRegistry {
     /**
      * Requires that a stamp agrees with every earlier declaration of the same identity:
      * the full tuple — state, time, author, module, path — must match, compared
-     * store-free by primordial UUIDs. First sight of an identity registers the stamp
+     * store-free by public id (a shared UUID is the same concept). First sight of an identity registers the stamp
      * under every UUID it carries.
      *
      * @param stamp the stamp as declared at a scope or written by a ledger
@@ -89,9 +89,9 @@ final class SessionRegistry {
         }
         boolean agrees = registered.state() == stamp.state()
                 && registered.time() == stamp.time()
-                && firstUuid(registered.author().publicId()).equals(firstUuid(stamp.author().publicId()))
-                && firstUuid(registered.module().publicId()).equals(firstUuid(stamp.module().publicId()))
-                && firstUuid(registered.path().publicId()).equals(firstUuid(stamp.path().publicId()));
+                && PublicId.equals(registered.author().publicId(), stamp.author().publicId())
+                && PublicId.equals(registered.module().publicId(), stamp.module().publicId())
+                && PublicId.equals(registered.path().publicId(), stamp.path().publicId());
         if (!agrees) {
             throw new IllegalArgumentException(
                     "Stamp " + stamp.publicId() + " is already declared in this session with a"
@@ -114,9 +114,5 @@ final class SessionRegistry {
             }
         }
         return null;
-    }
-
-    private static UUID firstUuid(PublicId publicId) {
-        return publicId.asUuidArray()[0];
     }
 }

@@ -15,12 +15,14 @@
  */
 package dev.ikm.tinkar.coordinate.stamp.change;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.service.NonExistentValue;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -29,7 +31,6 @@ import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
 import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.function.Function;
@@ -45,7 +46,7 @@ public record ChangeChronology(int nid, ImmutableList<VersionChangeRecord> chang
 
     public String toString(ViewCalculator viewCalculator, boolean showPriorValue) {
         StringBuilder sb = new StringBuilder("Changes for ");
-        Entity referencedEntity = EntityService.get().getEntityFast(nid);
+        Entity referencedEntity = EntityHandle.get(nid).expectEntity();
         switch (referencedEntity) {
             case ConceptEntity conceptFacade -> sb.append("concept ");
             case PatternEntity patternFacade -> sb.append("pattern ");
@@ -61,20 +62,20 @@ public record ChangeChronology(int nid, ImmutableList<VersionChangeRecord> chang
             for (FieldChangeRecord fieldChange: changeRecord.changes()) {
                 sb.append("\n   ");
                 Function<Object, String> formatFunction = value -> value.toString();
-                if (fieldChange.currentValue().fieldDefinition(viewCalculator).meaningNid() == TinkarTerm.TIME_FOR_VERSION.nid()) {
+                if (fieldChange.currentValue().fieldDefinition(viewCalculator).meaningNid() == KernelTerm.TIME_FOR_VERSION.nid()) {
                     formatFunction = value -> switch (value) {
                         case Long epochMs -> DateTimeUtil.format(epochMs);
                         case NonExistentValue nonExistentValue -> nonExistentValue.toString();
                         default -> value.toString();
                     };
-                } else if (fieldChange.currentValue().fieldDefinition(viewCalculator).dataTypeNid() == TinkarTerm.CONCEPT_FIELD.nid() ||
-                        fieldChange.currentValue().fieldDefinition(viewCalculator).dataTypeNid() == TinkarTerm.COMPONENT_FIELD.nid()) {
+                } else if (fieldChange.currentValue().fieldDefinition(viewCalculator).dataTypeNid() == KernelTerm.CONCEPT_FIELD.nid() ||
+                        fieldChange.currentValue().fieldDefinition(viewCalculator).dataTypeNid() == KernelTerm.COMPONENT_FIELD.nid()) {
                     formatFunction = value -> switch (value) {
                         case ConceptFacade conceptFacade -> viewCalculator.getPreferredDescriptionTextOrNid(conceptFacade);
                         default -> value.toString();
                     };
                 }
-                sb.append(viewCalculator.getPreferredDescriptionStringOrNid(fieldChange.currentValue().fieldDefinition(viewCalculator).meaningNid())).append(": ");
+                sb.append(viewCalculator.getPreferredDescriptionTextOrNid(fieldChange.currentValue().fieldDefinition(viewCalculator).meaningNid())).append(": ");
                 if (showPriorValue) {
                     sb.append(formatFunction.apply(fieldChange.priorValue().value())).append(" ").append(HEAVY_TRIANGLE_HEADED_RIGHTWARDS_ARROW).append(" ");
                 }

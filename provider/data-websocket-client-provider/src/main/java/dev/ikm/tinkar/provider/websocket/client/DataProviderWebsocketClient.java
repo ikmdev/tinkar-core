@@ -15,7 +15,9 @@
  */
 package dev.ikm.tinkar.provider.websocket.client;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
@@ -58,7 +60,7 @@ import java.util.function.ObjIntConsumer;
 
 public class DataProviderWebsocketClient
         extends Launcher
-        implements PrimitiveDataService {
+        implements PrimitiveDataService, EntityStore {
     private static final Logger LOG = LoggerFactory.getLogger(DataProviderWebsocketClient.class);
     private static final Integer wsKey = Integer.valueOf(1);
     private final URI uri;
@@ -70,6 +72,7 @@ public class DataProviderWebsocketClient
 
     public DataProviderWebsocketClient(URI uri) {
         this.uri = uri;
+        NidLayout.activate(NidLayout.SEQUENTIAL);
     }
 
     public static void main(String[] args) throws Exception {

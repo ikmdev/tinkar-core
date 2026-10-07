@@ -100,4 +100,18 @@ class DateTimeUtilTest {
         assertEquals(Instant.parse("2026-01-01T00:00:00.777Z"), PrimitiveData.INCEPTION_INSTANT);
         assertNotEquals(Instant.parse("2026-01-01T00:00:00.000Z"), PrimitiveData.INCEPTION_INSTANT);
     }
+
+    @Test
+    void elapsedBetweenNamesTheLargestWholeUnit() {
+        Instant now = Instant.parse("2026-10-03T12:00:00Z");
+        assertEquals("just now", DateTimeUtil.elapsedBetween(now, now));
+        assertEquals("just now", DateTimeUtil.elapsedBetween(now.plusSeconds(30), now));
+        assertEquals("1 second ago", DateTimeUtil.elapsedBetween(now.minusSeconds(1), now));
+        assertEquals("45 seconds ago", DateTimeUtil.elapsedBetween(now.minusSeconds(45), now));
+        assertEquals("1 minute ago", DateTimeUtil.elapsedBetween(now.minusSeconds(90), now));
+        assertEquals("3 hours ago", DateTimeUtil.elapsedBetween(now.minusSeconds(3 * 3600 + 59), now));
+        assertEquals("1 day ago", DateTimeUtil.elapsedBetween(now.minusSeconds(36 * 3600), now));
+        assertEquals("2 months ago", DateTimeUtil.elapsedBetween(now.minusSeconds(70L * 86400), now));
+        assertEquals("4 years ago", DateTimeUtil.elapsedBetween(now.minusSeconds(4L * 365 * 86400 + 86400), now));
+    }
 }

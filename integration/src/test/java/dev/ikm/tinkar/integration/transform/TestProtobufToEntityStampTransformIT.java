@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityVersion;
@@ -134,8 +135,7 @@ public class TestProtobufToEntityStampTransformIT {
         // Then
         assertNotNull(stampRecord);
         assertEquals(1, stampRecord.versions().size());
-        assertEquals(testConcept.publicId().asUuidArray()[0],
-                stampRecord.publicId().asUuidArray()[0]);
+        assertTrue(PublicId.equals(testConcept.publicId(), stampRecord.publicId()));
     }
 
     @Test

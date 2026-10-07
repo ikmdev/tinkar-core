@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.search;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -35,9 +36,9 @@ import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
@@ -55,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -233,8 +235,8 @@ public class Searcher {
             // is indexed-only in v3, so the override pulls source text from the
             // entity binary store per hit. Uppercase <B>/</B> tags match what
             // HighlightedSegments parses on the UI side.
-            UnifiedHighlighter highlighter = new EntityStoreBackedHighlighter(indexSearcher, Indexer.analyzer());
-            highlighter.setFormatter(new DefaultPassageFormatter("<B>", "</B>", "", false));
+            UnifiedHighlighter highlighter = new EntityStoreBackedHighlighter(indexSearcher, Indexer.analyzer(),
+                    new DefaultPassageFormatter("<B>", "</B>", "", false));
             String[] snippets = highlighter.highlight(IndexerSchema.TEXT.name(), query.get(), topDocs);
 
             PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];
@@ -549,20 +551,21 @@ public class Searcher {
      */
     public static Optional<PublicId> getPublicId(PublicId identifierSource, String identifierValue) {
         ViewCalculator viewCalc = Calculators.View.Default();
-        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(TinkarTerm.IDENTIFIER_PATTERN);
+        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(KernelTerm.IDENTIFIER_PATTERN);
 
         if (latestIdPattern.isAbsent()) {
             throw new RuntimeException("Identifier Pattern is absent from data set");
         }
 
         try {
-            int[] semanticNids = EntityService.get().semanticNidsOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid());
-            for (int nid : semanticNids) {
-                EntityVersion entityVersion = viewCalc.latest(nid).get();
+            Iterator<SemanticEntity<SemanticEntityVersion>> semantics =
+                    EntityService.get().semanticsOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid()).iterator();
+            while (semantics.hasNext()) {
+                EntityVersion entityVersion = viewCalc.latest(semantics.next()).get();
                 if (entityVersion instanceof SemanticEntityVersion semanticEntityVersion) {
-                    Object idValue = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_VALUE, semanticEntityVersion);
+                    Object idValue = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_VALUE, semanticEntityVersion);
                     if (identifierValue != null && identifierValue.equals(idValue)) {
-                        Component idSource = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_SOURCE, semanticEntityVersion);
+                        Component idSource = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_SOURCE, semanticEntityVersion);
                         if (identifierSource != null && idSource != null && PublicId.equals(idSource.publicId(), identifierSource)) {
                             return Optional.of(semanticEntityVersion.referencedComponent().publicId());
                         }

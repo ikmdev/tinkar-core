@@ -117,13 +117,13 @@
  * // Custom navigation coordinate
  * NavigationCoordinateRecord custom = NavigationCoordinateRecord.make(
  *     IntIds.set.of(
- *         TinkarTerm.INFERRED_NAVIGATION.nid(),
- *         TinkarTerm.CUSTOM_NAVIGATION.nid()
+ *         KernelTerm.INFERRED_NAVIGATION.nid(),
+ *         MyTerms.CUSTOM_NAVIGATION.nid()
  *     ),
  *     StateSet.ACTIVE,                    // Only active concepts
  *     IntIds.list.of(                      // Sort patterns
- *         TinkarTerm.SEVERITY_PATTERN.nid(),
- *         TinkarTerm.ALPHABETICAL_PATTERN.nid()
+ *         MyTerms.SEVERITY_PATTERN.nid(),
+ *         MyTerms.ALPHABETICAL_PATTERN.nid()
  *     ),
  *     true                                 // Enable sorting
  * );
@@ -170,9 +170,9 @@
  * <pre>{@code
  * NavigationCoordinateRecord mixed = NavigationCoordinateRecord.make(
  *     IntIds.set.of(
- *         TinkarTerm.INFERRED_NAVIGATION.nid(),      // Taxonomy
- *         TinkarTerm.PART_OF_NAVIGATION.nid(),       // Part-of hierarchy
- *         TinkarTerm.PROCEDURE_SITE_NAVIGATION.nid() // Procedure sites
+ *         KernelTerm.INFERRED_NAVIGATION.nid(),      // Taxonomy
+ *         MyTerms.PART_OF_NAVIGATION.nid(),       // Part-of hierarchy
+ *         MyTerms.PROCEDURE_SITE_NAVIGATION.nid() // Procedure sites
  *     ),
  *     StateSet.ACTIVE,
  *     IntIds.list.empty(),

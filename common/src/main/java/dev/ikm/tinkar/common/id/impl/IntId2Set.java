@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.common.id.impl;
 
 import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
 import java.util.Arrays;
@@ -24,7 +25,7 @@ public class IntId2Set extends IntId2 implements IntIdSet {
     public IntId2Set(int element, int element2) {
         super(element, element2);
         if (element == element2) {
-            throw new IllegalStateException("Duplicate values in set: " + element);
+            throw new IllegalStateException("Duplicate values in set: " + DiagnosticText.component(element));
         }
     }
 

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashSet;
@@ -41,7 +42,6 @@ import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedDataBuilder;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedUtil;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedUtil.SemanticStateException;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 
@@ -88,7 +88,7 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 						.collect(ElkSnomedData::getNid)
 						.toSet();
 				if (sctid == SnomedIds.root) {
-					expected_parent_nids = Set.of(TinkarTerm.PHENOMENON.nid());
+					expected_parent_nids = Set.of(KernelTerm.PHENOMENON.nid());
 					LOG.warn("Reset expected parents for " + sctid + " " + PrimitiveData.text(nid));
 				}
 				Set<Integer> expected_child_nids = isas.getChildren(sctid)

@@ -16,6 +16,9 @@
 package dev.ikm.tinkar.coordinate.stamp.calculator;
 
 
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.coordinate.PathService;
 import dev.ikm.tinkar.coordinate.stamp.StampBranchRecord;
@@ -24,6 +27,7 @@ import dev.ikm.tinkar.coordinate.stamp.StampPathImmutable;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
@@ -32,7 +36,6 @@ import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.map.primitive.MutableIntLongMap;
@@ -50,7 +53,7 @@ import java.util.Optional;
 /**
  * The path-origin resolver behind {@link PathService}: derives the path topology
  * (origins and branches of every path) from the semantics of
- * {@link TinkarTerm#PATH_ORIGINS_PATTERN}. Multi-version origins semantics are
+ * {@link KernelTerm#PATH_ORIGINS_PATTERN}. Multi-version origins semantics are
  * resolved to their latest version through the stamp-calculator machinery — see
  * {@link #latestOriginVersion(SemanticEntity)} for how that resolution stays well
  * founded while the path topology it feeds is still under construction.
@@ -69,7 +72,7 @@ public class PathProvider implements PathService {
     @Override
     public ImmutableSet<StampBranchRecord> getPathBranches(int pathNid) {
         MutableSet<StampBranchRecord> branchSet = Sets.mutable.empty();
-        EntityService.get().forEachSemanticOfPattern(TinkarTerm.PATH_ORIGINS_PATTERN.nid(), semanticEntity -> {
+        EntityService.get().forEachSemanticOfPattern(KernelTerm.PATH_ORIGINS_PATTERN.nid(), semanticEntity -> {
             // Referenced component = path for which this is an origin
             // Field 0 = path from which the origin is derived
             // Field 1 = instant of the origin
@@ -88,17 +91,17 @@ public class PathProvider implements PathService {
     }
 
     /**
-     * Gets every path declared by a {@link TinkarTerm#PATHS_PATTERN} semantic,
+     * Gets every path declared by a {@link KernelTerm#PATHS_PATTERN} semantic,
      * each with its resolved origins.
      *
      * @return the declared paths
      */
     @Override
     public ImmutableSet<StampPathImmutable> getPaths() {
-        int[] pathsPatternSemanticNids = EntityService.get().semanticNidsOfPattern(TinkarTerm.PATHS_PATTERN.nid());
+        int[] pathsPatternSemanticNids = EntityStore.current().semanticNidsOfPattern(KernelTerm.PATHS_PATTERN.nid());
         MutableSet<StampPathImmutable> pathSet = Sets.mutable.ofInitialCapacity(pathsPatternSemanticNids.length);
         for (int pathsPatternSemanticNid : pathsPatternSemanticNids) {
-            SemanticEntity semanticEntity = Entity.getFast(pathsPatternSemanticNid);
+            SemanticEntity semanticEntity = EntityHandle.get(pathsPatternSemanticNid).expectSemantic();
             int pathNid = semanticEntity.referencedComponentNid();
             pathSet.add(StampPathImmutable.make(pathNid, getPathOrigins(pathNid)));
         }
@@ -106,7 +109,7 @@ public class PathProvider implements PathService {
     }
 
     /**
-     * Gets the origins of a path from its {@link TinkarTerm#PATH_ORIGINS_PATTERN}
+     * Gets the origins of a path from its {@link KernelTerm#PATH_ORIGINS_PATTERN}
      * semantics. When no origin is declared, bootstrap fallbacks apply: the
      * primordial path has no origin by definition, the development path defaults to
      * an origin on the sandbox path, and the remaining well-known paths default to an
@@ -118,7 +121,7 @@ public class PathProvider implements PathService {
     @Override
     public ImmutableSet<StampPositionRecord> getPathOrigins(int pathNid) {
         MutableSet<StampPositionRecord> originSet = Sets.mutable.empty();
-        EntityService.get().forEachSemanticForComponentOfPattern(pathNid, TinkarTerm.PATH_ORIGINS_PATTERN.nid(), semanticEntity -> {
+        EntityService.get().forEachSemanticForComponentOfPattern(pathNid, KernelTerm.PATH_ORIGINS_PATTERN.nid(), semanticEntity -> {
             latestOriginVersion(semanticEntity).ifPresent(originVersion -> {
                 ImmutableList<Object> fields = originVersion.fieldValues();
                 ConceptFacade pathConcept;
@@ -133,16 +136,16 @@ public class PathProvider implements PathService {
             });
         });
 
-        if (originSet.isEmpty() && pathNid != TinkarTerm.PRIMORDIAL_PATH.nid()) {
+        if (originSet.isEmpty() && pathNid != KernelTerm.PRIMORDIAL_PATH.nid()) {
             // A boot strap issue, only the primordial path should have no origins.
             // If terminology not completely loaded, content may not yet be ready.
-            if (pathNid != TinkarTerm.SANDBOX_PATH.nid() && pathNid != TinkarTerm.MASTER_PATH.nid() && pathNid != TinkarTerm.DEVELOPMENT_PATH.nid()) {
-                throw new IllegalStateException("Path with no origin: " + EntityService.get().getEntityFast(pathNid));
+            if (pathNid != KernelTerm.SANDBOX_PATH.nid() && pathNid != KernelTerm.MASTER_PATH.nid() && pathNid != KernelTerm.DEVELOPMENT_PATH.nid()) {
+                throw new IllegalStateException("Path with no origin: " + DiagnosticText.component(pathNid));
             }
-            if (pathNid == TinkarTerm.DEVELOPMENT_PATH.nid()) {
-                return Sets.immutable.with(StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.SANDBOX_PATH.nid()));
+            if (pathNid == KernelTerm.DEVELOPMENT_PATH.nid()) {
+                return Sets.immutable.with(StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.SANDBOX_PATH.nid()));
             }
-            return Sets.immutable.with(StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.PRIMORDIAL_PATH.nid()));
+            return Sets.immutable.with(StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.PRIMORDIAL_PATH.nid()));
         }
         return originSet.toImmutable();
     }
@@ -171,7 +174,7 @@ public class PathProvider implements PathService {
      * result is also returned when no version is committed; callers skip the semantic
      * and the bootstrap fallbacks in {@link #getPathOrigins(int)} apply.
      *
-     * @param semanticEntity a semantic of {@link TinkarTerm#PATH_ORIGINS_PATTERN}
+     * @param semanticEntity a semantic of {@link KernelTerm#PATH_ORIGINS_PATTERN}
      * @return the version whose fields define current topology, or empty if the
      *         definition is retired or no version is resolvable
      */

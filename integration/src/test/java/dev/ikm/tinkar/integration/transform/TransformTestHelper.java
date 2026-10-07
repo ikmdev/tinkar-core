@@ -25,6 +25,7 @@ import dev.ikm.tinkar.entity.ConceptRecordBuilder;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.PublicIdentifierRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.PatternRecord;
 import dev.ikm.tinkar.entity.PatternRecordBuilder;
@@ -80,8 +81,7 @@ public class TransformTestHelper {
     }
 
     public static dev.ikm.tinkar.schema.PublicId createPBPublicId(PublicId publicId) {
-        return dev.ikm.tinkar.schema.PublicId.newBuilder()
-                .addUuids(publicId.asUuidList().get(0).toString()).build();
+        return dev.ikm.tinkar.entity.changeset.SchemaIds.toSchema(publicId);
     }
 
     public static long nowEpochMillis() {
@@ -168,15 +168,16 @@ public class TransformTestHelper {
      * Creates and stores a minimal ConceptRecord entity in the provider.
      */
     public static void storeConceptEntity(PublicId publicId, int nid) {
-        UUID uuid = publicId.asUuidArray()[0];
+        PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(publicId);
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
 
         // Build a stamp for this concept version using State.ACTIVE
         int stampNid = createAndStoreStamp();
 
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
-                .mostSignificantBits(uuid.getMostSignificantBits())
-                .leastSignificantBits(uuid.getLeastSignificantBits())
+                .mostSignificantBits(conceptIdRecord.mostSignificantBits())
+                .leastSignificantBits(conceptIdRecord.leastSignificantBits())
+                .additionalUuidLongs(conceptIdRecord.additionalUuidLongs())
                 .nid(nid)
                 .versions(versions)
                 .build();
@@ -190,9 +191,9 @@ public class TransformTestHelper {
      * Creates and stores a StampRecord in the provider, returning the stamp NID.
      */
     public static int createAndStoreStamp() {
-        PublicId stampPublicId = PublicIds.newRandom();
+        UUID stampUuid = UUID.randomUUID();
+        PublicId stampPublicId = PublicIds.of(stampUuid);
         int stampNid = Entity.nid(stampPublicId);
-        UUID stampUuid = stampPublicId.asUuidArray()[0];
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()
@@ -202,7 +203,7 @@ public class TransformTestHelper {
                 .versions(stampVersions)
                 .build();
 
-        // Use real concept NIDs from known TinkarTerm UUIDs for STAMP fields
+        // Use real concept NIDs from known kernel UUIDs for STAMP fields
         int stateNid = State.ACTIVE.nid();
         int authorNid = Entity.nid(PublicIds.of(UUID.fromString("76fdab49-b0ee-4c83-900e-8064103ef3b0")));
         int moduleNid = Entity.nid(PublicIds.of(UUID.fromString("840928b5-480c-4e8d-af77-7c817e880aed")));
@@ -227,9 +228,9 @@ public class TransformTestHelper {
      * returning the stamp NID.
      */
     public static int createAndStoreStamp(int stateNid, int authorNid, int moduleNid, int pathNid) {
-        PublicId stampPublicId = PublicIds.newRandom();
+        UUID stampUuid = UUID.randomUUID();
+        PublicId stampPublicId = PublicIds.of(stampUuid);
         int stampNid = Entity.nid(stampPublicId);
-        UUID stampUuid = stampPublicId.asUuidArray()[0];
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()
@@ -258,9 +259,9 @@ public class TransformTestHelper {
      * returning the stamp NID.
      */
     public static int createAndStoreStamp(int stateNid, long time, int authorNid, int moduleNid, int pathNid) {
-        PublicId stampPublicId = PublicIds.newRandom();
+        UUID stampUuid = UUID.randomUUID();
+        PublicId stampPublicId = PublicIds.of(stampUuid);
         int stampNid = Entity.nid(stampPublicId);
-        UUID stampUuid = stampPublicId.asUuidArray()[0];
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()
@@ -296,9 +297,9 @@ public class TransformTestHelper {
      * This is needed for Semantic entities which reference a pattern.
      */
     public static int createAndStorePattern(Map<String, Concept> conceptMap) {
-        PublicId patternPublicId = PublicIds.newRandom();
+        UUID patternUuid = UUID.randomUUID();
+        PublicId patternPublicId = PublicIds.of(patternUuid);
         int patternNid = Entity.nid(patternPublicId);
-        UUID patternUuid = patternPublicId.asUuidArray()[0];
 
         int stampNid = createAndStoreStamp();
         Concept purposeConcept = conceptMap.get(PURPOSE_CONCEPT_NAME);

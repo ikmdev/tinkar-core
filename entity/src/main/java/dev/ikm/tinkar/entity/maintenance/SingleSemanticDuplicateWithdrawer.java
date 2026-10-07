@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.maintenance;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.thread.StructuredScopes;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -64,7 +65,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * <p>Patterns whose UUID is not registered in the active data store are
  * skipped with an INFO log. Nids that the pattern index points at but for
- * which {@code getEntityFast} returns no bytes are counted as
+ * which the entity lookup returns nothing are counted as
  * {@link PatternResult#nullSemanticNids()} — these signal an indexing
  * inconsistency separate from duplicate detection.
  *
@@ -220,7 +221,7 @@ public final class SingleSemanticDuplicateWithdrawer {
             }
             PatternEntity<?> patternEntity = EntityHandle.getPatternOrThrow(patternNid);
             MutableIntList allNids = IntLists.mutable.empty();
-            PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, allNids::add);
+            EntityStore.current().forEachSemanticNidOfPattern(patternNid, allNids::add);
             enumerated.add(new PatternEnum(pattern, patternEntity, allNids));
             totalNids += allNids.size();
         }
@@ -324,7 +325,7 @@ public final class SingleSemanticDuplicateWithdrawer {
                     MutableIntObjectMap<MutableIntList> local = IntObjectMaps.mutable.empty();
                     for (int i = chunkStart; i < chunkEnd; i++) {
                         int nid = nids.get(i);
-                        Entity<?> entity = EntityService.get().getEntityFast(nid);
+                        Entity<?> entity = EntityHandle.get(nid).orNull();
                         if (entity == null) {
                             nullCount.incrementAndGet();
                             continue;

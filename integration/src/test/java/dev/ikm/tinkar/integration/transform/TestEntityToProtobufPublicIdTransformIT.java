@@ -22,6 +22,7 @@ import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptRecordBuilder;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.PublicIdentifierRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.fixtures.NewEphemeralKeyValueProvider;
@@ -61,9 +62,11 @@ public class TestEntityToProtobufPublicIdTransformIT {
         // Create a ConceptRecord with this multi-UUID public ID and transform via public API
         int stampNid = createAndStoreStamp();
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
+        PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(combinedPublicId);
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
-                .mostSignificantBits(uuid1.getMostSignificantBits())
-                .leastSignificantBits(uuid1.getLeastSignificantBits())
+                .mostSignificantBits(conceptIdRecord.mostSignificantBits())
+                .leastSignificantBits(conceptIdRecord.leastSignificantBits())
+                .additionalUuidLongs(conceptIdRecord.additionalUuidLongs())
                 .nid(nid)
                 .versions(versions)
                 .build();
@@ -73,11 +76,13 @@ public class TestEntityToProtobufPublicIdTransformIT {
         // When we transform
         TinkarMsg msg = EntityToTinkarSchemaTransformer.getInstance().transform(finalRecord);
 
-        // Then the resulting protobuf PublicId should contain the first UUID
+        // Then the resulting protobuf PublicId should contain every UUID
         assertNotNull(msg);
         assertTrue(msg.hasConceptChronology());
         var pbPublicId = msg.getConceptChronology().getPublicId();
-        assertFalse(pbPublicId.getUuidsList().isEmpty(), "Should have at least one UUID");
-        assertEquals(uuid1.toString(), pbPublicId.getUuids(0), "First UUID should match");
+        assertFalse(pbPublicId.getUuidBitsList().isEmpty(), "Should have at least one UUID");
+        assertEquals(0, pbPublicId.getUuidsCount(), "No UUID should be written as text");
+        assertEquals(java.util.Set.of(uuid1, uuid2), java.util.Set.of(dev.ikm.tinkar.entity.changeset.SchemaIds.uuids(pbPublicId)),
+                "Every UUID should be carried");
     }
 }

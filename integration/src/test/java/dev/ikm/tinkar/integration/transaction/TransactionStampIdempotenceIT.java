@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.integration.transaction;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -24,8 +26,6 @@ import dev.ikm.tinkar.fixtures.OpenSpinedArrayKeyValueProvider;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -109,9 +109,9 @@ class TransactionStampIdempotenceIT {
 
         // Define stamp coordinates
         State state = State.ACTIVE;
-        PublicId authorId = TinkarTerm.USER;
-        PublicId moduleId = TinkarTerm.DEVELOPMENT_MODULE;
-        PublicId pathId = TinkarTerm.DEVELOPMENT_PATH;
+        PublicId authorId = KernelTerm.USER;
+        PublicId moduleId = IkeTerms.DEVELOPMENT_MODULE;
+        PublicId pathId = KernelTerm.DEVELOPMENT_PATH;
 
         // Create a mock entity facade for testing
         PublicId entityId = PublicIds.of(UUID.randomUUID());
@@ -223,41 +223,5 @@ class TransactionStampIdempotenceIT {
             stamp1.nid(), stamp2.nid());
     }
 
-    @Test
-    @Order(5)
-    @DisplayName("getStamp() should reuse existing stamp from database if it exists")
-    @Disabled("This should never have worked...")
-    void testGetStampReusesExistingStampFromDatabase() {
-        LOG.info("Test that Transaction.getStamp() reuses existing stamp if already in database");
-
-        PublicId authorId = PublicIds.of(UUID.randomUUID());
-        PublicId moduleId = PublicIds.of(UUID.randomUUID());
-        PublicId pathId = PublicIds.of(UUID.randomUUID());
-
-        // Create first transaction and get a stamp
-        Transaction transaction1 = Transaction.make();
-        StampEntity stamp1 = transaction1.getStamp(State.ACTIVE, Long.MAX_VALUE,
-            authorId, moduleId, pathId);
-        PublicId stamp1PublicId = stamp1.publicId();
-        int stamp1Nid = stamp1.nid();
-
-        LOG.info("Created stamp1 with publicId={}, nid={}", stamp1PublicId, stamp1Nid);
-
-        // Create second transaction with same UUID as first
-        // This simulates the case where a stamp already exists in the database
-        Transaction transaction2 = Transaction.make(transaction1.transactionUuid().toString());
-        StampEntity stamp2 = transaction2.getStamp(State.ACTIVE, Long.MAX_VALUE,
-            authorId, moduleId, pathId);
-
-        // Verify stamps are the same (reused from database)
-        assertEquals(stamp1.nid(), stamp2.nid(),
-            "Stamps with same transaction UUID and coordinates should have same nid");
-        assertEquals(stamp1.publicId(), stamp2.publicId(),
-            "Stamps with same transaction UUID and coordinates should have same publicId");
-        assertEquals(stamp1, stamp2,
-            "Stamps with same transaction UUID and coordinates should be equal");
-
-        LOG.info("✓ Transaction.getStamp() correctly reused existing stamp from database");
-    }
 }
 

@@ -53,6 +53,23 @@ module dev.ikm.tinkar.common {
     exports dev.ikm.tinkar.common.id;
     exports dev.ikm.tinkar.common.id.impl;
     exports dev.ikm.tinkar.common.service;
+    // The store's entity contract: the entity layer and the stores only. Everything else asks
+    // EntityService, so the entity layer's rules hold for every caller.
+    exports dev.ikm.tinkar.common.service.internal to
+            dev.ikm.tinkar.entity,
+            dev.ikm.tinkar.provider.entity,
+            dev.ikm.tinkar.provider.spinedarray,
+            dev.ikm.tinkar.provider.mvstore,
+            dev.ikm.tinkar.provider.ephemeral,
+            dev.ikm.tinkar.provider.websocket.client,
+            dev.ikm.tinkar.provider.websocket.server,
+            dev.ikm.tinkar.provider.grpc,
+            dev.ikm.rocks.engine,
+            // Tests of the stores themselves. DataIntegrity asks whether every nid a store's
+            // index lists has an entity, a question the entity layer's answers deliberately
+            // hide; the provider integration tests exercise each store's own enumerations.
+            dev.ikm.tinkar.fixtures,
+            dev.ikm.tinkar.integration;
     exports dev.ikm.tinkar.common.service.llm;
     exports dev.ikm.tinkar.common.service.plugin;
     exports dev.ikm.tinkar.common.service.tool;

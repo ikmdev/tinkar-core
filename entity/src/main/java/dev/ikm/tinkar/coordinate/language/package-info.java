@@ -28,12 +28,12 @@
  * <dl>
  * <dt><strong>Natural Language</strong></dt>
  * <dd>Specifies the primary human language (e.g., English, Spanish, French). The language concept
- * NID identifies which language descriptions should be preferred. Special value {@code TinkarTerm.LANGUAGE}
+ * NID identifies which language descriptions should be preferred. Special value {@code KernelTerm.LANGUAGE}
  * acts as a wildcard, matching any language.</dd>
  *
  * <dt><strong>Description Patterns</strong></dt>
  * <dd>Defines which description patterns are acceptable for retrieval. Patterns specify the
- * structure and semantics of descriptions. Most commonly uses {@code TinkarTerm.DESCRIPTION_PATTERN},
+ * structure and semantics of descriptions. Most commonly uses {@code KernelTerm.DESCRIPTION_PATTERN},
  * but custom patterns can be specified for specialized vocabularies.</dd>
  *
  * <dt><strong>Description Types</strong></dt>
@@ -179,15 +179,15 @@
  * <pre>{@code
  * // Custom coordinate preferring technical definitions in US English
  * LanguageCoordinateRecord technical = LanguageCoordinateRecord.make(
- *     TinkarTerm.ENGLISH_LANGUAGE.nid(),
- *     IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
+ *     KernelTerm.ENGLISH_LANGUAGE.nid(),
+ *     IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
  *     IntIds.list.of(
- *         TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid(),      // Prefer definitions
- *         TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
- *         TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
+ *         KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid(),      // Prefer definitions
+ *         KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+ *         KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
  *     ),
- *     IntIds.list.of(TinkarTerm.US_DIALECT_PATTERN.nid()),
- *     IntIds.list.of(TinkarTerm.TECHNICAL_MODULE.nid())      // Custom module priority
+ *     IntIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid()),
+ *     IntIds.list.of(MyTerms.TECHNICAL_MODULE.nid())      // Custom module priority
  * );
  * }</pre>
  *

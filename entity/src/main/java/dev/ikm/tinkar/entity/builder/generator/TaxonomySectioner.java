@@ -15,13 +15,13 @@
  */
 package dev.ikm.tinkar.entity.builder.generator;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 
@@ -67,7 +67,7 @@ public final class TaxonomySectioner {
      */
     public static TaxonomySectioner fromStatedNavigation(StampCalculator calculator) {
         TaxonomySectioner sectioner = new TaxonomySectioner();
-        calculator.forEachSemanticVersionOfPattern(TinkarTerm.STATED_NAVIGATION_PATTERN,
+        calculator.forEachSemanticVersionOfPattern(KernelTerm.STATED_NAVIGATION_PATTERN,
                 (semanticVersion, patternVersion) -> {
                     int child = semanticVersion.referencedComponentNid();
                     int parentsFieldIndex = originFieldIndex(patternVersion);
@@ -94,7 +94,7 @@ public final class TaxonomySectioner {
      */
     public static TaxonomySectioner fromStatedAxioms(StampCalculator calculator) {
         TaxonomySectioner sectioner = new TaxonomySectioner();
-        calculator.forEachSemanticVersionOfPattern(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+        calculator.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                 (semanticVersion, patternVersion) -> {
                     int child = semanticVersion.referencedComponentNid();
                     if (semanticVersion.fieldValues().isEmpty()) {

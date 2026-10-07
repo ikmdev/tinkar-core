@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,7 +43,6 @@ import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 
@@ -91,7 +92,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		for (Concept con : ontology.getConcepts()) {
 			long nid = con.getId();
 			Set<Long> sups = toSctids(reasoner.getSuperConcepts(nid).boxed());
-			Long sctid = nid_sctid_map.get((int) nid);
+			Long sctid = nid_sctid_map.get(Nid.narrowChecked(nid));
 			if (sctid == null) {
 				non_snomed_cnt++;
 				continue;
@@ -101,7 +102,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
 				assertEquals(1, sups.size());
-				assertEquals(TinkarTerm.PHENOMENON.nid(), reasoner.getSuperConcepts(nid).toArray()[0]);
+				assertEquals(KernelTerm.PHENOMENON.nid(), reasoner.getSuperConcepts(nid).toArray()[0]);
 				continue;
 			} else {
 				assertNotNull(parents);

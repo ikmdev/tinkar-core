@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
@@ -26,7 +27,6 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.ImmutableList;
 
 public interface NavigationCalculator extends StampCalculatorDelegate, LanguageCalculatorDelegate {
@@ -174,7 +174,7 @@ public interface NavigationCalculator extends StampCalculatorDelegate, LanguageC
 
     default boolean isMultiparent(int conceptNid) {
         if (conceptNid == -1
-                || conceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
+                || conceptNid == KernelTerm.UNINITIALIZED_COMPONENT.nid()) {
             return false;
         }
         return parentsOf(conceptNid).size() > 1;

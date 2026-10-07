@@ -48,10 +48,10 @@
  * StampCalculator calculator = StampCalculatorWithCache.getCalculator(stampCoord);
  *
  * StampPositionRecord fromPos = StampPositionRecord.make(
- *     time1, TinkarTerm.DEVELOPMENT_PATH
+ *     time1, KernelTerm.DEVELOPMENT_PATH
  * );
  * StampPositionRecord toPos = StampPositionRecord.make(
- *     time2, TinkarTerm.DEVELOPMENT_PATH
+ *     time2, KernelTerm.DEVELOPMENT_PATH
  * );
  *
  * ChangeChronology changes = calculator.getChanges(conceptEntity, fromPos, toPos);
@@ -162,7 +162,7 @@
  * for (VersionChangeRecord versionChange : changes.versionChanges()) {
  *     for (FieldChangeRecord fieldChange : versionChange.fieldChanges()) {
  *         // Check if this is a description field
- *         if (fieldChange.fieldMeaning() == TinkarTerm.DESCRIPTION_TEXT.nid()) {
+ *         if (fieldChange.fieldMeaning() == MyTerms.DESCRIPTION_TEXT.nid()) {
  *             String oldText = (String) fieldChange.oldValue();
  *             String newText = (String) fieldChange.newValue();
  *             System.out.println("Description changed:");

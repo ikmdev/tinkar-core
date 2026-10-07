@@ -69,7 +69,6 @@ public class Validate {
     private static final String DEFAULT_INCLUSIVE_BETWEEN_EX_MESSAGE =
             "The value %s is not in the specified inclusive range of %s to %s";
     private static final String DEFAULT_MATCHES_PATTERN_EX = "The string %s does not match the pattern %s";
-    private static final String DEFAULT_IS_NULL_EX_MESSAGE = "The validated object is null";
     private static final String DEFAULT_IS_TRUE_EX_MESSAGE = "The validated expression is false";
     private static final String DEFAULT_NO_NULL_ELEMENTS_ARRAY_EX_MESSAGE =
             "The validated array contains null element at index: %,d";
@@ -193,27 +192,6 @@ public class Validate {
         if (!expression) {
             throw new IllegalArgumentException(DEFAULT_IS_TRUE_EX_MESSAGE);
         }
-    }
-
-    /**
-     * Validate that the specified argument is not {@code null};
-     * otherwise throwing an exception.
-     *
-     * <pre>Validate.notNull(myObject, "The object must not be null");</pre>
-     *
-     * <p>The message of the exception is &quot;The validated object is
-     * null&quot;.
-     *
-     * @param <T> the object type
-     * @param object  the object to check
-     * @return the validated object (never {@code null} for method chaining)
-     * @throws NullPointerException if the object is {@code null}
-     * @see #notNull(Object, String, Object...)
-     * @deprecated Use {@link Objects#requireNonNull(Object)}.
-     */
-    @Deprecated
-    public static <T> T notNull(final T object) {
-        return notNull(object, DEFAULT_IS_NULL_EX_MESSAGE);
     }
 
     /**

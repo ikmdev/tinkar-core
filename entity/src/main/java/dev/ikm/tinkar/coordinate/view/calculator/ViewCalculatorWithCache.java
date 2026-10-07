@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.coordinate.view.calculator;
 
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
@@ -42,9 +43,7 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
      */
     private static final Logger LOG = LoggerFactory.getLogger(ViewCalculatorWithCache.class);
 
-    private static final ConcurrentReferenceHashMap<ViewCoordinateRecord, ViewCalculatorWithCache> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final Cache<ViewCoordinateRecord, ViewCalculatorWithCache> SINGLETONS = Caffeine.newBuilder().weakValues().build();
     private final StampCalculatorWithCache stampCalculator;
     private final LanguageCalculator languageCalculator;
     private final NavigationCalculator navigationCalculator;
@@ -63,7 +62,7 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
     }
 
     public static ViewCalculatorWithCache getCalculator(ViewCoordinateRecord viewCoordinateRecord) {
-        return SINGLETONS.computeIfAbsent(viewCoordinateRecord,
+        return SINGLETONS.get(viewCoordinateRecord,
                 filterKey -> new ViewCalculatorWithCache(viewCoordinateRecord));
     }
 
@@ -100,7 +99,7 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
     public static class CacheProvider implements CachingService {
         @Override
         public void reset() {
-            SINGLETONS.clear();
+            SINGLETONS.invalidateAll();
         }
     }
 

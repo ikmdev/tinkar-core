@@ -162,8 +162,10 @@ public final class BindingsMain {
     private static void composeAndWrite(KnowledgeSetSource source, Path outputDir,
                                         String packageName, String className) throws Exception {
         KnowledgeSet knowledgeSet = source.compose();
-        Path file = BindingsWriter.write(knowledgeSet, packageName, className, outputDir);
-        System.out.println("Bindings written: " + file + " (" + knowledgeSet.declarations().size()
-                + " declarations from " + source.getClass().getName() + ")");
+        for (Path file : BindingsWriter.writeAll(knowledgeSet, packageName, className, outputDir)) {
+            System.out.println("Bindings written: " + file);
+        }
+        System.out.println("(" + knowledgeSet.declarations().size() + " declarations, "
+                + knowledgeSet.bindingClasses().size() + " binding classes, from " + source.getClass().getName() + ")");
     }
 }

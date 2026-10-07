@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternRecord;
 import dev.ikm.tinkar.entity.PatternVersionRecord;
@@ -102,14 +103,14 @@ public abstract class TransactionVersionTask extends TrackingCallable<Void> {
                                     .build();
                             Entity.provider().putEntity(analogue);
                         }
-                        default -> throw new IllegalStateException("Unexpected value: " + version);
+                        default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(version));
                     }
                     transactionForVersion.commit();
                     Entity.provider().notifyRefreshRequired(transaction);
                 }
             }, () -> {
                 AlertStreams.getRoot().dispatch(AlertObject.makeError("No transaction found. ", "Canceling Stamp",
-                        new IllegalStateException("No transaction for version: " + version)));
+                        new IllegalStateException("No transaction for version: " + EntityText.diagnostic(version))));
                 StampRecord stampRecord = (StampRecord) version.stamp();
                 StampRecord canceledStamp = stampRecord.withAndBuild(stampRecord.lastVersion().with().stateNid(State.CANCELED.nid()).time(Long.MIN_VALUE).build());
                 Entity.provider().putEntity(canceledStamp);

@@ -15,12 +15,16 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.id.IntIdCollection;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
@@ -36,7 +40,6 @@ import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
@@ -61,9 +64,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
      * The Constant LOG.
      */
     private static final Logger LOG = LoggerFactory.getLogger(NavigationCalculatorWithCache.class);
-    private static final ConcurrentReferenceHashMap<StampLangNavRecord, NavigationCalculatorWithCache> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final Cache<StampLangNavRecord, NavigationCalculatorWithCache> SINGLETONS = Caffeine.newBuilder().weakValues().build();
     private final StampCalculatorWithCache stampCalculator;
     private final StampCalculatorWithCache vertexStampCalculator;
     private final LanguageCalculatorWithCache languageCalculator;
@@ -86,7 +87,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     public static NavigationCalculatorWithCache getCalculator(StampCoordinateRecord stampFilter,
                                                               ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
                                                               NavigationCoordinateRecord navigationCoordinate) {
-        return SINGLETONS.computeIfAbsent(new StampLangNavRecord(stampFilter, languageCoordinateList, navigationCoordinate),
+        return SINGLETONS.get(new StampLangNavRecord(stampFilter, languageCoordinateList, navigationCoordinate),
                 filterKey -> new NavigationCalculatorWithCache(stampFilter,
                         languageCoordinateList, navigationCoordinate));
     }
@@ -141,7 +142,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public IntIdList unsortedParentsOf(int conceptNid) {
-        return getIntIdListForMeaning(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN);
+        return getIntIdListForMeaning(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
@@ -172,7 +173,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public ImmutableList<Edge> unsortedChildEdges(int conceptNid) {
-        return getEdges(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
+        return getEdges(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
     }
 
     @Override
@@ -182,7 +183,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public ImmutableList<Edge> unsortedParentEdges(int conceptNid) {
-        return getEdges(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN);
+        return getEdges(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
@@ -192,15 +193,15 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public IntIdList unsortedChildrenOf(int conceptNid) {
-        return getIntIdListForMeaning(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
+        return getIntIdListForMeaning(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
     }
     @Override
     public IntIdList unsortedUnversionedChildrenOf(int conceptNid) {
-        return getIntIdListForMeaningUnversioned(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
+        return getIntIdListForMeaningUnversioned(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
     }
     @Override
     public IntIdList unsortedUnversionedParentsOf(int conceptNid) {
-        return getIntIdListForMeaningUnversioned(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN);
+        return getIntIdListForMeaningUnversioned(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
@@ -216,7 +217,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public IntIdList unsortedParentsOf(int conceptNid, int patternNid) {
-        return getIntIdListForMeaningFromPattern(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN, patternNid);
+        return getIntIdListForMeaningFromPattern(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN, patternNid);
     }
 
     private ImmutableList<Edge> getEdges(int conceptNid, EntityProxy.Concept relationshipDirection) {
@@ -266,7 +267,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         latestPatternEntityVersion.ifPresentOrElse(
                 (patternEntityVersion) -> {
                     int indexForMeaning = patternEntityVersion.indexForMeaning(fieldMeaning);
-                    int[] semantics = PrimitiveData.get().semanticNidsForComponentOfPattern(referencedComponentNid, patternNid);
+                    int[] semantics = EntityStore.current().semanticNidsForComponentOfPattern(referencedComponentNid, patternNid);
                     if (semantics.length > 1) {
                         LOG.warn("More than one navigation semantic for concept: " +
                                 PrimitiveData.text(referencedComponentNid) + " in " + PrimitiveData.text(patternNid) +
@@ -329,7 +330,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                     }
                 },
                 () -> {
-                    throw new IllegalStateException("No active pattern version. " + latestPatternEntityVersion);
+                    throw new IllegalStateException("No active pattern version. " + DiagnosticText.component(patternNid));
                 });
     }
 
@@ -342,7 +343,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         // TODO: this has implicit assumption that no one will hold on to a calculator... Should we be defensive?
         @Override
         public void reset() {
-            SINGLETONS.clear();
+            SINGLETONS.invalidateAll();
         }
     }
 

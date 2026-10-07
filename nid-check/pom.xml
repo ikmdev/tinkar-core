@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd">
+    <modelVersion>4.1.0</modelVersion>
+
+    <parent/>
+
+    <artifactId>nid-check</artifactId>
+    <packaging>jar</packaging>
+
+    <name>TINKAR Nid Check</name>
+    <description>
+        A javac plugin, NidCheck, that fails the build on the nid hazards the compiler accepts
+        when nids widen from int to long: a long passed to a lookup in a collection of Integer,
+        an (int) cast of a nid outside Nid, and Nid.narrowChecked outside the classes allowed
+        to narrow (design-2026-09-30-64-bit-nids).
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>test-logging</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- The check is not run on itself: it is not built yet. The processor path
+                         is set rather than left empty, because javac loads every plugin it finds
+                         to look for auto-start ones, and an empty path is the classpath, which
+                         holds this module's service file before its class is compiled. -->
+                    <compilerArgs combine.self="override">
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
+                    <annotationProcessorPaths combine.self="override">
+                        <path>
+                            <groupId>io.soabase.record-builder</groupId>
+                            <artifactId>record-builder-processor</artifactId>
+                            <version>${record-builder-core.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

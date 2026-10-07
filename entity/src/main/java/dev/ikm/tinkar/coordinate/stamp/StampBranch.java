@@ -17,6 +17,7 @@ package dev.ikm.tinkar.coordinate.stamp;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.terms.ConceptFacade;
 
 import java.time.Instant;
@@ -66,7 +67,7 @@ public interface StampBranch
      * @return the stamp path ConceptFacade
      */
     default ConceptFacade getPathOfBranchConcept() {
-        return Entity.getFast(getPathOfBranchNid());
+        return EntityHandle.get(getPathOfBranchNid()).expectConcept();
     }
 
     StampBranchRecord toStampBranchRecord();

@@ -136,6 +136,7 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
      * Override to supply a configuration programmatically (for backward-compatible concrete extensions).
      * Default implementation reads {@link WithKeyValueProvider} annotation or uses sensible defaults.
      */
+    @SuppressWarnings("deprecation") // honors the deprecated controllerName until callers move to controllerClass
     protected Config resolveConfig(ExtensionContext context) {
         Class<?> testClass = context.getRequiredTestClass();
 

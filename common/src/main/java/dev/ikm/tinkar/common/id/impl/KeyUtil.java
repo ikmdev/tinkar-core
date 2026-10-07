@@ -92,7 +92,7 @@ public class KeyUtil {
         }
         return longs;
     }
-    public static long patternSequenceElementSequenceToLongKey(int patternSequence, long elementSequence) {
+    public static long patternSequenceElementSequenceToRocksKey(int patternSequence, long elementSequence) {
         return ((long) patternSequence << 48) | (elementSequence & 0xFFFFFFFFFFFFL);
     }
     public static byte[] patternSequenceElementSequenceToKey(int patternSequence, long elementSequence) {
@@ -113,14 +113,14 @@ public class KeyUtil {
         result[7] = (byte) elementSequence;
         return result;
     }
-    public static byte[] elementVersionKey(long longKey, int stampSequence) {
-        EntityKey.checkLongKey(longKey);
+    public static byte[] elementVersionKey(long rocksKey, int stampSequence) {
+        EntityKey.checkRocksKey(rocksKey);
         EntityKey.checkStampSequence(stampSequence);
 
         byte[] result = new byte[13];
 
-        // 64 bits (8 bytes) for longKey — big-endian
-        longKeyToBytes(longKey, result);
+        // 64 bits (8 bytes) for rocksKey — big-endian
+        rocksKeyToBytes(rocksKey, result);
         // byte indicating version
         result[8] = 1;
         // stampSequence
@@ -133,19 +133,19 @@ public class KeyUtil {
 
     /**
      * Add the version index becuase all stamp versions have the same stamp sequence.
-     * @param longKey
+     * @param rocksKey
      * @param stampSequence
      * @param versionIndex
      * @return
      */
-    public static byte[] stampVersionKey(long longKey, int stampSequence, byte versionIndex) {
-        EntityKey.checkLongKey(longKey);
+    public static byte[] stampVersionKey(long rocksKey, int stampSequence, byte versionIndex) {
+        EntityKey.checkRocksKey(rocksKey);
         EntityKey.checkStampSequence(stampSequence);
 
         byte[] result = new byte[14];
 
-        // 64 bits (8 bytes) for longKey — big-endian
-        longKeyToBytes(longKey, result);
+        // 64 bits (8 bytes) for rocksKey — big-endian
+        rocksKeyToBytes(rocksKey, result);
         // byte indicating stampversion
         result[8] = 2;
         // stampSequence
@@ -157,27 +157,27 @@ public class KeyUtil {
         return result;
     }
 
-    private static void longKeyToBytes(long longKey, byte[] result) {
-        result[0] = (byte) (longKey >>> 56);
-        result[1] = (byte) (longKey >>> 48);
-        result[2] = (byte) (longKey >>> 40);
-        result[3] = (byte) (longKey >>> 32);
-        result[4] = (byte) (longKey >>> 24);
-        result[5] = (byte) (longKey >>> 16);
-        result[6] = (byte) (longKey >>> 8);
-        result[7] = (byte) longKey;
+    private static void rocksKeyToBytes(long rocksKey, byte[] result) {
+        result[0] = (byte) (rocksKey >>> 56);
+        result[1] = (byte) (rocksKey >>> 48);
+        result[2] = (byte) (rocksKey >>> 40);
+        result[3] = (byte) (rocksKey >>> 32);
+        result[4] = (byte) (rocksKey >>> 24);
+        result[5] = (byte) (rocksKey >>> 16);
+        result[6] = (byte) (rocksKey >>> 8);
+        result[7] = (byte) rocksKey;
     }
 
     public static byte[] elementVersionKey(int patternSequence, long elementSequence, int stampSequence) {
-        return elementVersionKey(patternSequenceElementSequenceToLongKey(patternSequence, elementSequence), stampSequence);
+        return elementVersionKey(patternSequenceElementSequenceToRocksKey(patternSequence, elementSequence), stampSequence);
     }
 
-    public static int longKeyToPatternSequence(long longKey) {
-        return (int) ((longKey >>> 48) & 0xFFFF);
+    public static int rocksKeyToPatternSequence(long rocksKey) {
+        return (int) ((rocksKey >>> 48) & 0xFFFF);
     }
 
-    public static long longKeyToElementSequence(long longKey) {
-        return longKey & 0xFFFFFFFFFFFFL;
+    public static long rocksKeyToElementSequence(long rocksKey) {
+        return rocksKey & 0xFFFFFFFFFFFFL;
     }
 
     public static UUID byteArrayToUuid(byte[] uuidBytes) {
@@ -188,25 +188,25 @@ public class KeyUtil {
         return UuidUtil.getRawBytes(uuid);
     }
 
-    public static byte[] entityKeyToBytes(long longKey) {
-        EntityKey.checkLongKey(longKey);
+    public static byte[] entityKeyToBytes(long rocksKey) {
+        EntityKey.checkRocksKey(rocksKey);
         byte[] result = new byte[8];
-        // 64 bits (8 bytes) for longKey — big-endian
-        longKeyToBytes(longKey, result);
+        // 64 bits (8 bytes) for rocksKey — big-endian
+        rocksKeyToBytes(rocksKey, result);
         return result;
     }
 
     public static EntityKey entityKeyToBytes(byte[] entityKeyBytes) {
-        return EntityKey.ofLongKey(byteArrayToLong(entityKeyBytes));
+        return EntityKey.ofRocksKey(byteArrayToLong(entityKeyBytes));
     }
 
     public static byte[] entityReferencingSemanticKey(EntityKey entityKey, EntityKey referencingEntityKey) {
-        long baseLong = entityKey.longKey();
-        long refLong = referencingEntityKey.longKey();
+        long baseLong = entityKey.rocksKey();
+        long refLong = referencingEntityKey.rocksKey();
 
-        // Validate long keys (consistent with other utilities)
-        EntityKey.checkLongKey(baseLong);
-        EntityKey.checkLongKey(refLong);
+        // Validate rocks keys (consistent with other utilities)
+        EntityKey.checkRocksKey(baseLong);
+        EntityKey.checkRocksKey(refLong);
 
         byte[] result = new byte[16];
 
@@ -239,10 +239,10 @@ public class KeyUtil {
         }
 
         // Offsets:
-        // [0..7]   -> entityKey.longKey()
-        // [8..15]  -> referencingEntityKey.longKey()
+        // [0..7]   -> entityKey.rocksKey()
+        // [8..15]  -> referencingEntityKey.rocksKey()
 
-        long refLongKey =
+        long refRocksKey =
                 ((long) (compoundKey[8]  & 0xFF) << 56) |
                         ((long) (compoundKey[9]  & 0xFF) << 48) |
                         ((long) (compoundKey[10] & 0xFF) << 40) |
@@ -253,8 +253,8 @@ public class KeyUtil {
                         ((long) (compoundKey[15] & 0xFF));
 
         // Validate and construct
-        EntityKey.checkLongKey(refLongKey);
-        return EntityKey.ofLongKey(refLongKey);
+        EntityKey.checkRocksKey(refRocksKey);
+        return EntityKey.ofRocksKey(refRocksKey);
     }
 
 }

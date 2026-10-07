@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 
@@ -48,7 +49,7 @@ public class MembershipEntityAggregator extends EntityAggregator {
             // Aggregate Patterns and Stamps
             nidConsumer.accept(patternNid);
             patternsAggregatedCount.incrementAndGet();
-            Entity<? extends EntityVersion> patternEntity = EntityService.get().getEntityFast(patternNid);
+            Entity<? extends EntityVersion> patternEntity = EntityHandle.get(patternNid).expectEntity();
             patternEntity.stampNids().forEach(stampNidSet::add);
 
             EntityService.get().forEachSemanticOfPattern(patternNid, (semanticEntityOfPattern) -> {
@@ -57,7 +58,7 @@ public class MembershipEntityAggregator extends EntityAggregator {
                 if (referencedComponentNid != patternNid) {
                     // Aggregate Concept and Stamps
                     nidConsumer.accept(referencedComponentNid);
-                    Entity<? extends EntityVersion> referencedComponentEntity = EntityService.get().getEntityFast(referencedComponentNid);
+                    Entity<? extends EntityVersion> referencedComponentEntity = EntityHandle.get(referencedComponentNid).expectEntity();
                     switch (referencedComponentEntity.versionDataType()) {
                         case FieldDataType.CONCEPT_VERSION -> conceptsAggregatedCount.incrementAndGet();
                         case FieldDataType.PATTERN_VERSION -> patternsAggregatedCount.incrementAndGet();

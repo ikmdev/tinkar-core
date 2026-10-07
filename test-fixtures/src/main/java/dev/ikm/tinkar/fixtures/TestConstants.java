@@ -36,9 +36,9 @@ public class TestConstants {
     public static final Function<Class,File>
             createFilePathInTargetFromClassName = (clazz) -> createFilePathInTarget.apply("generated-datastores/%s".formatted(clazz.getSimpleName()));
 
-    // IKM Test Data Files
-    public static final File PB_STARTER_DATA = createFilePathInTarget.apply("data/tinkar-starter-data-unreasoned-pb.zip");
-    public static final File PB_STARTER_DATA_REASONED = createFilePathInTarget.apply("data/tinkar-starter-data-reasoned-pb.zip");
+    // Test data files: the IKE starter set, unreasoned and reasoned, and the Tinkar example data
+    public static final File PB_STARTER_DATA = createFilePathInTarget.apply("data/ike-starter-set-unreasoned-pb.zip");
+    public static final File PB_STARTER_DATA_REASONED = createFilePathInTarget.apply("data/ike-starter-set-reasoned-pb.zip");
     public static final File PB_EXAMPLE_DATA_REASONED = createFilePathInTarget.apply("data/tinkar-example-data-reasoned-pb.zip");
 
     // Other Helper Files

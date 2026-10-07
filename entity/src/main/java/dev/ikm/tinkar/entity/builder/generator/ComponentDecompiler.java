@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder.generator;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityHandle;
@@ -25,7 +26,6 @@ import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -67,7 +67,7 @@ public final class ComponentDecompiler {
      * @return the verb-call lines (in discovery order) and any hand-authoring notes
      */
     public static ComponentSource decompile(EntityFacade component, StampCalculator calculator,
-                                            TinkarTermReferenceResolver resolver) {
+                                            BindingReferenceResolver resolver) {
         List<String> lines = new ArrayList<>();
         List<String> notes = new ArrayList<>();
         List<EntityFacade> descriptions = new ArrayList<>();
@@ -81,16 +81,16 @@ public final class ComponentDecompiler {
 
         calculator.forEachSemanticVersionForComponent(component, (semanticVersion, entityVersion) -> {
             int patternNid = semanticVersion.patternNid();
-            if (patternNid == TinkarTerm.STATED_NAVIGATION_PATTERN.nid()
-                    || patternNid == TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid()
-                    || patternNid == TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
+            if (patternNid == KernelTerm.STATED_NAVIGATION_PATTERN.nid()
+                    || patternNid == KernelTerm.INFERRED_NAVIGATION_PATTERN.nid()
+                    || patternNid == KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
                 return; // Derived — excluded, regenerated at assembly (#872).
             }
-            if (patternNid == TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()) {
+            if (patternNid == KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()) {
                 decompileAxioms(semanticVersion, resolver, lines, notes);
                 return;
             }
-            if (patternNid == TinkarTerm.DESCRIPTION_PATTERN.nid()) {
+            if (patternNid == KernelTerm.DESCRIPTION_PATTERN.nid()) {
                 descriptions.add(EntityFacade.make(semanticVersion.chronology().nid()));
             }
             decompileGenericSemantic(semanticVersion, resolver, lines, notes);
@@ -112,7 +112,7 @@ public final class ComponentDecompiler {
      * with no definition cannot compile as a ledger declaration at all).
      */
     private static void decompilePatternDefinition(PatternFacade patternFacade, StampCalculator calculator,
-                                                    TinkarTermReferenceResolver resolver, List<String> lines,
+                                                    BindingReferenceResolver resolver, List<String> lines,
                                                     List<String> notes) {
         Latest<PatternEntityVersion> latest = calculator.latestPatternEntityVersion(patternFacade);
         if (!latest.isPresent()) {
@@ -133,46 +133,43 @@ public final class ComponentDecompiler {
         lines.add(line.toString());
     }
 
-    private static void decompileAxioms(SemanticEntityVersion semanticVersion, TinkarTermReferenceResolver resolver,
+    private static void decompileAxioms(SemanticEntityVersion semanticVersion, BindingReferenceResolver resolver,
                                         List<String> lines, List<String> notes) {
         DiTreeEntity tree = (DiTreeEntity) semanticVersion.fieldValues().get(0);
         AxiomDecompiler.Result result = AxiomDecompiler.decompile(tree);
-        String declaredId = TinkarTermReferenceResolver.publicIdLiteral(semanticVersion.chronology().publicId());
-        if (result.simpleIsA()) {
+        String declaredId = BindingReferenceResolver.publicIdLiteral(semanticVersion.chronology().publicId());
+        if (result.decompiled()) {
             // Declared identity via statedAxioms(PublicId, Consumer) — NOT
             // isA(ConceptFacade...), which is derived-identity only. There is no
             // declared-identity isA overload: EntityProxy implements both
             // ConceptFacade and PublicId, so isA(PublicId, ConceptFacade...) would be
             // genuinely ambiguous against isA(ConceptFacade...) for every real
             // argument (a structural conflict, not a naming one) — the verbose form
-            // below is the only unambiguous way to declare an is-a axiom's identity.
-            String conceptAxioms = result.parents().stream()
-                    .map(parent -> "leb.ConceptAxiom(" + resolver.resolve(parent).sourceExpression() + ")")
-                    .reduce((first, second) -> first + ", " + second)
-                    .orElseThrow();
-            lines.add(".statedAxioms(" + declaredId + ", leb -> leb.NecessarySet(leb.And("
-                    + conceptAxioms + ")))");
+            // below is the only unambiguous way to declare an is-a axiom's identity,
+            // and the same form carries every other expression shape.
+            lines.add(".statedAxioms(" + declaredId + ", "
+                    + result.builderLambda(concept -> resolver.resolve(concept).sourceExpression()) + ")");
             return;
         }
         notes.add("Stated axioms on " + semanticVersion.referencedComponentNid()
-                + " are not the simple isA shape — hand-author statedAxioms(" + declaredId + ", ...):\n"
-                + result.diagnosticDump());
+                + " cannot be rebuilt by the logic-expression builder — hand-author statedAxioms("
+                + declaredId + ", ...):\n" + result.diagnosticDump());
         lines.add("// TODO hand-author statedAxioms(" + declaredId + ", ...) — see generator manifest");
     }
 
     private static void decompileDialects(EntityFacade description, StampCalculator calculator,
-                                          TinkarTermReferenceResolver resolver, List<String> lines,
+                                          BindingReferenceResolver resolver, List<String> lines,
                                           List<String> notes) {
-        calculator.forEachSemanticVersionForComponentOfPattern(description, TinkarTerm.US_DIALECT_PATTERN,
+        calculator.forEachSemanticVersionForComponentOfPattern(description, KernelTerm.US_DIALECT_PATTERN,
                 (semanticVersion, entityVersion, patternVersion) ->
-                        emitSemanticOn(description, semanticVersion, TinkarTerm.US_DIALECT_PATTERN, resolver, lines, notes));
-        calculator.forEachSemanticVersionForComponentOfPattern(description, TinkarTerm.GB_DIALECT_PATTERN,
+                        emitSemanticOn(description, semanticVersion, KernelTerm.US_DIALECT_PATTERN, resolver, lines, notes));
+        calculator.forEachSemanticVersionForComponentOfPattern(description, KernelTerm.GB_DIALECT_PATTERN,
                 (semanticVersion, entityVersion, patternVersion) ->
-                        emitSemanticOn(description, semanticVersion, TinkarTerm.GB_DIALECT_PATTERN, resolver, lines, notes));
+                        emitSemanticOn(description, semanticVersion, KernelTerm.GB_DIALECT_PATTERN, resolver, lines, notes));
     }
 
     private static void decompileGenericSemantic(SemanticEntityVersion semanticVersion,
-                                                 TinkarTermReferenceResolver resolver, List<String> lines,
+                                                 BindingReferenceResolver resolver, List<String> lines,
                                                  List<String> notes) {
         // patternNid() is always a pattern — EntityFacade.make(nid) returns a
         // kind-less wrapper that is never instanceof PatternFacade, so wrapping it
@@ -184,7 +181,7 @@ public final class ComponentDecompiler {
     }
 
     private static void emitSemanticOn(EntityFacade referencedComponent, SemanticEntityVersion semanticVersion,
-                                       EntityFacade patternConstant, TinkarTermReferenceResolver resolver,
+                                       EntityFacade patternConstant, BindingReferenceResolver resolver,
                                        List<String> lines, List<String> notes) {
         emitGenericSemantic(referencedComponent, semanticVersion, patternConstant, resolver, lines, notes);
     }
@@ -202,12 +199,12 @@ public final class ComponentDecompiler {
      * instead of degrading gracefully.
      */
     private static void emitGenericSemantic(EntityFacade referencedComponent, SemanticEntityVersion semanticVersion,
-                                            EntityFacade patternFacade, TinkarTermReferenceResolver resolver,
+                                            EntityFacade patternFacade, BindingReferenceResolver resolver,
                                             List<String> lines, List<String> notes) {
-        String declaredId = TinkarTermReferenceResolver.publicIdLiteral(semanticVersion.chronology().publicId());
+        String declaredId = BindingReferenceResolver.publicIdLiteral(semanticVersion.chronology().publicId());
         String patternRef = resolver.resolve(patternFacade).sourceExpression();
         String referencedId = referencedComponent == null ? null
-                : TinkarTermReferenceResolver.publicIdLiteral(referencedComponent.publicId());
+                : BindingReferenceResolver.publicIdLiteral(referencedComponent.publicId());
         String location = referencedId == null ? declaredId : declaredId + " (on " + referencedId + ")";
 
         // Every field is scanned before any decision is made — collecting a note for
@@ -241,19 +238,25 @@ public final class ComponentDecompiler {
     /**
      * Serializes one field value to a Java source expression. Supports the value
      * types this starter set's own semantics actually carry — {@link EntityFacade},
-     * {@link String}, {@link Instant} — and reports (never guesses at) anything else,
-     * so a future starter set's unsupported field type surfaces as a manifest note,
-     * not a silently wrong or dropped value.
+     * {@link String}, {@link Instant}, {@link Integer}, {@link Long} — and reports
+     * (never guesses at) anything else, so a future starter set's unsupported field
+     * type surfaces as a manifest note, not a silently wrong or dropped value.
      */
-    private static String fieldValueExpression(Object value, TinkarTermReferenceResolver resolver) {
+    private static String fieldValueExpression(Object value, BindingReferenceResolver resolver) {
         if (value instanceof EntityFacade facade) {
             return resolver.resolve(facade).sourceExpression();
         }
         if (value instanceof String text) {
-            return '"' + TinkarTermReferenceResolver.escapeForJavaStringLiteral(text) + '"';
+            return '"' + BindingReferenceResolver.escapeForJavaStringLiteral(text) + '"';
         }
         if (value instanceof Instant instant) {
             return "Instant.parse(\"" + instant + "\")";
+        }
+        if (value instanceof Integer number) {
+            return Integer.toString(number);
+        }
+        if (value instanceof Long number) {
+            return number + "L";
         }
         throw new IllegalArgumentException("unsupported field value type: "
                 + (value == null ? "null" : value.getClass().getName()));

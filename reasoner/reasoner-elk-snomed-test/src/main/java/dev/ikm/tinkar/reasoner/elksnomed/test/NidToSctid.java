@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
+import dev.ikm.tinkar.common.id.Nid;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -67,7 +68,7 @@ public class NidToSctid {
 			long nid = concept.getId();
 			if (nid_to_sctid.get(nid) == null) {
 				not_in_snomed.add(nid);
-				if (!primordial_nids.contains((int) nid))
+				if (!primordial_nids.contains(Nid.narrowChecked(nid)))
 					LOG.error("None for: " + nid);
 				continue;
 			}

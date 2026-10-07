@@ -15,14 +15,9 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
-import java.util.HashMap;
-import java.util.Set;
-
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.eclipse.collections.api.factory.primitive.IntSets;
-import org.eclipse.collections.api.factory.primitive.LongObjectMaps;
-import org.eclipse.collections.api.factory.primitive.LongSets;
-import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
@@ -34,11 +29,9 @@ import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology.SwecIds;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class HybridReasonerService extends ElkSnomedReasonerService {
 
@@ -52,7 +45,7 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	}
 
 	public static long getRootId() {
-		return TinkarTerm.ROOT_VERTEX.nid();
+		return KernelTerm.ROOT_VERTEX.nid();
 	}
 
 	private static final SwecIds swec_ids = StatementSnomedOntology.swec_nfh_sctids; // swec_sctids;
@@ -89,60 +82,36 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	}
 
 	@Override
-	public void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater) {
-		throw new UnsupportedOperationException();
-	}
-	@Override
 	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
-		//TODO: refactor to use primitive collections directly.
 		nnfb = NecessaryNormalFormBuilder.create(sso.getOntology(),
-				convertToLongMap(sso.getSuperConcepts()),
-				convertToLongMap(sso.getSuperRoleTypes(false)),
-				TinkarTerm.ROOT_VERTEX.nid(),
+				sso.getSuperConcepts(),
+				sso.getSuperRoleTypes(false),
+				KernelTerm.ROOT_VERTEX.nid(),
 				(workDone, max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
 	}
 
-	/**
-	 * Converts boxed HashMap to primitive Eclipse Collections map.
-	 * Transforms HashMap<Long, Set<Long>> to MutableLongObjectMap<MutableLongSet>
-	 * for better performance with primitive types.
-	 *
-	 * @param source the boxed map to convert
-	 * @return a primitive map with primitive long sets as values
-	 * TODO: refactor to use primitive collections directly.
-	 */
-	private MutableLongObjectMap<MutableLongSet> convertToLongMap(HashMap<Long, Set<Long>> source) {
-		MutableLongObjectMap<MutableLongSet> result = LongObjectMaps.mutable.withInitialCapacity(source.size());
-		source.forEach((key, values) -> {
-			MutableLongSet primitiveValues = LongSets.mutable.withInitialCapacity(values.size());
-			values.forEach(primitiveValues::add);
-			result.put(key, primitiveValues);
-		});
-		return result;
-	}
-
 	@Override
 	public ImmutableIntSet getEquivalent(int id) {
-		Set<Long> eqs = sso.getEquivalentConcepts(id);
+		MutableLongSet eqs = sso.getEquivalentConcepts(id);
 		MutableIntSet eqsInt = IntSets.mutable.empty();
-		eqs.stream().mapToInt(Long::intValue).forEach(eqsInt::add);
+		eqs.forEach(l -> eqsInt.add((int) l));
 		return eqsInt.toImmutable();
 	}
 
 	@Override
 	public ImmutableIntSet getParents(int id) {
-		Set<Long> supers = sso.getSuperConcepts(id);
+		MutableLongSet supers = sso.getSuperConcepts(id);
 		MutableIntSet eqsInt = IntSets.mutable.empty();
-		supers.stream().mapToInt(Long::intValue).forEach(eqsInt::add);
+		supers.forEach(l -> eqsInt.add((int) l));
 		return eqsInt.toImmutable();
 	}
 
 	@Override
 	public ImmutableIntSet getChildren(int id) {
-		Set<Long> subs = sso.getSubConcepts(id);
+		MutableLongSet subs = sso.getSubConcepts(id);
 		MutableIntSet eqsInt = IntSets.mutable.empty();
-		subs.stream().mapToInt(Long::intValue).forEach(eqsInt::add);
+		subs.forEach(l -> eqsInt.add((int) l));
 		return eqsInt.toImmutable();
 	}
 

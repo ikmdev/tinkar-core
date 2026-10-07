@@ -119,7 +119,7 @@ public class EntityRecordFactory {
                         // no additional fieldValues
                         break;
                     default:
-                        throw new IllegalStateException("Unexpected value: " + entity);
+                        throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
                 }
                 //finishEntityWrite(byteBuf);
                 byteBuf.writeInt(entity.versions().size());
@@ -159,7 +159,7 @@ public class EntityRecordFactory {
             try {
                 ByteBuf byteBuf = ByteBufPool.allocate(MAX_VERSION_SIZE);
                 if (entityVersion.versionDataType().token == 0) {
-                    throw new IllegalStateException("Version type token cannot be zero... " + entityVersion);
+                    throw new IllegalStateException("Version type token cannot be zero... " + EntityText.diagnostic(entityVersion));
                 }
                 byteBuf.writeByte(entityVersion.versionDataType().token); //ensure that the chronicle byte array sorts first.
                 byteBuf.writeInt(entityVersion.stampNid());
@@ -191,7 +191,7 @@ public class EntityRecordFactory {
                         byteBuf.writeInt(stampEntityVersion.pathNid());
                         break;
                     default:
-                        throw new IllegalStateException("Unexpected value: " + entityVersion);
+                        throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entityVersion));
                 }
                 //writeVersionFields(byteBuf);
                 return byteBuf.asArray();
@@ -614,7 +614,7 @@ public class EntityRecordFactory {
                 int pathNid = readBuf.readInt();
                 yield new StampVersionRecord(stampRecord, stateNid, time, authorNid, moduleNid, pathNid);
             }
-            default -> throw new IllegalStateException("Unexpected value: " + entity);
+            default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
         };
     }
 

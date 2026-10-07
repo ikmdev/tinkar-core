@@ -1,8 +1,12 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.entity.internal.EntityLookup;
 import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.EntityProxy;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -330,11 +334,11 @@ public interface EntityHandle {
         if (nid == Integer.MIN_VALUE || nid == Integer.MAX_VALUE || nid == 0) {
             return absent();
         }
-        Entity entity = Entity.packagePrivateGetFast(nid);
+        Entity entity = EntityLookup.current().entityOrNull(nid);
         if (entity != null) {
             return of(entity);
         }
-        return absent();
+        return new AbsentHandle(() -> DiagnosticText.component(nid));
     }
 
     /**
@@ -348,7 +352,11 @@ public interface EntityHandle {
         if (publicId == null) {
             return absent();
         }
-        return get(Entity.nid(publicId));
+        EntityHandle handle = get(Entity.nid(publicId));
+        if (handle.isAbsent()) {
+            return new AbsentHandle(() -> DiagnosticText.component(publicId));
+        }
+        return handle;
     }
 
     /**
@@ -362,7 +370,11 @@ public interface EntityHandle {
         if (uuids == null) {
             return absent();
         }
-        return get(PrimitiveData.nid(uuids));
+        EntityHandle handle = get(PrimitiveData.nid(uuids));
+        if (handle.isAbsent() && uuids.length > 0) {
+            return new AbsentHandle(() -> DiagnosticText.component(PublicIds.of(uuids)));
+        }
+        return handle;
     }
 
     /**
@@ -376,7 +388,37 @@ public interface EntityHandle {
         if (entityFacade == null) {
             return absent();
         }
-        return get(entityFacade.nid());
+        int nid = entityFacade.nid();
+        EntityHandle handle = get(nid);
+        if (handle instanceof AbsentHandle absent && absent != AbsentHandle.INSTANCE) {
+            return new AbsentHandle(() -> identification(entityFacade, nid));
+        }
+        return handle;
+    }
+
+    /**
+     * Retrieves an entity by an {@link EntityProxy}. A proxy is both an {@link EntityFacade} and a
+     * {@link PublicId}, so without this overload a call with one is ambiguous; it resolves as
+     * {@link #get(EntityFacade)} does.
+     *
+     * @param proxy the entity proxy
+     * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
+     */
+    static EntityHandle get(EntityProxy proxy) {
+        return get((EntityFacade) proxy);
+    }
+
+    /**
+     * Retrieves an entity by an {@link Entity} value, looking it up again by its nid. An entity is
+     * both an {@link EntityFacade} and a {@link PublicId}, so without this overload a call with one
+     * is ambiguous; it resolves as {@link #get(EntityFacade)} does. To wrap the instance itself, use
+     * {@link #of(Entity)}.
+     *
+     * @param entity the entity
+     * @return an EntityHandle representing the stored entity, or an empty EntityHandle if absent.
+     */
+    static EntityHandle get(Entity<?> entity) {
+        return get((EntityFacade) entity);
     }
 
     /**
@@ -986,7 +1028,7 @@ public interface EntityHandle {
      */
     default Entity<? extends EntityVersion> expectEntity() {
         return entity().orElseThrow(() ->
-            new IllegalStateException("Expected entity to be present but entity was absent")
+            new IllegalStateException("Expected entity to be present but entity was absent" + askedFor())
         );
     }
 
@@ -1047,11 +1089,7 @@ public interface EntityHandle {
      */
     default ConceptEntity expectConcept() {
         return asConcept().orElseThrow(() ->
-            new IllegalStateException(
-                entity().map(e -> "Expected ConceptEntity but was " + e.getClass().getSimpleName() +
-                                 " with nid: " + e.nid() + " (" + e.publicId() + ")")
-                        .orElse("Expected ConceptEntity but entity was absent")
-            )
+            new IllegalStateException(notTheExpected("ConceptEntity", "ConceptEntity"))
         );
     }
 
@@ -1073,9 +1111,7 @@ public interface EntityHandle {
      */
     default ConceptEntity expectConcept(String errorMessage) {
         return asConcept().orElseThrow(() -> new IllegalStateException(errorMessage +
-                entity().map(e -> "Expected concept but was " + e.getClass().getSimpleName() +
-                                " with nid: " + e.nid() + " (" + e.publicId() + ")")
-                        .orElse("Expected Concept but entity was absent")));
+                notTheExpected("concept", "Concept")));
     }
 
     /**
@@ -1095,11 +1131,7 @@ public interface EntityHandle {
      */
     default SemanticEntity expectSemantic() {
         return asSemantic().orElseThrow(() ->
-            new IllegalStateException(
-                entity().map(e -> "Expected SemanticEntity but was " + e.getClass().getSimpleName() +
-                                 " with nid: " + e.nid() + " (" + e.publicId() + ")")
-                        .orElse("Expected SemanticEntity but entity was absent")
-            )
+            new IllegalStateException(notTheExpected("SemanticEntity", "SemanticEntity"))
         );
     }
 
@@ -1112,9 +1144,7 @@ public interface EntityHandle {
      */
     default SemanticEntity expectSemantic(String errorMessage) {
         return asSemantic().orElseThrow(() -> new IllegalStateException(errorMessage +
-                entity().map(e -> "Expected SemanticEntity but was " + e.getClass().getSimpleName() +
-                                " with nid: " + e.nid() + " (" + e.publicId() + ")")
-                        .orElse("Expected SemanticEntity but entity was absent")));
+                notTheExpected("SemanticEntity", "SemanticEntity")));
     }
 
     /**
@@ -1134,11 +1164,7 @@ public interface EntityHandle {
      */
     default PatternEntity expectPattern() {
         return asPattern().orElseThrow(() ->
-            new IllegalStateException(
-                entity().map(e -> "Expected PatternEntity but was " + e.getClass().getSimpleName() +
-                                 " with nid: " + e.nid() + " (" + e.publicId() + ")")
-                        .orElse("Expected PatternEntity but entity was absent")
-            )
+            new IllegalStateException(notTheExpected("PatternEntity", "PatternEntity"))
         );
     }
 
@@ -1151,9 +1177,7 @@ public interface EntityHandle {
      */
     default PatternEntity expectPattern(String errorMessage) {
         return asPattern().orElseThrow(() -> new IllegalStateException(errorMessage +
-                entity().map(e -> "Expected PatternEntity but was " + e.getClass().getSimpleName() +
-                                " with nid: " + e.nid() + " (" + e.publicId() + ")")
-                        .orElse("Expected PatternEntity but entity was absent")));
+                notTheExpected("PatternEntity", "PatternEntity")));
     }
 
     /**
@@ -1173,11 +1197,7 @@ public interface EntityHandle {
      */
     default StampEntity expectStamp() {
         return asStamp().orElseThrow(() ->
-            new IllegalStateException(
-                entity().map(e -> "Expected StampEntity but was " + e.getClass().getSimpleName() +
-                                 " with nid: " + e.nid() + " (" + e.publicId() + ")")
-                        .orElse("Expected StampEntity but entity was absent")
-            )
+            new IllegalStateException(notTheExpected("StampEntity", "StampEntity"))
         );
     }
 
@@ -1190,9 +1210,7 @@ public interface EntityHandle {
      */
     default StampEntity expectStamp(String errorMessage) {
         return asStamp().orElseThrow(() -> new IllegalStateException(errorMessage +
-                entity().map(e -> "Expected stamp but was " + e.getClass().getSimpleName() +
-                                " with nid: " + e.nid() + " (" + e.publicId() + ")")
-                        .orElse("Expected StampEntity but entity was absent")));
+                notTheExpected("stamp", "StampEntity")));
     }
 
     // ========== Record-Specific Expect Methods ==========
@@ -1221,8 +1239,7 @@ public interface EntityHandle {
             return conceptRecord;
         }
         throw new IllegalStateException(
-            "Expected ConceptRecord but was " + concept.getClass().getSimpleName() +
-            " with nid: " + concept.nid() + " (" + concept.publicId() + ")"
+            "Expected ConceptRecord but was " + EntityText.diagnostic(concept)
         );
     }
 
@@ -1250,8 +1267,7 @@ public interface EntityHandle {
             return patternRecord;
         }
         throw new IllegalStateException(
-            "Expected PatternRecord but was " + pattern.getClass().getSimpleName() +
-            " with nid: " + pattern.nid() + " (" + pattern.publicId() + ")"
+            "Expected PatternRecord but was " + EntityText.diagnostic(pattern)
         );
     }
 
@@ -1279,8 +1295,7 @@ public interface EntityHandle {
             return semanticRecord;
         }
         throw new IllegalStateException(
-            "Expected SemanticRecord but was " + semantic.getClass().getSimpleName() +
-            " with nid: " + semantic.nid() + " (" + semantic.publicId() + ")"
+            "Expected SemanticRecord but was " + EntityText.diagnostic(semantic)
         );
     }
 
@@ -1305,8 +1320,7 @@ public interface EntityHandle {
             return stampRecord;
         }
         throw new IllegalStateException(
-            "Expected StampRecord but was " + stamp.getClass().getSimpleName() +
-            " with nid: " + stamp.nid() + " (" + stamp.publicId() + ")"
+            "Expected StampRecord but was " + EntityText.diagnostic(stamp)
         );
     }
 
@@ -1389,6 +1403,50 @@ public interface EntityHandle {
         return entity().orElseThrow(exceptionSupplier);
     }
 
+    // ========== Exception Messages ==========
+
+    /**
+     * The message for a handle whose entity is absent, or is of another kind than the one
+     * expected ({@code IKE-Network/ike-issues#1189}). An entity of another kind is identified
+     * by its description and UUID; an absent one by what the handle was asked for.
+     *
+     * @param kind the expected kind, as written when the entity is of another kind
+     * @param kindWhenAbsent the expected kind, as written when the entity is absent
+     * @return the message
+     */
+    private String notTheExpected(String kind, String kindWhenAbsent) {
+        Optional<Entity<? extends EntityVersion>> entity = entity();
+        if (entity.isPresent()) {
+            return "Expected " + kind + " but was " + EntityText.diagnostic(entity.get());
+        }
+        return "Expected " + kindWhenAbsent + " but entity was absent" + askedFor();
+    }
+
+    /**
+     * What an absent handle was asked for, as the end of a message: a colon and the
+     * identification, or nothing when the handle was asked for nothing.
+     */
+    private String askedFor() {
+        return this instanceof AbsentHandle absent ? absent.askedFor() : "";
+    }
+
+    /**
+     * The identification of a component a facade names: by the facade's public id when it has
+     * one, because a store may have no public id for the nid of a component that was never
+     * written.
+     */
+    private static String identification(EntityFacade entityFacade, int nid) {
+        try {
+            PublicId publicId = entityFacade.publicId();
+            if (publicId != null && publicId.uuidCount() > 0) {
+                return DiagnosticText.component(publicId);
+            }
+        } catch (RuntimeException noPublicId) {
+            // the nid is then the only identifier there is
+        }
+        return DiagnosticText.component(nid);
+    }
+
     // ========== Nested Implementation Classes ==========
 
     /**
@@ -1414,17 +1472,32 @@ public interface EntityHandle {
     }
 
     /**
-     * Singleton implementation for an absent entity.
+     * Implementation for an absent entity.
      * <p>     * Provides all fluent methods via default implementations, all of which
-     * handle the empty case appropriately.
+     * handle the empty case appropriately. A handle that was asked for an entity the store
+     * does not hold remembers what it was asked for, so that the message of an {@code expect}
+     * method can say which one ({@code IKE-Network/ike-issues#1189}).
      */
     final class AbsentHandle implements EntityHandle {
         /**
-         * Singleton instance for absent entities.
+         * The handle that was asked for nothing, returned by {@link EntityHandle#absent()}.
          */
-        static final AbsentHandle INSTANCE = new AbsentHandle();
+        static final AbsentHandle INSTANCE = new AbsentHandle(null);
 
-        private AbsentHandle() {}
+        /** Writes the identification of what was asked for; null when nothing was. */
+        private final Supplier<String> identification;
+
+        private AbsentHandle(Supplier<String> identification) {
+            this.identification = identification;
+        }
+
+        /**
+         * What this handle was asked for, as the end of a message. The store is read only when
+         * a message is composed.
+         */
+        private String askedFor() {
+            return identification == null ? "" : ": " + identification.get();
+        }
 
         @Override
         public Optional<Entity<? extends EntityVersion>> entity() {

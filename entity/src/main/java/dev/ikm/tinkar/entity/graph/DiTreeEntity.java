@@ -15,13 +15,13 @@
  */
 package dev.ikm.tinkar.entity.graph;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -122,7 +122,7 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
             return false;
         }
         IsomorphicResultsLeafHash isomorphicResult = new IsomorphicResultsLeafHash(this, another,
-                TinkarTerm.UNINITIALIZED_COMPONENT.nid());
+                KernelTerm.UNINITIALIZED_COMPONENT.nid());
         try {
             isomorphicResult.call();
             return isomorphicResult.equivalent();

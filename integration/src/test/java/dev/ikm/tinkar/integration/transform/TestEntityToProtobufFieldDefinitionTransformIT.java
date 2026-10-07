@@ -62,9 +62,9 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
         Concept dataTypeConcept = conceptMap.get(DATATYPE_CONCEPT_NAME);
         Concept purposeConcept = conceptMap.get(PURPOSE_CONCEPT_NAME);
 
-        PublicId patternPublicId = PublicIds.newRandom();
+        UUID patternUuid = UUID.randomUUID();
+        PublicId patternPublicId = PublicIds.of(patternUuid);
         int patternNid = Entity.nid(patternPublicId);
-        UUID patternUuid = patternPublicId.asUuidArray()[0];
         int stampNid = createAndStoreStamp();
 
         FieldDefinitionRecord fieldDef = FieldDefinitionRecordBuilder.builder()
@@ -103,9 +103,9 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
         assertTrue(msg.hasPatternChronology());
         var fieldDefs = msg.getPatternChronology().getPatternVersions(0).getFieldDefinitionsList();
         assertEquals(1, fieldDefs.size());
-        assertFalse(fieldDefs.get(0).getMeaningPublicId().getUuidsList().isEmpty());
-        assertFalse(fieldDefs.get(0).getDataTypePublicId().getUuidsList().isEmpty());
-        assertFalse(fieldDefs.get(0).getPurposePublicId().getUuidsList().isEmpty());
+        assertFalse(fieldDefs.get(0).getMeaningPublicId().getUuidBitsList().isEmpty());
+        assertFalse(fieldDefs.get(0).getDataTypePublicId().getUuidBitsList().isEmpty());
+        assertFalse(fieldDefs.get(0).getPurposePublicId().getUuidBitsList().isEmpty());
     }
 
     @Test

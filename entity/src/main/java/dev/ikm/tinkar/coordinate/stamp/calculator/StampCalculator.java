@@ -37,6 +37,7 @@ import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.factory.Lists;
@@ -56,8 +57,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
-
-import static dev.ikm.tinkar.terms.TinkarTerm.STAMP_PATTERN;
 
 /**
  * Computes latest versions of components at a stamp coordinate's position.
@@ -711,7 +710,8 @@ public interface StampCalculator {
     default ChangeChronology changeChronology(Entity<?> entity) {
         MutableList<VersionChangeRecord> versionChangeRecords = Lists.mutable.withInitialCapacity(entity.versions().size());
         List<DiTreeVersion<EntityVersion>> versionGraphList = getVersionGraphList((Entity<EntityVersion>) entity);
-        Latest<PatternEntityVersion> latestStampPattern = latest(STAMP_PATTERN.nid());
+        // The stamp version pattern names each stamp field a change is recorded against.
+        Latest<PatternEntityVersion> latestStampPattern = latest(EntityBinding.Stamp.Version.pattern().nid());
 
         latestStampPattern.ifPresent(stampPatternVersion -> {
             PatternEntityVersion patternForSemantic =
@@ -779,10 +779,17 @@ public interface StampCalculator {
     private static void addChangesForStampFieldsForPattern(PatternEntityVersion latestPatternVersion, StampRecord newVersionStamp,
                                                            StampRecord predecessorStamp, MutableList<FieldChangeRecord> fieldChanges,
                                                            EntityVersion newVersion) {
-        for (int fieldIndex = 0; fieldIndex < latestPatternVersion.fieldDefinitions().size(); fieldIndex++) {
-            FieldDefinitionForEntity fieldDefinitionRecord = latestPatternVersion.fieldDefinitions().get(fieldIndex);
-            Object newVersionValue = newVersionStamp.fieldValues().get(fieldIndex);
-            Object priorVersionValue = predecessorStamp.fieldValues().get(fieldIndex);
+        // A stamp's field values are status, time, author, module and path, in that order;
+        // the stamp version pattern names them at its own indexes.
+        int[] fieldIndexes = {EntityBinding.Stamp.Version.statusFieldDefinitionIndex(),
+                EntityBinding.Stamp.Version.timeFieldDefinitionIndex(),
+                EntityBinding.Stamp.Version.authorFieldDefinitionIndex(),
+                EntityBinding.Stamp.Version.moduleFieldDefinitionIndex(),
+                EntityBinding.Stamp.Version.pathFieldDefinitionIndex()};
+        for (int valueIndex = 0; valueIndex < fieldIndexes.length; valueIndex++) {
+            FieldDefinitionForEntity fieldDefinitionRecord = latestPatternVersion.fieldDefinitions().get(fieldIndexes[valueIndex]);
+            Object newVersionValue = newVersionStamp.fieldValues().get(valueIndex);
+            Object priorVersionValue = predecessorStamp.fieldValues().get(valueIndex);
             if (!Objects.deepEquals(newVersionValue, priorVersionValue)) {
                 fieldChanges.add(makeFieldChangeRecord(newVersionValue, newVersion,
                         fieldDefinitionRecord, priorVersionValue, predecessorStamp));

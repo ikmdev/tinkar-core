@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.reasoner.service;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -17,7 +18,6 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -208,7 +209,7 @@ public class InferredResultsWriter {
 
 
 			inferredPattern = EntityHandle.getPatternOrThrow(getViewCoordinateRecord().logicCoordinate().inferredAxiomsPatternNid());
-			inferredNavigationPattern = EntityHandle.getPatternOrThrow(TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid());
+			inferredNavigationPattern = EntityHandle.getPatternOrThrow(KernelTerm.INFERRED_NAVIGATION_PATTERN.nid());
 			multipleEndpointTimer = new MultipleEndpointTimer<>(IsomorphicResults.EndPoints.class);
 			equivalentSets = new ConcurrentHashSet<>();
 			axiomDataNotFoundCounter = new AtomicInteger();
@@ -633,8 +634,11 @@ public class InferredResultsWriter {
 	 * @return Optional containing the nid of the correct semantic, or empty if none exists
 	 */
 	private Optional<Integer> findCanonicalSemanticNid(PatternEntity<?> patternEntity, Entity<?> referencedComponent) {
-		int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(
-				referencedComponent.nid(), patternEntity.nid());
+		// A semantic the index lists but the store does not hold is passed over; one the store
+		// holds but cannot read throws, rather than reading as absent and being written again.
+		List<SemanticEntity<SemanticEntityVersion>> semantics = EntityService.get().semanticsForComponentOfPattern(
+				referencedComponent.nid(), patternEntity.nid()).toList();
+		int[] semanticNids = semantics.stream().mapToInt(SemanticEntity::nid).toArray();
 		
 		if (semanticNids.length == 0) {
 			return Optional.empty();
@@ -642,21 +646,7 @@ public class InferredResultsWriter {
 		
 		if (semanticNids.length == 1) {
 			// Verify the single semantic belongs to the expected pattern
-            SemanticEntity<?> semantic = null;
-            try {
-                semantic = EntityHandle.getSemanticOrThrow(semanticNids[0]);
-            } catch (Exception e) {
-				// see if semantic is null.
-                byte[] bytes = PrimitiveData.get().getBytes(semanticNids[0]);
-				if (bytes == null) {
-					LOG.error(e.getMessage());
-					LOG.error("Semantic is null for nid " + semanticNids[0]);
-				} else {
-					LOG.error(e.getMessage());
-					LOG.error("Bytes are present for nid " + semanticNids[0] + " bytes are " + Arrays.toString(bytes));
-				}
-				return Optional.empty();
-            }
+            SemanticEntity<?> semantic = semantics.getFirst();
             if (semantic.patternNid() != patternEntity.nid()) {
 				LOG.error("Pattern mismatch! Expected pattern {} but semantic {} has pattern {}. " +
 						"Referenced component: {}. This indicates a data or indexing corruption.",
@@ -676,8 +666,8 @@ public class InferredResultsWriter {
 		MutableIntList duplicateNids = IntLists.mutable.empty();
 		MutableIntList wrongPatternNids = IntLists.mutable.empty();
 		
-		for (int semanticNid : semanticNids) {
-			SemanticEntity<?> semantic = EntityHandle.getSemanticOrThrow(semanticNid);
+		for (SemanticEntity<?> semantic : semantics) {
+			int semanticNid = semantic.nid();
 			
 			// Verify semantic belongs to the expected pattern
 			if (semantic.patternNid() != patternEntity.nid()) {

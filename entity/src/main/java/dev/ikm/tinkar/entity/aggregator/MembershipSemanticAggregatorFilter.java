@@ -2,6 +2,7 @@ package dev.ikm.tinkar.entity.aggregator;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -33,7 +34,7 @@ public class MembershipSemanticAggregatorFilter extends EntityAggregatorFilter {
                 version instanceof SemanticEntityVersion semanticVersion && semanticVersion.fieldValues().isEmpty();
 
         IntConsumer membershipSemanticConsumer = (nid) ->
-            EntityService.get().getEntity(nid).ifPresentOrElse((entity) -> {
+            EntityHandle.get(nid).entity().filter(e -> !e.canceled()).ifPresentOrElse((entity) -> {
                 // Filter out Membership Semantics (i.e., semantics with no fields) that are not in the acceptable list
                 if (entity instanceof SemanticEntity<?> semanticEntity
                         && semanticEntity.versions().stream().anyMatch(hasZeroSemanticFields)

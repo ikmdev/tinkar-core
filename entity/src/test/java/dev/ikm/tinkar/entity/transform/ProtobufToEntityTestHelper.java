@@ -87,7 +87,14 @@ public class ProtobufToEntityTestHelper {
     }
 
     public static int getNid(PublicId publicId) {
-        Integer nid = nidRegistry.get(publicId.asUuidArray()[0]);
+        // Registered under every UUID, so any of the public id's UUIDs finds it.
+        Integer nid = null;
+        for (UUID uuid : publicId.asUuidArray()) {
+            nid = nidRegistry.get(uuid);
+            if (nid != null) {
+                break;
+            }
+        }
         if (nid == null) {
             throw new IllegalStateException("No NID registered for PublicId: " + publicId);
         }
@@ -112,7 +119,7 @@ public class ProtobufToEntityTestHelper {
 
     public static dev.ikm.tinkar.schema.PublicId createPBPublicId(PublicId publicId) {
         return dev.ikm.tinkar.schema.PublicId.newBuilder()
-                .addUuids(publicId.asUuidList().get(0).toString()).build();
+                .addAllUuids(publicId.asUuidList().collect(UUID::toString)).build();
     }
 
     /**

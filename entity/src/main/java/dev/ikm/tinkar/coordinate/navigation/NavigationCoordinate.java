@@ -15,20 +15,17 @@
  */
 package dev.ikm.tinkar.coordinate.navigation;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.set.ImmutableSet;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -42,7 +39,7 @@ import java.util.UUID;
 public interface NavigationCoordinate {
 
     static IntIdSet defaultNavigationConceptIdentifierNids() {
-        return IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION.nid());
+        return IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid());
     }
 
     default UUID getNavigationCoordinateUuid() {
@@ -79,10 +76,6 @@ public interface NavigationCoordinate {
      * @return the priority list of patterns to use to sort the vertices.
      */
     IntIdList verticesSortPatternNidList();
-
-    default ImmutableSet<Concept> getNavigationIdentifierConcepts() {
-        return IntSets.immutable.of(navigationPatternNids().toArray()).collect(nid -> Entity.getFast(nid));
-    }
 
     NavigationCoordinateRecord toNavigationCoordinateRecord();
 

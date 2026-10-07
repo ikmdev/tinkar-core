@@ -25,10 +25,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestProtobufToEntityPublicIdTransform {
@@ -70,7 +73,7 @@ public class TestProtobufToEntityPublicIdTransform {
         Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
         PublicId expectedPublicId = testConcept.publicId();
         dev.ikm.tinkar.schema.PublicId pbPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder()
-                .addUuids(expectedPublicId.asUuidList().get(0).toString()).build();
+                .addAllUuids(expectedPublicId.asUuidList().collect(UUID::toString)).build();
 
         // When I try to transform it into a public ID protobuf message
         PublicId actualPublicId = TinkarSchemaToEntityTransformer.getInstance().transformPublicId(pbPublicId);
@@ -79,7 +82,7 @@ public class TestProtobufToEntityPublicIdTransform {
         assertEquals(actualPublicId, expectedPublicId, "Public ID's do not match.");
         assertEquals(actualPublicId.publicIdHash(), expectedPublicId.publicIdHash(), "Public ID's do not match.");
         assertEquals(actualPublicId.idString(), expectedPublicId.idString(), "Public ID's do not match.");
-        assertEquals(actualPublicId.asUuidList().get(0), expectedPublicId.asUuidList().get(0), "Public ID's do not match.");
+        assertTrue(PublicId.equals(actualPublicId, expectedPublicId), "Public ID's do not match.");
     }
 
     /**
@@ -88,14 +91,13 @@ public class TestProtobufToEntityPublicIdTransform {
     @Test
     @DisplayName("Transform a Public ID With Two UUIDs Present")
     public void publicIdTransformWithTwoUUIDS() {
-        // Given two PBPublic ID with two UUID
-        Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
-        PublicId actualOnePublicId = testConcept.publicId();
-        PublicId actualTwoPublicId = testConcept.publicId();
-        PublicId expectedCombinedSource = PublicIds.of(actualOnePublicId.asUuidList().get(0), actualTwoPublicId.asUuidList().get(0));
+        // Given a PBPublic ID with two distinct UUIDs
+        UUID one = UUID.randomUUID();
+        UUID two = UUID.randomUUID();
+        PublicId expectedCombinedSource = PublicIds.of(one, two);
         dev.ikm.tinkar.schema.PublicId pbPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder()
-                .addUuids(actualOnePublicId.asUuidList().get(0).toString())
-                .addUuids(actualTwoPublicId.asUuidList().get(0).toString())
+                .addUuids(one.toString())
+                .addUuids(two.toString())
                 .build();
 
         // When I try to transform them into a public ID protobuf message
@@ -106,7 +108,6 @@ public class TestProtobufToEntityPublicIdTransform {
         assertEquals(expectedCombinedSource.publicIdHash(), actualPublicId.publicIdHash(), "Public ID's hashes do not match.");
         assertEquals(expectedCombinedSource.idString(), actualPublicId.idString(), "Public ID's ID string do not match.");
         assertEquals(2, actualPublicId.asUuidList().size(), "Public ID's size do not match.");
-        assertEquals(expectedCombinedSource.asUuidList().get(0), actualPublicId.asUuidList().get(0), "Public ID's UUID lists from index 0 do not match.");
-        assertEquals(expectedCombinedSource.asUuidList().get(1), actualPublicId.asUuidList().get(1), "Public ID's UUID lists do not match from index 1.");
+        assertArrayEquals(expectedCombinedSource.asUuidArray(), actualPublicId.asUuidArray(), "Public ID's UUIDs do not match.");
     }
 }

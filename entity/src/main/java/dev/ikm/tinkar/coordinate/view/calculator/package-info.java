@@ -267,7 +267,7 @@
  *         DiTreeEntity tree = statedAxioms.get();
  *         analysis.setStatedAxioms(tree);
  *         analysis.setSufficientlyDefined(
- *             tree.containsVertexWithMeaning(TinkarTerm.SUFFICIENT_SET)
+ *             tree.containsVertexWithMeaning(KernelTerm.SUFFICIENT_SET)
  *         );
  *     }
  *

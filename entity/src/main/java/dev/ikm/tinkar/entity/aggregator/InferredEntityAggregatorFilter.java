@@ -1,11 +1,12 @@
 package dev.ikm.tinkar.entity.aggregator;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 
@@ -21,11 +22,11 @@ public class InferredEntityAggregatorFilter extends EntityAggregatorFilter {
     public EntityCountSummary aggregate(IntConsumer nidConsumer) {
         initCounts();
         final ImmutableList<Integer> inferredNidList = Lists.immutable.of(
-                TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid(),
-                TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid());
+                KernelTerm.INFERRED_NAVIGATION_PATTERN.nid(),
+                KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid());
 
         IntConsumer inferredFilterConsumer = (nid) -> {
-            Entity<? extends EntityVersion> entity = EntityService.get().getEntityFast(nid);
+            Entity<? extends EntityVersion> entity = EntityHandle.get(nid).orNull();
             // Filter out inferred Semantics
             if (entity instanceof SemanticEntity semanticEntity
                 && inferredNidList.contains(semanticEntity.patternNid())) {

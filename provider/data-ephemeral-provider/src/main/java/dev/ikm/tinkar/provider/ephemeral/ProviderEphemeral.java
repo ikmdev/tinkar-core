@@ -15,10 +15,12 @@
  */
 package dev.ikm.tinkar.provider.ephemeral;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
@@ -44,7 +46,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 
-public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
+public class ProviderEphemeral implements PrimitiveDataService, EntityStore, NidGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(ProviderEphemeral.class);
     protected static AtomicReference<ProviderEphemeral> providerReference = new AtomicReference<>();
     protected static ProviderEphemeral singleton;
@@ -69,6 +71,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     private ProviderEphemeral() {
         LOG.info("Constructing ProviderEphemeral");
+        NidLayout.activate(NidLayout.SEQUENTIAL);
     }
 
     public static PrimitiveDataService provider() {
@@ -147,12 +150,22 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        throw new UnsupportedOperationException();
+        nids.primitiveParallelStream().forEach(nid -> {
+            byte[] bytes = nidComponentMap.get(nid);
+            if (bytes != null) {
+                action.accept(bytes, nid);
+            }
+        });
     }
 
     @Override
     public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        throw new UnsupportedOperationException();
+        nids.forEach(nid -> {
+            byte[] bytes = nidComponentMap.get(nid);
+            if (bytes != null) {
+                action.accept(bytes, nid);
+            }
+        });
     }
 
     @Override
@@ -163,6 +176,8 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     @Override
     public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
         if (!nidToPatternNidMap.containsKey(nid)) {
+            // A concept, pattern or stamp comes with the not-applicable sentinel,
+            // Integer.MAX_VALUE (Nid.NOT_APPLICABLE), as its pattern; only a semantic is indexed.
             this.nidToPatternNidMap.put(nid, patternNid);
             if (patternNid != Integer.MAX_VALUE) {
 

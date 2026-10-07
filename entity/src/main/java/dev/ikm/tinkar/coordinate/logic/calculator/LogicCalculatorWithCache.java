@@ -15,8 +15,12 @@
  */
 package dev.ikm.tinkar.coordinate.logic.calculator;
 
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinate;
@@ -27,12 +31,10 @@ import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
-import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.Field;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +42,7 @@ import java.util.OptionalInt;
 
 public class LogicCalculatorWithCache implements LogicCalculator {
     private static final Logger LOG = LoggerFactory.getLogger(LogicCalculatorWithCache.class);
-    private static final ConcurrentReferenceHashMap<LogicAndStampCoordinate, LogicCalculatorWithCache> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final Cache<LogicAndStampCoordinate, LogicCalculatorWithCache> SINGLETONS = Caffeine.newBuilder().weakValues().build();
 
     ;
     private final LogicCoordinateRecord logicCoordinateRecord;
@@ -63,7 +63,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
      * @return the stampCoordinateRecord
      */
     public static LogicCalculatorWithCache getCalculator(LogicCoordinate logicCoordinate, StampCoordinate stampCoordinate) {
-        return SINGLETONS.computeIfAbsent(new LogicAndStampCoordinate(logicCoordinate.toLogicCoordinateRecord(),
+        return SINGLETONS.get(new LogicAndStampCoordinate(logicCoordinate.toLogicCoordinateRecord(),
                         stampCoordinate.toStampCoordinateRecord()),
                 logicCoordinateRecord -> new LogicCalculatorWithCache(logicCoordinate, stampCoordinate));
     }
@@ -74,7 +74,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     public static class CacheProvider implements CachingService {
         @Override
         public void reset() {
-            SINGLETONS.clear();
+            SINGLETONS.invalidateAll();
         }
     }
 
@@ -88,7 +88,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     public boolean hasSufficientSet(int nid) {
         int axiomsPatternNid = logicCoordinateRecord.statedAxiomsPatternNid();
 
-        int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(nid, axiomsPatternNid);
+        int[] semanticNids = EntityStore.current().semanticNidsForComponentOfPattern(nid, axiomsPatternNid);
         switch (semanticNids.length) {
             case 0:
                 // TODO Raise an alert... ?
@@ -97,12 +97,12 @@ public class LogicCalculatorWithCache implements LogicCalculator {
                 Latest<SemanticEntityVersion> latestAxioms = stampCalculator.latest(semanticNids[0]);
                 if (latestAxioms.isPresent()) {
                     SemanticEntityVersion axioms = latestAxioms.get();
-                    OptionalInt optionalIndexForMeaning = stampCalculator.getIndexForMeaning(axiomsPatternNid, TinkarTerm.EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS.nid());
+                    OptionalInt optionalIndexForMeaning = stampCalculator.getIndexForMeaning(axiomsPatternNid, KernelTerm.EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS.nid());
                     if (optionalIndexForMeaning.isPresent()) {
                         DiTreeEntity axiomsField =
                                 (DiTreeEntity) axioms.fieldValues().get(optionalIndexForMeaning.getAsInt());
                         for (EntityVertex vertex : axiomsField.vertexMap()) {
-                            if (vertex.getMeaningNid() == TinkarTerm.SUFFICIENT_SET.nid()) {
+                            if (vertex.getMeaningNid() == KernelTerm.SUFFICIENT_SET.nid()) {
                                 return true;
                             }
                         }
@@ -118,7 +118,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
                     };
                 }
                 // TODO Raise an alert...
-                throw new IllegalStateException("More than one set of axioms for concept: " + Entity.getFast(nid));
+                throw new IllegalStateException("More than one set of axioms for concept: " + DiagnosticText.component(nid));
         }
     }
 
@@ -126,10 +126,10 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     public Latest<SemanticEntityVersion> getAxiomSemanticForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
         int[] semanticNids = switch (premiseType) {
             case STATED -> {
-                yield PrimitiveData.get().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().statedAxiomsPatternNid());
+                yield EntityStore.current().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().statedAxiomsPatternNid());
             }
             case INFERRED -> {
-                yield PrimitiveData.get().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().inferredAxiomsPatternNid());
+                yield EntityStore.current().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().inferredAxiomsPatternNid());
             }
             default -> {
                 throw new IllegalStateException("Can't handle PremiseType: " + premiseType);
@@ -149,10 +149,10 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     public Latest<DiTreeEntity> getAxiomTreeForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
         int[] semanticNids = switch (premiseType) {
             case STATED -> {
-                yield PrimitiveData.get().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().statedAxiomsPatternNid());
+                yield EntityStore.current().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().statedAxiomsPatternNid());
             }
             case INFERRED -> {
-                yield PrimitiveData.get().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().inferredAxiomsPatternNid());
+                yield EntityStore.current().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().inferredAxiomsPatternNid());
             }
             default -> {
                 throw new IllegalStateException("Can't handle PremiseType: " + premiseType);
@@ -168,10 +168,10 @@ public class LogicCalculatorWithCache implements LogicCalculator {
 
         Latest<Field<DiTreeEntity>> latestAxiomField = switch (premiseType) {
             case INFERRED -> {
-                yield stampCalculator.getFieldForSemanticWithMeaning(semanticNids[0], TinkarTerm.EL_PLUS_PLUS_INFERRED_TERMINOLOGICAL_AXIOMS);
+                yield stampCalculator.getFieldForSemanticWithMeaning(semanticNids[0], KernelTerm.EL_PLUS_PLUS_INFERRED_TERMINOLOGICAL_AXIOMS);
             }
             case STATED -> {
-                yield stampCalculator.getFieldForSemanticWithMeaning(semanticNids[0], TinkarTerm.EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS);
+                yield stampCalculator.getFieldForSemanticWithMeaning(semanticNids[0], KernelTerm.EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS);
             }
         };
         if (latestAxiomField.isPresent()) {

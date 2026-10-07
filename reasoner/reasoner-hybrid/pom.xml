@@ -58,10 +58,12 @@
 		<dependency>
 			<groupId>dev.ikm.elk</groupId>
 			<artifactId>elk-snomed-test</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>dev.ikm.tinkar.ext.owl</groupId>
 			<artifactId>owl-extension</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>dev.ikm.hybrid-reasoner</groupId>
@@ -70,6 +72,11 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>dev.ikm.tinkar</groupId>
+			<artifactId>test-logging</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

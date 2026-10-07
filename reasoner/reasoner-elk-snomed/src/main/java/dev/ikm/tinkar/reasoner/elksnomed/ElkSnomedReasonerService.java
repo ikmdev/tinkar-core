@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import java.util.HashMap;
 import java.util.concurrent.CancellationException;
 import java.util.List;
@@ -40,13 +41,11 @@ import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.ext.lang.owl.OwlElToLogicalExpression;
 import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
 import dev.ikm.tinkar.reasoner.service.UnsupportedReasonerProcessIncremental;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
@@ -183,11 +182,6 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public void processIncremental(SemanticEntityVersion update, TrackingCallable<?> progressUpdater) {
 		processIncremental(List.of(), List.of(update), new TrackingCallable<Object>() {
 			@Override
@@ -229,7 +223,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		logMissingReasonerConcepts(superConcepts);
 		
 		nnfb = NecessaryNormalFormBuilder.create(ontology, superConcepts, superRoleTypes, 
-			TinkarTerm.ROOT_VERTEX.nid(), 
+			KernelTerm.ROOT_VERTEX.nid(), 
 			(int workDone, int max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
 	}
