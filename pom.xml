@@ -105,10 +105,10 @@
         <!-- The nid build check: how it reports, which classes may narrow a nid (the providers
              that keep int nids, the format 1 entity codec, the test of Nid itself, and, until
              the widening, the reasoner tests that map elk's long ids back to int nids), and
-             javac's cap on warnings, raised for a census. -->
+             javac's cap on warnings, high enough that no warning is dropped. -->
         <nid-check.report>error</nid-check.report>
         <nid-check.allow>dev.ikm.tinkar.provider.,dev.ikm.tinkar.entity.EntityRecordFactory,dev.ikm.tinkar.common.id.NidTest,dev.ikm.tinkar.reasoner.elksnomed.test.,dev.ikm.tinkar.reasoner.hybrid.test.</nid-check.allow>
-        <javac.maxwarns>100</javac.maxwarns>
+        <javac.maxwarns>10000</javac.maxwarns>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
 
         <maven.github-flow.version>1.21.1-r11</maven.github-flow.version>
