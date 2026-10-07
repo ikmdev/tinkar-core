@@ -35,6 +35,8 @@ import org.eclipse.collections.api.factory.primitive.IntLists;
 import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
 import dev.ikm.tinkar.common.service.ProviderController;
 import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.common.service.SearchService;
+import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.service.ServiceExclusionGroup;
 import dev.ikm.tinkar.common.service.ServiceLifecyclePhase;
 import dev.ikm.tinkar.common.service.TinkExecutor;
@@ -602,13 +604,19 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
         loadPhase = true;
         loadPhaseSearchPolicy.reset();
         PrimitiveData.get().setLoadPhase(true);
+        runningSearchService().ifPresent(search -> search.setLoadPhase(true));
     }
 
     @Override
     public void endLoadPhase() {
         loadPhase = false;
         PrimitiveData.get().setLoadPhase(false);
+        runningSearchService().ifPresent(search -> search.setLoadPhase(false));
         processor.dispatch(Integer.MIN_VALUE);
+    }
+
+    private static Optional<SearchService> runningSearchService() {
+        return ServiceLifecycleManager.get().getRunningService(SearchService.class);
     }
 
     /**

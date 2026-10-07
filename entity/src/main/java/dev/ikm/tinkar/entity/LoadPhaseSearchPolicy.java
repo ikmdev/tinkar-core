@@ -41,11 +41,12 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p>Behavior matrix:
  * <ul>
  *   <li>Change-set ≤ threshold: live-index every merge; no recreate at end.
- *       Index stays continuously current.</li>
+ *       The documents are written as the merges happen and become visible
+ *       to searches in one refresh when the load phase ends.</li>
  *   <li>Change-set &gt; threshold: live-index the first {@code threshold}
  *       merges, then skip the rest; full recreate at end. Worst case is
- *       marginally slower than today (the live-indexed prefix adds NRT-refresh
- *       overhead before fallback fires) but covers every change-set
+ *       marginally slower than today (the live-indexed prefix is indexed
+ *       again by the recreate) but covers every change-set
  *       conservatively.</li>
  *   <li>Initial bulk load: overflows the threshold quickly, falls back to
  *       full recreate. Identical to today.</li>

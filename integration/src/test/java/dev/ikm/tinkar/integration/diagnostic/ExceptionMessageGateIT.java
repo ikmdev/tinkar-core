@@ -20,15 +20,17 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -157,15 +159,32 @@ class ExceptionMessageGateIT {
         assertEquals(0, hits("/* new IllegalStateException(\"old: \" + PrimitiveData.text(nid)) */ int x;"));
     }
 
-    /** Every main source file of every module of tinkar-core. */
+    /**
+     * Every main source file of every module of tinkar-core. Build output is skipped
+     * rather than walked: the integration suites running alongside this one create and
+     * delete their stores under {@code integration/target} while the walk is going on.
+     */
     private static List<Path> mainSources() throws IOException {
-        try (Stream<Path> files = Files.walk(TINKAR_CORE)) {
-            return files.filter(path -> path.toString().endsWith(".java"))
-                    .filter(path -> path.toString().replace('\\', '/').contains(MAIN_SOURCES))
-                    .filter(path -> !path.toString().replace('\\', '/').contains("/target/"))
-                    .sorted()
-                    .toList();
-        }
+        List<Path> sources = new ArrayList<>();
+        Files.walkFileTree(TINKAR_CORE, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attributes) {
+                String name = dir.getFileName() == null ? "" : dir.getFileName().toString();
+                return name.equals("target") || name.equals(".git") ? FileVisitResult.SKIP_SUBTREE
+                        : FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+                String path = file.toString().replace('\\', '/');
+                if (path.endsWith(".java") && path.contains(MAIN_SOURCES)) {
+                    sources.add(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        sources.sort(null);
+        return sources;
     }
 
     /** How many findings the gate makes in a piece of source. */

@@ -25,6 +25,8 @@
             --enable-preview
             -Xmx12G
         </surefireArgLine>
+        <!-- How many suites run at once; -Dintegration.forkCount=1 runs them one at a time. -->
+        <integration.forkCount>0.5C</integration.forkCount>
     </properties>
 
 
@@ -203,10 +205,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
-                    <!-- Producer/consumer IT pairs (ForwardReferenceChangeSetGenerateIT
-                         before ...IngestIT, ExportDataIT before ImportDataIT) rely on
-                         alphabetical class order; the default is filesystem-dependent -->
-                    <runOrder>alphabetical</runOrder>
+                    <!-- Suites run in parallel JVMs, still one fresh JVM per suite
+                         (reuseForks=false from ike-parent). No suite depends on another:
+                         each keeps its store and files in a directory named on the suite,
+                         and a suite that needs more than one store lifetime runs the others
+                         as ForkedJvm stages. -->
+                    <forkCount>${integration.forkCount}</forkCount>
                 </configuration>
                 <executions>
                     <execution>
