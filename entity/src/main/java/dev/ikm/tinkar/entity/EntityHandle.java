@@ -269,7 +269,7 @@ import java.util.function.Supplier;
  * <p><b>Anti-patterns to avoid:</b></p>
  * <pre>{@code
  * // ❌ DON'T: Unsafe cast (bypasses type checking)
- * ConceptEntity concept = (ConceptEntity) Entity.getFast(nid);
+ * ConceptEntity concept = (ConceptEntity) EntityHandle.get(nid).orNull();
  *
  * // ❌ DON'T: Verbose Optional handling when type is guaranteed
  * ConceptEntity meaning = EntityHandle.get(meaningNid())

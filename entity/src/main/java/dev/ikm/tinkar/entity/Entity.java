@@ -102,9 +102,8 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * ConceptEntity concept = EntityHandle.getConceptOrThrow(publicId);
  * SemanticEntity semantic = EntityHandle.getSemanticOrThrow(entityFacade);
  *
- * // ❌ WRONG: Direct static method (deprecated, will be removed)
- * Optional<Entity> entity = Entity.get(nid); // DON'T DO THIS
- * Entity entity = Entity.getFast(nid);        // DON'T DO THIS
+ * // ❌ WRONG: Unchecked cast (bypasses type checking)
+ * ConceptEntity concept = (ConceptEntity) EntityHandle.get(nid).orNull(); // DON'T DO THIS
  * }</pre>
  *
  * <h2>When to Use Entity vs ObservableEntity</h2>

@@ -138,7 +138,7 @@ public class TransformTestHelper {
     /**
      * Loads test concepts from JSON, assigns real NIDs via Entity.nid(),
      * and stores ConceptRecord entities in the ephemeral provider so
-     * getEntityFast(nid) works for entity-to-protobuf tests.
+     * EntityHandle.get(nid) finds them for entity-to-protobuf tests.
      */
     public static Map<String, Concept> loadTestConcepts(Object test) {
         Map<String, Concept> conceptMap = new HashMap<>();
@@ -155,7 +155,7 @@ public class TransformTestHelper {
             // Entity.nid() assigns a real NID via the running provider
             int nid = Entity.nid(concept.publicId());
 
-            // Store a real ConceptRecord so Entity.provider().getEntityFast(nid) works
+            // Store a real ConceptRecord so EntityHandle.get(nid) finds it
             storeConceptEntity(concept.publicId(), nid);
 
             conceptMap.put(name, concept);

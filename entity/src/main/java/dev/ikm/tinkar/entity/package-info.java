@@ -196,11 +196,11 @@
  *
  * <pre>{@code
  * // NID-based access (fast, local)
- * ConceptEntity concept = Entity.getFast(nid);
+ * ConceptEntity concept = EntityHandle.get(nid).expectConcept();
  *
  * // PublicId-based access (universal)
  * PublicId publicId = Entity.provider().publicId(nid);
- * Optional<Integer> nidOpt = Entity.provider().nidForPublicId(publicId);
+ * int nidAgain = Entity.provider().nidForPublicId(publicId);
  * }</pre>
  *
  * <p><b>Entity Versioning and Chronology</b></p>
@@ -372,7 +372,7 @@
  *
  * <ul>
  * <li><strong>Use NIDs for internal operations</strong> - Much faster than PublicIds</li>
- * <li><strong>Cache entities when reusing</strong> - Entity.getFast() is optimized but not free</li>
+ * <li><strong>Cache entities when reusing</strong> - EntityHandle.get() is optimized but not free</li>
  * <li><strong>Use STAMP calculators</strong> - Built-in caching for version resolution</li>
  * <li><strong>Batch semantic queries</strong> - forEachSemanticForComponent more efficient
  * than individual lookups</li>

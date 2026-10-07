@@ -235,7 +235,7 @@
  * // Synchronize changes from source to target
  * void syncChanges(StampPositionRecord lastSync, StampPositionRecord now) {
  *     for (int nid : allEntityNids) {
- *         Entity entity = Entity.getFast(nid);
+ *         Entity entity = EntityHandle.get(nid).expectEntity();
  *         ChangeChronology changes = calc.getChanges(entity, lastSync, now);
  *
  *         if (!changes.versionChanges().isEmpty()) {
@@ -271,7 +271,7 @@
  *     StampPositionRecord nowPos = StampPositionRecord.make(now, path);
  *
  *     for (int subscribedNid : subscribedEntities) {
- *         Entity entity = Entity.getFast(subscribedNid);
+ *         Entity entity = EntityHandle.get(subscribedNid).expectEntity();
  *         ChangeChronology changes = calc.getChanges(entity, lastCheck, nowPos);
  *
  *         if (!changes.versionChanges().isEmpty()) {
