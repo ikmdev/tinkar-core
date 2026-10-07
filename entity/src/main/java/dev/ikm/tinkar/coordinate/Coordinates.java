@@ -22,13 +22,11 @@ import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinate;
 import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
-import dev.ikm.tinkar.coordinate.stamp.StampPathImmutable;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.factory.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -224,17 +222,6 @@ public class Coordinates {
 
         public static StampPositionRecord LatestOnMaster() {
             return StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.MASTER_PATH);
-        }
-    }
-
-    public static class Path {
-
-        public static StampPathImmutable Master() {
-            return StampPathImmutable.make(TinkarTerm.MASTER_PATH, Sets.immutable.of(StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.PRIMORDIAL_PATH.nid())));
-        }
-
-        public static StampPathImmutable Development() {
-            return StampPathImmutable.make(TinkarTerm.DEVELOPMENT_PATH, Sets.immutable.of(StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.SANDBOX_PATH.nid())));
         }
     }
 

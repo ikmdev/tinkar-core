@@ -116,7 +116,7 @@
  * <p>Represents a development path. Key methods:</p>
  * <ul>
  * <li>{@code pathConceptNid()} - Get path concept identifier</li>
- * <li>{@code pathOrigins()} - Get origin positions (where path branched from)</li>
+ * <li>{@code getPathOrigins()} - Get origin positions (where path branched from)</li>
  * </ul>
  *
  * <p><b>StateSet Enumeration</b></p>
@@ -225,7 +225,7 @@
  * <pre>{@code
  * // Master path originates from primordial path
  * StampPathImmutable masterPath = StampPathImmutable.make(
- *     TinkarTerm.MASTER_PATH,
+ *     TinkarTerm.MASTER_PATH.nid(),
  *     Sets.immutable.of(
  *         StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.PRIMORDIAL_PATH.nid())
  *     )
@@ -233,7 +233,7 @@
  *
  * // Development path branches from master
  * StampPathImmutable devPath = StampPathImmutable.make(
- *     TinkarTerm.DEVELOPMENT_PATH,
+ *     TinkarTerm.DEVELOPMENT_PATH.nid(),
  *     Sets.immutable.of(
  *         StampPositionRecord.make(branchTimestamp, TinkarTerm.MASTER_PATH.nid())
  *     )

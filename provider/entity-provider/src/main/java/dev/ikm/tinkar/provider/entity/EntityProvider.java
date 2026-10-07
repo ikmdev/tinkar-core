@@ -150,7 +150,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         LOG.error("ERROR getting string for nid: " + anyString);
                         LOG.error("ERROR Nid - 2: <" + (nid - 2) + "> " + getChronology(nid - 2));
                         LOG.error("ERROR Nid - 1: <" + (nid - 1) + "> " + getChronology(nid - 1));
-                        LOG.error("ERROR Nid: <" + nid + "> " + getChronology(nid - 1));
+                        LOG.error("ERROR Nid: <" + nid + "> " + getChronology(nid));
                         LOG.error("ERROR Nid + 1: <" + (nid + 1) + "> " + getChronology(nid + 1));
                         LOG.error("ERROR Nid + 2: <" + (nid + 2) + "> " + getChronology(nid + 2));
 

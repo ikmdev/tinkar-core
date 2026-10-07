@@ -42,11 +42,6 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     private final int pathConceptNid;
     private final ImmutableSet<StampPositionRecord> pathOrigins;
 
-    private StampPathImmutable(ConceptFacade pathConcept, ImmutableSet<StampPositionRecord> pathOrigins) {
-        this.pathConceptNid = pathConcept.nid();
-        this.pathOrigins = pathOrigins;
-    }
-
     private StampPathImmutable(int pathConceptNid, ImmutableSet<StampPositionRecord> pathOrigins) {
         this.pathConceptNid = pathConceptNid;
         this.pathOrigins = pathOrigins;
@@ -61,10 +56,6 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
             mutableOrigins.add(StampPositionRecord.make(in.readLong(), in.readNid()));
         }
         this.pathOrigins = mutableOrigins.toImmutable();
-    }
-
-    public static StampPathImmutable make(ConceptFacade pathConcept, ImmutableSet<StampPositionRecord> pathOrigins) {
-        return make(pathConcept, pathOrigins);
     }
 
     public static StampPathImmutable make(int pathConceptNid, ImmutableSet<StampPositionRecord> pathOrigins) {

@@ -203,8 +203,8 @@
  *     }
  *
  *     // Check path origins (branching)
- *     StampPath coordPath = pathService.getPath(coordPathNid);
- *     for (StampPosition origin : coordPath.pathOrigins()) {
+ *     StampPath coordPath = StampPathImmutable.make(coordPathNid);
+ *     for (StampPosition origin : coordPath.getPathOrigins()) {
  *         if (origin.getPathForPositionNid() == stampPathNid &&
  *             stamp.time() <= origin.time()) {
  *             return true; // Stamp predates branch point
