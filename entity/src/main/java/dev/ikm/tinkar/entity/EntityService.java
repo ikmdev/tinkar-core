@@ -386,6 +386,41 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         return count.sum();
     }
 
+    /**
+     * How many semantics of a pattern the store holds, counted without reading them: the length
+     * of the pattern's index. A view that shows the first few semantics of a pattern and the
+     * number of the rest uses this, with {@link #semanticsOfPattern(int)} limited, so it reads
+     * only what it shows; counting with {@link #forEachSemanticOfPattern} reads every semantic.
+     *
+     * @param patternNid the pattern
+     * @return the number of semantics its index lists
+     */
+    default int countSemanticsOfPattern(int patternNid) {
+        if (keysNoSemantics(patternNid)) {
+            return 0;
+        }
+        return EntityStore.current().semanticNidsOfPattern(patternNid).length;
+    }
+
+    /**
+     * Whether a pattern is one whose elements are not semantics: the concept, stamp and pattern
+     * binding patterns. A pattern-keyed store keys every concept, stamp and pattern under one of
+     * them, so their index lists concepts, stamps and patterns; none of them has a semantic.
+     *
+     * @param patternNid the pattern
+     * @return {@code true} for the concept, stamp and pattern binding patterns
+     */
+    static boolean keysNoSemantics(int patternNid) {
+        // By nid: most stores keep no map from a nid back to its public id.
+        for (PublicId binding : List.of(EntityBinding.Concept.pattern().publicId(),
+                EntityBinding.Stamp.pattern().publicId(), EntityBinding.Pattern.pattern().publicId())) {
+            if (PrimitiveData.get().hasPublicId(binding) && PrimitiveData.get().nidForPublicId(binding) == patternNid) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
     void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);

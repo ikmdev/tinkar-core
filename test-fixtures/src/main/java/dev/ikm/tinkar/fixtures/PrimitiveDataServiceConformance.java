@@ -36,12 +36,15 @@ import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.terms.EntityBinding;
+import dev.ikm.tinkar.terms.EntityProxy;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.eclipse.collections.api.factory.primitive.LongLists;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -268,6 +271,33 @@ public abstract class PrimitiveDataServiceConformance {
         assertEquals(0, EntityStore.current().semanticNidsForComponent(world.otherConcept().nid()).length);
         assertEquals(0, EntityStore.current()
                 .semanticNidsForComponentOfPattern(world.otherConcept().nid(), world.pattern().nid()).length);
+    }
+
+    @Test
+    void aPatternsSemanticsAreCountedAndStreamed() {
+        World world = makeWorld();
+        assertEquals(1, EntityService.get().countSemanticsOfPattern(world.pattern().nid()));
+        assertEquals(List.of(world.semantic().nid()), EntityService.get().semanticsOfPattern(world.pattern().nid())
+                .map(semantic -> semantic.nid()).toList());
+    }
+
+    /**
+     * The concept, stamp and pattern binding patterns have no semantics. A pattern-keyed store
+     * keys concepts, stamps and patterns under them, so their index lists those; the entity layer
+     * must not give them out as semantics (IKE-Network/ike-issues#1248).
+     */
+    @Test
+    void theBindingPatternsHaveNoSemantics() {
+        makeWorld();
+        for (EntityProxy.Pattern binding : List.of(EntityBinding.Concept.pattern(), EntityBinding.Stamp.pattern(),
+                EntityBinding.Pattern.pattern())) {
+            int patternNid = EntityService.get().nidForPattern(binding.publicId());
+            List<Integer> given = new java.util.ArrayList<>();
+            EntityService.get().forEachSemanticOfPattern(patternNid, semantic -> given.add(semantic.nid()));
+            assertEquals(List.of(), given, binding.description());
+            assertEquals(0, EntityService.get().semanticsOfPattern(patternNid).count(), binding.description());
+            assertEquals(0, EntityService.get().countSemanticsOfPattern(patternNid), binding.description());
+        }
     }
 
     // ---------- the world ----------

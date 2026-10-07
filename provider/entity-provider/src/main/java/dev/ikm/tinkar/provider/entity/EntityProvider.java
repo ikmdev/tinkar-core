@@ -69,7 +69,6 @@ import java.util.concurrent.FutureTask;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.IntStream;
-import java.util.Objects;
 
 import static dev.ikm.tinkar.terms.KernelTerm.DESCRIPTION_PATTERN;
 
@@ -373,11 +372,17 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
 
     @Override
     public void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
+        if (EntityService.keysNoSemantics(patternNid)) {
+            return;
+        }
         EntityStore.current().forEachSemanticNidOfPattern(patternNid, (int nid) -> acceptSemantic(nid, procedure));
     }
 
     @Override
     public Stream<SemanticEntity<SemanticEntityVersion>> semanticsOfPattern(int patternNid) {
+        if (EntityService.keysNoSemantics(patternNid)) {
+            return Stream.empty();
+        }
         return semantics(EntityStore.current().semanticNidsOfPattern(patternNid));
     }
 
@@ -391,18 +396,23 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
         return semantics(EntityStore.current().semanticNidsForComponentOfPattern(componentNid, patternNid));
     }
 
-    /** The semantics with these nids, read as the stream reaches them; a nid with no entity is passed over. */
+    /**
+     * The semantics with these nids, read as the stream reaches them; a nid with no entity, or
+     * whose entity is not a semantic, is passed over.
+     */
+    @SuppressWarnings("unchecked")
     private Stream<SemanticEntity<SemanticEntityVersion>> semantics(int[] nids) {
         return IntStream.of(nids)
-                .mapToObj(nid -> this.<SemanticEntity<SemanticEntityVersion>, SemanticEntityVersion>getEntityFast(nid))
-                .filter(Objects::nonNull);
+                .mapToObj(nid -> (Entity<?>) getEntityFast(nid))
+                .filter(entity -> entity instanceof SemanticEntity)
+                .map(entity -> (SemanticEntity<SemanticEntityVersion>) entity);
     }
 
-    /** Gives the consumer the semantic with this nid, unless no entity has it. */
+    /** Gives the consumer the semantic with this nid, unless no entity has it or it is not a semantic. */
+    @SuppressWarnings("unchecked")
     private void acceptSemantic(int nid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
-        SemanticEntity<SemanticEntityVersion> semantic = getEntityFast(nid);
-        if (semantic != null) {
-            procedure.accept(semantic);
+        if ((Entity<?>) getEntityFast(nid) instanceof SemanticEntity semantic) {
+            procedure.accept((SemanticEntity<SemanticEntityVersion>) semantic);
         }
     }
 
