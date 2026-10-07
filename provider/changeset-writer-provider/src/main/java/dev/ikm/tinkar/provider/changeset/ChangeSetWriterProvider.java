@@ -87,6 +87,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     final AtomicReference<Thread> serviceThread = new AtomicReference<>();
     private final Map<Thread, Semaphore> threadSemaphoreMap = new ConcurrentHashMap<>();
     private final Map<Thread, STATE> threadStateMap = new ConcurrentHashMap<>();
+    // One checkpoint at a time: two that overlapped each started a service thread, and the one
+    // not kept as serviceThread ran on with a file no checkpoint would close.
+    private final Object checkpointLock = new Object();
 
     /**
      * Initialization-on-demand holder idiom:
@@ -286,7 +289,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     };
                     try {
                         AtomicLong lastWriteTimeMillis = new AtomicLong(System.currentTimeMillis());
-                        while (threadStateMap.get(Thread.currentThread()) == STATE.RUNNING) {
+                        // A thread that is no longer the service thread stops, should one be left over.
+                        while (serviceThread.get() == Thread.currentThread()
+                                && threadStateMap.get(Thread.currentThread()) == STATE.RUNNING) {
                             final Entity<EntityVersion> entityToWrite = this.entitiesToWrite.poll(250, TimeUnit.MILLISECONDS);
                             if (entityToWrite != null) {
                                 lastWriteTimeMillis.set(System.currentTimeMillis());
@@ -296,6 +301,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                 LOG.info("Rotating ChangeSetWriterProvider, no activity for {} minutes.",
                                         TimeUnit.MILLISECONDS.toMinutes(INACTIVITY_THRESHOLD_MILLIS));
                                 TinkExecutor.threadPool().submit(this::save);
+                                // Once per idle period, not at every poll until the rotation comes.
+                                lastWriteTimeMillis.set(System.currentTimeMillis());
                             }
                         }
                     } catch (InterruptedException e) {
@@ -557,30 +564,32 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      */
     private CompletableFuture<Void> checkpoint(boolean restart) {
         return CompletableFuture.supplyAsync(() -> {
-            Thread interruptedThread = null;
-            switch (serviceThread.get()) {
-                case Thread thread -> {
-                    interruptedThread = thread;
+            synchronized (checkpointLock) {
+                Thread interruptedThread = null;
+                switch (serviceThread.get()) {
+                    case Thread thread -> {
+                        interruptedThread = thread;
+                    }
+                    case null -> {
+                    }
                 }
-                case null -> {
+                if (interruptedThread != null) {
+                    LOG.trace("Stopping ChangeSetWriterProvider on service thread: {}", interruptedThread);
+                    threadStateMap.put(interruptedThread, (restart?STATE.ROTATING:STATE.STOPPED));
+                    // Wait for the thread to drain the queue into its file and close it: when this
+                    // future completes, everything queued before the checkpoint is in a closed file.
+                    Semaphore changeSetWriter = threadSemaphoreMap.remove(interruptedThread);
+                    if (changeSetWriter != null) {
+                        changeSetWriter.acquireUninterruptibly();
+                        LOG.trace("Stopped ChangeSetWriterProvider on service thread: {}", interruptedThread);
+                    }
                 }
-            }
-            if (interruptedThread != null) {
-                LOG.trace("Stopping ChangeSetWriterProvider on service thread: {}", interruptedThread);
-                threadStateMap.put(interruptedThread, (restart?STATE.ROTATING:STATE.STOPPED));
-                // Wait for the thread to drain the queue into its file and close it: when this
-                // future completes, everything queued before the checkpoint is in a closed file.
-                Semaphore changeSetWriter = threadSemaphoreMap.remove(interruptedThread);
-                if (changeSetWriter != null) {
-                    changeSetWriter.acquireUninterruptibly();
-                    LOG.trace("Stopped ChangeSetWriterProvider on service thread: {}", interruptedThread);
+                if (restart) {
+                    // Only now a new thread with a new file, so it takes nothing queued before the checkpoint.
+                    startService();
                 }
+                return null;
             }
-            if (restart) {
-                // Only now a new thread with a new file, so it takes nothing queued before the checkpoint.
-                startService();
-            }
-            return null;
         }, TinkExecutor.ioThreadPool());
     }
 }
