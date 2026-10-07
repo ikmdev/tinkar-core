@@ -102,6 +102,13 @@
         <maven.sonarqube.version>5.5.0.6356</maven.sonarqube.version>
         <maven-jxr-plugin.version>3.6.0</maven-jxr-plugin.version>
         <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
+        <!-- The nid build check: how it reports, which classes may narrow a nid (the providers
+             that keep int nids, the format 1 entity codec, the test of Nid itself, and, until
+             the widening, the reasoner tests that map elk's long ids back to int nids), and
+             javac's cap on warnings, raised for a census. -->
+        <nid-check.report>error</nid-check.report>
+        <nid-check.allow>dev.ikm.tinkar.provider.,dev.ikm.tinkar.entity.EntityRecordFactory,dev.ikm.tinkar.common.id.NidTest,dev.ikm.tinkar.reasoner.elksnomed.test.,dev.ikm.tinkar.reasoner.hybrid.test.</nid-check.allow>
+        <javac.maxwarns>100</javac.maxwarns>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
 
         <maven.github-flow.version>1.21.1-r11</maven.github-flow.version>
@@ -180,7 +187,20 @@
                         <release>${java.version}</release>
                         <compilerArgs>
                             <arg>--enable-preview</arg>
+                            <!-- The nid build check (nid-check, IKE-Network/ike-issues#1244):
+                                 nid-check.report is error, or warning for a census;
+                                 nid-check.allow names the classes that may narrow a nid. -->
+                            <arg>-Xplugin:NidCheck report=${nid-check.report} allow=${nid-check.allow}</arg>
+                            <arg>-Xmaxwarns</arg>
+                            <arg>${javac.maxwarns}</arg>
                         </compilerArgs>
+                        <annotationProcessorPaths combine.children="append">
+                            <path>
+                                <groupId>dev.ikm.tinkar</groupId>
+                                <artifactId>nid-check</artifactId>
+                                <version>${project.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -219,6 +239,7 @@
                                     <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-slf4j2-impl</ignoredUnusedDeclaredDependency>
                                     <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-jul</ignoredUnusedDeclaredDependency>
                                     <ignoredUnusedDeclaredDependency>dev.ikm.tinkar:test-logging</ignoredUnusedDeclaredDependency>
+                                    <ignoredUnusedDeclaredDependency>dev.ikm.tinkar:nid-check</ignoredUnusedDeclaredDependency>
                                     <ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter</ignoredUnusedDeclaredDependency>
                                     <ignoredUnusedDeclaredDependency>org.junit.platform:junit-platform-console</ignoredUnusedDeclaredDependency>
                                     <ignoredUnusedDeclaredDependency>org.apache.maven.surefire:common-java5</ignoredUnusedDeclaredDependency>

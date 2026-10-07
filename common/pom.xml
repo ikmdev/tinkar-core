@@ -12,6 +12,16 @@
 <!--        <plugin-boot-layer-module.version>1.0-SNAPSHOT</plugin-boot-layer-module.version>-->
 <!--    </properties>-->
     <dependencies>
+        <!-- Orders the reactor only: every module compiled with the nid build check reaches
+             common, so nid-check is built before any of them. The compiler takes the check from
+             its processor path (the root POM). -->
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>nid-check</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
         <dependency>
             <groupId>org.roaringbitmap</groupId>
             <artifactId>RoaringBitmap</artifactId>

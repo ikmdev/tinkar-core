@@ -64,6 +64,13 @@ import java.util.regex.Pattern;
  *   {@code Nid.narrowChecked} is the sanctioned narrowing.</li>
  *   <li><b>{@code Nid.narrowChecked} outside the classes allowed to narrow</b>: the providers that
  *   keep {@code int} nids, and the format 1 entity codec.</li>
+ *   <li><b>A {@code long} nid compared with a sentinel by {@code ==} or {@code !=}</b>: with a
+ *   constant whose value is {@code Integer.MAX_VALUE}, {@code Long.MAX_VALUE},
+ *   {@code Integer.MIN_VALUE} or {@code Long.MIN_VALUE}. Each of the two sentinels has an
+ *   {@code int} form and a {@code long} form that mean the same, so a comparison with one form
+ *   misses the other; {@code Nid.isNotApplicable} and {@code Nid.isNone} test both. An
+ *   {@code int} nid is not reported: it can only hold the {@code int} form, so the comparison is
+ *   right, as it is in the providers that keep {@code int} nids.</li>
  * </ol>
  * <p>Use: {@code -Xplugin:"NidCheck allow=<prefix>,<prefix>"} with the plugin on the processor
  * path. Each prefix is matched against the fully qualified name of the top-level class that holds
@@ -182,7 +189,7 @@ public final class NidCheck implements Plugin {
                     sentinel = sentinelName(node.getLeftOperand());
                     nidSide = node.getRightOperand();
                 }
-                if (sentinel != null && namesANid(nidSide)) {
+                if (sentinel != null && namesANid(nidSide) && isLong(typeOf(nidSide))) {
                     report(node, "nid compared with " + sentinel + "; the sentinel has an int form and a long form "
                             + "that mean the same, so test with Nid.isNotApplicable or Nid.isNone");
                 }

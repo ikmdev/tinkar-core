@@ -239,7 +239,7 @@ class NidCheckTest {
                 package sample;
                 class Sample {
                     static final long WILDCARD = Long.MAX_VALUE;
-                    boolean test(int patternNid, long nid, long conceptNid) {
+                    boolean test(Long patternNid, long nid, long conceptNid) {
                         return patternNid != Integer.MAX_VALUE
                                 || nid == Long.MAX_VALUE
                                 || Integer.MIN_VALUE == conceptNid
@@ -250,6 +250,21 @@ class NidCheckTest {
                 """);
         assertEquals(5, findings.size(), findings.toString());
         assertTrue(findings.getFirst().contains("Nid.isNotApplicable or Nid.isNone"));
+    }
+
+    @Test
+    void anIntNidComparedWithASentinelIsNotReported() {
+        // An int nid can only hold the int form, so the comparison is right, as in the
+        // providers that keep int nids.
+        List<String> findings = check("""
+                package sample;
+                class Sample {
+                    boolean test(int patternNid, int nid) {
+                        return patternNid != Integer.MAX_VALUE || nid == Integer.MIN_VALUE;
+                    }
+                }
+                """);
+        assertEquals(List.of(), findings);
     }
 
     @Test

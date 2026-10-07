@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -91,7 +92,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		for (Concept con : ontology.getConcepts()) {
 			long nid = con.getId();
 			Set<Long> sups = toSctids(reasoner.getSuperConcepts(nid).boxed());
-			Long sctid = nid_sctid_map.get((int) nid);
+			Long sctid = nid_sctid_map.get(Nid.narrowChecked(nid));
 			if (sctid == null) {
 				non_snomed_cnt++;
 				continue;

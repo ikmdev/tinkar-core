@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid.test;
 
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -73,7 +74,7 @@ public abstract class HybridReasonerServiceTestBase extends HybridReasonerTestBa
 		SwecIds swecNids = HybridReasonerService.getSwecNids();
 		for (long nid : List.of(HybridReasonerService.getRootId(), swecNids.swec(), swecNids.swec_parent(),
 				swecNids.findingContext(), swecNids.knownAbsent())) {
-			LOG.info(PrimitiveData.text((int) nid) + " " + nid);
+			LOG.info(PrimitiveData.text(Nid.narrowChecked(nid)) + " " + nid);
 		}
 		{
 			int nid = ElkSnomedData.getNid(SnomedIds.root);

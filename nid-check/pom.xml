@@ -23,4 +23,29 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- The check is not run on itself: it is not built yet. The processor path
+                         is set rather than left empty, because javac loads every plugin it finds
+                         to look for auto-start ones, and an empty path is the classpath, which
+                         holds this module's service file before its class is compiled. -->
+                    <compilerArgs combine.self="override">
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
+                    <annotationProcessorPaths combine.self="override">
+                        <path>
+                            <groupId>io.soabase.record-builder</groupId>
+                            <artifactId>record-builder-processor</artifactId>
+                            <version>${record-builder-core.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

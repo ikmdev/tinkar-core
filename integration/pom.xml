@@ -178,15 +178,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <compilerArgs>
-                        <arg>--enable-preview</arg>
-                    </compilerArgs>
-                </configuration>
-            </plugin>
             <!-- forkCount=1, reuseForks=false (fresh JVM per test class)
                  moved to ike-parent:13 (#282) -->
             <plugin>
