@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
@@ -70,6 +71,7 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
 
     private ProviderEphemeral() {
         LOG.info("Constructing ProviderEphemeral");
+        NidLayout.activate(NidLayout.SEQUENTIAL);
     }
 
     public static PrimitiveDataService provider() {
@@ -174,6 +176,8 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     @Override
     public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
         if (!nidToPatternNidMap.containsKey(nid)) {
+            // A concept, pattern or stamp comes with the not-applicable sentinel,
+            // Integer.MAX_VALUE (Nid.NOT_APPLICABLE), as its pattern; only a semantic is indexed.
             this.nidToPatternNidMap.put(nid, patternNid);
             if (patternNid != Integer.MAX_VALUE) {
 

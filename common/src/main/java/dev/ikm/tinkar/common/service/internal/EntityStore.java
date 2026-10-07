@@ -76,9 +76,11 @@ public interface EntityStore {
      * Defaults to an activity of DataActivity.SYNCHRONIZABLE_EDIT.
      *
      * @param nid                    native identifier (an int) with which the resulting value is to be associated
-     * @param patternNid
+     * @param patternNid             if the bytes are for a semantic, its pattern nid, otherwise
+     *                               the not-applicable sentinel, {@code Integer.MAX_VALUE}
+     *                               ({@link dev.ikm.tinkar.common.id.Nid#NOT_APPLICABLE})
      * @param referencedComponentNid if the bytes are for a semantic, the referenced component nid,
-     *                               otherwise Integer.MAX_VALUE.
+     *                               otherwise the not-applicable sentinel, {@code Integer.MAX_VALUE}.
      * @param value                  the non-null value to be merged with the existing value
      *                               associated with the nid or, if no existing value or a null value
      *                               is associated with the nid, to be associated with the nid
@@ -98,9 +100,11 @@ public interface EntityStore {
      * versions of an entity, where each version is represented as a byte[].
      *
      * @param nid Native identifier (an int) with which the resulting value is to be associated.
-     * @param patternNid Pattern native identifier.
+     * @param patternNid If the bytes are for a semantic, its pattern nid, otherwise the
+     *                   not-applicable sentinel, {@code Integer.MAX_VALUE}
+     *                   ({@link dev.ikm.tinkar.common.id.Nid#NOT_APPLICABLE}).
      * @param referencedComponentNid If the bytes are for a semantic, the referenced component nid,
-     *                               otherwise Integer.MAX_VALUE.
+     *                               otherwise the not-applicable sentinel, {@code Integer.MAX_VALUE}.
      * @param value The non-null value to be merged with the existing value
      *              associated with the nid or, if no existing value or a null value
      *              is associated with the nid, to be associated with the nid.

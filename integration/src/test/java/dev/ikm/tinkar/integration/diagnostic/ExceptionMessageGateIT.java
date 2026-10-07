@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * does not see an entity, a version, a vertex, or a tree joined into a message with its own
  * {@code toString()}; {@code EntityText} and {@code DiTreeText} are the forms for those.
  *
- * <p>Three messages are about the nid itself and are allowed ({@link #KNOWN}). The gate fails
+ * <p>Six messages are about the nid itself and are allowed ({@link #KNOWN}). The gate fails
  * when their number changes in either direction, so the list stays true.
  */
 class ExceptionMessageGateIT {
@@ -93,12 +93,15 @@ class ExceptionMessageGateIT {
 
     /**
      * Messages the gate allows, by source file: how many, and why. Each is about the nid
-     * itself, and says nothing about a component: a value that can never be a nid, and a nid
-     * the store minted no public id for, written as a nid of this store.
+     * itself, and says nothing about a component: a value that can never be a nid, a nid
+     * the store minted no public id for, written as a nid of this store, and a 64-bit nid that
+     * reached code holding an {@code int} nid ({@code Nid.narrowChecked}), with its two halves.
      */
     private static final Map<String, Integer> KNOWN = Map.of(
+            "common/src/main/java/dev/ikm/tinkar/common/id/Nid.java", 2,
             "common/src/main/java/dev/ikm/tinkar/common/id/impl/NidCodec6.java", 1,
             "common/src/main/java/dev/ikm/tinkar/common/id/impl/NidCodec8.java", 1,
+            "common/src/main/java/dev/ikm/tinkar/common/id/impl/NidLayout.java", 1,
             "provider/data-ephemeral-provider/src/main/java/dev/ikm/tinkar/provider/ephemeral/ProviderEphemeral.java", 1);
 
     /** The start of an exception being made; its arguments follow. */

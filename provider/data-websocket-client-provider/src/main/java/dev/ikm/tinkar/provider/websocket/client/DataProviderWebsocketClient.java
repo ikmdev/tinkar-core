@@ -17,6 +17,7 @@ package dev.ikm.tinkar.provider.websocket.client;
 
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
@@ -71,6 +72,7 @@ public class DataProviderWebsocketClient
 
     public DataProviderWebsocketClient(URI uri) {
         this.uri = uri;
+        NidLayout.activate(NidLayout.SEQUENTIAL);
     }
 
     public static void main(String[] args) throws Exception {

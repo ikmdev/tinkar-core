@@ -12,11 +12,16 @@ public interface EntityKey {
     int MAX_16BIT_UNSIGNED = (1 << 16) - 1;
 
     /**
-     * Combines the pattern sequence and element sequence into a single long key. Necessary
-     * until we get JEP 401: Value Classes, then we can make the entity key a value class.
-     * @return
+     * The RocksDB store key: {@code [patternSequence:16][elementSequence:48]}. Used only by
+     * rocks-kb, to key its column families.
+     * <p>Not a nid. A typical rocks key passes the validity test for a 64-bit nid
+     * ({@link Nid#isValid64(long)}), which is 32/32, so one passed as a nid shows up only as a
+     * lookup that finds nothing; hence the name, which keeps the two {@code long} forms of an
+     * entity apart (design {@code design-2026-09-30-64-bit-nids}).
+     *
+     * @return the rocks key
      */
-    public long longKey();
+    long rocksKey();
 
     /**
      * The pattern sequence. A 16-bit unsigned number.
@@ -43,11 +48,11 @@ public interface EntityKey {
     }
 
     default byte[] toBytes() {
-        return KeyUtil.entityKeyToBytes(longKey());
+        return KeyUtil.entityKeyToBytes(rocksKey());
     }
 
     default EntityKey fromBytes(byte[] bytes) {
-        return EntityKey.ofLongKey(KeyUtil.byteArrayToLong(bytes));
+        return EntityKey.ofRocksKey(KeyUtil.byteArrayToLong(bytes));
     }
 
     default byte[] key() {
@@ -62,8 +67,8 @@ public interface EntityKey {
         return new EntityKeyRecord(NidLayout.active().decodePatternSequence(nid), NidLayout.active().decodeElementSequence(nid));
     }
 
-    static EntityKey ofLongKey(long longKey) {
-        return new EntityKeyRecord(longKey);
+    static EntityKey ofRocksKey(long rocksKey) {
+        return new EntityKeyRecord(rocksKey);
     }
 
     default byte[] patternSequenceAsByteArray() {
@@ -87,22 +92,22 @@ public interface EntityKey {
 
     record EntityKeyRecord(int patternSequence, long elementSequence) implements EntityKey {
         @Override
-        public long longKey() {
-            return KeyUtil.patternSequenceElementSequenceToLongKey(patternSequence(), elementSequence());
+        public long rocksKey() {
+            return KeyUtil.patternSequenceElementSequenceToRocksKey(patternSequence(), elementSequence());
         }
         public EntityKeyRecord {
             checkPatternSequence(patternSequence());
             checkElementSequence(elementSequence());
         }
-        public EntityKeyRecord(long longKey) {
-            this(KeyUtil.longKeyToPatternSequence(longKey), KeyUtil.longKeyToElementSequence(longKey));
+        public EntityKeyRecord(long rocksKey) {
+            this(KeyUtil.rocksKeyToPatternSequence(rocksKey), KeyUtil.rocksKeyToElementSequence(rocksKey));
         }
     }
 
     record EntityVersionKeyRecord(int patternSequence, long elementSequence, int stampSequence) implements EntityVersionKey {
         @Override
-        public long longKey() {
-            return KeyUtil.patternSequenceElementSequenceToLongKey(patternSequence(), elementSequence());
+        public long rocksKey() {
+            return KeyUtil.patternSequenceElementSequenceToRocksKey(patternSequence(), elementSequence());
         }
     }
 
@@ -124,9 +129,9 @@ public interface EntityKey {
         }
     }
 
-    static void checkLongKey(long longKey) {
-        checkElementSequence(KeyUtil.longKeyToElementSequence(longKey));
-        checkPatternSequence(KeyUtil.longKeyToPatternSequence(longKey));
+    static void checkRocksKey(long rocksKey) {
+        checkElementSequence(KeyUtil.rocksKeyToElementSequence(rocksKey));
+        checkPatternSequence(KeyUtil.rocksKeyToPatternSequence(rocksKey));
     }
 
     /**
@@ -159,7 +164,7 @@ public interface EntityKey {
         }
 
         @Override
-        public long longKey() {
+        public long rocksKey() {
             // Pack as [0:16][elementSequence:48] for consistency
             return elementSequence() & MAX_48BIT_UNSIGNED;
         }

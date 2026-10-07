@@ -54,7 +54,15 @@ public class DateTimeUtil {
     public static final DateTimeFormatter COMPRESSED_DATE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssz");
     public static final DateTimeFormatter COMPRESSED_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
 
+    /**
+     * The rendered word for {@code Long.MAX_VALUE} as a time: latest, as the time of a position,
+     * and uncommitted, as the time of a stamp, which commit replaces with the commit time. A time
+     * sentinel; nids have sentinels of their own ({@code dev.ikm.tinkar.common.id.Nid}).
+     */
     public static final String LATEST = "Latest";
+    /**
+     * The rendered word for {@code Long.MIN_VALUE} as a time: the time of a canceled stamp.
+     */
     public static final String CANCELED = "Canceled";
     /**
      * The rendered word for the pre-inception time sentinel — the platform's
@@ -159,7 +167,11 @@ public class DateTimeUtil {
      * {@link #formatUtc(long)} delegates at UTC (generated artifacts render
      * machine-independently).
      *
-     * @param epochMilliSecond the epoch time in milliseconds, or a sentinel value
+     * @param epochMilliSecond the epoch time in milliseconds, or a time sentinel:
+     *                         {@code Long.MAX_VALUE} (latest, or uncommitted),
+     *                         {@code Long.MIN_VALUE} (canceled),
+     *                         {@link PrimitiveData#PRE_INCEPTION_TIME}, or
+     *                         {@link PrimitiveData#INCEPTION_EPOCH}
      * @param formatter        the date-time formatter to render with
      * @param zone             the zone to render the instant at
      * @return the sentinel word, or the time rendered at {@code zone}

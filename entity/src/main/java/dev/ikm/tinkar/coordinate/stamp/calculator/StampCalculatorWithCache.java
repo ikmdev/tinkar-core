@@ -412,6 +412,7 @@ public class StampCalculatorWithCache implements StampCalculator {
 
         for (V newVersionToTest : versions) {
             StampEntity stamp = newVersionToTest.stamp();
+            // A canceled stamp has the time Long.MIN_VALUE and is on no route.
             if (stamp != null && stamp.time() > Long.MIN_VALUE
                     && !(excludeDefaultsAndTemplates
                             && stamp.moduleNid() == DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE.nid())

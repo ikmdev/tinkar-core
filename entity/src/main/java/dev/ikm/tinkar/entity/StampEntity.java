@@ -83,6 +83,8 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
             return versions().get(0);
         }
         StampEntityVersion latest = null;
+        // Stamp times carry the sentinels: Long.MIN_VALUE is canceled and Long.MAX_VALUE is
+        // uncommitted, which commit replaces with the commit time.
         for (StampEntityVersion version : versions()) {
             if (version.time() == Long.MIN_VALUE) {
                 // if canceled (Long.MIN_VALUE), latest is canceled.

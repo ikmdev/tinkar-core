@@ -18,6 +18,7 @@ package dev.ikm.tinkar.provider.mvstore;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
@@ -81,6 +82,7 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
     public MVStoreProvider() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening MVStoreProvider");
+        NidLayout.activate(NidLayout.SEQUENTIAL);
         this.offHeap = new OffHeapStore();
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
@@ -234,6 +236,8 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
         // concurrent first merges of the same nid race.
         Integer priorPatternNid = this.nidToPatternNidMap.putIfAbsent(nid, patternNid);
         if (priorPatternNid == null) {
+            // A concept, pattern or stamp comes with the not-applicable sentinel,
+            // Integer.MAX_VALUE (Nid.NOT_APPLICABLE), as its pattern; only a semantic is indexed.
             if (patternNid != Integer.MAX_VALUE) {
                 long citationLong = IntsInLong.ints2Long(nid, patternNid);
                 this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
@@ -243,9 +247,9 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
             }
         } else if (priorPatternNid != patternNid) {
             // A nid's pattern never changes. A mismatch means two different components were
-            // given the same nid, e.g. a concept (pattern MAX_VALUE) reusing a semantic's nid.
+            // given the same nid, e.g. a concept (pattern not applicable, MAX_VALUE) reusing a semantic's nid.
             // Only collisions involving a semantic are detectable here; concepts, patterns and
-            // stamps all pass MAX_VALUE. Fail fast rather than merge unrelated bytes.
+            // stamps all pass the not-applicable sentinel, MAX_VALUE. Fail fast rather than merge unrelated bytes.
             String message = "Nid collision: nid " + nid + " already bound to pattern " + priorPatternNid
                     + " but merge supplied pattern " + patternNid + " for " + sourceObject;
             LOG.error(message);

@@ -282,6 +282,8 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
 
     private void putEntity(Entity entity, DataActivity activity, boolean dispatch, boolean addToCache) {
         invalidateCaches(entity);
+        // Only a semantic has a pattern and a referenced component; every other entity passes
+        // the not-applicable sentinel, Integer.MAX_VALUE (Nid.NOT_APPLICABLE), for both.
         byte[] mergedEntityBytes = switch (entity) {
             case ConceptEntity conceptEntity -> {
                 STRING_CACHE.put(conceptEntity.nid(), conceptEntity.asUuidList().toString());

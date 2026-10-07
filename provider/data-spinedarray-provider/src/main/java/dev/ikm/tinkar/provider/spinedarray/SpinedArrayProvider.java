@@ -23,6 +23,7 @@ import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
@@ -138,6 +139,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     private SpinedArrayProvider() throws IOException, ExecutionException, InterruptedException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening SpinedArrayProvider on thread: {}", Thread.currentThread().getName());
+        NidLayout.activate(NidLayout.SEQUENTIAL);
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
         if (expectEmpty) {
@@ -289,6 +291,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
 
             OptionalInt optionalNid = optionalNid(uuids);
 
+            // Integer.MAX_VALUE, which is never a nid, marks "no nid yet" until one of the UUIDs
+            // has one or the first is given a new one.
             int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
 
             for (UUID uuid : uuids) {
@@ -332,6 +336,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
 
             OptionalInt optionalNid = optionalNid(uuidList.toArray(new UUID[uuidList.size()]));
 
+            // Integer.MAX_VALUE, which is never a nid, marks "no nid yet" until one of the UUIDs
+            // has one or the first is given a new one.
             int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
 
             for (UUID uuid : uuidList) {
@@ -406,6 +412,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             throw new IllegalStateException("NID should not be Integer.MIN_VALUE");
         }
         if (!this.entityToBytesMap.containsKey(nid)) {
+            // The pattern is stored as given, so a concept, pattern or stamp is stored with the
+            // not-applicable sentinel, Integer.MAX_VALUE (Nid.NOT_APPLICABLE), which this file
+            // keeps on disk; only a semantic is indexed under its pattern and referenced component.
             this.nidToPatternNidMap.put(nid, patternNid);
             if (patternNid != Integer.MAX_VALUE) {
                 long citationLong = IntsInLong.ints2Long(nid, patternNid);
@@ -594,6 +603,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     @Override
     public void erase(int nid) {
         this.entityToBytesMap.put(nid, null);
+        // The not-applicable sentinel: an erased nid has no pattern.
         this.nidToPatternNidMap.put(nid, Integer.MAX_VALUE);
         this.nidToCitingComponentsNidMap.put(nid, null);
         this.conceptNids.remove(nid);
