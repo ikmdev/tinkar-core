@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.module.Configuration;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -217,6 +218,34 @@ public class Layers {
      * @throws RuntimeException if resolution fails; the exception message lists
      *                          parent-layer modules to aid diagnosis
      */
+    /**
+     * Grants this module's qualified exports to the modules of a layer it names. A qualified
+     * export is fixed when the layer of its module is defined, so it never reaches a module that
+     * arrives later in a plugin layer: the Rocks store ({@code dev.ikm.rocks.engine}) and the gRPC
+     * provider are named in {@code common}'s export of {@code service.internal}, and are loaded as
+     * plugins. A module may export its own packages at run time, and only to the modules its
+     * descriptor names, so the restriction the descriptor declares is kept
+     * (IKE-Network/ike-issues#1247).
+     *
+     * @param layer the plugin layer just defined
+     */
+    static void grantQualifiedExports(ModuleLayer layer) {
+        Module common = Layers.class.getModule();
+        if (!common.isNamed()) {
+            return; // on the classpath common is the unnamed module, which exports every package
+        }
+        for (ModuleDescriptor.Exports export : common.getDescriptor().exports()) {
+            for (String target : export.targets()) {
+                layer.findModule(target)
+                        .filter(module -> module.getLayer() == layer)
+                        .ifPresent(module -> {
+                            common.addExports(export.source(), module);
+                            LOG.info("Exported {} to {} in its plugin layer", export.source(), target);
+                        });
+            }
+        }
+    }
+
     public static ModuleLayer createModuleLayer(List<ModuleLayer> parentLayers, List<Path> modulePathEntries) {
         LOG.info("Creating module layer from {} path entries", modulePathEntries.size());
         for (Path entry : modulePathEntries) {
@@ -260,6 +289,7 @@ public class Layers {
 
             ModuleLayer layer = ModuleLayer.defineModulesWithOneLoader(appConfig, parentLayers, scl).layer();
             LOG.info("Created module layer with {} modules", layer.modules().size());
+            grantQualifiedExports(layer);
 
             return layer;
         } catch (Exception e) {
