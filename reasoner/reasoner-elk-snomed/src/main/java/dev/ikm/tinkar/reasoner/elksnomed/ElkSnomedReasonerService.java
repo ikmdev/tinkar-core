@@ -24,12 +24,11 @@ import java.util.Set;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.eclipse.collections.api.factory.primitive.LongObjectMaps;
 import org.eclipse.collections.api.factory.primitive.LongSets;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,8 +191,8 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater) {
-		for (int delete : deletes) {
+	public void processIncremental(List<Long> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater) {
+		for (long delete : deletes) {
 			Concept concept = builder.processDelete(delete);
 			if (concept != null) {
 				reasoner.processDelete(concept);
@@ -229,11 +228,11 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	private void logMissingReasonerConcepts(MutableLongObjectMap<MutableLongSet> superConcepts) {
-		ImmutableIntList conceptSet = data.getReasonerConceptSet();
+		ImmutableLongList conceptSet = data.getReasonerConceptSet();
 		int missingCount = 0;
 		StringBuilder sample = new StringBuilder();
 		int sampleLimit = 10;
-		for (int nid : conceptSet.toArray()) {
+		for (long nid : conceptSet.toArray()) {
 			if (!superConcepts.containsKey((long) nid)) {
 				if (missingCount < sampleLimit) {
 					if (sample.length() > 0) {
@@ -268,14 +267,14 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public ImmutableIntList getReasonerConceptSet() {
+	public ImmutableLongList getReasonerConceptSet() {
 		return data.getReasonerConceptSet();
 	}
 
-	protected ImmutableIntSet toIntSet(MutableLongSet classes) {
+	protected ImmutableLongSet toIntSet(MutableLongSet classes) {
 		if (classes == null)
 			return null;
-		MutableIntSet parentNids = IntSets.mutable.withInitialCapacity(classes.size());
+		MutableLongSet parentNids = LongSets.mutable.withInitialCapacity(classes.size());
 		for (long parent : classes.toArray()) {
 			parentNids.add((int) parent);
 		}
@@ -283,25 +282,25 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public ImmutableIntSet getEquivalent(int id) {
+	public ImmutableLongSet getEquivalent(long id) {
 		MutableLongSet eqs = reasoner.getEquivalentConcepts(id);
 		return toIntSet(eqs);
 	}
 
 	@Override
-	public ImmutableIntSet getParents(int id) {
+	public ImmutableLongSet getParents(long id) {
 		MutableLongSet supers = reasoner.getSuperConcepts(id);
 		return toIntSet(supers);
 	}
 
 	@Override
-	public ImmutableIntSet getChildren(int id) {
+	public ImmutableLongSet getChildren(long id) {
 		MutableLongSet subs = reasoner.getSubConcepts(id);
 		return toIntSet(subs);
 	}
 
 	@Override
-	public LogicalExpression getNecessaryNormalForm(int id) {
+	public LogicalExpression getNecessaryNormalForm(long id) {
 		Definition def = nnfb.getNecessaryNormalForm(id);
 		if (def == null)
 			return null;

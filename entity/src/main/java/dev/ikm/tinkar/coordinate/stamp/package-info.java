@@ -151,7 +151,7 @@
  * StampCoordinateRecord custom = StampCoordinateRecord.make(
  *     StateSet.ACTIVE,
  *     position,
- *     IntIds.set.of(KernelTerm.SOLOR_MODULE.nid())
+ *     LongIds.set.of(KernelTerm.SOLOR_MODULE.nid())
  * );
  * }</pre>
  *
@@ -186,7 +186,7 @@
  * StampCoordinateRecord stamp = StampCoordinateRecord.make(
  *     StateSet.ACTIVE,
  *     position,
- *     IntIds.set.empty()
+ *     LongIds.set.empty()
  * );
  * }</pre>
  *
@@ -194,7 +194,7 @@
  * <pre>{@code
  * // Include only specific modules
  * StampCoordinateRecord filtered = stamp.withModuleNids(
- *     IntIds.set.of(
+ *     LongIds.set.of(
  *         KernelTerm.SOLOR_MODULE.nid(),
  *         MyTerms.SNOMED_CT_CORE_MODULE.nid()
  *     )
@@ -202,7 +202,7 @@
  *
  * // Exclude specific modules
  * StampCoordinateRecord excluded = stamp.withExcludedModuleNids(
- *     IntIds.set.of(MyTerms.DEPRECATED_MODULE.nid())
+ *     LongIds.set.of(MyTerms.DEPRECATED_MODULE.nid())
  * );
  * }</pre>
  *

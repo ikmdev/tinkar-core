@@ -42,7 +42,7 @@ import static dev.ikm.tinkar.common.util.Symbols.HEAVY_TRIANGLE_HEADED_RIGHTWARD
  * @param nid
  * @param changeRecords
  */
-public record ChangeChronology(int nid, ImmutableList<VersionChangeRecord> changeRecords) {
+public record ChangeChronology(long nid, ImmutableList<VersionChangeRecord> changeRecords) {
 
     public String toString(ViewCalculator viewCalculator, boolean showPriorValue) {
         StringBuilder sb = new StringBuilder("Changes for ");

@@ -39,11 +39,11 @@ public interface EntityKey {
      * Returns the unique native identifier (NID) for this entity key.
      * The implementation of this method provides an integer ID representing
      * the entity in unique terms within its context. Native identifiers start at
-     * {@code dev.ikm.tinkar.common.service.PrimitiveDataService.FIRST_NID} and increment by 1 for each new entity.
+     * {@code dev.ikm.tinkar.common.service.SequentialNids.FIRST_NID} and increment by 1 for each new entity.
      *
-     * @return an integer representing the unique identifier (NID)
+     * @return the nid, widened from the {@code int} a 6-bit, 8-bit, or sequential store holds
      */
-    default int nid() {
+    default long nid() {
         return NidLayout.active().encode(patternSequence(), elementSequence());
     }
 
@@ -63,7 +63,7 @@ public interface EntityKey {
         return new EntityKeyRecord(patternSequence, elementSequence);
     }
 
-    static EntityKey ofNid(int nid) {
+    static EntityKey ofNid(long nid) {
         return new EntityKeyRecord(NidLayout.active().decodePatternSequence(nid), NidLayout.active().decodeElementSequence(nid));
     }
 
@@ -173,7 +173,7 @@ public interface EntityKey {
          * Returns the original sequential NID directly, bypassing NidLayout.active().
          */
         @Override
-        public int nid() {
+        public long nid() {
             return sequentialNid;
         }
     }
@@ -185,8 +185,8 @@ public interface EntityKey {
      * @param nid the sequential NID from a non-pattern-encoded provider
      * @return an EntityKey that preserves the NID unchanged
      */
-    static EntityKey ofSequentialNid(int nid) {
-        return new SequentialNidEntityKey(nid);
+    static EntityKey ofSequentialNid(long nid) {
+        return new SequentialNidEntityKey(Nid.narrowChecked(nid));
     }
 
 }

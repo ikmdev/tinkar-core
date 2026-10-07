@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
+import java.util.function.LongConsumer;
+
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
@@ -50,10 +52,10 @@ public class TemporalEntityAggregator extends EntityAggregator {
     }
 
     @Override
-    public EntityCountSummary aggregate(IntConsumer nidConsumer) {
+    public EntityCountSummary aggregate(LongConsumer nidConsumer) {
         initCounts();
         // Filter Stamp Nids based on the supplied time span
-        Set<Integer> filteredStampNids = new HashSet<>();
+        Set<Long> filteredStampNids = new HashSet<>();
         EntityStore.current().forEachStampNid((stampNid) -> {
             EntityService.get().getStamp(stampNid).ifPresent((stampEntity) -> {
                 if (fromEpochMillis <= stampEntity.time() && stampEntity.time() <= toEpochMillis) {
@@ -62,7 +64,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
             });
         });
 
-        List<Integer> stampsToExport = new ArrayList<>();
+        List<Long> stampsToExport = new ArrayList<>();
 
         // Aggregate concepts with a filtered stamp. Resolution goes through
         // EntityHandle — the byte-backed lookup the downstream consumer uses — so a
@@ -77,7 +79,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
                 lastOrphanCount++;
                 return;
             }
-            Set<Integer> conceptStampNidList = conceptEntity.stampNids().mapToSet(i->i);
+            Set<Long> conceptStampNidList = conceptEntity.stampNids().mapToSet(i->i);
             // Write whole chronology if ANY of the stamps satisfy conditions
             if (!Collections.disjoint(filteredStampNids, conceptStampNidList)) {
                 conceptsAggregatedCount.incrementAndGet();
@@ -93,7 +95,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
                 lastOrphanCount++;
                 return;
             }
-            Set<Integer> semanticStampNidList = semanticEntity.stampNids().mapToSet(i->i);
+            Set<Long> semanticStampNidList = semanticEntity.stampNids().mapToSet(i->i);
             // Write whole chronology if ANY of the stamps satisfy conditions
             if (!Collections.disjoint(filteredStampNids, semanticStampNidList)) {
                 semanticsAggregatedCount.incrementAndGet();
@@ -109,7 +111,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
                 lastOrphanCount++;
                 return;
             }
-            Set<Integer> patternStampNidList = patternEntity.stampNids().mapToSet(i->i);
+            Set<Long> patternStampNidList = patternEntity.stampNids().mapToSet(i->i);
             // Write whole chronology if ANY of the stamps satisfy conditions
             if (!Collections.disjoint(filteredStampNids, patternStampNidList)) {
                 patternsAggregatedCount.incrementAndGet();
@@ -124,9 +126,9 @@ public class TemporalEntityAggregator extends EntityAggregator {
 
         // Deduplicate and export aggregated stamps — resolution-checked like every
         // other bucket, so the count only claims stamps that can be delivered.
-        Set<Integer> deduplicatedStampsToExport = new HashSet<>(stampsToExport);
-        List<Integer> deliverableStampNids = new ArrayList<>();
-        for (int stampNid : deduplicatedStampsToExport) {
+        Set<Long> deduplicatedStampsToExport = new HashSet<>(stampsToExport);
+        List<Long> deliverableStampNids = new ArrayList<>();
+        for (long stampNid : deduplicatedStampsToExport) {
             if (EntityHandle.get(stampNid).isPresent()) {
                 deliverableStampNids.add(stampNid);
             } else {

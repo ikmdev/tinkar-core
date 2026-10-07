@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+
 import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -38,8 +40,8 @@ import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -166,7 +168,7 @@ class DefaultsTemplateDslIT {
                 .stampCalculator();
     }
 
-    private static int nidOf(UUID semanticUuid) {
+    private static long nidOf(UUID semanticUuid) {
         return EntityService.get().nidForPublicId(PublicIds.of(semanticUuid));
     }
 
@@ -206,7 +208,7 @@ class DefaultsTemplateDslIT {
     @Test
     @DisplayName("templatePurpose states the isA parentage under the Template concept, once")
     void templatePurposeParentsUnderTemplateConcept() {
-        int purposeNid = TEST_SET.conceptRef(PURPOSE_FQN).nid();
+        long purposeNid = TEST_SET.conceptRef(PURPOSE_FQN).nid();
         List<SemanticEntity<SemanticEntityVersion>> axioms = EntityService.get().semanticsForComponentOfPattern(
                 purposeNid, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
         assertEquals(1, axioms.size(), "the purpose must carry its stated-axiom semantic");
@@ -229,8 +231,8 @@ class DefaultsTemplateDslIT {
     @Test
     @DisplayName("verb-authored tuples honor the category boundary: excluded from version iteration")
     void verbAuthoredTuplesExcludedFromVersionIteration() {
-        int patternNid = TEST_SET.patternRef(PATTERN_FQN).nid();
-        MutableIntSet iterated = IntSets.mutable.empty();
+        long patternNid = TEST_SET.patternRef(PATTERN_FQN).nid();
+        MutableLongSet iterated = LongSets.mutable.empty();
         calculator(StateSet.ACTIVE_AND_INACTIVE).forEachSemanticVersionOfPattern(patternNid,
                 (semanticVersion, patternVersion) -> iterated.add(semanticVersion.nid()));
         assertFalse(iterated.contains(nidOf(defaultId)),
@@ -238,8 +240,8 @@ class DefaultsTemplateDslIT {
         assertFalse(iterated.contains(nidOf(templateId)),
                 "the template semantic must be excluded from version iteration");
 
-        MutableIntSet chronologyNids =
-                IntSets.mutable.of(EntityService.get().semanticsOfPattern(patternNid).mapToInt(SemanticEntity::nid).toArray());
+        MutableLongSet chronologyNids =
+                LongSets.mutable.of(EntityService.get().semanticsOfPattern(patternNid).mapToLong(SemanticEntity::nid).toArray());
         assertTrue(chronologyNids.contains(nidOf(defaultId)),
                 "chronology enumeration is store truth — the nids are still there");
         assertTrue(chronologyNids.contains(nidOf(templateId)));

@@ -20,20 +20,20 @@ import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
 
-import java.util.function.IntFunction;
+import java.util.function.LongFunction;
 
-public interface IntIdSet extends IdSet, IntIdCollection {
+public interface LongIdSet extends IdSet, LongIdCollection {
 
-    default <T extends Object> ImmutableSet<T> map(IntFunction<T> function) {
+    default <T extends Object> ImmutableSet<T> map(LongFunction<T> function) {
         MutableSet<T> set = Sets.mutable.ofInitialCapacity(size());
-        for (int nid : toArray()) {
+        for (long nid : toArray()) {
             set.add(function.apply(nid));
         }
         return set.toImmutable();
     }
 
-    default IntIdSet with(int... valuesToAdd) {
-        return IntIds.set.of(this, valuesToAdd);
+    default LongIdSet with(long... valuesToAdd) {
+        return LongIds.set.of(this, valuesToAdd);
     }
 
 }

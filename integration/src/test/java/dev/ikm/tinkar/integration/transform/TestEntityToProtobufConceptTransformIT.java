@@ -54,10 +54,10 @@ public class TestEntityToProtobufConceptTransformIT {
     public void conceptChronologyTransformWithOneVersion() {
         // Given a ConceptRecord with one version that has a real stamp stored in the provider
         Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
-        int conceptNid = Entity.nid(testConcept.publicId());
+        long conceptNid = Entity.nid(testConcept.publicId());
         PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(testConcept.publicId());
 
-        int stampNid = createAndStoreStamp();
+        long stampNid = createAndStoreStamp();
 
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
@@ -88,11 +88,11 @@ public class TestEntityToProtobufConceptTransformIT {
     public void conceptVersionTransformWithTwoVersions() {
         // Given a ConceptRecord with two versions, each with a stored stamp
         Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
-        int conceptNid = Entity.nid(testConcept.publicId());
+        long conceptNid = Entity.nid(testConcept.publicId());
         PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(testConcept.publicId());
 
-        int stampNid1 = createAndStoreStamp();
-        int stampNid2 = createAndStoreStamp();
+        long stampNid1 = createAndStoreStamp();
+        long stampNid2 = createAndStoreStamp();
 
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()

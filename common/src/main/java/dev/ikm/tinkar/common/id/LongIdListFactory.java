@@ -13,34 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.common.id.impl;
+package dev.ikm.tinkar.common.id;
 
-import dev.ikm.tinkar.common.id.IntIdList;
+import java.util.Collection;
+import java.util.function.ToLongFunction;
 
-public class IntId0List extends IntId0 implements IntIdList {
-    public static final IntId0List INSTANCE = new IntId0List();
+public interface LongIdListFactory {
+    LongIdList empty();
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj instanceof IntIdList intIdList) {
-            if (intIdList.isEmpty()) {
-                return true;
-            }
-        }
-        return false;
+    LongIdList of();
+
+    LongIdList of(long one);
+
+    LongIdList of(long one, long two);
+
+    LongIdList of(LongIdList list, long... elements);
+
+    default <T> LongIdList of(Collection<T> components, ToLongFunction<T> function) {
+        return of(components.stream().mapToLong(component -> function.applyAsLong(component)).toArray());
     }
 
-    @Override
-    public int hashCode() {
-        return 1;
-    }
-
-    @Override
-    public String toString() {
-        return "IntIdList[]";
-    }
+    LongIdList of(long... elements);
 
 }

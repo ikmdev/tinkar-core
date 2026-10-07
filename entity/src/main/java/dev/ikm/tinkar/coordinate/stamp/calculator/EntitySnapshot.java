@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.stamp.calculator;
 
-import dev.ikm.tinkar.common.id.IntIdCollection;
+import dev.ikm.tinkar.common.id.LongIdCollection;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityHandle;
@@ -33,14 +33,14 @@ import org.eclipse.collections.api.list.MutableList;
  */
 public class EntitySnapshot<V extends EntityVersion> {
     private final Latest<V> latestVersion;
-    private final IntIdCollection latestStampIds;
-    private final IntIdCollection allStampIds;
+    private final LongIdCollection latestStampIds;
+    private final LongIdCollection allStampIds;
     private final Entity<V> entity;
     private final ImmutableList<V> uncommittedVersions;
     private final ImmutableList<V> historicVersions;
 
 
-    public EntitySnapshot(ViewCalculator viewCalculator, int nid) {
+    public EntitySnapshot(ViewCalculator viewCalculator, long nid) {
         this(viewCalculator, (Entity<V>) EntityHandle.get(nid).expectEntity());
     }
 
@@ -70,7 +70,7 @@ public class EntitySnapshot<V extends EntityVersion> {
 
 
     //~--- methods -------------------------------------------------------------
-    public int nid() {
+    public long nid() {
         return this.entity.nid();
     }
 
@@ -100,7 +100,7 @@ public class EntitySnapshot<V extends EntityVersion> {
             return VersionCategory.Uncommitted;
         }
 
-        int stampNid = version.stampNid();
+        long stampNid = version.stampNid();
 
         if (latestStampIds.contains(stampNid)) {
             if (latestVersion.contradictions().isEmpty()) {

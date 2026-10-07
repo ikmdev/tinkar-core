@@ -1,5 +1,7 @@
 package dev.ikm.tinkar.provider.changeset;
 
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.DataActivity;
@@ -232,7 +234,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         Thread thread = Thread.ofVirtual().name("ChangeSetWriterProvider-ServiceThread").unstarted(() -> {
             LOG.trace("Starting ChangeSetWriterProvider on service thread: {}", Thread.currentThread());
             try {
-                final MutableMultimap<Integer, Entity<EntityVersion>> uncommittedEntitiesByStamp = Multimaps.mutable.set.empty();
+                final MutableMultimap<Long, Entity<EntityVersion>> uncommittedEntitiesByStamp = Multimaps.mutable.set.empty();
                 final LongAdder entityCount = new LongAdder();
                 final LongAdder conceptsCount = new LongAdder();
                 final LongAdder semanticsCount = new LongAdder();
@@ -240,8 +242,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 final LongAdder stampsCount = new LongAdder();
 
                 // By nid: a public id is never a hash key.
-                final Set<Integer> moduleList = new HashSet<>();
-                final Set<Integer> authorList = new HashSet<>();
+                final Set<Long> moduleList = new HashSet<>();
+                final Set<Long> authorList = new HashSet<>();
                 final EntityToTinkarSchemaTransformer entityTransformer =
                         EntityToTinkarSchemaTransformer.getInstance();
 
@@ -260,7 +262,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                         if (entityToWrite.uncommitted()) {
                             // We will write uncommitted versions at the end of the thread to prevent bloat from uncommitted changes,
                             // unless they are committed before the thread stops.
-                            ImmutableIntList uncommittedStampNids = entityToWrite.uncommittedStampNids();
+                            ImmutableLongList uncommittedStampNids = entityToWrite.uncommittedStampNids();
                             uncommittedStampNids.forEach(stampNid -> {
                                 LOG.trace("ChangeSetWriterProvider caching uncommitted entity for stampNid {}:\n{}", stampNid, entityToWrite);
                                 uncommittedEntitiesByStamp.remove(stampNid, entityToWrite);
@@ -321,9 +323,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     // event anchors them in time), but within each group the ordering
                     // contract ("snapshot → dependents") still holds.
                     // Snapshot the key set before iterating, since removeAll mutates it.
-                    List<Integer> stampNidsSnapshot = new ArrayList<>();
+                    List<Long> stampNidsSnapshot = new ArrayList<>();
                     uncommittedEntitiesByStamp.keySet().forEach(stampNidsSnapshot::add);
-                    for (Integer stampNid : stampNidsSnapshot) {
+                    for (Long stampNid : stampNidsSnapshot) {
                         writeStampSnapshotsThenDependents(
                                 uncommittedEntitiesByStamp.removeAll(stampNid),
                                 entityCount, conceptsCount, semanticsCount, patternsCount,
@@ -396,8 +398,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                     LongAdder semanticsCount,
                                     LongAdder patternsCount,
                                     LongAdder stampsCount,
-                                    Set<Integer> moduleList,
-                                    Set<Integer> authorList,
+                                    Set<Long> moduleList,
+                                    Set<Long> authorList,
                                     EntityToTinkarSchemaTransformer entityTransformer,
                                     IdentityIndex.Writer identities,
                                     ZipOutputStream zos) {
@@ -459,8 +461,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             LongAdder semanticsCount,
             LongAdder patternsCount,
             LongAdder stampsCount,
-            Set<Integer> moduleList,
-            Set<Integer> authorList,
+            Set<Long> moduleList,
+            Set<Long> authorList,
             EntityToTinkarSchemaTransformer entityTransformer,
             IdentityIndex.Writer identities,
             ZipOutputStream zos) {
@@ -502,8 +504,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                            LongAdder semanticsCount,
                                            LongAdder patternsCount,
                                            LongAdder stampsCount,
-                                           Set<Integer> moduleList,
-                                           Set<Integer> authorList) {
+                                           Set<Long> moduleList,
+                                           Set<Long> authorList) {
         return ExportEntitiesToProtobufFile.generateManifestContent(entityCount.sum(),
                 conceptsCount.sum(),
                 semanticsCount.sum(),

@@ -15,6 +15,12 @@
  */
 package dev.ikm.tinkar.provider.spinedarray;
 
+import org.eclipse.collections.api.block.procedure.primitive.LongProcedure;
+import java.util.function.ObjLongConsumer;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.common.service.SequentialNids;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
@@ -111,7 +117,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
 
     protected static LongAdder writeSequence = new LongAdder();
     protected final CountDownLatch uuidsLoadedLatch = new CountDownLatch(1);
-    final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
+    final AtomicInteger nextNid = new AtomicInteger(SequentialNids.FIRST_NID);
 
     final ConcurrentHashMap<UUID, Integer> uuidToNidMap = ConcurrentHashMap.newMap();
     final ConcurrentHashSet<Integer> patternNids = new ConcurrentHashSet();
@@ -282,11 +288,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public int nidForUuids(UUID... uuids) {
+    public long nidForUuids(UUID... uuids) {
         try {
             this.uuidsLoadedLatch.await();
             if (uuids.length == 1) {
-                return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
+                return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> Nid.narrowChecked(newNid()));
             }
 
             OptionalInt optionalNid = optionalNid(uuids);
@@ -296,8 +302,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
 
             for (UUID uuid : uuids) {
-                if (nid == Integer.MAX_VALUE) {
-                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> newNid());
+                if (Nid.isNotApplicable(nid)) {
+                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> Nid.narrowChecked(newNid()));
                 } else {
                     uuidToNidMap.put(uuid, nid);
                 }
@@ -322,16 +328,16 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public int newNid() {
+    public long newNid() {
         return nextNid.getAndIncrement();
     }
 
     @Override
-    public int nidForUuids(ImmutableList<UUID> uuidList) {
+    public long nidForUuids(ImmutableList<UUID> uuidList) {
         try {
             this.uuidsLoadedLatch.await();
             if (uuidList.size() == 1) {
-                return uuidToNidMap.computeIfAbsent(uuidList.get(0), uuidKey -> newNid());
+                return uuidToNidMap.computeIfAbsent(uuidList.get(0), uuidKey -> Nid.narrowChecked(newNid()));
             }
 
             OptionalInt optionalNid = optionalNid(uuidList.toArray(new UUID[uuidList.size()]));
@@ -341,8 +347,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
 
             for (UUID uuid : uuidList) {
-                if (nid == Integer.MAX_VALUE) {
-                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> newNid());
+                if (Nid.isNotApplicable(nid)) {
+                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> Nid.narrowChecked(newNid()));
                 } else {
                     uuidToNidMap.put(uuid, nid);
                 }
@@ -368,71 +374,80 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public void forEach(ObjIntConsumer<byte[]> action) {
-        this.entityToBytesMap.forEach(action);
+    public void forEach(ObjLongConsumer<byte[]> action) {
+        this.entityToBytesMap.forEach((bytes, nid) -> action.accept(bytes, nid));
     }
 
     @Override
-    public void forEachParallel(ObjIntConsumer<byte[]> action) {
+    public void forEachParallel(ObjLongConsumer<byte[]> action) {
         try {
-            this.entityToBytesMap.forEachParallel(action);
+            this.entityToBytesMap.forEachParallel((bytes, nid) -> action.accept(bytes, nid));
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+    public void forEachParallel(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
         try {
-            this.entityToBytesMap.forEachParallel(nids, action);
+            this.entityToBytesMap.forEachParallel(narrow(nids), (bytes, nid) -> action.accept(bytes, nid));
         } catch (ExecutionException | InterruptedException e) {
             AlertStreams.dispatchToRoot(e);
         }
     }
 
     @Override
-    public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+    public void forEach(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
         try {
-            this.entityToBytesMap.forEach(nids, action);
+            this.entityToBytesMap.forEach(narrow(nids), (bytes, nid) -> action.accept(bytes, nid));
         } catch (ExecutionException | InterruptedException e) {
             AlertStreams.dispatchToRoot(e);
         }
     }
 
 
-    @Override
-    public byte[] getBytes(int nid) {
-        return this.entityToBytesMap.get(nid);
+    /** The nids of a widened list, narrowed for the spined maps, which hold int nids. */
+    private static ImmutableIntList narrow(ImmutableLongList nids) {
+        int[] narrowed = new int[nids.size()];
+        for (int i = 0; i < narrowed.length; i++) {
+            narrowed[i] = Nid.narrowChecked(nids.get(i));
+        }
+        return IntLists.immutable.of(narrowed);
     }
 
     @Override
-    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
-        if (nid == Integer.MIN_VALUE) {
+    public byte[] getBytes(long nid) {
+        return this.entityToBytesMap.get(Nid.narrowChecked(nid));
+    }
+
+    @Override
+    public byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
+        if (Nid.isNone(nid)) {
             LOG.error("NID should not be Integer.MIN_VALUE");
             throw new IllegalStateException("NID should not be Integer.MIN_VALUE");
         }
-        if (!this.entityToBytesMap.containsKey(nid)) {
+        if (!this.entityToBytesMap.containsKey(Nid.narrowChecked(nid))) {
             // The pattern is stored as given, so a concept, pattern or stamp is stored with the
             // not-applicable sentinel, Integer.MAX_VALUE (Nid.NOT_APPLICABLE), which this file
             // keeps on disk; only a semantic is indexed under its pattern and referenced component.
-            this.nidToPatternNidMap.put(nid, patternNid);
-            if (patternNid != Integer.MAX_VALUE) {
-                long citationLong = IntsInLong.ints2Long(nid, patternNid);
-                this.nidToCitingComponentsNidMap.accumulateAndGet(referencedComponentNid, new long[]{citationLong},
+            this.nidToPatternNidMap.put(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
+            if (!Nid.isNotApplicable(patternNid)) {
+                long citationLong = IntsInLong.ints2Long(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
+                this.nidToCitingComponentsNidMap.accumulateAndGet(Nid.narrowChecked(referencedComponentNid), new long[]{citationLong},
                         PrimitiveDataService::mergeCitations);
-                addToPatternElementSet(patternNid, nid);
+                addToPatternElementSet(Nid.narrowChecked(patternNid), Nid.narrowChecked(nid));
             }
             if (sourceObject instanceof ConceptEntity concept) {
-                this.conceptNids.add(concept.nid());
+                this.conceptNids.add(Nid.narrowChecked(concept.nid()));
             } else if (sourceObject instanceof SemanticEntity semanticEntity) {
-                this.semanticNids.add(semanticEntity.nid());
+                this.semanticNids.add(Nid.narrowChecked(semanticEntity.nid()));
             } else if (sourceObject instanceof PatternEntity patternEntity) {
-                this.patternNids.add(patternEntity.nid());
+                this.patternNids.add(Nid.narrowChecked(patternEntity.nid()));
             } else if (sourceObject instanceof StampEntity stampEntity) {
-                this.stampNids.add(stampEntity.nid());
+                this.stampNids.add(Nid.narrowChecked(stampEntity.nid()));
             }
         }
-        byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(nid, value, PrimitiveDataService::merge);
+        byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(Nid.narrowChecked(nid), value, PrimitiveDataService::merge);
         this.writeSequence.increment();
         this.changeSetWriterServices.forEach(writerService -> writerService.writeToChangeSet((Entity) sourceObject, activity));
 
@@ -491,14 +506,14 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public int[] semanticNidsOfPattern(int patternNid) {
-        IntSet elementNids = getElementNidsForPatternNid(patternNid);
+    public long[] semanticNidsOfPattern(long patternNid) {
+        IntSet elementNids = getElementNidsForPatternNid(Nid.narrowChecked(patternNid));
         if (elementNids.notEmpty()) {
-            MutableIntList elementNidList = IntLists.mutable.withInitialCapacity(elementNids.size());
+            MutableLongList elementNidList = LongLists.mutable.withInitialCapacity(elementNids.size());
             elementNids.forEach(integer -> elementNidList.add(integer));
             return elementNidList.toArray();
         }
-        return new int[0];
+        return new long[0];
     }
 
     public IntSet getElementNidsForPatternNid(int patternNid) {
@@ -509,25 +524,25 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
+    public void forEachSemanticNidOfPattern(long patternNid, LongProcedure procedure) {
         EntityHandle.get(patternNid).expectPattern("Trying to iterate elements for entity that is not a pattern: ");
 
         IntSet elementNids;
         if (LOG.isTraceEnabled()) {
             Stopwatch sw = new Stopwatch();
-            elementNids = getElementNidsForPatternNid(patternNid);
+            elementNids = getElementNidsForPatternNid(Nid.narrowChecked(patternNid));
             LOG.atTrace().log("getElementNidsForPatternNid " + PrimitiveData.text(patternNid) +
                     " time: " + sw.durationString());
         } else {
-            elementNids = getElementNidsForPatternNid(patternNid);
+            elementNids = getElementNidsForPatternNid(Nid.narrowChecked(patternNid));
         }
         if (elementNids.notEmpty()) {
-            elementNids.forEach(procedure);
+            elementNids.forEach(procedure::value);
         }
     }
 
     @Override
-    public void forEachPatternNid(IntProcedure procedure) {
+    public void forEachPatternNid(LongProcedure procedure) {
         try {
             this.uuidsLoadedLatch.await();
             this.patternNids.forEach(patternNid -> procedure.accept(patternNid));
@@ -538,7 +553,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public void forEachConceptNid(IntProcedure procedure) {
+    public void forEachConceptNid(LongProcedure procedure) {
         try {
             this.uuidsLoadedLatch.await();
             this.conceptNids.forEach(conceptNid -> procedure.accept(conceptNid));
@@ -549,7 +564,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public void forEachStampNid(IntProcedure procedure) {
+    public void forEachStampNid(LongProcedure procedure) {
         try {
             this.uuidsLoadedLatch.await();
             this.stampNids.forEach(stampNid -> procedure.accept(stampNid));
@@ -560,7 +575,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public void forEachSemanticNid(IntProcedure procedure) {
+    public void forEachSemanticNid(LongProcedure procedure) {
         try {
             this.uuidsLoadedLatch.await();
             this.semanticNids.forEach(semanticNid -> procedure.accept(semanticNid));
@@ -571,8 +586,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
-        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+    public void forEachSemanticNidForComponent(long componentNid, LongProcedure procedure) {
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(Nid.narrowChecked(componentNid));
         if (citationLongs != null) {
             for (long citationLong : citationLongs) {
                 int citingComponentNid = (int) (citationLong >> 32);
@@ -582,8 +597,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
-        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+    public void forEachSemanticNidForComponentOfPattern(long componentNid, long patternNid, LongProcedure procedure) {
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(Nid.narrowChecked(componentNid));
         if (citationLongs != null) {
             for (long citationLong : citationLongs) {
                 int citingComponentNid = (int) (citationLong >> 32);
@@ -601,15 +616,15 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public void erase(int nid) {
-        this.entityToBytesMap.put(nid, null);
+    public void erase(long nid) {
+        this.entityToBytesMap.put(Nid.narrowChecked(nid), null);
         // The not-applicable sentinel: an erased nid has no pattern.
-        this.nidToPatternNidMap.put(nid, Integer.MAX_VALUE);
-        this.nidToCitingComponentsNidMap.put(nid, null);
-        this.conceptNids.remove(nid);
-        this.semanticNids.remove(nid);
-        this.patternNids.remove(nid);
-        this.stampNids.remove(nid);
+        this.nidToPatternNidMap.put(Nid.narrowChecked(nid), Integer.MAX_VALUE);
+        this.nidToCitingComponentsNidMap.put(Nid.narrowChecked(nid), null);
+        this.conceptNids.remove(Nid.narrowChecked(nid));
+        this.semanticNids.remove(Nid.narrowChecked(nid));
+        this.patternNids.remove(Nid.narrowChecked(nid));
+        this.stampNids.remove(Nid.narrowChecked(nid));
         this.nidToCitingComponentsNidMap.forEach((nidPatternsCitingComponent, referencedComponentNid) -> {
             MutableLongList nidPatternInLongToRemove = LongLists.mutable.withInitialCapacity(2);
             for (long nidPatternInLong : nidPatternsCitingComponent) {
@@ -629,7 +644,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public void mergeThenErase(int nidToErase, int nidToMergeInto) {
+    public void mergeThenErase(long nidToErase, long nidToMergeInto) {
 
 
         byte[] mergedBytes = merge(getBytes(nidToMergeInto), getBytes(nidToErase), DataActivity.DATA_REPAIR);
@@ -735,8 +750,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     @Override
-    public void put(int nid, byte[] bytesToOverwrite) {
-        this.entityToBytesMap.put(nid, bytesToOverwrite);
+    public void put(long nid, byte[] bytesToOverwrite) {
+        this.entityToBytesMap.put(Nid.narrowChecked(nid), bytesToOverwrite);
     }
 
 

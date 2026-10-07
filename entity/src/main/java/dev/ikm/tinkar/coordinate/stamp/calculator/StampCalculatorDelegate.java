@@ -26,7 +26,7 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.terms.EntityFacade;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 
 import java.util.List;
 import java.util.OptionalInt;
@@ -35,17 +35,17 @@ import java.util.stream.Stream;
 
 public interface StampCalculatorDelegate extends StampCalculator {
     @Override
-    default Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid) {
+    default Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(long patternNid) {
         return stampCalculator().streamLatestVersionForPattern(patternNid);
     }
 
     @Override
-    default <V extends EntityVersion> Latest<V> latest(int nid) {
+    default <V extends EntityVersion> Latest<V> latest(long nid) {
         return stampCalculator().latest(nid);
     }
 
     @Override
-    default <V extends EntityVersion> Latest<V> latestNoCache(int nid) {
+    default <V extends EntityVersion> Latest<V> latestNoCache(long nid) {
         return stampCalculator().latestNoCache(nid);
     }
 
@@ -70,52 +70,52 @@ public interface StampCalculatorDelegate extends StampCalculator {
     }
 
     @Override
-    default RelativePosition relativePosition(int stampNid, int stampNid2) {
+    default RelativePosition relativePosition(long stampNid, long stampNid2) {
         return stampCalculator().relativePosition(stampNid, stampNid2);
     }
 
     @Override
-    default void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
+    default void forEachSemanticVersionOfPattern(long patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
         stampCalculator().forEachSemanticVersionOfPattern(patternNid, procedure);
     }
 
     @Override
-    default void forEachSemanticVersionOfPatternParallel(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
+    default void forEachSemanticVersionOfPatternParallel(long patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
         stampCalculator().forEachSemanticVersionOfPatternParallel(patternNid, procedure);
     }
 
     @Override
-    default void forEachSemanticVersionInSetOfPatternParallel(ImmutableIntSet semanticNidSet, int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
+    default void forEachSemanticVersionInSetOfPatternParallel(ImmutableLongSet semanticNidSet, long patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
         stampCalculator().forEachSemanticVersionInSetOfPatternParallel(semanticNidSet, patternNid, procedure);
     }
 
     @Override
-    default void forEachSemanticVersionForComponent(int componentNid, BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
+    default void forEachSemanticVersionForComponent(long componentNid, BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
         stampCalculator().forEachSemanticVersionForComponent(componentNid, procedure);
     }
 
     @Override
-    default void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid, TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure) {
+    default void forEachSemanticVersionForComponentOfPattern(long componentNid, long patternNid, TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure) {
         stampCalculator().forEachSemanticVersionForComponentOfPattern(componentNid, patternNid, procedure);
     }
 
     @Override
-    default void forEachSemanticVersionWithFieldsForComponent(int componentNid, TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion> procedure) {
+    default void forEachSemanticVersionWithFieldsForComponent(long componentNid, TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion> procedure) {
         stampCalculator().forEachSemanticVersionWithFieldsForComponent(componentNid, procedure);
     }
 
     @Override
-    default Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid) {
+    default Latest<PatternEntityVersion> latestPatternEntityVersion(long patternNid) {
         return stampCalculator().latestPatternEntityVersion(patternNid);
     }
 
     @Override
-    default OptionalInt getIndexForMeaning(int patternNid, int meaningNid) {
+    default OptionalInt getIndexForMeaning(long patternNid, long meaningNid) {
         return stampCalculator().getIndexForMeaning(patternNid, meaningNid);
     }
 
     @Override
-    default OptionalInt getIndexForPurpose(int patternNid, int purposeNid) {
+    default OptionalInt getIndexForPurpose(long patternNid, long purposeNid) {
         return stampCalculator().getIndexForPurpose(patternNid, purposeNid);
     }
 
@@ -125,22 +125,22 @@ public interface StampCalculatorDelegate extends StampCalculator {
     }
 
     @Override
-    default <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion) {
+    default <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, long criterionNid, FieldCriterion fieldCriterion) {
         return stampCalculator().getFieldForSemantic(latestSemanticVersion, criterionNid, fieldCriterion);
     }
 
     @Override
-    default <T> Latest<Field<T>> getFieldForSemanticWithMeaning(SemanticEntityVersion semanticVersion, int meaningNid) {
+    default <T> Latest<Field<T>> getFieldForSemanticWithMeaning(SemanticEntityVersion semanticVersion, long meaningNid) {
         return stampCalculator().getFieldForSemanticWithMeaning(semanticVersion, meaningNid);
     }
 
     @Override
-    default <T> Latest<Field<T>> getFieldForSemantic(int componentNid, int criterionNid, FieldCriterion fieldCriterion) {
+    default <T> Latest<Field<T>> getFieldForSemantic(long componentNid, long criterionNid, FieldCriterion fieldCriterion) {
         return stampCalculator().getFieldForSemantic(componentNid, criterionNid, fieldCriterion);
     }
 
     @Override
-    default <T> Latest<Field<T>> getFieldForSemanticWithMeaning(int componentNid, int meaningNid) {
+    default <T> Latest<Field<T>> getFieldForSemanticWithMeaning(long componentNid, long meaningNid) {
         return stampCalculator().getFieldForSemanticWithMeaning(componentNid, meaningNid);
     }
 

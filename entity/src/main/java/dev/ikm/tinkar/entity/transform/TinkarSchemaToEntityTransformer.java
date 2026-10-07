@@ -15,10 +15,16 @@
  */
 package dev.ikm.tinkar.entity.transform;
 
+import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
+import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import dev.ikm.tinkar.entity.changeset.SchemaIds;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -52,16 +58,16 @@ import dev.ikm.tinkar.terms.EntityProxy;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntIntMap;
-import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
+import org.eclipse.collections.api.map.primitive.ImmutableLongObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
-import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
+import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
+import org.eclipse.collections.impl.list.mutable.primitive.LongArrayList;
 import org.eclipse.collections.impl.map.mutable.primitive.IntIntHashMap;
-import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
+import org.eclipse.collections.impl.map.mutable.primitive.LongObjectHashMap;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -105,7 +111,7 @@ public class TinkarSchemaToEntityTransformer {
         if(pbConceptChronology.getConceptVersionsCount() == 0){
             throw new RuntimeException("Exception thrown, Concept Chronology can't contain zero versions");
         }
-        int conceptNid = nidForConcept(pbConceptChronology.getPublicId());
+        long conceptNid = nidForConcept(pbConceptChronology.getPublicId());
         PublicId conceptPublicId = transformPublicId(pbConceptChronology.getPublicId());
         RecordListBuilder<ConceptVersionRecord> conceptVersions = RecordListBuilder.make();
         if (conceptPublicId.uuidCount() == 0) {
@@ -147,16 +153,16 @@ public class TinkarSchemaToEntityTransformer {
         PublicId referencedComponentPublicId = transformPublicId(pbSemanticChronology.getReferencedComponentPublicId());
 
         SemanticRecord semanticRecord;
-        int patternNid = nidForPattern(patternPublicId);
+        long patternNid = nidForPattern(patternPublicId);
 
 
         // For sequential NID providers (single-pass import), we can assign a NID without 
         // requiring the entity to exist in the database. Entity.nid() will create/retrieve
         // the NID based on PublicId alone.
-        final int referencedComponentNid = Entity.nid(referencedComponentPublicId);
+        final long referencedComponentNid = Entity.nid(referencedComponentPublicId);
 
         if (semanticPublicId.uuidCount() > 0) {
-            int semanticNid = nidForSemantic(patternPublicId, semanticPublicId);
+            long semanticNid = nidForSemantic(patternPublicId, semanticPublicId);
             PublicIdentifierRecord semanticIdRecord = PublicIdentifierRecord.make(semanticPublicId);
             semanticRecord = SemanticRecordBuilder.builder()
                     .leastSignificantBits(semanticIdRecord.leastSignificantBits())
@@ -222,10 +228,10 @@ public class TinkarSchemaToEntityTransformer {
         MutableList<FieldDefinitionRecord> fieldDefinition = Lists.mutable
                 .withInitialCapacity(pbPatternVersion.getFieldDefinitionsCount());
         //TODO: Is this a proper way to grab NID?
-        int patternNid = pattern.nid();
-        int patternStampNid = nidForStamp(pbPatternVersion.getStampChronologyPublicId());
-        int semanticPurposeNid = nidForConcept(pbPatternVersion.getReferencedComponentPurposePublicId());
-        int semanticMeaningNid = nidForConcept(pbPatternVersion.getReferencedComponentMeaningPublicId());
+        long patternNid = pattern.nid();
+        long patternStampNid = nidForStamp(pbPatternVersion.getStampChronologyPublicId());
+        long semanticPurposeNid = nidForConcept(pbPatternVersion.getReferencedComponentPurposePublicId());
+        long semanticMeaningNid = nidForConcept(pbPatternVersion.getReferencedComponentMeaningPublicId());
         for(FieldDefinition pbFieldDefinition : pbPatternVersion.getFieldDefinitionsList()){
             fieldDefinition.add(transformFieldDefinitionRecord(pbFieldDefinition, patternStampNid, patternNid));
         }
@@ -247,7 +253,7 @@ public class TinkarSchemaToEntityTransformer {
         PublicId stampPublicId = transformPublicId(stampChronology.getPublicId());
         StampRecord stampRecord;
         if (stampPublicId.uuidCount() > 0) {
-            int stampNid = nidForStamp(stampChronology.getPublicId());
+            long stampNid = nidForStamp(stampChronology.getPublicId());
             PublicIdentifierRecord stampIdRecord = PublicIdentifierRecord.make(stampPublicId);
             stampRecord = StampRecordBuilder.builder()
                     .leastSignificantBits(stampIdRecord.leastSignificantBits())
@@ -287,10 +293,10 @@ public class TinkarSchemaToEntityTransformer {
     //Field Definition Transformation
     //This creates PBFieldDefinition (line 256 in Tinkar.proto)
     protected FieldDefinitionRecord transformFieldDefinitionRecord(FieldDefinition pbFieldDefinition,
-                                                                   int patternVersionStampNid, int patternNid) {
-        int meaningNid = nidForConcept(pbFieldDefinition.getMeaningPublicId());
-        int purposeNid = nidForConcept(pbFieldDefinition.getPurposePublicId());
-        int dataTypeNid = nidForConcept(pbFieldDefinition.getDataTypePublicId());
+                                                                   long patternVersionStampNid, long patternNid) {
+        long meaningNid = nidForConcept(pbFieldDefinition.getMeaningPublicId());
+        long purposeNid = nidForConcept(pbFieldDefinition.getPurposePublicId());
+        long dataTypeNid = nidForConcept(pbFieldDefinition.getDataTypePublicId());
         return FieldDefinitionRecordBuilder.builder()
                 .meaningNid(meaningNid)
                 .purposeNid(purposeNid)
@@ -358,26 +364,26 @@ public class TinkarSchemaToEntityTransformer {
         }
         return SchemaIds.toPublicId(pbPublicId);
     }
-    protected IntIdList transformPublicIdList(dev.ikm.tinkar.schema.PublicIdList pbPublicIdList) {
+    protected LongIdList transformPublicIdList(dev.ikm.tinkar.schema.PublicIdList pbPublicIdList) {
         if(pbPublicIdList.getPublicIdsCount() == 0){
-            return IntIds.list.empty();
+            return LongIds.list.empty();
         }
-        int[] nids = new int[pbPublicIdList.getPublicIdsCount()];
+        long[] nids = new long[pbPublicIdList.getPublicIdsCount()];
         for(int i = 0; i < pbPublicIdList.getPublicIdsCount(); i++) {
             nids[i] = PrimitiveData.nid(transformPublicId(pbPublicIdList.getPublicIds(i)));
         }
-        return IntIds.list.of(nids);
+        return LongIds.list.of(nids);
     }
-    protected IntIdSet transformPublicIdSet(dev.ikm.tinkar.schema.PublicIdSet pbPublicIdSet) {
+    protected LongIdSet transformPublicIdSet(dev.ikm.tinkar.schema.PublicIdSet pbPublicIdSet) {
         if(pbPublicIdSet.getPublicIdsCount() == 0){
-            return IntIds.set.empty();
+            return LongIds.set.empty();
         }
-        int[] nids = new int[pbPublicIdSet.getPublicIdsCount()];
+        long[] nids = new long[pbPublicIdSet.getPublicIdsCount()];
         for(int i = 0; i < pbPublicIdSet.getPublicIdsCount(); i++) {
             nids[i] = PrimitiveData.nid(transformPublicId(pbPublicIdSet.getPublicIds(i)));
 
         }
-        return IntIds.set.of(nids);
+        return LongIds.set.of(nids);
     }
     protected UUID transformVertexUUID(VertexUUID vertexUUID) {
         return SchemaIds.toUuid(vertexUUID);
@@ -387,7 +393,7 @@ public class TinkarSchemaToEntityTransformer {
         List<IntToMultipleIntMap> SuccessorMapList = pbDiGraph.getSuccessorMapList();
         // The protobuf form carries root vertex INDEXES; the entity form carries the
         // root VERTICES themselves. The previous code cast the index list
-        // (ImmutableIntList) straight to ImmutableList<EntityVertex>, which throws
+        // (ImmutableLongList) straight to ImmutableList<EntityVertex>, which throws
         // ClassCastException for any graph with at least one root — resolve each index
         // against the parsed vertex map instead (IKE-Network/ike-issues#885).
         ImmutableList<EntityVertex> vertexMap = parseVertices(pbDiGraph.getVerticesList(),
@@ -445,7 +451,7 @@ public class TinkarSchemaToEntityTransformer {
     }
     protected EntityVertex transformVertexEntity(Vertex pbVertex, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer){
         UUID vertexID = transformVertexUUID(pbVertex.getVertexUuid());
-        MutableIntObjectMap<Object> properties =  IntObjectMaps.mutable.empty();
+        MutableLongObjectMap<Object> properties =  LongObjectMaps.mutable.empty();
         EntityVertex storedVertex = EntityVertex.make(vertexID, EntityService.get().nidForPublicId(transformPublicId(pbVertex.getMeaningPublicId())));
         storedVertex.setVertexIndex(pbVertex.getIndex());
         pbVertex.getPropertiesList().forEach(property -> {
@@ -472,7 +478,7 @@ public class TinkarSchemaToEntityTransformer {
         ConceptRecord conceptRecord;
 
         if (conceptPublicId.uuidCount() > 0) {
-            int conceptNid = nidForConcept(conceptPublicId);
+            long conceptNid = nidForConcept(conceptPublicId);
             PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(conceptPublicId);
             conceptRecord = ConceptRecordBuilder.builder()
                     .leastSignificantBits(conceptIdRecord.leastSignificantBits())
@@ -522,7 +528,7 @@ public class TinkarSchemaToEntityTransformer {
      * @param pbPublicId protobuf PublicId of the component
      * @return the generated nid
      */
-    protected int nidFor(int patternNid, dev.ikm.tinkar.schema.PublicId pbPublicId) {
+    protected long nidFor(long patternNid, dev.ikm.tinkar.schema.PublicId pbPublicId) {
         PublicId patternPublicId = EntityHandle.get(patternNid).expectEntity().publicId();
         PublicId componentPublicId = transformPublicId(pbPublicId);
         return ScopedValue
@@ -537,53 +543,53 @@ public class TinkarSchemaToEntityTransformer {
      * @param pbPublicId protobuf PublicId of the component
      * @return the generated nid
      */
-    protected int nidForSemantic(PublicId patternPublicId, dev.ikm.tinkar.schema.PublicId pbPublicId) {
+    protected long nidForSemantic(PublicId patternPublicId, dev.ikm.tinkar.schema.PublicId pbPublicId) {
         PublicId componentPublicId = transformPublicId(pbPublicId);
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
                 .call(() -> Entity.nid(componentPublicId));
     }
 
-    protected int nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
+    protected long nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
                 .call(() -> Entity.nid(semanticPublicId));
     }
 
-    protected int nidForPattern(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+    protected long nidForPattern(dev.ikm.tinkar.schema.PublicId pbPublicId) {
         PublicId componentPublicId = transformPublicId(pbPublicId);
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Pattern.pattern())
                 .call(() -> Entity.nid(componentPublicId));
     }
 
-    protected int nidForPattern(PublicId patternPublicId) {
+    protected long nidForPattern(PublicId patternPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Pattern.pattern())
                 .call(() -> Entity.nid(patternPublicId));
     }
 
-    protected int nidForStamp(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+    protected long nidForStamp(dev.ikm.tinkar.schema.PublicId pbPublicId) {
         PublicId componentPublicId = transformPublicId(pbPublicId);
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
                 .call(() -> Entity.nid(componentPublicId));
     }
 
-    protected int nidForStamp(PublicId stampPublicId) {
+    protected long nidForStamp(PublicId stampPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
                 .call(() -> Entity.nid(stampPublicId));
     }
 
-    protected int nidForConcept(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+    protected long nidForConcept(dev.ikm.tinkar.schema.PublicId pbPublicId) {
         PublicId componentPublicId = transformPublicId(pbPublicId);
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
                 .call(() -> Entity.nid(componentPublicId));
     }
 
-    protected int nidForConcept(PublicId conceptPublicId) {
+    protected long nidForConcept(PublicId conceptPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
                 .call(() -> Entity.nid(conceptPublicId));

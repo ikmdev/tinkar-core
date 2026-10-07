@@ -57,10 +57,10 @@ public class TestEntityToProtobufPublicIdTransformIT {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         PublicId combinedPublicId = PublicIds.of(uuid1, uuid2);
-        int nid = Entity.nid(combinedPublicId);
+        long nid = Entity.nid(combinedPublicId);
 
         // Create a ConceptRecord with this multi-UUID public ID and transform via public API
-        int stampNid = createAndStoreStamp();
+        long stampNid = createAndStoreStamp();
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
         PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(combinedPublicId);
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()

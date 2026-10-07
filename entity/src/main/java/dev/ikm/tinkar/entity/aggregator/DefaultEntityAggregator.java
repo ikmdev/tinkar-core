@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
+import java.util.function.LongConsumer;
+
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -36,7 +38,7 @@ public class DefaultEntityAggregator extends EntityAggregator {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultEntityAggregator.class);
 
     @Override
-    public EntityCountSummary aggregate(IntConsumer nidConsumer) {
+    public EntityCountSummary aggregate(LongConsumer nidConsumer) {
         initCounts();
         // Aggregate all Stamps
         EntityStore.current().forEachStampNid(stampNid -> {
@@ -92,7 +94,7 @@ public class DefaultEntityAggregator extends EntityAggregator {
         return summarize();
     }
 
-    private void dispatch(int nid,
+    private void dispatch(long nid,
                           Consumer<Entity<?>> entityConsumer,
                           AtomicLong orphanCount) {
         Entity<?> entity = EntityHandle.get(nid).orNull();

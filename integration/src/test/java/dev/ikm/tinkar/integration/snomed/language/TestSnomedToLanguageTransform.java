@@ -125,7 +125,7 @@ public class TestSnomedToLanguageTransform {
         UUID identifierSemanticUUID = getIdentifierSemanticUUID(rows.get(0));
         UUID referenceComponentUUID = getIdentifierReferenceComponentUUID(rows.get(0));
 
-        Integer expectedStampRecordNid = createStampChronology(rows.get(0)).nid();
+        Long expectedStampRecordNid = createStampChronology(rows.get(0)).nid();
 
         // testing values
         SemanticRecord testIdentifierSemanticRecord = createLanguageIdentifierSemantic(rows.get(0));
@@ -165,7 +165,7 @@ public class TestSnomedToLanguageTransform {
         UUID languageAcceptabilitySemanticUUID = getLanguageAcceptabilitySemanticUUID(rows.get(0));
         UUID languageAcceptabilityReferenceComponentUUID = getLanguageAcceptabilityReferenceComponentUUID(rows.get(0));
 
-        Integer expectedStampRecordNid = createStampChronology(rows.get(0)).nid();
+        Long expectedStampRecordNid = createStampChronology(rows.get(0)).nid();
 
         // testing values
         SemanticRecord testLanguageAcceptabilitySemanticRecord = createLanguageAceeptabilitySemantic(rows.get(0));

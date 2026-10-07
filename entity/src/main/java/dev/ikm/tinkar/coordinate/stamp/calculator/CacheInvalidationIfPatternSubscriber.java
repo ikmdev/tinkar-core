@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.stamp.calculator;
 
+import dev.ikm.tinkar.common.id.Nid;
 import com.github.benmanes.caffeine.cache.Cache;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 import dev.ikm.tinkar.entity.Entity;
@@ -23,7 +24,7 @@ import dev.ikm.tinkar.entity.PatternEntity;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class CacheInvalidationIfPatternSubscriber implements Subscriber<Integer> {
+public class CacheInvalidationIfPatternSubscriber implements Subscriber<Long> {
 	CopyOnWriteArrayList<Cache<? extends Object, ? extends Object>> cachesToManage = new CopyOnWriteArrayList<>();
 
 
@@ -35,9 +36,9 @@ public class CacheInvalidationIfPatternSubscriber implements Subscriber<Integer>
 
 
 	@Override
-	public void onNext(Integer nid) {
+	public void onNext(Long nid) {
 		// Do nothing with item, but request another...
-		if (nid == Integer.MIN_VALUE) {
+		if (Nid.isNone(nid)) {
 			return;
 		}
 		Entity entity = EntityHandle.get(nid).orNull();

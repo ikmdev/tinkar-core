@@ -101,7 +101,7 @@ public final class SectionEmitter {
         StringBuilder calls = new StringBuilder();
         StringBuilder methods = new StringBuilder();
         int methodCount = 0;
-        for (int memberNid : section.members()) {
+        for (long memberNid : section.members()) {
             StringBuilder component = new StringBuilder();
             if (emitComponent(memberNid, calculator, languageCalculator, resolver, component, notes, section.name())) {
                 String method = "component" + methodCount++;
@@ -127,7 +127,7 @@ public final class SectionEmitter {
      *
      * @return whether a statement was appended
      */
-    private static boolean emitComponent(int memberNid, StampCalculator calculator,
+    private static boolean emitComponent(long memberNid, StampCalculator calculator,
                                          LanguageCalculator languageCalculator, BindingReferenceResolver resolver,
                                          StringBuilder source, List<String> notes, String sectionName) {
         EntityHandle handle = EntityHandle.get(memberNid);

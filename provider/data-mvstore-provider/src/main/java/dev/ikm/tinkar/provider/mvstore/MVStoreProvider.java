@@ -15,6 +15,12 @@
  */
 package dev.ikm.tinkar.provider.mvstore;
 
+import org.eclipse.collections.api.block.procedure.primitive.LongProcedure;
+import java.util.function.ObjLongConsumer;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.common.service.SequentialNids;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.common.id.PublicId;
@@ -111,7 +117,7 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
         }
 
         this.nidAllocator = new NidAllocator(uuidToNidMap,
-                PrimitiveDataService.FIRST_NID, NidAllocator.DEFAULT_BLOCK_SIZE,
+                SequentialNids.FIRST_NID, NidAllocator.DEFAULT_BLOCK_SIZE,
                 List.of(nidToComponentMap, nidToPatternNidMap));
 
         MVStoreProvider.singleton = this;
@@ -138,7 +144,7 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
     }
 
     @Override
-    public int newNid() {
+    public long newNid() {
         return nidAllocator.newNid();
     }
 
@@ -176,13 +182,13 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
     }
 
     @Override
-    public int nidForUuids(UUID... uuids) {
-        return PrimitiveDataService.nidForUuids(uuidToNidMap, this, uuids);
+    public long nidForUuids(UUID... uuids) {
+        return SequentialNids.nidForUuids(uuidToNidMap, () -> Nid.narrowChecked(newNid()), uuids);
     }
 
     @Override
-    public int nidForUuids(ImmutableList<UUID> uuidList) {
-        return PrimitiveDataService.nidForUuids(uuidToNidMap, this, uuidList);
+    public long nidForUuids(ImmutableList<UUID> uuidList) {
+        return SequentialNids.nidForUuids(uuidToNidMap, () -> Nid.narrowChecked(newNid()), uuidList);
     }
 
     @Override
@@ -196,19 +202,19 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
     }
 
     @Override
-    public void forEach(ObjIntConsumer<byte[]> action) {
+    public void forEach(ObjLongConsumer<byte[]> action) {
         nidToComponentMap.entrySet().forEach(entry -> action.accept(entry.getValue(), entry.getKey()));
     }
 
     @Override
-    public void forEachParallel(ObjIntConsumer<byte[]> action) {
+    public void forEachParallel(ObjLongConsumer<byte[]> action) {
         nidToComponentMap.entrySet().stream().parallel().forEach(entry -> action.accept(entry.getValue(), entry.getKey()));
     }
 
     @Override
-    public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+    public void forEachParallel(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
         nids.primitiveParallelStream().forEach(nid -> {
-            byte[] bytes = nidToComponentMap.get(nid);
+            byte[] bytes = nidToComponentMap.get(Nid.narrowChecked(nid));
             if (bytes != null) {
                 action.accept(bytes, nid);
             }
@@ -216,9 +222,9 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
     }
 
     @Override
-    public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+    public void forEach(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
         nids.forEach(nid -> {
-            byte[] bytes = nidToComponentMap.get(nid);
+            byte[] bytes = nidToComponentMap.get(Nid.narrowChecked(nid));
             if (bytes != null) {
                 action.accept(bytes, nid);
             }
@@ -226,24 +232,24 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
     }
 
     @Override
-    public byte[] getBytes(int nid) {
-        return this.nidToComponentMap.get(nid);
+    public byte[] getBytes(long nid) {
+        return this.nidToComponentMap.get(Nid.narrowChecked(nid));
     }
 
     @Override
-    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity dataActivity) {
+    public byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject, DataActivity dataActivity) {
         // putIfAbsent makes "first writer indexes" atomic; the former containsKey/put pair let
         // concurrent first merges of the same nid race.
-        Integer priorPatternNid = this.nidToPatternNidMap.putIfAbsent(nid, patternNid);
+        Integer priorPatternNid = this.nidToPatternNidMap.putIfAbsent(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
         if (priorPatternNid == null) {
             // A concept, pattern or stamp comes with the not-applicable sentinel,
             // Integer.MAX_VALUE (Nid.NOT_APPLICABLE), as its pattern; only a semantic is indexed.
-            if (patternNid != Integer.MAX_VALUE) {
-                long citationLong = IntsInLong.ints2Long(nid, patternNid);
-                this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
+            if (!Nid.isNotApplicable(patternNid)) {
+                long citationLong = IntsInLong.ints2Long(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
+                this.nidToCitingComponentsNidMap.merge(Nid.narrowChecked(referencedComponentNid), new long[]{citationLong},
                         PrimitiveDataService::mergeCitations);
                 // TODO this will be slow merge for large sets. Consider alternatives.
-                this.addToElementSet(patternNid, nid);
+                this.addToElementSet(Nid.narrowChecked(patternNid), Nid.narrowChecked(nid));
             }
         } else if (priorPatternNid != patternNid) {
             // A nid's pattern never changes. A mismatch means two different components were
@@ -255,7 +261,7 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
             LOG.error(message);
             throw new IllegalStateException(message);
         }
-        byte[] mergedBytes = nidToComponentMap.merge(nid, value, PrimitiveDataService::merge);
+        byte[] mergedBytes = nidToComponentMap.merge(Nid.narrowChecked(nid), value, PrimitiveDataService::merge);
         writeSequence.increment();
 
         // Delegate indexing to SearchProvider.
@@ -307,8 +313,8 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
     }
 
     @Override
-    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
-        Set<Integer> elementNids = getElementNidsForPatternNid(patternNid);
+    public void forEachSemanticNidOfPattern(long patternNid, LongProcedure procedure) {
+        Set<Integer> elementNids = getElementNidsForPatternNid(Nid.narrowChecked(patternNid));
         if (elementNids != null && elementNids.size() > 0) {
             for (int elementNid : elementNids) {
                 procedure.accept(elementNid);
@@ -330,22 +336,22 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
     }
 
     @Override
-    public void forEachPatternNid(IntProcedure procedure) {
+    public void forEachPatternNid(LongProcedure procedure) {
         forEachNidOfType(PATTERN_TOKEN, procedure);
     }
 
     @Override
-    public void forEachConceptNid(IntProcedure procedure) {
+    public void forEachConceptNid(LongProcedure procedure) {
         forEachNidOfType(CONCEPT_TOKEN, procedure);
     }
 
     @Override
-    public void forEachStampNid(IntProcedure procedure) {
+    public void forEachStampNid(LongProcedure procedure) {
         forEachNidOfType(STAMP_TOKEN, procedure);
     }
 
     @Override
-    public void forEachSemanticNid(IntProcedure procedure) {
+    public void forEachSemanticNid(LongProcedure procedure) {
         forEachNidOfType(SEMANTIC_TOKEN, procedure);
     }
 
@@ -358,7 +364,7 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
     private static final byte STAMP_TOKEN = PrimitiveDataService.STAMP_DATA_TYPE;
 
     /** Visits the nid of every entity of one type, by the type token its bytes begin with. */
-    private void forEachNidOfType(byte typeToken, IntProcedure procedure) {
+    private void forEachNidOfType(byte typeToken, LongProcedure procedure) {
         nidToComponentMap.entrySet().forEach(entry -> {
             byte[] bytes = entry.getValue();
             if (bytes != null && bytes.length > TYPE_TOKEN_OFFSET && bytes[TYPE_TOKEN_OFFSET] == typeToken) {
@@ -368,8 +374,8 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
     }
 
     @Override
-    public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
-        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+    public void forEachSemanticNidForComponent(long componentNid, LongProcedure procedure) {
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(Nid.narrowChecked(componentNid));
         if (citationLongs != null) {
             for (long citationLong : citationLongs) {
                 int citingComponentNid = (int) (citationLong >> 32);
@@ -379,8 +385,8 @@ public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGe
     }
 
     @Override
-    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
-        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+    public void forEachSemanticNidForComponentOfPattern(long componentNid, long patternNid, LongProcedure procedure) {
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(Nid.narrowChecked(componentNid));
         if (citationLongs != null) {
             for (long citationLong : citationLongs) {
                 int citingComponentNid = (int) (citationLong >> 32);

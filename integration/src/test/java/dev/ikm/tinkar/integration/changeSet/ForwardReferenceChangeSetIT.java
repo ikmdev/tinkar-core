@@ -276,7 +276,7 @@ class ForwardReferenceChangeSetIT {
                     KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
             );
             // The nid of a concept that is written AFTER this semantic
-            int conceptNid = EntityService.get().nidForPublicId(PublicIds.of(CONCEPT_UUID));
+            long conceptNid = EntityService.get().nidForPublicId(PublicIds.of(CONCEPT_UUID));
             return SemanticRecord.build(
                     SEMANTIC_UUID,
                     KernelTerm.DESCRIPTION_PATTERN.nid(),

@@ -15,12 +15,13 @@
  */
 package dev.ikm.tinkar.common.id.impl;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdCollection;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
 import java.util.Arrays;
-import java.util.function.IntConsumer;
-import java.util.stream.IntStream;
+import java.util.function.LongConsumer;
+import java.util.stream.LongStream;
 
 /**
  * https://dirtyhandscoding.wordpress.com/2017/08/25/performance-comparison-linear-search-vs-binary-search/
@@ -28,20 +29,20 @@ import java.util.stream.IntStream;
  * is greater than just iterating through an array. So I chose to use direct iteration for lookup for lists &lt; 32 elements
  * in size. I don’t think there will ever be a case when the public id has &gt; 32 UUIDs inside.
  */
-public class IntIdSetArray
-        implements IntIdSet {
-    private final int[] elements;
+public class LongIdSetArray
+        implements LongIdSet {
+    private final long[] elements;
 
-    private IntIdSetArray(int... newElements) {
+    private LongIdSetArray(long... newElements) {
         this.elements = newElements;
     }
 
-    public static IntIdSetArray newIntIdSet(int... newElements) {
-        return new IntIdSetArray(newElements);
+    public static LongIdSetArray newLongIdSet(long... newElements) {
+        return new LongIdSetArray(newElements);
     }
 
-    public static IntIdSetArray newIntIdSetAlreadySorted(int... newElements) {
-        return new IntIdSetArray(newElements);
+    public static LongIdSetArray newLongIdSetAlreadySorted(long... newElements) {
+        return new LongIdSetArray(newElements);
     }
 
 
@@ -51,15 +52,15 @@ public class IntIdSetArray
     }
 
     @Override
-    public IntStream intStream() {
-        return IntStream.of(elements);
+    public LongStream longStream() {
+        return LongStream.of(elements);
     }
 
     @Override
-    public boolean contains(int value) {
+    public boolean contains(long value) {
         // for small lists, iteration is faster search than binary search because of less branching.
         if (elements.length < 32) {
-            for (int element : elements) {
+            for (long element : elements) {
                 if (value == element) {
                     return true;
                 }
@@ -67,7 +68,7 @@ public class IntIdSetArray
             return false;
         }
 
-        int[] clone = elements.clone();
+        long[] clone = elements.clone();
         Arrays.sort(clone);
         return Arrays.binarySearch(clone, value) >= 0;
     }
@@ -78,13 +79,13 @@ public class IntIdSetArray
     }
 
     @Override
-    public int[] toArray() {
+    public long[] toArray() {
         return elements;
     }
 
     @Override
-    public void forEach(IntConsumer consumer) {
-        for (int element : elements) {
+    public void forEach(LongConsumer consumer) {
+        for (long element : elements) {
             consumer.accept(element);
         }
     }
@@ -94,17 +95,17 @@ public class IntIdSetArray
         if (this == obj) {
             return true;
         }
-        if (obj instanceof IntIdSet intIdSet) {
-            if (elements.length != intIdSet.size()) {
+        if (obj instanceof LongIdSet longIdSet) {
+            if (elements.length != longIdSet.size()) {
                 return false;
             }
 
-            int[] elements1 = elements.clone();
-            int[] elements2;
-            if (intIdSet instanceof IntIdSetArray intIdSetArray) {
-                elements2 = intIdSetArray.elements.clone();
+            long[] elements1 = elements.clone();
+            long[] elements2;
+            if (longIdSet instanceof LongIdSetArray longIdSetArray) {
+                elements2 = longIdSetArray.elements.clone();
             } else {
-                elements2 = intIdSet.toArray().clone();
+                elements2 = longIdSet.toArray().clone();
             }
             Arrays.sort(elements1);
             Arrays.sort(elements2);
@@ -117,15 +118,15 @@ public class IntIdSetArray
     @Override
     public int hashCode() {
         int h = 0;
-        for (int element : elements) {
-            h += element;
+        for (long element : elements) {
+            h += LongIdCollection.hashOf(element);
         }
         return h;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("IntIdSet[");
+        StringBuilder sb = new StringBuilder("LongIdSet[");
         for (int i = 0; i < elements.length && i <= TO_STRING_LIMIT; i++) {
             sb.append(PrimitiveData.textWithNid(elements[i])).append(", ");
             if (i == TO_STRING_LIMIT) {

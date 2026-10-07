@@ -129,6 +129,44 @@ public interface Nid {
     }
 
     /**
+     * The hash code of a nid: its low half. For every nid that fits an {@code int}, which is every
+     * nid of a 6-bit, 8-bit, or sequential store, it equals {@link Integer#hashCode(int)} of the
+     * {@code int} the nid widened from, so hash codes, and the order of hash collections, are
+     * what they were before nids widened. {@link Long#hashCode(long)} differs for every negative
+     * value, and every sequential nid is negative.
+     *
+     * @param nid a nid
+     * @return its hash code
+     */
+    static int hash(long nid) {
+        return (int) nid;
+    }
+
+    /**
+     * The nid a boxed value holds: a {@link Long}, or an {@link Integer} widened, as a nid boxed
+     * before nids were {@code long} still is. For a nid that passes through an {@code Object}: a
+     * field value, drag-and-drop content, a tree item, a proxied argument.
+     *
+     * <p>Neither a cast nor a primitive pattern serves: {@code (Long)} throws on an {@code Integer},
+     * {@code (Integer)} throws on a {@code Long}, and {@code case long nid} does not match a boxed
+     * {@code Integer}, so a nid falls through to the next case unseen. This accepts both boxes and
+     * refuses anything else.
+     *
+     * @param boxed a boxed nid
+     * @return the nid
+     * @throws IllegalArgumentException if the value is not a {@code Long} or an {@code Integer}
+     */
+    static long nidOf(Object boxed) {
+        return switch (boxed) {
+            case Long nid -> nid;
+            case Integer nid -> nid;
+            case null -> throw new IllegalArgumentException("not a nid: null");
+            default -> throw new IllegalArgumentException("not a nid: " + boxed + " ("
+                    + boxed.getClass().getName() + ")");
+        };
+    }
+
+    /**
      * Composes a 64-bit nid: the pattern sequence in the upper 32 bits, the element sequence in
      * the lower 32. {@code long} order, pattern-then-element order and big-endian key order are
      * the same order.
@@ -209,6 +247,54 @@ public interface Nid {
     }
 
     /**
+     * Validates a nid of either kind: one that fits an {@code int}, widened from a 6-bit, 8-bit, or
+     * sequential store, is validated as {@link #validate(int)} does; any other must be a 64-bit nid
+     * ({@link #validate64(long)}). The widened entity layer holds both kinds as {@code long}.
+     *
+     * @param nid the nid to validate
+     * @return the nid, unchanged
+     * @throws IllegalArgumentException if the nid is not a valid nid of either kind
+     */
+    static long validate(long nid) {
+        if (nid >= Integer.MIN_VALUE && nid <= Integer.MAX_VALUE) {
+            return validate(narrowChecked(nid));
+        }
+        return validate64(nid);
+    }
+
+    /**
+     * Whether a nid of either kind is valid: {@link #isValid(int)} for one that fits an {@code int},
+     * {@link #isValid64(long)} for any other.
+     *
+     * @param nid the nid to test
+     * @return true if the nid is valid
+     */
+    static boolean isValid(long nid) {
+        if (nid >= Integer.MIN_VALUE && nid <= Integer.MAX_VALUE) {
+            return isValid(narrowChecked(nid));
+        }
+        return isValid64(nid);
+    }
+
+    /**
+     * {@link #validate(long)} with a description of the context for the message.
+     *
+     * @param nid the nid to validate
+     * @param contextDescription what the nid is, for the message
+     * @return the nid, unchanged
+     */
+    static long validate(long nid, String contextDescription) {
+        if (nid >= Integer.MIN_VALUE && nid <= Integer.MAX_VALUE) {
+            return validate(narrowChecked(nid), contextDescription);
+        }
+        try {
+            return validate64(nid);
+        } catch (IllegalArgumentException invalid) {
+            throw new IllegalArgumentException(contextDescription + ": " + invalid.getMessage(), invalid);
+        }
+    }
+
+    /**
      * Validates that a NID is not one of the reserved/invalid values and returns it.
      * <p>     * These values are reserved in Tinkar for special purposes:
      * <ul>
@@ -236,8 +322,8 @@ public interface Nid {
      * void testSemanticFieldsNotReserved() {
      *     SemanticEntity semantic = EntityHandle.getSemanticOrThrow(semanticNid);
      *     semantic.fieldValues().forEach(field -> {
-     *         if (field instanceof Integer intValue) {
-     *             Nid.validate(intValue);
+     *         if (field instanceof EntityFacade facade) {
+     *             Nid.validate(facade.nid());
      *         }
      *     });
      * }

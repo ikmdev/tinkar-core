@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.ext.lang.owl;
 
+import dev.ikm.tinkar.common.id.Nid;
+
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
 
 import java.util.Arrays;
@@ -25,21 +27,21 @@ import java.util.Objects;
  * @author kec
  */
 public class TransformationGroup {
-    final int conceptNid;
-    final int[] semanticNids;
+    final long conceptNid;
+    final long[] semanticNids;
     final PremiseType premiseType;
 
-    public TransformationGroup(int conceptNid, int[] semanticNids, PremiseType premiseType) {
+    public TransformationGroup(long conceptNid, long[] semanticNids, PremiseType premiseType) {
         this.conceptNid = conceptNid;
         this.semanticNids = semanticNids;
         this.premiseType = premiseType;
     }
 
-    public int getConceptNid() {
+    public long getConceptNid() {
         return conceptNid;
     }
 
-    public int[] getSemanticNids() {
+    public long[] getSemanticNids() {
         return semanticNids;
     }
 
@@ -62,7 +64,7 @@ public class TransformationGroup {
     @Override
     public int hashCode() {
         int hash = 3;
-        hash = 23 * hash + this.conceptNid;
+        hash = 23 * hash + Nid.hash(this.conceptNid);
         hash = 23 * hash + Objects.hashCode(this.premiseType);
         return hash;
     }

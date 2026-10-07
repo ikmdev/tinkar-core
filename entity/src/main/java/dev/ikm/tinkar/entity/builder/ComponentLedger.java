@@ -16,8 +16,8 @@
 package dev.ikm.tinkar.entity.builder;
 
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.id.PublicIdSet;
@@ -516,7 +516,7 @@ final class ComponentLedger {
                     "Field " + index + " on " + birthFqn + " is a double — the store narrows double"
                             + " to float silently; pass a Float");
         }
-        if (value instanceof IntIdList || value instanceof IntIdSet) {
+        if (value instanceof LongIdList || value instanceof LongIdSet) {
             throw new IllegalArgumentException(
                     "Field " + index + " on " + birthFqn + " is nid-based and not replay-stable —"
                             + " pass a PublicIdList or PublicIdSet");
@@ -657,7 +657,7 @@ final class ComponentLedger {
 
     // ------------------------------------------------------------------ replay
 
-    int componentNid() {
+    long componentNid() {
         return nidFor(componentId);
     }
 
@@ -668,10 +668,10 @@ final class ComponentLedger {
      * identity ({@link Stamp#declaredIdentity()}); a declared identity may carry
      * multiple UUIDs, all registered to the one nid.
      */
-    int writeStamp(Stamp stamp) {
+    long writeStamp(Stamp stamp) {
         registry.requireStampAgreement(stamp);
         PublicId stampId = stamp.publicId();
-        int stampNid = EntityService.get().nidForStamp(stampId);
+        long stampNid = EntityService.get().nidForStamp(stampId);
         boolean alreadyWritten = false;
         for (UUID uuid : stampId.asUuidArray()) {
             if (writtenStamps.contains(uuid)) {
@@ -692,7 +692,7 @@ final class ComponentLedger {
      * Writes the stamp entity for a declared stamp under its nid. Writing the same stamp
      * again merges to the same entity.
      */
-    static void putStampEntity(Stamp stamp, int stampNid) {
+    static void putStampEntity(Stamp stamp, long stampNid) {
         PublicIdentifierRecord stampIdRecord = PublicIdentifierRecord.make(stamp.publicId());
         RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
         StampRecord stampEntity = new StampRecord(stampIdRecord.mostSignificantBits(),
@@ -706,15 +706,15 @@ final class ComponentLedger {
     }
 
     /** Writes every description ledger and its dialect-acceptability semantic. */
-    void writeDescriptions(int componentNid) {
+    void writeDescriptions(long componentNid) {
         seedFqnIfImplicit();
         for (DescriptionLedger description : descriptions) {
             writeDescription(description, componentNid);
         }
     }
 
-    private void writeDescription(DescriptionLedger description, int componentNid) {
-        int descriptionNid = nidFor(description.uuid);
+    private void writeDescription(DescriptionLedger description, long componentNid) {
+        long descriptionNid = nidFor(description.uuid);
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(PublicIds.of(description.uuid),
                 KernelTerm.DESCRIPTION_PATTERN, componentNid, versions);
@@ -733,7 +733,7 @@ final class ComponentLedger {
         writeDialect(description, descriptionNid);
     }
 
-    private void writeDialect(DescriptionLedger description, int descriptionNid) {
+    private void writeDialect(DescriptionLedger description, long descriptionNid) {
         UUID dialectUuid = UuidT5Generator.get(description.uuid, "us-dialect");
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(PublicIds.of(dialectUuid),
@@ -758,7 +758,7 @@ final class ComponentLedger {
      * ledger reproduces the same graph bytes, which the store merge then no-ops instead
      * of silently replacing the version payload.
      */
-    void writeAxioms(int componentNid) {
+    void writeAxioms(long componentNid) {
         if (axiomVersions.isEmpty()) {
             return;
         }
@@ -795,9 +795,9 @@ final class ComponentLedger {
      * their nid-based graph entities here too, for the same reason
      * (IKE-Network/ike-issues#885).
      */
-    void writeGenericSemantics(int componentNid) {
+    void writeGenericSemantics(long componentNid) {
         for (GenericSemanticLedger semantic : genericSemantics) {
-            int referencedNid = semantic.referencedComponent == null
+            long referencedNid = semantic.referencedComponent == null
                     ? componentNid
                     : nidFor(semantic.referencedComponent);
             RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
@@ -835,11 +835,11 @@ final class ComponentLedger {
         };
     }
 
-    static int nidFor(UUID uuid) {
+    static long nidFor(UUID uuid) {
         return PrimitiveData.nid(PublicIds.of(uuid));
     }
 
-    static int nidFor(PublicId publicId) {
+    static long nidFor(PublicId publicId) {
         return PrimitiveData.nid(publicId);
     }
 
@@ -850,10 +850,10 @@ final class ComponentLedger {
      * persistent providers even when the pattern chronology is not present yet.
      */
     private static SemanticRecord newSemantic(PublicId semanticId, EntityProxy.Pattern pattern,
-                                              int referencedComponentNid,
+                                              long referencedComponentNid,
                                               RecordListBuilder<SemanticVersionRecord> versions) {
         PublicIdentifierRecord identifier = PublicIdentifierRecord.make(semanticId);
-        int nid = ScopedValue.where(PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID, pattern.publicId())
+        long nid = ScopedValue.where(PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID, pattern.publicId())
                 .call(() -> PrimitiveData.nid(semanticId));
         return SemanticRecordBuilder.builder()
                 .mostSignificantBits(identifier.mostSignificantBits())

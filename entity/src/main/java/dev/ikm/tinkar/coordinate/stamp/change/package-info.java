@@ -74,7 +74,7 @@
  * <pre>{@code
  * for (VersionChangeRecord versionChange : changes.versionChanges()) {
  *     // Examine version-level change
- *     int stampNid = versionChange.stampNid();
+ *     long stampNid = versionChange.stampNid();
  *     StampEntity stamp = Entity.getStamp(stampNid);
  *
  *     System.out.println("Changed at: " + stamp.time());
@@ -142,7 +142,7 @@
  * // Find all concepts that changed in time range
  * List<ChangeChronology> changes = new ArrayList<>();
  *
- * for (int conceptNid : allConceptNids) {
+ * for (long conceptNid : allConceptNids) {
  *     ConceptEntity concept = Entity.getConceptForNid(conceptNid);
  *     ChangeChronology changeChronology = calc.getChanges(
  *         concept, fromPos, toPos
@@ -234,7 +234,7 @@
  * <pre>{@code
  * // Synchronize changes from source to target
  * void syncChanges(StampPositionRecord lastSync, StampPositionRecord now) {
- *     for (int nid : allEntityNids) {
+ *     for (long nid : allEntityNids) {
  *         Entity entity = EntityHandle.get(nid).expectEntity();
  *         ChangeChronology changes = calc.getChanges(entity, lastSync, now);
  *
@@ -270,7 +270,7 @@
  *     StampPositionRecord lastCheck = StampPositionRecord.make(lastCheckTime, path);
  *     StampPositionRecord nowPos = StampPositionRecord.make(now, path);
  *
- *     for (int subscribedNid : subscribedEntities) {
+ *     for (long subscribedNid : subscribedEntities) {
  *         Entity entity = EntityHandle.get(subscribedNid).expectEntity();
  *         ChangeChronology changes = calc.getChanges(entity, lastCheck, nowPos);
  *

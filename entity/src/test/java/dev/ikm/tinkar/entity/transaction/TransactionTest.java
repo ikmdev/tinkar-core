@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TransactionTest {
     /*
-    NOTE: method addComponent(int entityNid) is not being used anywhere, but in this Test Class so far.
+    NOTE: method addComponent(long entityNid) is not being used anywhere, but in this Test Class so far.
      */
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionTest.class);
@@ -44,8 +44,8 @@ public class TransactionTest {
         LOG.warn("Test addComponent(entityNid) Not Zero");
 
         Transaction transaction = new Transaction();
-        int actualEntityNid = 6;
-        int expectedEntityNid;
+        long actualEntityNid = 6;
+        long expectedEntityNid;
 
         expectedEntityNid = actualEntityNid;
         transaction.addComponent(actualEntityNid);
@@ -73,8 +73,8 @@ public class TransactionTest {
         LOG.warn("Test addComponent(entityNid) with Negative Values");
 
         Transaction transaction = new Transaction();
-        int actualEntityNid = -1;
-        int expectedEntityNid;
+        long actualEntityNid = -1;
+        long expectedEntityNid;
 
         expectedEntityNid = actualEntityNid;
         transaction.addComponent(actualEntityNid);

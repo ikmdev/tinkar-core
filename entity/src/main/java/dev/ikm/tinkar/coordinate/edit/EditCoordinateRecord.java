@@ -34,8 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
 // It previously declared promotionPath and destinationModule transposed, so make()/decode() — which pass
 // args in the order below — stored destinationModule into the promotionPath field and vice versa, leaving
 // every freshly-made record's destinationModule/promotionPath swapped (IKE-Network/ike-issues#744).
-public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int destinationModuleNid,
-                                   int defaultPathNid, int promotionPathNid)
+public record EditCoordinateRecord(long authorNid, long defaultModuleNid, long destinationModuleNid,
+                                   long defaultPathNid, long promotionPathNid)
         implements EditCoordinate, ImmutableCoordinate {
 
     private static final ConcurrentHashMap<EditCoordinateRecord, EditCoordinateRecord> SINGLETONS = new ConcurrentHashMap<>();
@@ -46,7 +46,7 @@ public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int dest
      * @param pathNid
      * @return
      */
-    public static EditCoordinateRecord make(int authorNid, int moduleNid, int pathNid) {
+    public static EditCoordinateRecord make(long authorNid, long moduleNid, long pathNid) {
         return SINGLETONS.computeIfAbsent(new EditCoordinateRecord(authorNid, moduleNid, moduleNid, pathNid, pathNid),
                 editCoordinateImmutable -> editCoordinateImmutable);
     }
@@ -70,7 +70,7 @@ public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int dest
      * @param promotionPathNid
      * @return
      */
-    public static EditCoordinateRecord make(int authorNid, int defaultModuleNid, int destinationModuleNid, int defaultPathNid, int promotionPathNid) {
+    public static EditCoordinateRecord make(long authorNid, long defaultModuleNid, long destinationModuleNid, long defaultPathNid, long promotionPathNid) {
         return SINGLETONS.computeIfAbsent(new EditCoordinateRecord(authorNid, defaultModuleNid, destinationModuleNid, defaultPathNid, promotionPathNid),
                 editCoordinateImmutable -> editCoordinateImmutable);
     }
@@ -118,27 +118,27 @@ public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int dest
     }
 
     @Override
-    public int getAuthorNidForChanges() {
+    public long getAuthorNidForChanges() {
         return this.authorNid;
     }
 
     @Override
-    public int getDefaultModuleNid() {
+    public long getDefaultModuleNid() {
         return this.defaultModuleNid;
     }
 
     @Override
-    public int getDestinationModuleNid() {
+    public long getDestinationModuleNid() {
         return this.destinationModuleNid;
     }
 
     @Override
-    public int getDefaultPathNid() {
+    public long getDefaultPathNid() {
         return this.defaultPathNid;
     }
 
     @Override
-    public int getPromotionPathNid() {
+    public long getPromotionPathNid() {
         return this.promotionPathNid;
     }
 

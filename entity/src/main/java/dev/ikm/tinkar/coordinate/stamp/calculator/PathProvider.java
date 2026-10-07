@@ -15,6 +15,9 @@
  */
 package dev.ikm.tinkar.coordinate.stamp.calculator;
 
+import org.eclipse.collections.api.factory.primitive.LongLongMaps;
+import org.eclipse.collections.api.map.primitive.MutableLongLongMap;
+
 
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
@@ -41,7 +44,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.map.primitive.MutableIntLongMap;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
-import org.eclipse.collections.api.tuple.primitive.IntLongPair;
+import org.eclipse.collections.api.tuple.primitive.LongLongPair;
 import org.eclipse.collections.impl.factory.primitive.IntLongMaps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +73,7 @@ public class PathProvider implements PathService {
      * @return the branch records for every path originating from {@code pathNid}
      */
     @Override
-    public ImmutableSet<StampBranchRecord> getPathBranches(int pathNid) {
+    public ImmutableSet<StampBranchRecord> getPathBranches(long pathNid) {
         MutableSet<StampBranchRecord> branchSet = Sets.mutable.empty();
         EntityService.get().forEachSemanticOfPattern(KernelTerm.PATH_ORIGINS_PATTERN.nid(), semanticEntity -> {
             // Referenced component = path for which this is an origin
@@ -98,11 +101,11 @@ public class PathProvider implements PathService {
      */
     @Override
     public ImmutableSet<StampPathImmutable> getPaths() {
-        int[] pathsPatternSemanticNids = EntityStore.current().semanticNidsOfPattern(KernelTerm.PATHS_PATTERN.nid());
+        long[] pathsPatternSemanticNids = EntityStore.current().semanticNidsOfPattern(KernelTerm.PATHS_PATTERN.nid());
         MutableSet<StampPathImmutable> pathSet = Sets.mutable.ofInitialCapacity(pathsPatternSemanticNids.length);
-        for (int pathsPatternSemanticNid : pathsPatternSemanticNids) {
+        for (long pathsPatternSemanticNid : pathsPatternSemanticNids) {
             SemanticEntity semanticEntity = EntityHandle.get(pathsPatternSemanticNid).expectSemantic();
-            int pathNid = semanticEntity.referencedComponentNid();
+            long pathNid = semanticEntity.referencedComponentNid();
             pathSet.add(StampPathImmutable.make(pathNid, getPathOrigins(pathNid)));
         }
         return pathSet.toImmutable();
@@ -119,7 +122,7 @@ public class PathProvider implements PathService {
      * @return the resolved origins of {@code pathNid}
      */
     @Override
-    public ImmutableSet<StampPositionRecord> getPathOrigins(int pathNid) {
+    public ImmutableSet<StampPositionRecord> getPathOrigins(long pathNid) {
         MutableSet<StampPositionRecord> originSet = Sets.mutable.empty();
         EntityService.get().forEachSemanticForComponentOfPattern(pathNid, KernelTerm.PATH_ORIGINS_PATTERN.nid(), semanticEntity -> {
             latestOriginVersion(semanticEntity).ifPresent(originVersion -> {
@@ -184,8 +187,8 @@ public class PathProvider implements PathService {
             return Optional.of(versions.get(0));
         }
 
-        final int referencedPathNid = semanticEntity.referencedComponentNid();
-        final MutableIntLongMap newestCommitTimeByPath = IntLongMaps.mutable.empty();
+        final long referencedPathNid = semanticEntity.referencedComponentNid();
+        final MutableLongLongMap newestCommitTimeByPath = LongLongMaps.mutable.empty();
         for (SemanticEntityVersion version : versions) {
             StampEntity stamp = version.stamp();
             final long time = stamp.time();
@@ -197,12 +200,12 @@ public class PathProvider implements PathService {
             newestCommitTimeByPath.updateValue(stamp.pathNid(), time, existing -> Math.max(existing, time));
         }
 
-        final int[] orderedSegmentPathNids = new int[newestCommitTimeByPath.size() + 1];
+        final long[] orderedSegmentPathNids = new long[newestCommitTimeByPath.size() + 1];
         orderedSegmentPathNids[0] = referencedPathNid;
         int segmentIndex = 1;
-        for (IntLongPair pathAndNewestTime : newestCommitTimeByPath.keyValuesView().toSortedList(
-                Comparator.<IntLongPair>comparingLong(IntLongPair::getTwo).reversed()
-                        .thenComparingInt(IntLongPair::getOne))) {
+        for (LongLongPair pathAndNewestTime : newestCommitTimeByPath.keyValuesView().toSortedList(
+                Comparator.<LongLongPair>comparingLong(LongLongPair::getTwo).reversed()
+                        .thenComparingLong(LongLongPair::getOne))) {
             orderedSegmentPathNids[segmentIndex++] = pathAndNewestTime.getOne();
         }
 

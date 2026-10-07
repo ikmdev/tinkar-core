@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.integration.roundtrip;
 
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
@@ -196,7 +196,7 @@ class TemporalClassificationIT {
         return selected;
     }
 
-    private static int pathNid(Properties in) {
+    private static long pathNid(Properties in) {
         return PrimitiveData.nid(UUID.fromString(in.getProperty(PATH)));
     }
 
@@ -208,7 +208,7 @@ class TemporalClassificationIT {
             TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
             try {
                 new LoadEntitiesFromProtobufFile(new File(in.getProperty(IMPORT_FILE))).compute();
-                int pathNid = pathNid(in);
+                long pathNid = pathNid(in);
                 TreeSet<Long> times = new TreeSet<>();
                 EntityService.get().forEachStampEntity(stamp -> {
                     for (StampEntityVersion version : stamp.versions()) {
@@ -240,7 +240,7 @@ class TemporalClassificationIT {
             TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
             try {
                 StampPositionRecord position = StampPositionRecord.make(Long.parseLong(time), pathNid(in));
-                StampCoordinateRecord stamps = StampCoordinateRecord.make(StateSet.ACTIVE, position, IntIds.set.empty());
+                StampCoordinateRecord stamps = StampCoordinateRecord.make(StateSet.ACTIVE, position, LongIds.set.empty());
                 ViewCoordinateRecord coordinate = ViewCoordinateRecord.make(stamps,
                         Coordinates.Language.UsEnglishRegularName(), Coordinates.Logic.ElPlusPlus(),
                         Coordinates.Navigation.stated(), Coordinates.Edit.Default());

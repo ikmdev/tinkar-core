@@ -54,18 +54,18 @@ package dev.ikm.tinkar.coordinate.stamp.calculator;
 
 //~--- JDK imports ------------------------------------------------------------
 
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
 
 import java.util.Collection;
 import java.util.List;
@@ -445,14 +445,14 @@ public final class Latest<V> {
         }
     }
 
-    public IntIdSet stampNids() {
+    public LongIdSet stampNids() {
         if (contradictions == null) {
             if (value instanceof EntityVersion EntityVersion) {
-                return IntIds.set.of(EntityVersion.stampNid());
+                return LongIds.set.of(EntityVersion.stampNid());
             }
             throw new IllegalStateException("value not instanceof EntityVersion: " + value);
         }
-        MutableIntList intList = IntLists.mutable.withInitialCapacity(contradictions.size() + 1);
+        MutableLongList intList = LongLists.mutable.withInitialCapacity(contradictions.size() + 1);
         if (value instanceof EntityVersion entityVersion) {
             intList.add(entityVersion.stampNid());
         } else {
@@ -465,7 +465,7 @@ public final class Latest<V> {
                 throw new IllegalStateException("value not instanceof EntityVersion: " + version);
             }
         }
-        return IntIds.set.of(intList.toArray());
+        return LongIds.set.of(intList.toArray());
     }
 }
 

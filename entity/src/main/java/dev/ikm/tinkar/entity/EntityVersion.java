@@ -19,13 +19,13 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.FieldDataType;
 
 public interface EntityVersion extends VersionData {
-    default int nid() {
+    default long nid() {
         return entity().nid();
     }
 
     Entity entity();
 
-    int stampNid();
+    long stampNid();
 
     Entity chronology();
 

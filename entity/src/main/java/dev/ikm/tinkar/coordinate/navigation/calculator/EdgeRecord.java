@@ -15,19 +15,19 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
 
 import java.util.Objects;
 
-public record EdgeRecord(IntIdSet typeNids, int destinationNid, String comparisonString) implements Edge {
+public record EdgeRecord(LongIdSet typeNids, long destinationNid, String comparisonString) implements Edge {
     public EdgeRecord {
         Objects.requireNonNull(typeNids);
         Objects.requireNonNull(comparisonString);
     }
 
-    public EdgeRecord(IntIdSet typeNids, int destinationNid, LanguageCalculator languageCalculator) {
+    public EdgeRecord(LongIdSet typeNids, long destinationNid, LanguageCalculator languageCalculator) {
         this(typeNids, destinationNid, languageCalculator.getDescriptionTextOrNid(destinationNid));
     }
 

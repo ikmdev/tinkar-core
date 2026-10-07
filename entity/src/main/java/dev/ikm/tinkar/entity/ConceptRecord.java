@@ -32,7 +32,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
 @RecordBuilder
 public record ConceptRecord(
         long mostSignificantBits, long leastSignificantBits,
-        ImmutableLongList additionalUuidLongs, int nid,
+        ImmutableLongList additionalUuidLongs, long nid,
         ImmutableList<ConceptVersionRecord> versions)
         implements ConceptEntity<ConceptVersionRecord>, ImmutableEntity<ConceptVersionRecord>, ConceptRecordBuilder.With {
 
@@ -46,7 +46,7 @@ public record ConceptRecord(
     public static ConceptRecord makeNew(PublicId publicId, RecordListBuilder versionListBuilder) {
         PublicIdentifierRecord publicIdRecord = PublicIdentifierRecord.make(publicId);
 
-        int nid = ScopedValue
+        long nid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId())
                 .call(() -> PrimitiveData.nid(publicId));
 
@@ -55,7 +55,7 @@ public record ConceptRecord(
     }
 
     public static ConceptRecord makeNew(UUID conceptUuid, RecordListBuilder versionListBuilder) {
-        int nid = ScopedValue
+        long nid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId())
                 .call(() -> PrimitiveData.nid(conceptUuid));
         return new ConceptRecord(conceptUuid.getMostSignificantBits(), conceptUuid.getLeastSignificantBits(),
@@ -63,7 +63,7 @@ public record ConceptRecord(
     }
     public static ConceptRecord build(PublicId publicId, StampEntityVersion stampVersion) {
         RecordListBuilder<ConceptVersionRecord> versionRecords = RecordListBuilder.make();
-        int conceptNid = ScopedValue
+        long conceptNid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId())
                 .call(() -> PrimitiveData.nid(publicId));
 
@@ -81,7 +81,7 @@ public record ConceptRecord(
 
     public static ConceptRecord build(UUID conceptUuid, StampEntityVersion stampVersion) {
         RecordListBuilder<ConceptVersionRecord> versionRecords = RecordListBuilder.make();
-        int conceptNid = ScopedValue
+        long conceptNid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId())
                 .call(() -> PrimitiveData.nid(conceptUuid));
 

@@ -30,7 +30,7 @@ import org.eclipse.collections.api.collection.ImmutableCollection;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
 
 import java.util.UUID;
 
@@ -64,20 +64,20 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
     }
 
     @Override
-    public String getVertexLabel(int vertexConceptNid, LanguageCalculator languageCalculator) {
+    public String getVertexLabel(long vertexConceptNid, LanguageCalculator languageCalculator) {
         return languageCalculator.getDescriptionText(vertexConceptNid).orElse(PrimitiveData.text(vertexConceptNid));
     }
 
     @Override
-    public final int[] sortVertexes(int[] vertexConceptNids, NavigationCalculator navigationCalculator) {
+    public final long[] sortVertexes(long[] vertexConceptNids, NavigationCalculator navigationCalculator) {
         if (vertexConceptNids.length < 2) {
             // nothing to sort, skip creating the objects for sort.
             return vertexConceptNids;
         }
 
-        return IntLists.immutable.of(vertexConceptNids).primitiveStream().mapToObj(vertexConceptNid ->
+        return LongLists.immutable.of(vertexConceptNids).primitiveStream().mapToObj(vertexConceptNid ->
                         new VertexItem(vertexConceptNid, navigationCalculator.getDescriptionTextOrNid(vertexConceptNid)))
-                .sorted().mapToInt(value -> value.nid).toArray();
+                .sorted().mapToLong(value -> value.nid).toArray();
     }
 
     @Override
@@ -118,10 +118,10 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
     }
 
     private static class VertexItem implements Comparable<VertexItem> {
-        private final int nid;
+        private final long nid;
         private final String description;
 
-        public VertexItem(int nid, String description) {
+        public VertexItem(long nid, String description) {
             this.nid = nid;
             this.description = description;
         }

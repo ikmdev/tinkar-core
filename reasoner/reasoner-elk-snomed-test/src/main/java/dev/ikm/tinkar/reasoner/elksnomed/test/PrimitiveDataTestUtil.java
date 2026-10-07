@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DataServiceController;
@@ -162,7 +162,7 @@ public abstract class PrimitiveDataTestUtil {
 		// workaround until db create issue fixed
 //		instant = instant.plus(4, ChronoUnit.HOURS);
 		StampPositionRecord pos = StampPositionRecord.make(instant, KernelTerm.DEVELOPMENT_PATH);
-		StampCoordinateRecord scr = StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE, pos, IntIds.set.empty());
+		StampCoordinateRecord scr = StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE, pos, LongIds.set.empty());
 		ViewCoordinateRecord vcr = ViewCoordinateRecord.make(scr, Language.UsEnglishRegularName(), Logic.ElPlusPlus(),
 				Navigation.inferred(), Edit.Default());
 		ViewCalculatorWithCache vc = ViewCalculatorWithCache.getCalculator(vcr);
@@ -171,31 +171,31 @@ public abstract class PrimitiveDataTestUtil {
 
 	public static ViewCalculator getViewCalculatorPrimordial() {
 		StampCoordinateRecord scr = StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
-				Position.LatestOnDevelopment(), IntIds.set.of(KernelTerm.PRIMORDIAL_MODULE.nid()));
+				Position.LatestOnDevelopment(), LongIds.set.of(KernelTerm.PRIMORDIAL_MODULE.nid()));
 		ViewCoordinateRecord vcr = ViewCoordinateRecord.make(scr, Language.UsEnglishRegularName(), Logic.ElPlusPlus(),
 				Navigation.inferred(), Edit.Default());
 		ViewCalculatorWithCache vc = ViewCalculatorWithCache.getCalculator(vcr);
 		return vc;
 	}
 
-	public static HashSet<Integer> getPrimordialNids() throws Exception {
-		HashSet<Integer> nids = new HashSet<>();
+	public static HashSet<Long> getPrimordialNids() throws Exception {
+		HashSet<Long> nids = new HashSet<>();
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculatorPrimordial();
 		vc.forEachSemanticVersionOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid(), (semanticEntityVersion, _) -> {
-			int conceptNid = semanticEntityVersion.referencedComponentNid();
+			long conceptNid = semanticEntityVersion.referencedComponentNid();
 			if (vc.latestIsActive(conceptNid))
 				nids.add(conceptNid);
 		});
 		return nids;
 	}
 
-	public static HashSet<Integer> getPrimordialNidsWithSctids() throws Exception {
+	public static HashSet<Long> getPrimordialNidsWithSctids() throws Exception {
 		ViewCalculator vc = getViewCalculator();
 		return getPrimordialNids().stream().filter(nid -> getSctid(nid, vc) != null)
 				.collect(Collectors.toCollection(HashSet::new));
 	}
 
-	public static String getSctid(int conceptNid, ViewCalculator vc) {
+	public static String getSctid(long conceptNid, ViewCalculator vc) {
 		ArrayList<String> ret = new ArrayList<>();
 		Latest<PatternEntityVersion> latestIdPattern = vc.latestPatternEntityVersion(KernelTerm.IDENTIFIER_PATTERN);
 		EntityService.get().forEachSemanticForComponentOfPattern(conceptNid, KernelTerm.IDENTIFIER_PATTERN.nid(),

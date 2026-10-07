@@ -53,11 +53,11 @@ public class ElkSnomedIncrementalVersionsTestIT extends ElkSnomedIncrementalTest
 			ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator(effective_time);
 			long vc_time = ((StampCalculatorWithCache) vc.stampCalculator()).filter().time();
 			LOG.info("\tView calculator time: " + Instant.ofEpochMilli(vc_time) + " " + vc_time);
-			HashSet<Integer> no_sctid_nids = new HashSet<>();
-			HashSet<Integer> active_nids = new HashSet<>();
-			HashSet<Integer> inactive_nids = new HashSet<>();
+			HashSet<Long> no_sctid_nids = new HashSet<>();
+			HashSet<Long> active_nids = new HashSet<>();
+			HashSet<Long> inactive_nids = new HashSet<>();
 			vc.forEachSemanticVersionOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid(), (semanticEntityVersion, _) -> {
-				int nid = semanticEntityVersion.referencedComponentNid();
+				long nid = semanticEntityVersion.referencedComponentNid();
 				String sctid = PrimitiveDataTestUtil.getSctid(nid, vc);
 				if (sctid != null) {
 					if (vc.latestIsActive(nid)) {
@@ -86,7 +86,7 @@ public class ElkSnomedIncrementalVersionsTestIT extends ElkSnomedIncrementalTest
 			ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator(effective_time);
 			long time = ((StampCalculatorWithCache) vc.stampCalculator()).filter().time();
 			LOG.info("View calculator time: " + Instant.ofEpochMilli(time) + " " + time);
-			HashSet<Integer> no_sctid_nids = new HashSet<>();
+			HashSet<Long> no_sctid_nids = new HashSet<>();
 			AtomicInteger active = new AtomicInteger();
 			AtomicInteger inactive = new AtomicInteger();
 			AtomicInteger time_cnt = new AtomicInteger();
@@ -94,7 +94,7 @@ public class ElkSnomedIncrementalVersionsTestIT extends ElkSnomedIncrementalTest
 					(semanticEntityVersion, _) -> {
 						if (semanticEntityVersion.time() == time)
 							time_cnt.incrementAndGet();
-						int nid = semanticEntityVersion.referencedComponentNid();
+						long nid = semanticEntityVersion.referencedComponentNid();
 						String sctid = PrimitiveDataTestUtil.getSctid(nid, vc);
 						if (sctid != null) {
 							ZonedDateTime zdt = Instant.ofEpochMilli(semanticEntityVersion.time())

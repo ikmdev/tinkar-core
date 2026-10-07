@@ -58,7 +58,7 @@ public class TestEntityToProtobufStampTransformIT {
 
         UUID stampUuid = UUID.randomUUID();
         PublicId stampPublicId = PublicIds.of(stampUuid);
-        int stampNid = Entity.nid(stampPublicId);
+        long stampNid = Entity.nid(stampPublicId);
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()
@@ -192,7 +192,7 @@ public class TestEntityToProtobufStampTransformIT {
 
         UUID stampUuid = UUID.randomUUID();
         PublicId stampPublicId = PublicIds.of(stampUuid);
-        int stampNid = Entity.nid(stampPublicId);
+        long stampNid = Entity.nid(stampPublicId);
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()

@@ -15,6 +15,9 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
+import java.util.function.LongConsumer;
+import java.util.function.LongPredicate;
+
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
@@ -73,7 +76,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
     private final List<PublicId> allowedPaths;
     private final List<PublicId> includedPatterns;
     private final List<PublicId> excludedPatterns;
-    private final IntPredicate purposeNidPredicate;
+    private final LongPredicate purposeNidPredicate;
 
     /**
      * An allowlist by module only — any path, any pattern, no purpose refinement.
@@ -99,7 +102,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
      */
     public AllowlistEntityAggregator(Collection<PublicId> allowedModules, Collection<PublicId> allowedPaths,
                                      Collection<PublicId> includedPatterns, Collection<PublicId> excludedPatterns,
-                                     IntPredicate purposeNidPredicate) {
+                                     LongPredicate purposeNidPredicate) {
         this.allowedModules = List.copyOf(Objects.requireNonNull(allowedModules, "allowedModules"));
         this.allowedPaths = allowedPaths == null ? List.of() : List.copyOf(allowedPaths);
         this.includedPatterns = includedPatterns == null ? List.of() : List.copyOf(includedPatterns);
@@ -108,20 +111,20 @@ public class AllowlistEntityAggregator extends EntityAggregator {
     }
 
     @Override
-    public EntityCountSummary aggregate(IntConsumer nidConsumer) {
+    public EntityCountSummary aggregate(LongConsumer nidConsumer) {
         initCounts();
 
-        Set<Integer> allowedModuleNids = new HashSet<>();
+        Set<Long> allowedModuleNids = new HashSet<>();
         allowedModules.forEach(publicId -> allowedModuleNids.add(PrimitiveData.nid(publicId)));
-        Set<Integer> allowedPathNids = new HashSet<>();
+        Set<Long> allowedPathNids = new HashSet<>();
         allowedPaths.forEach(publicId -> allowedPathNids.add(PrimitiveData.nid(publicId)));
-        Set<Integer> includedPatternNids = new HashSet<>();
+        Set<Long> includedPatternNids = new HashSet<>();
         includedPatterns.forEach(publicId -> includedPatternNids.add(PrimitiveData.nid(publicId)));
-        Set<Integer> excludedPatternNids = new HashSet<>();
+        Set<Long> excludedPatternNids = new HashSet<>();
         excludedPatterns.forEach(publicId -> excludedPatternNids.add(PrimitiveData.nid(publicId)));
 
         // The stamps whose module (and path, when constrained) is allowlisted.
-        Set<Integer> allowedStampNids = new HashSet<>();
+        Set<Long> allowedStampNids = new HashSet<>();
         EntityStore.current().forEachStampNid(stampNid ->
                 EntityService.get().getStamp(stampNid).ifPresent(stampEntity -> {
                     boolean moduleOk = allowedModuleNids.contains(stampEntity.moduleNid());
@@ -131,12 +134,12 @@ public class AllowlistEntityAggregator extends EntityAggregator {
                     }
                 }));
 
-        List<Integer> referencedStampNids = new ArrayList<>();
+        List<Long> referencedStampNids = new ArrayList<>();
 
         // Concepts included when any of their stamps is allowlisted.
         EntityStore.current().forEachConceptNid(conceptNid ->
                 EntityHandle.get(conceptNid).entity().filter(e -> !e.canceled()).ifPresent(conceptEntity -> {
-                    Set<Integer> stampNids = conceptEntity.stampNids().mapToSet(i -> i);
+                    Set<Long> stampNids = conceptEntity.stampNids().mapToSet(i -> i);
                     if (!Collections.disjoint(allowedStampNids, stampNids)) {
                         conceptsAggregatedCount.incrementAndGet();
                         nidConsumer.accept(conceptNid);
@@ -148,7 +151,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
         // a pattern entity is itself subject to the pattern include/exclude by its own nid.
         EntityStore.current().forEachPatternNid(patternNid ->
                 EntityHandle.get(patternNid).entity().filter(e -> !e.canceled()).ifPresent(patternEntity -> {
-                    Set<Integer> stampNids = patternEntity.stampNids().mapToSet(i -> i);
+                    Set<Long> stampNids = patternEntity.stampNids().mapToSet(i -> i);
                     if (!Collections.disjoint(allowedStampNids, stampNids)
                             && patternAllowed(patternNid, includedPatternNids, excludedPatternNids)) {
                         patternsAggregatedCount.incrementAndGet();
@@ -164,7 +167,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
                     if (!(semanticEntity instanceof SemanticEntity<?> semantic)) {
                         return;
                     }
-                    Set<Integer> stampNids = semanticEntity.stampNids().mapToSet(i -> i);
+                    Set<Long> stampNids = semanticEntity.stampNids().mapToSet(i -> i);
                     if (!Collections.disjoint(allowedStampNids, stampNids)
                             && patternAllowed(semantic.patternNid(), includedPatternNids, excludedPatternNids)
                             && purposeAllows(semanticEntity)) {
@@ -174,7 +177,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
                     }
                 }));
 
-        Set<Integer> deduplicatedStampNids = new HashSet<>(referencedStampNids);
+        Set<Long> deduplicatedStampNids = new HashSet<>(referencedStampNids);
         stampsAggregatedCount.set(deduplicatedStampNids.size());
         deduplicatedStampNids.forEach(nidConsumer::accept);
 
@@ -185,7 +188,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
      * Whether {@code patternNid} passes the pattern include/exclude: never when excluded; otherwise when
      * the include-set is empty (any pattern) or contains it.
      */
-    private static boolean patternAllowed(int patternNid, Set<Integer> included, Set<Integer> excluded) {
+    private static boolean patternAllowed(long patternNid, Set<Long> included, Set<Long> excluded) {
         if (excluded.contains(patternNid)) {
             return false;
         }

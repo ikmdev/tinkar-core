@@ -35,7 +35,7 @@ public interface ConceptEnumerationFacade<E extends Enum<E>>
         return this.conceptForEnum().publicId();
     }
 
-    default int nid() {
+    default long nid() {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
                 .call(() -> PrimitiveData.nid(this.conceptForEnum().publicId()));

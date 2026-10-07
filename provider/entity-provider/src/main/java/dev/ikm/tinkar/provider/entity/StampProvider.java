@@ -16,8 +16,9 @@
  */
 package dev.ikm.tinkar.provider.entity;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 import dev.ikm.tinkar.entity.*;
@@ -46,16 +47,16 @@ import java.util.concurrent.ConcurrentSkipListSet;
  */
 
 public class StampProvider extends EntityProcessor<StampEntity<StampEntityVersion>, StampEntityVersion>
-        implements StampService, Subscriber<Integer> {
+        implements StampService, Subscriber<Long> {
     private static final Logger LOG = LoggerFactory.getLogger(StampProvider.class);
 
     //TODO: Revisit these field type choices...
-    final ConcurrentHashMap<Integer, StampEntity> stamps = new ConcurrentHashMap<>();
+    final ConcurrentHashMap<Long, StampEntity> stamps = new ConcurrentHashMap<>();
     final ConcurrentSkipListSet<Long> times = new ConcurrentSkipListSet<>();
-    final ConcurrentSkipListSet<Integer> authors = new ConcurrentSkipListSet<>();
-    final ConcurrentSkipListSet<Integer> modules = new ConcurrentSkipListSet<>();
-    final ConcurrentSkipListSet<Integer> paths = new ConcurrentSkipListSet<>();
-    final ConcurrentSkipListSet<Integer> stampNids = new ConcurrentSkipListSet<>();
+    final ConcurrentSkipListSet<Long> authors = new ConcurrentSkipListSet<>();
+    final ConcurrentSkipListSet<Long> modules = new ConcurrentSkipListSet<>();
+    final ConcurrentSkipListSet<Long> paths = new ConcurrentSkipListSet<>();
+    final ConcurrentSkipListSet<Long> stampNids = new ConcurrentSkipListSet<>();
     
     private volatile boolean initialized = false;
     private volatile boolean subscribed = false;
@@ -96,9 +97,9 @@ public class StampProvider extends EntityProcessor<StampEntity<StampEntityVersio
         stampNids.add(stampEntity.nid());
     }
 
-    public IntIdSet stampNids() {
+    public LongIdSet stampNids() {
         ensureInitialized();
-        return IntIds.set.of(stampNids.stream().mapToInt(wrappedPath -> (int) wrappedPath).toArray());
+        return LongIds.set.of(stampNids.stream().mapToLong(stampNid -> stampNid).toArray());
     }
 
     public ImmutableLongList timesInUse() {
@@ -107,21 +108,21 @@ public class StampProvider extends EntityProcessor<StampEntity<StampEntityVersio
     }
 
     @Override
-    public IntIdSet getAuthorNidsInUse() {
+    public LongIdSet getAuthorNidsInUse() {
         ensureInitialized();
-        return IntIds.set.of(authors, nid -> nid);
+        return LongIds.set.of(authors, nid -> nid);
     }
 
     @Override
-    public IntIdSet getModuleNidsInUse() {
+    public LongIdSet getModuleNidsInUse() {
         ensureInitialized();
-        return IntIds.set.of(modules, nid -> nid);
+        return LongIds.set.of(modules, nid -> nid);
     }
 
     @Override
-    public IntIdSet getPathNidsInUse() {
+    public LongIdSet getPathNidsInUse() {
         ensureInitialized();
-        return IntIds.set.of(paths, nid -> nid);
+        return LongIds.set.of(paths, nid -> nid);
     }
 
     @Override
@@ -131,9 +132,9 @@ public class StampProvider extends EntityProcessor<StampEntity<StampEntityVersio
     }
 
     @Override
-    public void onNext(Integer nid) {
+    public void onNext(Long nid) {
         ensureInitialized();
-        if (nid == Integer.MIN_VALUE) {
+        if (Nid.isNone(nid)) {
             return;
         }
         EntityHandle.get(nid).ifStamp(this::process);

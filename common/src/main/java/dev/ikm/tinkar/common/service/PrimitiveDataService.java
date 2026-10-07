@@ -21,14 +21,11 @@ import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
-import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ByteList;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.MutableSet;
@@ -44,93 +41,12 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.ObjIntConsumer;
 
 public interface PrimitiveDataService {
 
-    int FIRST_NID = Integer.MIN_VALUE + 1;
     byte STAMP_DATA_TYPE = 7;
 
-    ConcurrentHashSet<Integer> canceledStampNids = new ConcurrentHashSet<>();
-
-    static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, NidGenerator nidGenerator, ImmutableList<UUID> uuidList) {
-        switch (uuidList.size()) {
-            case 0:
-                throw new IllegalStateException("uuidList cannot be empty");
-            case 1: {
-                return valueOrGenerateAndPut(uuidList.get(0), uuidNidMap, nidGenerator);
-            }
-        }
-        return valueOrGenerateForList(uuidList.toSortedList(), uuidNidMap, nidGenerator);
-    }
-
-    static int valueOrGenerateAndPut(UUID uuid,
-                                     ConcurrentMap<UUID, Integer> uuidNidMap,
-                                     NidGenerator nidGenerator) {
-        Integer nid = uuidNidMap.get(uuid);
-        if (nid != null) {
-            return nid;
-        }
-        nid = uuidNidMap.computeIfAbsent(uuid, uuidKey -> nidGenerator.newNid());
-        return nid;
-    }
-
-    /**
-     * The nid of a public id with more than one UUID: the nid of its least UUID the store knows,
-     * or a new one if it knows none. Every UUID no component holds is then mapped to that nid, so a
-     * later lookup by it finds the component; a UUID another component holds keeps its nid.
-     * <p>
-     * When the UUIDs belong to more than one component, the public id names components the store
-     * holds as distinct. That is advised ({@link IdentityAdvisories#componentsShareUuids}) and left
-     * for review, not reconciled here: the store goes on, the id resolving by its least known UUID.
-     *
-     * @param sortedUuidList the public id's UUIDs, sorted
-     */
-    static int valueOrGenerateForList(ListIterable<UUID> sortedUuidList,
-                                      ConcurrentMap<UUID, Integer> uuidNidMap,
-                                      NidGenerator nidGenerator) {
-        boolean missingMap = false;
-        int foundValue = Integer.MIN_VALUE;
-        java.util.TreeSet<Integer> foundNids = new java.util.TreeSet<>();
-
-        for (UUID uuid : sortedUuidList) {
-            Integer nid = uuidNidMap.get(uuid);
-            if (nid == null) {
-                missingMap = true;
-            } else {
-                foundNids.add(nid);
-                if (foundValue == Integer.MIN_VALUE) {
-                    foundValue = nid;
-                }
-            }
-        }
-        if (foundNids.size() > 1) {
-            IdentityAdvisories.componentsShareUuids(sortedUuidList.toList(), foundNids);
-        }
-        if (!missingMap) {
-            return foundValue;
-        }
-        if (foundValue == Integer.MIN_VALUE) {
-            foundValue = valueOrGenerateAndPut(sortedUuidList.get(0), uuidNidMap, nidGenerator);
-        }
-        for (UUID uuid : sortedUuidList) {
-            uuidNidMap.putIfAbsent(uuid, foundValue);
-        }
-        return foundValue;
-    }
-
-    static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, NidGenerator nidGenerator, UUID... uuids) {
-        switch (uuids.length) {
-            case 0:
-                throw new IllegalStateException("uuidList cannot be empty");
-            case 1:
-                return valueOrGenerateAndPut(uuids[0], uuidNidMap, nidGenerator);
-        }
-        UUID[] sorted = uuids.clone();
-        Arrays.sort(sorted);
-        return valueOrGenerateForList(Lists.immutable.of(sorted), uuidNidMap, nidGenerator);
-    }
+    ConcurrentHashSet<Long> canceledStampNids = new ConcurrentHashSet<>();
 
     /**
      * Merge bytes from concurrently created entities. Method is idempotent.
@@ -155,7 +71,7 @@ public interface PrimitiveDataService {
         return Sets.mutable.withAll(UuidUtil.toList(longList.toArray()).castToList());
     }
 
-    private static int recordNid(byte[] recordBytes) {
+    private static long recordNid(byte[] recordBytes) {
         ByteBuf buf = ByteBuf.wrapForReading(recordBytes);
         buf.moveHead(9 + 1); // part count, first part size, format version; entity type token
         return buf.readInt();
@@ -173,7 +89,7 @@ public interface PrimitiveDataService {
         }
         try {
             MutableSet<ByteList> byteArraySet = Sets.mutable.empty();
-            MutableIntList stampList = IntLists.mutable.withInitialCapacity(16);
+            MutableLongList stampList = LongLists.mutable.withInitialCapacity(16);
             byte entityFormat = newBytes[8];
             addToSet(newBytes, byteArraySet, stampList, entityFormat);
             addToSet(oldBytes, byteArraySet, stampList, entityFormat);
@@ -213,7 +129,7 @@ public interface PrimitiveDataService {
                             removing them left a canceled stamp with no version at all.
                          */
                         case 4, 5, 6 -> {
-                            int stampNid = ((versionBytes.get(1) & 0xFF) << 24) |
+                            long stampNid = ((versionBytes.get(1) & 0xFF) << 24) |
                                     ((versionBytes.get(2) & 0xFF) << 16) |
                                     ((versionBytes.get(3) & 0xFF) << 8) |
                                     ((versionBytes.get(4) & 0xFF) << 0);
@@ -318,7 +234,7 @@ public interface PrimitiveDataService {
      *                     the edits of a single version under a single stamp value are sequential, not concurrent.
      * @throws IOException
      */
-    private static void addToSet(byte[] bytes, MutableSet<ByteList> byteArraySet, MutableIntList stampsInSet,
+    private static void addToSet(byte[] bytes, MutableSet<ByteList> byteArraySet, MutableLongList stampsInSet,
                                  byte entityFormat) throws IOException {
         ByteBuf readBuf = ByteBuf.wrapForReading(bytes);
         boolean stampDataType = bytes[9] == STAMP_DATA_TYPE;
@@ -348,7 +264,7 @@ public interface PrimitiveDataService {
                 if (stampDataType) {
                     byteArraySet.add(ByteLists.immutable.of(newArray));
                 } else {
-                    int stampNid = ((newArray[1] & 0xFF) << 24) |
+                    long stampNid = ((newArray[1] & 0xFF) << 24) |
                             ((newArray[2] & 0xFF) << 16) |
                             ((newArray[3] & 0xFF) << 8) |
                             ((newArray[4] & 0xFF) << 0);
@@ -364,7 +280,7 @@ public interface PrimitiveDataService {
         }
     }
 
-    default boolean isCanceledStampNid(int stampNid) {
+    default boolean isCanceledStampNid(long stampNid) {
         return canceledStampNids.contains(stampNid);
     }
 
@@ -398,18 +314,18 @@ public interface PrimitiveDataService {
      * @throws UnsupportedOperationException if this provider cannot reverse-resolve nids
      * @throws IllegalStateException         if the nid was never minted in this store
      */
-    default PublicId publicIdForNid(int nid) {
+    default PublicId publicIdForNid(long nid) {
         throw new UnsupportedOperationException(
                 "This primitive-data provider does not maintain a reverse (nid to public id) identity map");
     }
 
-    default int nidForPublicId(PublicId publicId) {
+    default long nidForPublicId(PublicId publicId) {
         return nidForUuids(publicId.asUuidArray());
     }
 
-    int nidForUuids(UUID... uuids);
+    long nidForUuids(UUID... uuids);
 
-    int nidForUuids(ImmutableList<UUID> uuidList);
+    long nidForUuids(ImmutableList<UUID> uuidList);
 
     boolean hasUuid(UUID uuid);
 
@@ -432,7 +348,7 @@ public interface PrimitiveDataService {
 
     CompletableFuture<Void> recreateLuceneIndex() throws Exception;
 
-    default void addCanceledStampNid(int stampNid) {
+    default void addCanceledStampNid(long stampNid) {
         canceledStampNids.add(stampNid);
     }
 
@@ -449,8 +365,7 @@ public interface PrimitiveDataService {
      * <p>     * Providers using pattern-encoded NIDs (e.g., RocksDB) should override this method.
      */
     default EntityKey getEntityKey(PublicId patternId, PublicId entityId) {
-        int nid = nidForUuids(entityId.asUuidArray());
-        return EntityKey.ofSequentialNid(nid);
+        return EntityKey.ofSequentialNid(nidForUuids(entityId.asUuidArray()));
     }
 
     /**
@@ -459,8 +374,7 @@ public interface PrimitiveDataService {
      */
     default Optional<EntityKey> getEntityKey(UUID uuid) {
         if (hasUuid(uuid)) {
-            int nid = nidForUuids(uuid);
-            return Optional.of(EntityKey.ofSequentialNid(nid));
+            return Optional.of(EntityKey.ofSequentialNid(nidForUuids(uuid)));
         }
         return Optional.empty();
     }

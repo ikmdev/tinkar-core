@@ -35,7 +35,7 @@ public interface ViewCalculator extends StampCalculatorDelegate, LanguageCalcula
         return isDefined(facade.nid());
     }
 
-    default boolean isDefined(int conceptNid) {
+    default boolean isDefined(long conceptNid) {
         Latest<DiTreeEntity> conceptExpression = getAxiomTreeForEntity(conceptNid, PremiseType.STATED);
         if (!conceptExpression.isPresent()) {
             conceptExpression = getAxiomTreeForEntity(conceptNid, PremiseType.INFERRED);

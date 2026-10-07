@@ -1,5 +1,7 @@
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.common.id.Nid;
+
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DiagnosticText;
@@ -89,7 +91,7 @@ import java.util.function.Supplier;
  *   <th>Example</th>
  * </tr>
  * <tr>
- *   <td><b>int nid</b></td>
+ *   <td><b>long nid</b></td>
  *   <td>Internal processing, performance-critical paths</td>
  *   <td>{@code EntityHandle.get(123)}</td>
  * </tr>
@@ -187,7 +189,7 @@ import java.util.function.Supplier;
  *
  * <pre>{@code
  * // User input - might be any type
- * public String getDisplayName(int userEnteredNid) {
+ * public String getDisplayName(long userEnteredNid) {
  *     return EntityHandle.get(userEnteredNid)
  *         .asConcept()
  *         .map(concept -> concept.getDescription())
@@ -226,7 +228,7 @@ import java.util.function.Supplier;
  * }
  *
  * // Business logic with model guarantees
- * public void processHierarchy(int parentNid) {
+ * public void processHierarchy(long parentNid) {
  *     ConceptEntity parent = EntityHandle.get(parentNid).expectConcept();
  *     // Continue with guaranteed concept...
  * }
@@ -330,8 +332,8 @@ public interface EntityHandle {
      * @param nid the native identifier
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
       */
-    static EntityHandle get(int nid) {
-        if (nid == Integer.MIN_VALUE || nid == Integer.MAX_VALUE || nid == 0) {
+    static EntityHandle get(long nid) {
+        if (Nid.isNone(nid) || Nid.isNotApplicable(nid) || nid == 0) {
             return absent();
         }
         Entity entity = EntityLookup.current().entityOrNull(nid);
@@ -388,7 +390,7 @@ public interface EntityHandle {
         if (entityFacade == null) {
             return absent();
         }
-        int nid = entityFacade.nid();
+        long nid = entityFacade.nid();
         EntityHandle handle = get(nid);
         if (handle instanceof AbsentHandle absent && absent != AbsentHandle.INSTANCE) {
             return new AbsentHandle(() -> identification(entityFacade, nid));
@@ -662,7 +664,7 @@ public interface EntityHandle {
      * @throws IllegalStateException if entity is absent
      * @see #expectEntity()
      */
-    static Entity<? extends EntityVersion> getEntityOrThrow(int nid) {
+    static Entity<? extends EntityVersion> getEntityOrThrow(long nid) {
         return get(nid).expectEntity();
     }
 
@@ -698,7 +700,7 @@ public interface EntityHandle {
      * @throws IllegalStateException if entity is absent or not a concept
      * @see #expectConcept()
      */
-    static ConceptEntity getConceptOrThrow(int nid) {
+    static ConceptEntity getConceptOrThrow(long nid) {
         return get(nid).expectConcept();
     }
 
@@ -732,7 +734,7 @@ public interface EntityHandle {
      * @return the SemanticEntity (never null)
      * @throws IllegalStateException if entity is absent or not a semantic
      */
-    static SemanticEntity getSemanticOrThrow(int nid) {
+    static SemanticEntity getSemanticOrThrow(long nid) {
         return get(nid).expectSemantic();
     }
 
@@ -766,7 +768,7 @@ public interface EntityHandle {
      * @return the PatternEntity (never null)
      * @throws IllegalStateException if entity is absent or not a pattern
      */
-    static PatternEntity getPatternOrThrow(int nid) {
+    static PatternEntity getPatternOrThrow(long nid) {
         return get(nid).expectPattern();
     }
 
@@ -800,7 +802,7 @@ public interface EntityHandle {
      * @return the StampEntity (never null)
      * @throws IllegalStateException if entity is absent or not a stamp
      */
-    static StampEntity getStampOrThrow(int nid) {
+    static StampEntity getStampOrThrow(long nid) {
         return get(nid).expectStamp();
     }
 
@@ -882,7 +884,7 @@ public interface EntityHandle {
      *     .orElse(null);
      *
      * // Extract and return from method
-     * public Optional<ConceptEntity> findConcept(int nid) {
+     * public Optional<ConceptEntity> findConcept(long nid) {
      *     return EntityHandle.get(nid).asConcept();
      * }
      *
@@ -1015,7 +1017,7 @@ public interface EntityHandle {
      * ImmutableList<?> versions = entity.versions();
      *
      * // Cache any entity type
-     * public void cacheEntity(int nid) {
+     * public void cacheEntity(long nid) {
      *     Entity<?> entity = EntityHandle.get(nid).expectEntity();
      *     cache.put(nid, entity);
      * }
@@ -1076,7 +1078,7 @@ public interface EntityHandle {
      *     .getDescription();
      *
      * // Business logic with schema guarantee
-     * public void processParent(int parentNid) {
+     * public void processParent(long parentNid) {
      *     ConceptEntity parent = EntityHandle.get(parentNid).expectConcept();
      *     // Continue with guaranteed concept...
      * }
@@ -1120,7 +1122,7 @@ public interface EntityHandle {
      *
      * <p><b>Usage Example:</b></p>
      * <pre>{@code
-     * public SemanticEntity getDefinition(int semanticNid) {
+     * public SemanticEntity getDefinition(long semanticNid) {
      *     return EntityHandle.get(semanticNid).expectSemantic();
      * }
      * }</pre>
@@ -1153,7 +1155,7 @@ public interface EntityHandle {
      *
      * <p><b>Usage Example:</b></p>
      * <pre>{@code
-     * public PatternEntity getPatternForSemantic(int patternNid) {
+     * public PatternEntity getPatternForSemantic(long patternNid) {
      *     return EntityHandle.get(patternNid).expectPattern();
      * }
      * }</pre>
@@ -1186,7 +1188,7 @@ public interface EntityHandle {
      *
      * <p><b>Usage Example:</b></p>
      * <pre>{@code
-     * public StampEntity getVersionStamp(int stampNid) {
+     * public StampEntity getVersionStamp(long stampNid) {
      *     return EntityHandle.get(stampNid).expectStamp();
      * }
      * }</pre>
@@ -1435,7 +1437,7 @@ public interface EntityHandle {
      * one, because a store may have no public id for the nid of a component that was never
      * written.
      */
-    private static String identification(EntityFacade entityFacade, int nid) {
+    private static String identification(EntityFacade entityFacade, long nid) {
         try {
             PublicId publicId = entityFacade.publicId();
             if (publicId != null && publicId.uuidCount() > 0) {

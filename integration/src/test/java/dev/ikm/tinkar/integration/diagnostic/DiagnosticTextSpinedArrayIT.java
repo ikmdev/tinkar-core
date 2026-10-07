@@ -65,7 +65,7 @@ class DiagnosticTextSpinedArrayIT {
 
     @Test
     void aDescribedComponentIsItsDescriptionThenItsUuid() {
-        int nid = KernelTerm.ENGLISH_LANGUAGE.nid();
+        long nid = KernelTerm.ENGLISH_LANGUAGE.nid();
         String description = PrimitiveData.textOptional(nid).orElseThrow();
 
         String text = DiagnosticText.component(nid);
@@ -79,7 +79,7 @@ class DiagnosticTextSpinedArrayIT {
 
     @Test
     void aComponentThatIsReferredToButWasNeverWrittenIsItsNidInThisStore() {
-        int nid = PrimitiveData.nid(PublicIds.of(UUID.randomUUID().toString()));
+        long nid = PrimitiveData.nid(PublicIds.of(UUID.randomUUID().toString()));
 
         assertEquals("nid " + nid + " in this store, which has no public id for it", DiagnosticText.component(nid));
         assertEquals("nid " + nid + " in this store", DiagnosticText.name(nid));
@@ -87,7 +87,7 @@ class DiagnosticTextSpinedArrayIT {
 
     @Test
     void aHandleForAComponentThatWasNeverWrittenSaysWhichNidWasAskedFor() {
-        int nid = PrimitiveData.nid(PublicIds.of(UUID.randomUUID().toString()));
+        long nid = PrimitiveData.nid(PublicIds.of(UUID.randomUUID().toString()));
 
         IllegalStateException failure = assertThrows(IllegalStateException.class,
                 () -> EntityHandle.get(nid).expectEntity());

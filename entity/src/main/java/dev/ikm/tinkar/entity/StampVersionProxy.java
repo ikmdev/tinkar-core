@@ -17,7 +17,7 @@ package dev.ikm.tinkar.entity;
 
 public interface StampVersionProxy extends StampVersion {
     @Override
-    default int stateNid() {
+    default long stateNid() {
         return stampVersion().stateNid();
     }
 
@@ -27,17 +27,17 @@ public interface StampVersionProxy extends StampVersion {
     }
 
     @Override
-    default int authorNid() {
+    default long authorNid() {
         return stampVersion().authorNid();
     }
 
     @Override
-    default int moduleNid() {
+    default long moduleNid() {
         return stampVersion().moduleNid();
     }
 
     @Override
-    default int pathNid() {
+    default long pathNid() {
         return stampVersion().pathNid();
     }
 

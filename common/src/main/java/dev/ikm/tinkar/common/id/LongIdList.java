@@ -20,10 +20,10 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 
-import java.util.function.IntFunction;
+import java.util.function.LongFunction;
 
-public interface IntIdList extends IdList, IntIdCollection {
-    default <T extends Object> ImmutableList<T> map(IntFunction<T> function) {
+public interface LongIdList extends IdList, LongIdCollection {
+    default <T extends Object> ImmutableList<T> map(LongFunction<T> function) {
         MutableList<T> list = Lists.mutable.ofInitialCapacity(size());
         for (int i = 0; i < size(); i++) {
             list.add(function.apply(get(i)));
@@ -31,7 +31,7 @@ public interface IntIdList extends IdList, IntIdCollection {
         return list.toImmutable();
     }
 
-    int get(int index);
+    long get(int index);
 
     default boolean notEmpty() {
         return !this.isEmpty();
@@ -39,8 +39,8 @@ public interface IntIdList extends IdList, IntIdCollection {
 
     boolean isEmpty();
 
-    default IntIdList with(int... valuesToAdd) {
-        return IntIds.list.of(this, valuesToAdd);
+    default LongIdList with(long... valuesToAdd) {
+        return LongIds.list.of(this, valuesToAdd);
     }
 
 

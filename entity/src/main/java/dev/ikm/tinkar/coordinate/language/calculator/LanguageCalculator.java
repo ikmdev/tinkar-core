@@ -16,9 +16,9 @@
 package dev.ikm.tinkar.coordinate.language.calculator;
 
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.util.text.NaturalOrder;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinate;
@@ -79,7 +79,7 @@ public interface LanguageCalculator {
      * @return descriptions from the first pattern in the the language coordinate pattern priority list
      * that contains any descriptions.
      */
-    ImmutableList<SemanticEntity> getDescriptionsForComponent(int componentNid);
+    ImmutableList<SemanticEntity> getDescriptionsForComponent(long componentNid);
 
 
     /**
@@ -102,8 +102,8 @@ public interface LanguageCalculator {
      * @param descriptionTypeNid the identifier of the description type to filter the results
      * @return an immutable list of SemanticEntityVersion objects matching the specified component and description type
      */
-    ImmutableList<SemanticEntityVersion> getDescriptionsForComponentOfType(int componentNid,
-                                                                           int descriptionTypeNid);
+    ImmutableList<SemanticEntityVersion> getDescriptionsForComponentOfType(long componentNid,
+                                                                           long descriptionTypeNid);
 
     /**
      * Retrieves a list of preferred description text for the specified components.
@@ -111,7 +111,7 @@ public interface LanguageCalculator {
      * @param ids the set of component identifiers for which the preferred descriptions are to be retrieved
      * @return an immutable list of preferred description texts corresponding to the specified component identifiers
      */
-    default ImmutableList<String> getPreferredDescriptionTextListForComponents(IntIdSet ids) {
+    default ImmutableList<String> getPreferredDescriptionTextListForComponents(LongIdSet ids) {
         return getPreferredDescriptionTextListForComponents(ids.toArray());
     }
 
@@ -125,15 +125,15 @@ public interface LanguageCalculator {
      *             are to be retrieved.
      * @return an immutable list of preferred description texts corresponding to the provided component identifiers.
      */
-    default ImmutableList<String> getPreferredDescriptionTextListForComponents(int... nids) {
+    default ImmutableList<String> getPreferredDescriptionTextListForComponents(long... nids) {
         MutableList<String> descriptionTextList = Lists.mutable.ofInitialCapacity(nids.length);
-        for (int nid : nids) {
+        for (long nid : nids) {
             descriptionTextList.add(getPreferredDescriptionTextWithFallbackOrNid(nid));
         }
         return descriptionTextList.toImmutable();
     }
 
-    default String getPreferredDescriptionTextWithFallbackOrNid(int nid) {
+    default String getPreferredDescriptionTextWithFallbackOrNid(long nid) {
         Optional<String> optionalResult = getRegularDescriptionText(nid);
         if (optionalResult.isPresent()) {
             return optionalResult.get();
@@ -146,7 +146,7 @@ public interface LanguageCalculator {
         if (optionalResult.isPresent()) {
             return optionalResult.get();
         }
-        return Integer.toString(nid);
+        return Long.toString(nid);
     }
 
     /**
@@ -155,7 +155,7 @@ public interface LanguageCalculator {
      * @param entityNid the unique identifier of the entity whose description text is to be retrieved
      * @return an Optional containing the regular description text if available; otherwise, an empty Optional
      */
-    Optional<String> getRegularDescriptionText(int entityNid);
+    Optional<String> getRegularDescriptionText(long entityNid);
 
     /**
      * Retrieves the fully qualified name text for a given component identified by its nid.
@@ -163,7 +163,7 @@ public interface LanguageCalculator {
      * @param componentNid the nid of the component for which the fully qualified name text is to be retrieved
      * @return an Optional containing the fully qualified name text if available; otherwise, an empty Optional
      */
-    default Optional<String> getFullyQualifiedNameText(int componentNid) {
+    default Optional<String> getFullyQualifiedNameText(long componentNid) {
         return getDescriptionTextForComponentOfType(componentNid, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
     }
 
@@ -173,7 +173,7 @@ public interface LanguageCalculator {
      * @param nid The unique identifier (nid) for which the semantic text needs to be fetched.
      * @return An Optional containing the semantic text if present, or an empty Optional if no semantic text is available for the given nid.
      */
-    Optional<String> getSemanticText(int nid);
+    Optional<String> getSemanticText(long nid);
 
     /**
      * Retrieves the description text of a specific type for a given component.
@@ -182,7 +182,7 @@ public interface LanguageCalculator {
      * @param descriptionTypeNid The identifier of the description type to retrieve for the component.
      * @return An {@link Optional} containing the description text if it exists, otherwise an empty {@link Optional}.
      */
-    Optional<String> getDescriptionTextForComponentOfType(int entityNid, int descriptionTypeNid);
+    Optional<String> getDescriptionTextForComponentOfType(long entityNid, long descriptionTypeNid);
 
     /**
      * Gets the text of type {@link KernelTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}.  Will return empty, if
@@ -252,12 +252,12 @@ public interface LanguageCalculator {
      * @param componentNid the Nid of the component for which to retrieve the fully qualified name text
      * @return the fully qualified name text if available; otherwise, the Nid as a string
      */
-    default String getFullyQualifiedNameTextOrNid(int componentNid) {
+    default String getFullyQualifiedNameTextOrNid(long componentNid) {
         Optional<String> optionalText = getDescriptionTextForComponentOfType(componentNid, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
         if (optionalText.isPresent()) {
             return optionalText.get();
         }
-        return Integer.toString(componentNid);
+        return Long.toString(componentNid);
     }
 
     /**
@@ -292,19 +292,19 @@ public interface LanguageCalculator {
      * @param componentNid the unique identifier (NID) of the component for which the description is requested
      * @return the description text if available, otherwise the string representation of the component NID
      */
-    default String getDescriptionTextOrNid(int componentNid) {
+    default String getDescriptionTextOrNid(long componentNid) {
         Optional<String> text = getDescriptionText(componentNid);
         if (text.isPresent()) {
             return text.get();
         }
-        return Integer.toString(componentNid);
+        return Long.toString(componentNid);
     }
 
     /**
      * @param componentNid
      * @return Return the latestDescription according to the type and dialect preferences of this {@code LanguageCoordinate}.
      */
-    Optional<String> getDescriptionText(int componentNid);
+    Optional<String> getDescriptionText(long componentNid);
 
     /*
     Allow the pattern to also define a pattern for user text.
@@ -331,7 +331,7 @@ public interface LanguageCalculator {
      * @param entityNid the concept nid.
      * @return an optional latestDescription best matching the {@code LanguageCoordinate} constraints.
      */
-    default Latest<SemanticEntityVersion> getDescription(int entityNid) {
+    default Latest<SemanticEntityVersion> getDescription(long entityNid) {
         return getDescription(getDescriptionsForComponent(entityNid));
     }
 
@@ -397,7 +397,7 @@ public interface LanguageCalculator {
      * @param stampNid the unique identifier of the stamp for which the text is to be retrieved
      * @return the text corresponding to the specified stamp Nid
      */
-    default String getTextForStamp(int stampNid) {
+    default String getTextForStamp(long stampNid) {
         return getTextForStamp(Entity.getStamp(stampNid));
     }
     /**
@@ -424,7 +424,7 @@ public interface LanguageCalculator {
      * @param stampNid the identifier of the stamp for which the preferred text is to be retrieved
      * @return the preferred text corresponding to the specified stamp identifier
      */
-    default String getPreferredTextForStamp(int stampNid) {
+    default String getPreferredTextForStamp(long stampNid) {
         return getPreferredTextForStamp(Entity.getStamp(stampNid));
     }
     /**
@@ -450,7 +450,7 @@ public interface LanguageCalculator {
      * @param stampNid the identifier of the stamp for which the fully qualified text is required
      * @return the fully qualified text corresponding to the provided stamp identifier
      */
-    default String getFullyQualifiedTextForStamp(int stampNid) {
+    default String getFullyQualifiedTextForStamp(long stampNid) {
         return getFullyQualifiedTextForStamp(Entity.getStamp(stampNid));
     }
     /**
@@ -485,7 +485,7 @@ public interface LanguageCalculator {
      * @return the fully qualified description text, a regular description text, a semantic text,
      *         or the nid as a string if no description is found
      */
-    default String getFullyQualifiedDescriptionTextWithFallbackOrNid(int nid) {
+    default String getFullyQualifiedDescriptionTextWithFallbackOrNid(long nid) {
         Optional<String> optionalResult = getFullyQualifiedNameText(nid);
         if (optionalResult.isPresent()) {
             return optionalResult.get();
@@ -498,7 +498,7 @@ public interface LanguageCalculator {
         if (optionalResult.isPresent()) {
             return optionalResult.get();
         }
-        return Integer.toString(nid);
+        return Long.toString(nid);
     }
 
     /**
@@ -519,7 +519,7 @@ public interface LanguageCalculator {
      * @param nid the numerical identifier for which the preferred description is to be retrieved
      * @return the preferred description text if available, otherwise the nid as a string
      */
-    default String getPreferredDescriptionTextOrNid(int nid) {
+    default String getPreferredDescriptionTextOrNid(long nid) {
         return toEntityStringOrNid(nid, this::getRegularDescriptionText);
     }
 
@@ -531,12 +531,12 @@ public interface LanguageCalculator {
      * @param toOptionalEntityString a function that takes an integer nid and returns an Optional containing the entity string if available
      * @return the entity string corresponding to the nid if present, otherwise the nid itself as a string
      */
-    default String toEntityStringOrNid(int nid, Function<Integer, Optional<String>> toOptionalEntityString) {
+    default String toEntityStringOrNid(long nid, Function<Long, Optional<String>> toOptionalEntityString) {
         Optional<String> optionalEntityString = toOptionalEntityString.apply(nid);
         if (optionalEntityString.isPresent()) {
             return optionalEntityString.get();
         }
-        return Integer.toString(nid);
+        return Long.toString(nid);
     }
 
     /**
@@ -552,7 +552,7 @@ public interface LanguageCalculator {
         if (optionalEntityString.isPresent()) {
             return optionalEntityString.get();
         }
-        return Integer.toString(entityFacade.nid());
+        return Long.toString(entityFacade.nid());
     }
 
     /**
@@ -586,7 +586,7 @@ public interface LanguageCalculator {
      * @return the transformed entity string if the input string corresponds to a valid entity, or the
      *         original input string if no transformation is possible.
      */
-    default String toEntityStringOrInputString(String possibleEntityString, Function<Integer, Optional<String>> toOptionalEntityString) {
+    default String toEntityStringOrInputString(String possibleEntityString, Function<Long, Optional<String>> toOptionalEntityString) {
         Optional<EntityProxy> optionalEntity = ProxyFactory.fromXmlFragmentOptional(possibleEntityString);
         if (optionalEntity.isPresent()) {
             Optional<String> optionalEntityString = toOptionalEntityString.apply(optionalEntity.get().nid());
@@ -640,7 +640,7 @@ public interface LanguageCalculator {
         if (optionalEntityString.isPresent()) {
             return optionalEntityString.get();
         }
-        return EntityHandle.get(entityFacade).expectEntity().publicId().toString() + " <" + Integer.toString(entityFacade.nid()) + ">";
+        return EntityHandle.get(entityFacade).expectEntity().publicId().toString() + " <" + Long.toString(entityFacade.nid()) + ">";
     }
 
     /**
@@ -737,7 +737,7 @@ public interface LanguageCalculator {
      * @return the regular name latestDescription, if available
      */
     default Latest<SemanticEntityVersion> getRegularDescription(ImmutableList<SemanticEntity> descriptionList) {
-        return getSpecifiedDescription(descriptionList, IntIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
+        return getSpecifiedDescription(descriptionList, LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
     }
 
     /**
@@ -753,7 +753,7 @@ public interface LanguageCalculator {
      */
 
     Latest<SemanticEntityVersion> getSpecifiedDescription(ImmutableList<SemanticEntity> descriptionList,
-                                                          IntIdList descriptionTypePriority);
+                                                          LongIdList descriptionTypePriority);
 
     /**
      * Return a description of type {@link KernelTerm#DEFINITION_DESCRIPTION_TYPE}, or an empty latest version, if none are of type definition in this or any
@@ -763,7 +763,7 @@ public interface LanguageCalculator {
      * @return
      */
     default Latest<SemanticEntityVersion> getDefinitionDescription(ImmutableList<SemanticEntity> descriptionList) {
-        return getSpecifiedDescription(descriptionList, IntIds.list.of(KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid()));
+        return getSpecifiedDescription(descriptionList, LongIds.list.of(KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid()));
     }
 
     /**
@@ -785,7 +785,7 @@ public interface LanguageCalculator {
      * @param entityNid the nid (numeric identifier) of the entity whose definition description text is to be retrieved
      * @return an Optional containing the definition description text if available, otherwise an empty Optional
      */
-    default Optional<String> getDefinitionDescriptionText(int entityNid) {
+    default Optional<String> getDefinitionDescriptionText(long entityNid) {
         return getDescriptionTextForComponentOfType(entityNid, KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid());
     }
 
@@ -808,8 +808,8 @@ public interface LanguageCalculator {
      * @param entityNid the conceptId to get the fully specified latestDescription for
      * @return the regular name latestDescription
      */
-    default Latest<SemanticEntityVersion> getRegularDescription(int entityNid) {
-        return getSpecifiedDescription(getDescriptionsForComponent(entityNid), IntIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
+    default Latest<SemanticEntityVersion> getRegularDescription(long entityNid) {
+        return getSpecifiedDescription(getDescriptionsForComponent(entityNid), LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
     }
 
     /**
@@ -820,7 +820,7 @@ public interface LanguageCalculator {
      * @return the regular name latestDescription, if available
      */
     default Latest<SemanticEntityVersion> getFullyQualifiedDescription(ImmutableList<SemanticEntity> descriptionList) {
-        return getSpecifiedDescription(descriptionList, IntIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
+        return getSpecifiedDescription(descriptionList, LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
     }
 
     /**
@@ -840,8 +840,8 @@ public interface LanguageCalculator {
      * @param conceptId the conceptId to get the fully specified latestDescription for
      * @return the fully specified latestDescription
      */
-    default Latest<SemanticEntityVersion> getFullyQualifiedDescription(int conceptId) {
-        return getSpecifiedDescription(getDescriptionsForComponent(conceptId), IntIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
+    default Latest<SemanticEntityVersion> getFullyQualifiedDescription(long conceptId) {
+        return getSpecifiedDescription(getDescriptionsForComponent(conceptId), LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
     }
 
 }

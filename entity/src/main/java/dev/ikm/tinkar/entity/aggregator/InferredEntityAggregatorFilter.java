@@ -1,5 +1,7 @@
 package dev.ikm.tinkar.entity.aggregator;
 
+import java.util.function.LongConsumer;
+
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
@@ -19,13 +21,13 @@ public class InferredEntityAggregatorFilter extends EntityAggregatorFilter {
     }
 
     @Override
-    public EntityCountSummary aggregate(IntConsumer nidConsumer) {
+    public EntityCountSummary aggregate(LongConsumer nidConsumer) {
         initCounts();
-        final ImmutableList<Integer> inferredNidList = Lists.immutable.of(
+        final ImmutableList<Long> inferredNidList = Lists.immutable.of(
                 KernelTerm.INFERRED_NAVIGATION_PATTERN.nid(),
                 KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid());
 
-        IntConsumer inferredFilterConsumer = (nid) -> {
+        LongConsumer inferredFilterConsumer = (nid) -> {
             Entity<? extends EntityVersion> entity = EntityHandle.get(nid).orNull();
             // Filter out inferred Semantics
             if (entity instanceof SemanticEntity semanticEntity

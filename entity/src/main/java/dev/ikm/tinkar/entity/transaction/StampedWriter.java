@@ -178,9 +178,9 @@ public final class StampedWriter implements AutoCloseable {
      * @param conceptId the concept's identity
      * @return the concept's nid
      */
-    public int concept(PublicId conceptId) {
+    public long concept(PublicId conceptId) {
         requireOpen();
-        int nid = EntityService.get().nidForConcept(conceptId);
+        long nid = EntityService.get().nidForConcept(conceptId);
         PublicIdentifierRecord identifier = PublicIdentifierRecord.make(conceptId);
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
         ConceptRecord concept = ConceptRecordBuilder.builder()
@@ -209,9 +209,9 @@ public final class StampedWriter implements AutoCloseable {
      * @param fields    the field definitions, in field order; none for a membership pattern
      * @return the pattern's nid
      */
-    public int pattern(PublicId patternId, ConceptFacade meaning, ConceptFacade purpose, Field... fields) {
+    public long pattern(PublicId patternId, ConceptFacade meaning, ConceptFacade purpose, Field... fields) {
         requireOpen();
-        int nid = EntityService.get().nidForPattern(patternId);
+        long nid = EntityService.get().nidForPattern(patternId);
         PublicIdentifierRecord identifier = PublicIdentifierRecord.make(patternId);
         RecordListBuilder<PatternVersionRecord> versions = RecordListBuilder.make();
         PatternRecord pattern = PatternRecordBuilder.builder()
@@ -255,10 +255,10 @@ public final class StampedWriter implements AutoCloseable {
      * @param fieldValues         the field values, in the pattern's field order
      * @return the semantic's nid
      */
-    public int semantic(PublicId semanticId, PublicId patternId, PublicId referencedComponent,
+    public long semantic(PublicId semanticId, PublicId patternId, PublicId referencedComponent,
                         Object... fieldValues) {
         requireOpen();
-        int nid = EntityService.get().nidForSemantic(patternId, semanticId);
+        long nid = EntityService.get().nidForSemantic(patternId, semanticId);
         PublicIdentifierRecord identifier = PublicIdentifierRecord.make(semanticId);
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord semantic = SemanticRecordBuilder.builder()
@@ -291,12 +291,12 @@ public final class StampedWriter implements AutoCloseable {
      * @param text      the fully qualified name
      * @return the description semantic's nid
      */
-    public int fullyQualifiedName(PublicId component, String text) {
+    public long fullyQualifiedName(PublicId component, String text) {
         if (text == null || text.isBlank()) {
             throw new IllegalArgumentException("A fully qualified name needs text: " + component.idString());
         }
         PublicId description = PublicIds.of(fullyQualifiedNameUuid(component));
-        int nid = semantic(description, KernelTerm.DESCRIPTION_PATTERN, component,
+        long nid = semantic(description, KernelTerm.DESCRIPTION_PATTERN, component,
                 KernelTerm.ENGLISH_LANGUAGE, text,
                 KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE);
         semantic(PublicIds.of(UuidT5Generator.get(description.leastUuid(), "us-dialect")),

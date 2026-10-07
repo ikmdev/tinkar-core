@@ -205,7 +205,7 @@ public interface FieldHandle {
      * @throws IllegalArgumentException if no field with the specified meaning NID exists
      * @throws IllegalStateException if no latest pattern version can be determined
      */
-    static FieldHandle ofMeaning(SemanticEntityVersion version, int meaningNid, StampCalculator stampCalculator) {
+    static FieldHandle ofMeaning(SemanticEntityVersion version, long meaningNid, StampCalculator stampCalculator) {
         PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
                 .orElseThrow(() -> new IllegalStateException(
                         "No latest pattern version for: " + DiagnosticText.component(version.patternNid())));
@@ -262,7 +262,7 @@ public interface FieldHandle {
      * @throws IllegalArgumentException if no field with the specified purpose NID exists
      * @throws IllegalStateException if no latest pattern version can be determined
      */
-    static FieldHandle ofPurpose(SemanticEntityVersion version, int purposeNid, StampCalculator stampCalculator) {
+    static FieldHandle ofPurpose(SemanticEntityVersion version, long purposeNid, StampCalculator stampCalculator) {
         PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
                 .orElseThrow(() -> new IllegalStateException(
                         "No latest pattern version for: " + DiagnosticText.component(version.patternNid())));

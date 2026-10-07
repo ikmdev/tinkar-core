@@ -17,8 +17,8 @@ package dev.ikm.tinkar.entity.transform;
 
 import dev.ikm.tinkar.entity.changeset.SchemaIds;
 import com.google.protobuf.ByteString;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.id.PublicIdSet;
 import dev.ikm.tinkar.common.id.VertexId;
@@ -250,8 +250,8 @@ public class EntityToTinkarSchemaTransformer {
             case SpatialPoint spatialPoint -> toSpatialPoint(spatialPoint);
             //TODO: we do not have a create undirected graph method [Ask Andrew]
 //            case dev.ikm.tinkar.component.graph.Graph graph -> createGraph
-            case IntIdList intIdList -> toPBPublicIdList(intIdList);
-            case IntIdSet intIdSet -> toPBPublicIdSet(intIdSet);
+            case LongIdList intIdList -> toPBPublicIdList(intIdList);
+            case LongIdSet intIdSet -> toPBPublicIdSet(intIdSet);
             case BigDecimal bigDecimal -> toPBBigDecimal(bigDecimal);
             case Long l -> toPBLong(l);
             case null, default -> throw new IllegalStateException("Unknown or null field object for: " + obj + ", " +obj.getClass());
@@ -289,11 +289,11 @@ public class EntityToTinkarSchemaTransformer {
     protected Field toPBInstant(Instant value) {
         return Field.newBuilder().setTimeValue(DateTimeUtil.instantToEpochMs(value)).build();
     }
-    protected Field toPBPublicIdList(IntIdList value) {
+    protected Field toPBPublicIdList(LongIdList value) {
         //TODO: Figure out what are the Int ID's getting written
         return Field.newBuilder().setPublicIds(createPBPublicIdList(value)).build();
     }
-    protected Field toPBPublicIdSet(IntIdSet value) {
+    protected Field toPBPublicIdSet(LongIdSet value) {
         return Field.newBuilder().setPublicIdset(createPBPublicIdSet(value)).build();
     }
     protected Field toPBDiTree(DiTree value) {
@@ -388,7 +388,7 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
-    protected dev.ikm.tinkar.schema.PublicIdList createPBPublicIdList(IntIdList intIdList){
+    protected dev.ikm.tinkar.schema.PublicIdList createPBPublicIdList(LongIdList intIdList){
         List<PublicId> pbPublicIds = new ArrayList<>();
         intIdList.forEach(nid -> pbPublicIds.add(createPBPublicId(PrimitiveData.publicId(nid))));
         return dev.ikm.tinkar.schema.PublicIdList.newBuilder()
@@ -397,7 +397,7 @@ public class EntityToTinkarSchemaTransformer {
     }
 
     /** A set's members in public id order, not nid order, so the same set is written the same way in every store. */
-    protected dev.ikm.tinkar.schema.PublicIdSet createPBPublicIdSet(IntIdSet intIdSet){
+    protected dev.ikm.tinkar.schema.PublicIdSet createPBPublicIdSet(LongIdSet intIdSet){
         List<dev.ikm.tinkar.common.id.PublicId> members = new ArrayList<>();
         intIdSet.forEach(nid -> members.add(PrimitiveData.publicId(nid)));
         members.sort(null);

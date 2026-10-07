@@ -39,7 +39,7 @@ public interface EntityLookup {
      * @param nid the entity's nid
      * @return the entity, or {@code null} if the store holds none for the nid
      */
-    Entity<?> entityOrNull(int nid);
+    Entity<?> entityOrNull(long nid);
 
     /**
      * Returns the lookup of the running entity provider.

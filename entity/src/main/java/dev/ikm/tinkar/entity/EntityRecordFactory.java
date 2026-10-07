@@ -15,9 +15,14 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import org.eclipse.collections.api.factory.primitive.LongSets;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.id.PublicIdSet;
@@ -88,7 +93,7 @@ public class EntityRecordFactory {
                 //byte[1]
                 byteBuf.writeByte(entity.entityDataType().token); //ensure that the chronicle byte array sorts first.
                 //byte[2-5]
-                byteBuf.writeInt(entity.nid());
+                byteBuf.writeInt(Nid.narrowChecked(entity.nid()));
                 //byte[6-13]
                 byteBuf.writeLong(entity.mostSignificantBits());
                 //byte[14-21]
@@ -106,8 +111,8 @@ public class EntityRecordFactory {
                 }
                 switch (entity) {
                     case SemanticEntity semanticEntity:
-                        byteBuf.writeInt(semanticEntity.referencedComponentNid());
-                        byteBuf.writeInt(semanticEntity.patternNid());
+                        byteBuf.writeInt(Nid.narrowChecked(semanticEntity.referencedComponentNid()));
+                        byteBuf.writeInt(Nid.narrowChecked(semanticEntity.patternNid()));
                         break;
                     case ConceptRecord conceptEntity:
                         // No additional fieldValues for concept records.
@@ -162,19 +167,19 @@ public class EntityRecordFactory {
                     throw new IllegalStateException("Version type token cannot be zero... " + EntityText.diagnostic(entityVersion));
                 }
                 byteBuf.writeByte(entityVersion.versionDataType().token); //ensure that the chronicle byte array sorts first.
-                byteBuf.writeInt(entityVersion.stampNid());
+                byteBuf.writeInt(Nid.narrowChecked(entityVersion.stampNid()));
                 switch (entityVersion) {
                     case ConceptEntityVersion conceptEntityVersion:
                         // no additional data
                         break;
                     case PatternVersionRecord patternVersionRecord:
-                        byteBuf.writeInt(patternVersionRecord.semanticPurposeNid());
-                        byteBuf.writeInt(patternVersionRecord.semanticMeaningNid());
+                        byteBuf.writeInt(Nid.narrowChecked(patternVersionRecord.semanticPurposeNid()));
+                        byteBuf.writeInt(Nid.narrowChecked(patternVersionRecord.semanticMeaningNid()));
                         byteBuf.writeInt(patternVersionRecord.fieldDefinitions().size());
                         for (FieldDefinitionRecord field : patternVersionRecord.fieldDefinitions()) {
-                            byteBuf.writeInt(field.dataTypeNid());
-                            byteBuf.writeInt(field.purposeNid());
-                            byteBuf.writeInt(field.meaningNid());
+                            byteBuf.writeInt(Nid.narrowChecked(field.dataTypeNid()));
+                            byteBuf.writeInt(Nid.narrowChecked(field.purposeNid()));
+                            byteBuf.writeInt(Nid.narrowChecked(field.meaningNid()));
                         }
                         break;
                     case SemanticEntityVersion semanticEntityVersion:
@@ -184,11 +189,11 @@ public class EntityRecordFactory {
                         }
                         break;
                     case StampEntityVersion stampEntityVersion:
-                        byteBuf.writeInt(stampEntityVersion.stateNid());
+                        byteBuf.writeInt(Nid.narrowChecked(stampEntityVersion.stateNid()));
                         byteBuf.writeLong(stampEntityVersion.time());
-                        byteBuf.writeInt(stampEntityVersion.authorNid());
-                        byteBuf.writeInt(stampEntityVersion.moduleNid());
-                        byteBuf.writeInt(stampEntityVersion.pathNid());
+                        byteBuf.writeInt(Nid.narrowChecked(stampEntityVersion.authorNid()));
+                        byteBuf.writeInt(Nid.narrowChecked(stampEntityVersion.moduleNid()));
+                        byteBuf.writeInt(Nid.narrowChecked(stampEntityVersion.pathNid()));
                         break;
                     default:
                         throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entityVersion));
@@ -245,21 +250,21 @@ public class EntityRecordFactory {
                         writeBuf.write(bytes);
                     });
             case ConceptFacade conceptField ->
-                    writeTokenAndField(writeBuf, FieldDataType.CONCEPT, () -> writeBuf.writeInt(conceptField.nid()));
+                    writeTokenAndField(writeBuf, FieldDataType.CONCEPT, () -> writeBuf.writeInt(Nid.narrowChecked(conceptField.nid())));
             case Concept conceptField ->
-                    writeTokenAndField(writeBuf, FieldDataType.CONCEPT, () -> writeBuf.writeInt(Entity.nid(conceptField)));
+                    writeTokenAndField(writeBuf, FieldDataType.CONCEPT, () -> writeBuf.writeInt(Nid.narrowChecked(Entity.nid(conceptField))));
             case SemanticFacade semanticField ->
-                    writeTokenAndField(writeBuf, FieldDataType.SEMANTIC, () -> writeBuf.writeInt(semanticField.nid()));
+                    writeTokenAndField(writeBuf, FieldDataType.SEMANTIC, () -> writeBuf.writeInt(Nid.narrowChecked(semanticField.nid())));
             case Semantic semanticField ->
-                    writeTokenAndField(writeBuf, FieldDataType.SEMANTIC, () -> writeBuf.writeInt(Entity.nid(semanticField)));
+                    writeTokenAndField(writeBuf, FieldDataType.SEMANTIC, () -> writeBuf.writeInt(Nid.narrowChecked(Entity.nid(semanticField))));
             case PatternFacade patternField ->
-                    writeTokenAndField(writeBuf, FieldDataType.PATTERN, () -> writeBuf.writeInt(patternField.nid()));
+                    writeTokenAndField(writeBuf, FieldDataType.PATTERN, () -> writeBuf.writeInt(Nid.narrowChecked(patternField.nid())));
             case Pattern patternField ->
-                    writeTokenAndField(writeBuf, FieldDataType.PATTERN, () -> writeBuf.writeInt(Entity.nid(patternField)));
+                    writeTokenAndField(writeBuf, FieldDataType.PATTERN, () -> writeBuf.writeInt(Nid.narrowChecked(Entity.nid(patternField))));
             case EntityFacade entityField ->
-                    writeTokenAndField(writeBuf, FieldDataType.IDENTIFIED_THING, () -> writeBuf.writeInt(entityField.nid()));
+                    writeTokenAndField(writeBuf, FieldDataType.IDENTIFIED_THING, () -> writeBuf.writeInt(Nid.narrowChecked(entityField.nid())));
             case Component componentField ->
-                    writeTokenAndField(writeBuf, FieldDataType.IDENTIFIED_THING, () -> writeBuf.writeInt(Entity.nid(componentField)));
+                    writeTokenAndField(writeBuf, FieldDataType.IDENTIFIED_THING, () -> writeBuf.writeInt(Nid.narrowChecked(Entity.nid(componentField))));
             case DiTreeEntity diTreeEntityField ->
                     writeTokenAndField(writeBuf, FieldDataType.DITREE, () ->
                             writeBuf.write(diTreeEntityField.getBytes()));
@@ -290,36 +295,36 @@ public class EntityRecordFactory {
                         writeBuf.writeFloat(spatialPointField.y());
                         writeBuf.writeFloat(spatialPointField.z());
                     });
-            case IntIdList intIdListField ->
+            case LongIdList intIdListField ->
                     writeTokenAndField(writeBuf, COMPONENT_ID_LIST, () -> {
                         writeBuf.writeInt(intIdListField.size());
-                        intIdListField.forEach(id -> writeBuf.writeInt(id));
+                        intIdListField.forEach(id -> writeBuf.writeInt(Nid.narrowChecked(id)));
                     });
-            case IntIdSet intIdSetField ->
+            case LongIdSet intIdSetField ->
                     writeTokenAndField(writeBuf, FieldDataType.COMPONENT_ID_SET, () -> {
                         writeBuf.writeInt(intIdSetField.size());
-                        intIdSetField.forEach(id -> writeBuf.writeInt(id));
+                        intIdSetField.forEach(id -> writeBuf.writeInt(Nid.narrowChecked(id)));
                     });
             case PublicId publicId ->
                     writeTokenAndField(writeBuf, FieldDataType.IDENTIFIED_THING, () ->
-                            writeBuf.writeInt(Entity.nid(publicId)));
+                            writeBuf.writeInt(Nid.narrowChecked(Entity.nid(publicId))));
             case PublicIdList publicIdListField -> {
-                    MutableIntList nidList = IntLists.mutable.withInitialCapacity(publicIdListField.size());
+                    MutableLongList nidList = LongLists.mutable.withInitialCapacity(publicIdListField.size());
                     publicIdListField.forEach(publicId -> {
                         nidList.add(PrimitiveData.get().nidForPublicId((PublicId) publicId));
                     });
                     writeBuf.writeByte(COMPONENT_ID_LIST.token);
                     writeBuf.writeInt(nidList.size());
-                    nidList.forEach(id -> writeBuf.writeInt(id));
+                    nidList.forEach(id -> writeBuf.writeInt(Nid.narrowChecked(id)));
             }
             case PublicIdSet publicIdSetField -> {
-                MutableIntList nidSet = IntLists.mutable.withInitialCapacity(publicIdSetField.size());
+                MutableLongList nidSet = LongLists.mutable.withInitialCapacity(publicIdSetField.size());
                 publicIdSetField.forEach(publicId -> {
                     nidSet.add(PrimitiveData.get().nidForPublicId((PublicId) publicId));
                 });
                 writeBuf.writeByte(FieldDataType.COMPONENT_ID_SET.token);
                 writeBuf.writeInt(nidSet.size());
-                nidSet.forEach(id -> writeBuf.writeInt(id));
+                nidSet.forEach(id -> writeBuf.writeInt(Nid.narrowChecked(id)));
             }
             default -> throw new IllegalStateException("Unexpected value: %s of class: %s".formatted(field, field.getClass()));
         }
@@ -331,29 +336,29 @@ public class EntityRecordFactory {
 
     public static void writeField(ByteBuf writeBuf, EntityFacade entityField) {
         writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
-        writeBuf.writeInt(entityField.nid());
+        writeBuf.writeInt(Nid.narrowChecked(entityField.nid()));
     }
 
     public static void writeField(ByteBuf writeBuf, Component componentField) {
         writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
-        writeBuf.writeInt(Entity.nid(componentField));
+        writeBuf.writeInt(Nid.narrowChecked(Entity.nid(componentField)));
     }
 
     public static void writeField(ByteBuf writeBuf, Semantic semanticField) {
         writeBuf.writeByte(FieldDataType.SEMANTIC.token);
         if (semanticField instanceof ComponentWithNid) {
-            writeBuf.writeInt(((ComponentWithNid) semanticField).nid());
+            writeBuf.writeInt(Nid.narrowChecked(((ComponentWithNid) semanticField).nid()));
         } else {
-            writeBuf.writeInt(Entity.nid(semanticField));
+            writeBuf.writeInt(Nid.narrowChecked(Entity.nid(semanticField)));
         }
     }
 
     public static void writeField(ByteBuf writeBuf, Pattern patternField) {
         writeBuf.writeByte(FieldDataType.PATTERN.token);
         if (patternField instanceof ComponentWithNid) {
-            writeBuf.writeInt(((ComponentWithNid) patternField).nid());
+            writeBuf.writeInt(Nid.narrowChecked(((ComponentWithNid) patternField).nid()));
         } else {
-            writeBuf.writeInt(Entity.nid(patternField));
+            writeBuf.writeInt(Nid.narrowChecked(Entity.nid(patternField)));
         }
     }
 
@@ -458,7 +463,7 @@ public class EntityRecordFactory {
         if (entityFormatVersion != ENTITY_FORMAT_VERSION) {
             throw new IllegalStateException("Unsupported entity format version: " + entityFormatVersion);
         }
-        int nid = readBuf.readInt();
+        long nid = readBuf.readInt();
         long mostSignificantBits = readBuf.readLong();
         long leastSignificantBits = readBuf.readLong();
 
@@ -488,8 +493,8 @@ public class EntityRecordFactory {
             }
 
             case SEMANTIC_CHRONOLOGY -> {
-                int referencedComponentNid = readBuf.readInt();
-                int patternNid = readBuf.readInt();
+                long referencedComponentNid = readBuf.readInt();
+                long patternNid = readBuf.readInt();
                 versionCount = readBuf.readInt();
                 RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
                 SemanticRecord semanticRecord = new SemanticRecord(mostSignificantBits, leastSignificantBits,
@@ -543,7 +548,7 @@ public class EntityRecordFactory {
         // but is used for merge functions for concurrent write of versions using CAS...
         int bytesInVersion = readBuf.readInt();
         byte token = readBuf.readByte();
-        int stampNid = readBuf.readInt();
+        long stampNid = readBuf.readInt();
         if (entity.versionDataType().token != token) {
             // f88e125b-b054-566f-bd72-a150df58e1d9 = Tinkar base model component pattern
             // It is the description for the membership pattern for "path"
@@ -592,8 +597,8 @@ public class EntityRecordFactory {
                 yield new SemanticVersionRecord(semanticRecord, stampNid, fields);
             }
             case PatternRecord patternRecord -> {
-                int semanticPurposeNid = readBuf.readInt();
-                int semanticMeaningNid = readBuf.readInt();
+                long semanticPurposeNid = readBuf.readInt();
+                long semanticMeaningNid = readBuf.readInt();
                 int fieldCount = readBuf.readInt();
                 MutableList<FieldDefinitionRecord> fieldDefinitionForEntities = Lists.mutable.ofInitialCapacity(fieldCount);
                 for (int fieldIndex = 0; fieldIndex < fieldCount; fieldIndex++) {
@@ -607,11 +612,11 @@ public class EntityRecordFactory {
                 yield patternVersionRecord;
             }
             case StampRecord stampRecord -> {
-                int stateNid = readBuf.readInt();
+                long stateNid = readBuf.readInt();
                 long time = readBuf.readLong();
-                int authorNid = readBuf.readInt();
-                int moduleNid = readBuf.readInt();
-                int pathNid = readBuf.readInt();
+                long authorNid = readBuf.readInt();
+                long moduleNid = readBuf.readInt();
+                long pathNid = readBuf.readInt();
                 yield new StampVersionRecord(stampRecord, stateNid, time, authorNid, moduleNid, pathNid);
             }
             default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
@@ -634,8 +639,8 @@ public class EntityRecordFactory {
             case INSTANT -> Instant.ofEpochSecond(readBuf.readLong(), readBuf.readInt());
             case PLANAR_POINT -> new PlanarPoint(readBuf.readInt(), readBuf.readInt());
             case SPATIAL_POINT -> new SpatialPoint(readBuf.readInt(), readBuf.readInt(), readBuf.readInt());
-            case COMPONENT_ID_LIST -> IntIds.list.of(readIntArray(readBuf));
-            case COMPONENT_ID_SET -> IntIds.set.of(readIntArray(readBuf));
+            case COMPONENT_ID_LIST -> LongIds.list.of(readNidArray(readBuf));
+            case COMPONENT_ID_SET -> LongIds.set.of(readNidArray(readBuf));
             case LONG -> readBuf.readLong();
             case DECIMAL -> new BigDecimal(new String(readBytes(readBuf), UTF_8));
             // OBJECT_ARRAY read case, symmetric with the writeField Object[] case:
@@ -661,9 +666,10 @@ public class EntityRecordFactory {
         return bytes;
     }
 
-    static protected int[] readIntArray(ByteBuf readBuf) {
+    /** An id list or set of format 1: its size, then each nid as four bytes, widened as it is read. */
+    static protected long[] readNidArray(ByteBuf readBuf) {
         int size = readBuf.readInt();
-        int[] array = new int[size];
+        long[] array = new long[size];
         for (int i = 0; i < size; i++) {
             array[i] = readBuf.readInt();
         }
@@ -683,8 +689,8 @@ public class EntityRecordFactory {
             case PlanarPoint planarPointField -> planarPointField;
             case SpatialPoint spatialPointField -> spatialPointField;
             case BigDecimal bigDecimalField -> bigDecimalField;
-            case IntIdSet intIdSet -> intIdSet;
-            case IntIdList intIdList -> intIdList;
+            case LongIdSet intIdSet -> intIdSet;
+            case LongIdList intIdList -> intIdList;
             // conversions
             case Concept conceptField -> EntityProxy.Concept.make(Entity.nid(conceptField));
             case Semantic semanticField -> EntityProxy.Semantic.make(Entity.nid(semanticField));
@@ -703,21 +709,21 @@ public class EntityRecordFactory {
                 yield internalElements;
             }
             case PublicIdSet publicIdSetField -> {
-                MutableIntSet idSet = IntSets.mutable.withInitialCapacity(publicIdSetField.size());
+                MutableLongSet idSet = LongSets.mutable.withInitialCapacity(publicIdSetField.size());
                 publicIdSetField.forEach(publicId -> {
                     if (publicId == null) {
                         throw new IllegalStateException("PublicId cannot be null");
                     }
                     idSet.add(Entity.nid((PublicId) publicId));
                 });
-                yield IntIds.set.ofAlreadySorted(idSet.toSortedArray());
+                yield LongIds.set.ofAlreadySorted(idSet.toSortedArray());
             }
             case PublicIdList publicIdListField -> {
-                MutableIntList idList = IntLists.mutable.withInitialCapacity(publicIdListField.size());
+                MutableLongList idList = LongLists.mutable.withInitialCapacity(publicIdListField.size());
                 publicIdListField.forEach(publicId -> {
                     idList.add(Entity.nid((PublicId) publicId));
                 });
-                yield IntIds.list.of(idList.toArray());
+                yield LongIds.list.of(idList.toArray());
             }
 
             default -> throw new IllegalStateException("Unexpected value: " + externalObject);

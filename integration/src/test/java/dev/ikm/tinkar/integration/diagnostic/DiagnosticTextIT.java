@@ -17,7 +17,7 @@ package dev.ikm.tinkar.integration.diagnostic;
 
 import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DiagnosticText;
@@ -35,8 +35,8 @@ import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
-import org.eclipse.collections.api.factory.primitive.IntObjectMaps;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.api.factory.primitive.LongObjectMaps;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -68,7 +68,7 @@ class DiagnosticTextIT {
     private static final String UNDESCRIBED = UNDESCRIBED_UUID.toString();
 
     /** A nid the store never assigned. */
-    private static final int UNASSIGNED_NID = Integer.MAX_VALUE - 1;
+    private static final long UNASSIGNED_NID = Integer.MAX_VALUE - 1;
 
     /** The form {@code PrimitiveData.text} writes for a component with no description. */
     private static final Pattern ANGLE_BRACKET_NID = Pattern.compile("<-?\\d+>");
@@ -76,7 +76,7 @@ class DiagnosticTextIT {
     /** A nid of the test store in decimal: the store numbers components up from the bottom of the int range. */
     private static final Pattern STORE_NID = Pattern.compile("-2147[34]\\d{5}(?!\\d)");
 
-    private int undescribedNid;
+    private long undescribedNid;
 
     @BeforeAll
     void startStore() {
@@ -100,7 +100,7 @@ class DiagnosticTextIT {
 
     @Test
     void aDescribedComponentIsItsDescriptionThenItsUuid() {
-        int nid = KernelTerm.ENGLISH_LANGUAGE.nid();
+        long nid = KernelTerm.ENGLISH_LANGUAGE.nid();
         String description = PrimitiveData.textOptional(nid).orElseThrow();
 
         String text = DiagnosticText.component(nid);
@@ -122,7 +122,7 @@ class DiagnosticTextIT {
 
     @Test
     void aSemanticHasNoDescriptionAndIsItsUuid() {
-        int semanticNid = EntityService.get().semanticsForComponentOfPattern(
+        long semanticNid = EntityService.get().semanticsForComponentOfPattern(
                 KernelTerm.ENGLISH_LANGUAGE.nid(), KernelTerm.DESCRIPTION_PATTERN.nid()).findFirst().orElseThrow().nid();
 
         String text = DiagnosticText.component(semanticNid);
@@ -143,7 +143,7 @@ class DiagnosticTextIT {
         // This store keeps an index from nid to UUID beside its entities, so it has the public
         // id of a nid for which no entity was written.
         String referredTo = UUID.randomUUID().toString();
-        int nid = PrimitiveData.nid(PublicIds.of(referredTo));
+        long nid = PrimitiveData.nid(PublicIds.of(referredTo));
 
         assertEquals("UUID " + referredTo, DiagnosticText.component(nid));
         assertEquals(referredTo, DiagnosticText.name(nid));
@@ -220,7 +220,7 @@ class DiagnosticTextIT {
 
         EntityVertex propertySet = EntityVertex.make(KernelTerm.PROPERTY_SET);
         setProperty(propertySet, KernelTerm.PROPERTY_SEQUENCE,
-                IntIds.list.of(IkeTerms.PART_OF.nid(), undescribedNid, UNASSIGNED_NID));
+                LongIds.list.of(IkeTerms.PART_OF.nid(), undescribedNid, UNASSIGNED_NID));
 
         DiTreeEntity.Builder builder = DiTreeEntity.builder();
         builder.setRoot(root);
@@ -234,7 +234,7 @@ class DiagnosticTextIT {
 
     /** Gives a vertex one property. */
     private static void setProperty(EntityVertex vertex, EntityFacade key, Object value) {
-        MutableIntObjectMap<Object> properties = IntObjectMaps.mutable.empty();
+        MutableLongObjectMap<Object> properties = LongObjectMaps.mutable.empty();
         properties.put(key.nid(), value);
         vertex.setProperties(properties);
     }

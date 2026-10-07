@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
  */
 class StampRecordCommittedFormTest {
 
-    private static final int NID = 11;
+    private static final long NID = 11;
     private static final int ACTIVE = 21;
     private static final int CANCELED = 22;
     private static final int AUTHOR = 31;

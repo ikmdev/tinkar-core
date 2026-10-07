@@ -18,29 +18,29 @@ package dev.ikm.tinkar.coordinate.edit;
 public interface EditCoordinateDelegate extends EditCoordinate {
 
     @Override
-    default int getAuthorNidForChanges() {
+    default long getAuthorNidForChanges() {
         return editCoordinate().getAuthorNidForChanges();
     }
 
     EditCoordinate editCoordinate();
 
     @Override
-    default int getDefaultModuleNid() {
+    default long getDefaultModuleNid() {
         return editCoordinate().getDefaultModuleNid();
     }
 
     @Override
-    default int getDestinationModuleNid() {
+    default long getDestinationModuleNid() {
         return editCoordinate().getDestinationModuleNid();
     }
 
     @Override
-    default int getDefaultPathNid() {
+    default long getDefaultPathNid() {
         return editCoordinate().getDefaultPathNid();
     }
 
     @Override
-    default int getPromotionPathNid() {
+    default long getPromotionPathNid() {
         return editCoordinate().getPromotionPathNid();
     }
 

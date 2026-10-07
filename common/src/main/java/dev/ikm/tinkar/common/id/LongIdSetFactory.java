@@ -16,23 +16,24 @@
 package dev.ikm.tinkar.common.id;
 
 import java.util.Collection;
-import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 
-public interface IntIdListFactory {
-    IntIdList empty();
+public interface LongIdSetFactory {
+    LongIdSet empty();
 
-    IntIdList of();
+    LongIdSet of();
 
-    IntIdList of(int one);
+    LongIdSet of(long one);
 
-    IntIdList of(int one, int two);
+    LongIdSet of(long one, long two);
 
-    IntIdList of(IntIdList list, int... elements);
+    LongIdSet ofAlreadySorted(long... elements);
 
-    default <T> IntIdList of(Collection<T> components, ToIntFunction<T> function) {
-        return of(components.stream().mapToInt(component -> function.applyAsInt(component)).toArray());
+    LongIdSet of(LongIdSet ids, long... elements);
+
+    default <T> LongIdSet of(Collection<T> components, ToLongFunction<T> function) {
+        return of(components.stream().mapToLong(component -> function.applyAsLong(component)).toArray());
     }
 
-    IntIdList of(int... elements);
-
+    LongIdSet of(long... elements);
 }

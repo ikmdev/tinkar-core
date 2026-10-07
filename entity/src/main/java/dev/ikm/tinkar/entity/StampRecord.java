@@ -36,7 +36,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
 @RecordBuilder
 public record StampRecord(
         long mostSignificantBits, long leastSignificantBits,
-        ImmutableLongList additionalUuidLongs, int nid,
+        ImmutableLongList additionalUuidLongs, long nid,
         ImmutableList<StampVersionRecord> versions)
         implements StampEntity<StampVersionRecord>, ImmutableEntity<StampVersionRecord>,
                    StampFacade, IdentifierData, StampRecordBuilder.With {
@@ -70,7 +70,7 @@ public record StampRecord(
         // The stamp pattern the providers file and enumerate stamps under, as the loader
         // does: a provider that keys nids by pattern (Rocks) otherwise files a stamp made
         // here where forEachStampNid never looks.
-        int stampNid = ScopedValue
+        long stampNid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
                 .call(() -> PrimitiveData.nid(stampUuid));
 

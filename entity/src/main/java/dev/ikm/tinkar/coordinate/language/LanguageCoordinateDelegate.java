@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.language;
 
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -49,7 +49,7 @@ public interface LanguageCoordinateDelegate extends LanguageCoordinate {
    }
 
    @Override
-   default IntIdList modulePreferenceNidListForLanguage() {
+   default LongIdList modulePreferenceNidListForLanguage() {
       return getLanguageCoordinate().modulePreferenceNidListForLanguage();
    }
 
@@ -64,17 +64,17 @@ public interface LanguageCoordinateDelegate extends LanguageCoordinate {
    }
 
    @Override
-   default IntIdList descriptionTypePreferenceNidList() {
+   default LongIdList descriptionTypePreferenceNidList() {
       return getLanguageCoordinate().descriptionTypePreferenceNidList();
    }
 
    @Override
-   default IntIdList dialectPatternPreferenceNidList() {
+   default LongIdList dialectPatternPreferenceNidList() {
       return getLanguageCoordinate().dialectPatternPreferenceNidList();
    }
 
    @Override
-   default IntIdList descriptionPatternPreferenceNidList() {
+   default LongIdList descriptionPatternPreferenceNidList() {
       return getLanguageCoordinate().descriptionPatternPreferenceNidList();
    }
 
@@ -84,7 +84,7 @@ public interface LanguageCoordinateDelegate extends LanguageCoordinate {
    }
 
    @Override
-   default int languageConceptNid() {
+   default long languageConceptNid() {
       return getLanguageCoordinate().languageConceptNid();
    }
 }

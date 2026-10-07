@@ -35,7 +35,7 @@ import dev.ikm.elk.snomed.model.Role;
 import dev.ikm.elk.snomed.model.RoleGroup;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.elk.snomed.model.SnomedEntity;
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
@@ -110,8 +110,8 @@ public class ElkSnomedDataBuilder {
 					} catch (Exception ex) {
 						int errorCount = ex_cnt.incrementAndGet();
 						if (errorCount <= 10) {
-							int conceptNid = semanticEntityVersion.referencedComponentNid();
-							int semanticNid = semanticEntityVersion.chronology().nid();
+							long conceptNid = semanticEntityVersion.referencedComponentNid();
+							long semanticNid = semanticEntityVersion.chronology().nid();
 							LOG.error("Error processing stated axiom semantic nid={} for concept nid={} ({})",
 									semanticNid, conceptNid, PrimitiveData.text(conceptNid));
 							LOG.error("Semantic pattern nid={} ({})",
@@ -151,7 +151,7 @@ public class ElkSnomedDataBuilder {
 		var objectAttributeRoot = ElkSnomedData.tryGetNid(SnomedIds.concept_model_object_attribute);
 		var dataAttributeRoot = ElkSnomedData.tryGetNid(SnomedIds.concept_model_data_attribute);
 		for (RoleType role : data.getRoleTypes()) {
-			if (objectAttributeRoot.isPresent() && objectAttributeRoot.getAsInt() == role.getId()) {
+			if (objectAttributeRoot.isPresent() && objectAttributeRoot.getAsLong() == role.getId()) {
 				LOG.info("Skipping root " + PrimitiveData.text((int) role.getId()));
 				continue;
 			}
@@ -169,7 +169,7 @@ public class ElkSnomedDataBuilder {
 			}
 		}
 		for (ConcreteRoleType role : data.getConcreteRoleTypes()) {
-			if (dataAttributeRoot.isPresent() && dataAttributeRoot.getAsInt() == role.getId()) {
+			if (dataAttributeRoot.isPresent() && dataAttributeRoot.getAsLong() == role.getId()) {
 				LOG.info("Skipping root " + PrimitiveData.text((int) role.getId()));
 				continue;
 			}
@@ -188,7 +188,7 @@ public class ElkSnomedDataBuilder {
 		}
 	}
 
-	public Concept processDelete(int nid) {
+	public Concept processDelete(long nid) {
 		if (data.getConcept(nid) != null) {
 			return data.deleteConcept(nid);
 		}
@@ -206,7 +206,7 @@ public class ElkSnomedDataBuilder {
 	}
 
 	public Concept processUpdate(SemanticEntityVersion update) {
-		int nid = update.referencedComponentNid();
+		long nid = update.referencedComponentNid();
 		{
 			Concept concept = data.getConcept(nid);
 			if (concept != null) {
@@ -239,12 +239,12 @@ public class ElkSnomedDataBuilder {
 		return LogicalAxiomSemantic.get(node.getMeaningNid());
 	}
 
-	public static int getNid(EntityVertex node, dev.ikm.tinkar.terms.EntityProxy.Concept concept) {
+	public static long getNid(EntityVertex node, dev.ikm.tinkar.terms.EntityProxy.Concept concept) {
 		ConceptFacade cf = node.propertyFast(concept);
 		return cf.nid();
 	}
 
-	private EntityVertex getFirstChildCheck(int conceptNid, EntityVertex node, DiTreeEntity definition,
+	private EntityVertex getFirstChildCheck(long conceptNid, EntityVertex node, DiTreeEntity definition,
 			dev.ikm.tinkar.terms.EntityProxy.Concept meaning) {
 		final ImmutableList<EntityVertex> children = definition.successors(node);
 		if (children.size() != 1)
@@ -260,7 +260,7 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private void checkRoleOperator(EntityVertex node) {
-		int role_operator_nid = getNid(node, KernelTerm.ROLE_OPERATOR);
+		long role_operator_nid = getNid(node, KernelTerm.ROLE_OPERATOR);
 		if (role_operator_nid != KernelTerm.EXISTENTIAL_RESTRICTION.nid())
 			throw new UnsupportedOperationException(
 					"Role: " + DiagnosticText.component(role_operator_nid) + " not supported. ");
@@ -273,7 +273,7 @@ public class ElkSnomedDataBuilder {
 
 	private SnomedEntity processDefinition(SemanticEntityVersion semanticEntityVersion) {
 		SnomedEntity ret = null;
-		int conceptNid = semanticEntityVersion.referencedComponentNid();
+		long conceptNid = semanticEntityVersion.referencedComponentNid();
 		DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().getFirst();
 		EntityVertex root = definition.root();
 		if (definition.successors(root).isEmpty()) {
@@ -334,21 +334,21 @@ public class ElkSnomedDataBuilder {
 		return ret;
 	}
 
-	private void processDefinition(int conceptNid, Definition def, EntityVertex node, DiTreeEntity definition) {
+	private void processDefinition(long conceptNid, Definition def, EntityVertex node, DiTreeEntity definition) {
 		EntityVertex child = getFirstChildCheck(conceptNid, node, definition, null);
 		switch (getMeaning(child)) {
 		case AND -> {
 			processAnd(def, child, definition);
 		}
 		case CONCEPT -> {
-			int nid = getNid(child, KernelTerm.CONCEPT_REFERENCE);
+			long nid = getNid(child, KernelTerm.CONCEPT_REFERENCE);
 			def.addSuperConcept(data.getOrCreateConcept(nid));
 		}
 		default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
 		}
 	}
 
-	private void processPropertySet(int conceptNid, EntityVertex propertySetNode, DiTreeEntity definition) {
+	private void processPropertySet(long conceptNid, EntityVertex propertySetNode, DiTreeEntity definition) {
 		if (log_property_sets)
 			LOG.info("PropertySet: " + PrimitiveData.text(conceptNid) + " " + propertySetNode + "\n" + definition);
 		EntityVertex child = getFirstChildCheck(conceptNid, propertySetNode, definition, KernelTerm.AND);
@@ -372,7 +372,7 @@ public class ElkSnomedDataBuilder {
 					throw new IllegalStateException(
 							"Property chain malformed. Concept: " + DiagnosticText.component(conceptNid)
 									+ " definition:\n" + DiTreeText.diagnostic(definition));
-				IntIdList ps = node.propertyFast(KernelTerm.PROPERTY_SEQUENCE);
+				LongIdList ps = node.propertyFast(KernelTerm.PROPERTY_SEQUENCE);
 				if (ps == null)
 					throw new IllegalStateException(
 							"Property chain malformed. Expected " + DiagnosticText.name(KernelTerm.PROPERTY_SEQUENCE.nid())
@@ -396,7 +396,7 @@ public class ElkSnomedDataBuilder {
 		}
 	}
 
-	private void processDataPropertySet(int conceptNid, EntityVertex propertySetNode, DiTreeEntity definition) {
+	private void processDataPropertySet(long conceptNid, EntityVertex propertySetNode, DiTreeEntity definition) {
 		if (log_property_sets)
 			LOG.info("DataPropertySet: " + PrimitiveData.text(conceptNid) + " " + propertySetNode + "\n" + definition);
 		EntityVertex child = getFirstChildCheck(conceptNid, propertySetNode, definition, KernelTerm.AND);
@@ -416,12 +416,12 @@ public class ElkSnomedDataBuilder {
 		for (EntityVertex child : definition.successors(node)) {
 			switch (getMeaning(child)) {
 			case CONCEPT -> {
-				int concept_nid = getNid(child, KernelTerm.CONCEPT_REFERENCE);
+				long concept_nid = getNid(child, KernelTerm.CONCEPT_REFERENCE);
 				def.addSuperConcept(data.getOrCreateConcept(concept_nid));
 			}
 			case ROLE -> {
 				checkRoleOperator(child);
-				int role_type_nid = getNid(child, KernelTerm.ROLE_TYPE);
+				long role_type_nid = getNid(child, KernelTerm.ROLE_TYPE);
 				if (role_type_nid == KernelTerm.ROLE_GROUP.nid()) {
 					// TODO Placeholder for now so the tests work
 //					data.getOrCreateRoleType(role_type_nid);
@@ -446,14 +446,14 @@ public class ElkSnomedDataBuilder {
 
 	private Role makeRole(EntityVertex node, DiTreeEntity definition) {
 		EntityVertex child = getFirstChildCheck(-1, node, definition, null);
-		int role_type_nid = getNid(node, KernelTerm.ROLE_TYPE);
+		long role_type_nid = getNid(node, KernelTerm.ROLE_TYPE);
 		RoleType role_type = data.getOrCreateRoleType(role_type_nid);
-		int concept_nid = getNid(child, KernelTerm.CONCEPT_REFERENCE);
+		long concept_nid = getNid(child, KernelTerm.CONCEPT_REFERENCE);
 		return new Role(role_type, data.getOrCreateConcept(concept_nid));
 	}
 
 	private ConcreteRole makeConcreteRole(EntityVertex node, DiTreeEntity definition) {
-		int role_type_nid = getNid(node, KernelTerm.FEATURE_TYPE);
+		long role_type_nid = getNid(node, KernelTerm.FEATURE_TYPE);
 		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
 		Object value = node.propertyFast(KernelTerm.LITERAL_VALUE);
 		ValueType value_type = switch (value) {
@@ -469,7 +469,7 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private ConcreteRole makeIntervalRole(EntityVertex node, DiTreeEntity definition) {
-		int role_type_nid = getNid(node, KernelTerm.INTERVAL_ROLE_TYPE);
+		long role_type_nid = getNid(node, KernelTerm.INTERVAL_ROLE_TYPE);
 		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
 		data.addIntervalRoleType(role_type);
 		Interval interval = IntervalUtil.makeInterval(node);

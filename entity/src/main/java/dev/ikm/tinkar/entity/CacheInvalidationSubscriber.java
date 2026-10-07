@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.common.id.Nid;
 import com.github.benmanes.caffeine.cache.Cache;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 
@@ -24,12 +25,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Remove objects from a cache based on
  */
-public class CacheInvalidationSubscriber implements Subscriber<Integer> {
-    CopyOnWriteArrayList<Cache<Integer, ? extends Object>> cachesToManage = new CopyOnWriteArrayList<>();
+public class CacheInvalidationSubscriber implements Subscriber<Long> {
+    CopyOnWriteArrayList<Cache<Long, ? extends Object>> cachesToManage = new CopyOnWriteArrayList<>();
 
 
-    public void addCaches(Cache<Integer, ? extends Object>... caches) {
-        for (Cache<Integer, ?> cache : caches) {
+    public void addCaches(Cache<Long, ? extends Object>... caches) {
+        for (Cache<Long, ?> cache : caches) {
             cachesToManage.add(cache);
         }
     }
@@ -37,10 +38,10 @@ public class CacheInvalidationSubscriber implements Subscriber<Integer> {
 
 
     @Override
-    public void onNext(Integer nid) {
+    public void onNext(Long nid) {
         // Do nothing with item, but request another...
-        for (Cache<Integer, ?> cache : cachesToManage) {
-            if (nid == Integer.MIN_VALUE) {
+        for (Cache<Long, ?> cache : cachesToManage) {
+            if (Nid.isNone(nid)) {
                 cache.invalidateAll();
             } else {
                 cache.invalidate(nid);

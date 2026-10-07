@@ -15,21 +15,22 @@
  */
 package dev.ikm.tinkar.common.id.impl;
 
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdCollection;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
 import java.util.Arrays;
-import java.util.function.IntConsumer;
-import java.util.stream.IntStream;
+import java.util.function.LongConsumer;
+import java.util.stream.LongStream;
 
 /**
  *
  */
-public final class IntIdListArray
-        implements IntIdList {
-    private final int[] elements;
+public final class LongIdListArray
+        implements LongIdList {
+    private final long[] elements;
 
-    public IntIdListArray(int... newElements) {
+    public LongIdListArray(long... newElements) {
         this.elements = newElements;
     }
 
@@ -39,13 +40,13 @@ public final class IntIdListArray
     }
 
     @Override
-    public IntStream intStream() {
-        return IntStream.of(elements);
+    public LongStream longStream() {
+        return LongStream.of(elements);
     }
 
     @Override
-    public boolean contains(int value) {
-        for (int element : elements) {
+    public boolean contains(long value) {
+        for (long element : elements) {
             if (value == element) {
                 return true;
             }
@@ -54,19 +55,19 @@ public final class IntIdListArray
     }
 
     @Override
-    public int[] toArray() {
+    public long[] toArray() {
         return elements;
     }
 
     @Override
-    public void forEach(IntConsumer consumer) {
-        for (int element : elements) {
+    public void forEach(LongConsumer consumer) {
+        for (long element : elements) {
             consumer.accept(element);
         }
     }
 
     @Override
-    public int get(int index) {
+    public long get(int index) {
         return elements[index];
     }
 
@@ -80,8 +81,8 @@ public final class IntIdListArray
         if (this == obj) {
             return true;
         }
-        if (obj instanceof IntIdList intIdList) {
-            if (intIdList.size() == elements.length && Arrays.equals(this.toArray(), intIdList.toArray())) {
+        if (obj instanceof LongIdList longIdList) {
+            if (longIdList.size() == elements.length && Arrays.equals(this.toArray(), longIdList.toArray())) {
                 return true;
             }
         }
@@ -91,15 +92,15 @@ public final class IntIdListArray
     @Override
     public int hashCode() {
         int h = 1;
-        for(int element : elements) {
-            h = 31 * h + element;
+        for(long element : elements) {
+            h = 31 * h + LongIdCollection.hashOf(element);
         }
         return h;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("IntIdList[");
+        StringBuilder sb = new StringBuilder("LongIdList[");
         for (int i = 0; i < elements.length && i <= TO_STRING_LIMIT; i++) {
             sb.append(PrimitiveData.textWithNid(elements[i])).append(", ");
             if (i == TO_STRING_LIMIT) {

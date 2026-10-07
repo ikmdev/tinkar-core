@@ -58,7 +58,7 @@ public class TempEditUtil {
 		this.statedAxiomPattern = statedAxiomPattern;
 	}
 
-	private int getStatedSemanticNid(int concept) {
+	private long getStatedSemanticNid(long concept) {
 		List<SemanticEntity<SemanticEntityVersion>> statedSemantics = EntityService.get()
 				.semanticsForComponentOfPattern(concept, statedAxiomPattern.nid()).toList();
 		if (statedSemantics.isEmpty())
@@ -68,7 +68,7 @@ public class TempEditUtil {
 		return statedSemantics.getFirst().nid();
 	}
 
-	private void update(int statedSemanticNid, LogicalExpression newStatedExpression) {
+	private void update(long statedSemanticNid, LogicalExpression newStatedExpression) {
 		Transaction updateStatedTransaction = Transaction.make();
 		StampEntity<?> updateStamp = updateStatedTransaction.getStamp(State.ACTIVE,
 				viewCalculator.viewCoordinateRecord().getAuthorNidForChanges(),
@@ -82,9 +82,9 @@ public class TempEditUtil {
 	}
 
 	public DiTreeEntity setParent(UUID conceptUuid, UUID parentUuid) {
-		int conceptNid = PrimitiveData.nid(conceptUuid);
-		int parentNid = PrimitiveData.nid(parentUuid);
-		int statedSemanticNid = getStatedSemanticNid(conceptNid);
+		long conceptNid = PrimitiveData.nid(conceptUuid);
+		long parentNid = PrimitiveData.nid(parentUuid);
+		long statedSemanticNid = getStatedSemanticNid(conceptNid);
 		Latest<SemanticEntityVersion> latestStatedSemantic = viewCalculator.latest(statedSemanticNid);
 		LOG.info("Stated: " + latestStatedSemantic.get());
 		DiTreeEntity def = (DiTreeEntity) latestStatedSemantic.get().fieldValues().getFirst();
@@ -102,8 +102,8 @@ public class TempEditUtil {
 	}
 
 	public DiTreeEntity makeEquivalent(UUID conceptUuid) {
-		int conceptNid = PrimitiveData.nid(conceptUuid);
-		int statedSemanticNid = getStatedSemanticNid(conceptNid);
+		long conceptNid = PrimitiveData.nid(conceptUuid);
+		long statedSemanticNid = getStatedSemanticNid(conceptNid);
 		Latest<SemanticEntityVersion> latestStatedSemantic = viewCalculator.latest(statedSemanticNid);
 		LOG.info("Stated: " + latestStatedSemantic.get());
 		DiTreeEntity def = (DiTreeEntity) latestStatedSemantic.get().fieldValues().getFirst();

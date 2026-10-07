@@ -43,7 +43,7 @@ public interface StampPath
      *
      * @return the nid of the Concept that defines this STAMP path.
      */
-    int pathConceptNid();
+    long pathConceptNid();
 
     default ConceptFacade pathConcept() {
         return EntityHandle.get(pathConceptNid()).expectConcept();
@@ -52,7 +52,7 @@ public interface StampPath
     @Override
     default int compareTo(StampPath that) {
         if (this.pathConceptNid() != that.pathConceptNid()) {
-            return Integer.compare(this.pathConceptNid(), that.pathConceptNid());
+            return Long.compare(this.pathConceptNid(), that.pathConceptNid());
         }
         if (this.getPathOrigins().size() != that.getPathOrigins().size()) {
             return Integer.compare(this.getPathOrigins().size(), that.getPathOrigins().size());

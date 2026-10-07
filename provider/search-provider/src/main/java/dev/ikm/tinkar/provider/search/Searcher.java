@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.provider.search;
 
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
@@ -243,7 +243,7 @@ public class Searcher {
             for (int i = 0; i < hits.length; i++) {
                 int docId = hits[i].doc;
                 Document hitDoc = indexSearcher.storedFields().document(docId, IndexerSchema.FIELDS_TO_LOAD);
-                int nid = IndexerSchema.NID.read(hitDoc);
+                long nid = IndexerSchema.NID.read(hitDoc);
                 int fieldOrdinal = IndexerSchema.INDEXED_FIELD_ORDINAL.read(hitDoc);
                 results[i] = new PrimitiveDataSearchResult(nid, fieldOrdinal, hits[i].score, snippets[i]);
             }
@@ -311,8 +311,8 @@ public class Searcher {
      */
     public static List<PublicId> childrenOf(NavigationCalculator navCalc, PublicId parentConceptId) {
         List<PublicId> childIds = new ArrayList<>();
-        int[] childNidList = navCalc.childrenOf(EntityService.get().nidForPublicId(parentConceptId)).toArray();
-        for (int childNid : childNidList) {
+        long[] childNidList = navCalc.childrenOf(EntityService.get().nidForPublicId(parentConceptId)).toArray();
+        for (long childNid : childNidList) {
             EntityHandle.get(childNid).ifPresent((entity) -> childIds.add(entity.publicId()));
         }
         return childIds;
@@ -341,8 +341,8 @@ public class Searcher {
      */
     public static List<PublicId> descendantsOf(NavigationCalculator navCalc, PublicId ancestorConceptId) {
         List<PublicId> descendantIds = new ArrayList<>();
-        int[] descendantNidList = navCalc.descendentsOf(EntityService.get().nidForPublicId(ancestorConceptId)).toArray();
-        for (int descendantNid : descendantNidList) {
+        long[] descendantNidList = navCalc.descendentsOf(EntityService.get().nidForPublicId(ancestorConceptId)).toArray();
+        for (long descendantNid : descendantNidList) {
             EntityHandle.get(descendantNid).ifPresent((entity) -> descendantIds.add(entity.publicId()));
         }
         return descendantIds;
@@ -392,8 +392,8 @@ public class Searcher {
     public static List<PublicId> getLidrRecordSemanticsFromTestKit(PublicId testKitId){
         List<PublicId> lidrRecordSemanticIds = new ArrayList<>();
 
-        int diagnosticDevicePatternNid;
-        int lidrRecordPatternNid;
+        long diagnosticDevicePatternNid;
+        long lidrRecordPatternNid;
         try {
             diagnosticDevicePatternNid = DIAGNOSTIC_DEVICE_PATTERN.nid();
             lidrRecordPatternNid = LIDR_RECORD_PATTERN.nid();
@@ -464,7 +464,7 @@ public class Searcher {
                 .ifPresent((lidrRecordVersion) -> {
                     SemanticEntityVersion lidrRecordSemanticVersion = (SemanticEntityVersion) lidrRecordVersion;
                     int idxResultConformances = 5;
-                    ((IntIdSet) lidrRecordSemanticVersion.fieldValues().get(idxResultConformances))
+                    ((LongIdSet) lidrRecordSemanticVersion.fieldValues().get(idxResultConformances))
                             .map(PrimitiveData::publicId)
                             .forEach(resultConformanceList::add);
                 }));
@@ -492,9 +492,9 @@ public class Searcher {
     public static List<PublicId> getAllowedResultsFromResultConformance(NavigationCalculator navCalc, PublicId resultConformanceId) {
         List<PublicId> allowedResultsList = new ArrayList<>();
 
-        int resultConformanceNid;
-        int quantitativePatternNid;
-        int qualitativePatternNid;
+        long resultConformanceNid;
+        long quantitativePatternNid;
+        long qualitativePatternNid;
         try {
             resultConformanceNid = EntityService.get().nidForPublicId(resultConformanceId);
             quantitativePatternNid = QUANTITATIVE_ALLOWED_RESULT_SET_PATTERN.nid();
@@ -507,14 +507,14 @@ public class Searcher {
         EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, quantitativePatternNid,
                 (quantitativeResultSet) -> navCalc.stampCalculator().latest(quantitativeResultSet)
                         .ifPresent((latestQuantitativeResultSet) -> {
-                            ((IntIdSet) latestQuantitativeResultSet.fieldValues().get(0))
+                            ((LongIdSet) latestQuantitativeResultSet.fieldValues().get(0))
                                     .map(PrimitiveData::publicId)
                                     .forEach(allowedResultsList::add);
                         }));
         EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, qualitativePatternNid,
                 (qualitativeResultSet) -> navCalc.stampCalculator().latest(qualitativeResultSet)
                         .ifPresent((latestQualitativeResultSet) -> {
-                            ((IntIdSet) latestQualitativeResultSet.fieldValues().get(0))
+                            ((LongIdSet) latestQualitativeResultSet.fieldValues().get(0))
                                     .map(PrimitiveData::publicId)
                                     .forEach(allowedResultsList::add);
                         }));

@@ -57,7 +57,7 @@ public class TestEntityToProtobufPatternTransformIT {
     private PatternRecord createPatternWithVersions(int numVersions) {
         UUID patternUuid = UUID.randomUUID();
         PublicId patternPublicId = PublicIds.of(patternUuid);
-        int patternNid = Entity.nid(patternPublicId);
+        long patternNid = Entity.nid(patternPublicId);
 
         Concept purposeConcept = conceptMap.get(REF_COMP_PURPOSE_CONCEPT_NAME);
         Concept meaningConcept = conceptMap.get(REF_COMP_MEANING_CONCEPT_NAME);
@@ -74,7 +74,7 @@ public class TestEntityToProtobufPatternTransformIT {
                 .build();
 
         for (int i = 0; i < numVersions; i++) {
-            int stampNid = createAndStoreStamp();
+            long stampNid = createAndStoreStamp();
             FieldDefinitionRecord fieldDef = FieldDefinitionRecordBuilder.builder()
                     .dataTypeNid(Entity.nid(dataTypeConcept.publicId()))
                     .purposeNid(Entity.nid(fieldPurposeConcept.publicId()))
@@ -134,7 +134,7 @@ public class TestEntityToProtobufPatternTransformIT {
         assertThrows(Throwable.class, () -> {
             UUID patternUuid = UUID.randomUUID();
             PublicId patternPublicId = PublicIds.of(patternUuid);
-            int patternNid = Entity.nid(patternPublicId);
+            long patternNid = Entity.nid(patternPublicId);
 
             RecordListBuilder<PatternVersionRecord> patternVersions = RecordListBuilder.make();
             PatternRecord patternRecord = PatternRecordBuilder.builder()
@@ -144,7 +144,7 @@ public class TestEntityToProtobufPatternTransformIT {
                     .versions(patternVersions)
                     .build();
 
-            int stampNid = createAndStoreStamp();
+            long stampNid = createAndStoreStamp();
             PatternVersionRecordBuilder.builder()
                     .chronology(patternRecord)
                     .stampNid(stampNid)
@@ -161,7 +161,7 @@ public class TestEntityToProtobufPatternTransformIT {
         assertThrows(Throwable.class, () -> {
             UUID patternUuid = UUID.randomUUID();
             PublicId patternPublicId = PublicIds.of(patternUuid);
-            int patternNid = Entity.nid(patternPublicId);
+            long patternNid = Entity.nid(patternPublicId);
 
             RecordListBuilder<PatternVersionRecord> patternVersions = RecordListBuilder.make();
             PatternRecord patternRecord = PatternRecordBuilder.builder()
@@ -171,7 +171,7 @@ public class TestEntityToProtobufPatternTransformIT {
                     .versions(patternVersions)
                     .build();
 
-            int stampNid = createAndStoreStamp();
+            long stampNid = createAndStoreStamp();
             PatternVersionRecordBuilder.builder()
                     .chronology(patternRecord)
                     .stampNid(stampNid)

@@ -143,9 +143,9 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 
 	public ArrayList<String> getSupercs(ReasonerService rs) {
 		ArrayList<String> lines = new ArrayList<>();
-		for (int con_id : rs.getReasonerConceptSet().toArray()) {
+		for (long con_id : rs.getReasonerConceptSet().toArray()) {
 			String con_str = PrimitiveData.publicId(con_id).idString() + "\t" + PrimitiveData.text(con_id);
-			for (int sup_id : rs.getParents(con_id).toArray()) {
+			for (long sup_id : rs.getParents(con_id).toArray()) {
 				String sup_str = PrimitiveData.publicId(sup_id).idString() + "\t" + PrimitiveData.text(sup_id);
 				lines.add(con_str + "\t" + sup_str);
 			}

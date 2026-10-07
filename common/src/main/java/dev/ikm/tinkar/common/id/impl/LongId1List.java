@@ -15,11 +15,12 @@
  */
 package dev.ikm.tinkar.common.id.impl;
 
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdCollection;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-public class IntId1List extends IntId1 implements IntIdList {
-    public IntId1List(int element) {
+public class LongId1List extends LongId1 implements LongIdList {
+    public LongId1List(long element) {
         super(element);
     }
 
@@ -33,8 +34,8 @@ public class IntId1List extends IntId1 implements IntIdList {
         if (this == obj) {
             return true;
         }
-        if (obj instanceof IntIdList intIdList) {
-            if (intIdList.size() == 1 && intIdList.get(0) == element) {
+        if (obj instanceof LongIdList longIdList) {
+            if (longIdList.size() == 1 && longIdList.get(0) == element) {
                 return true;
             }
         }
@@ -43,11 +44,11 @@ public class IntId1List extends IntId1 implements IntIdList {
 
     @Override
     public int hashCode() {
-        return 31 + element;
+        return 31 + LongIdCollection.hashOf(element);
     }
 
     @Override
     public String toString() {
-        return "IntIdList[" + PrimitiveData.textWithNid(element) + "]";
+        return "LongIdList[" + PrimitiveData.textWithNid(element) + "]";
     }
 }

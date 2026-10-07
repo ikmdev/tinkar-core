@@ -71,7 +71,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 class ExceptionMessageIT {
 
     /** A nid the store never assigned. */
-    private static final int UNASSIGNED_NID = Integer.MAX_VALUE - 1;
+    private static final long UNASSIGNED_NID = Integer.MAX_VALUE - 1;
 
     /** The form {@code PrimitiveData.text} writes for a component with no description. */
     private static final Pattern ANGLE_BRACKET_NID = Pattern.compile("<-?\\d+>");
@@ -82,10 +82,10 @@ class ExceptionMessageIT {
     private ViewCalculator view;
 
     /** A concept with no description and no definition. */
-    private int undescribedNid;
+    private long undescribedNid;
 
     /** A concept with no description whose stated definition is malformed. */
-    private int malformedNid;
+    private long malformedNid;
 
     /** The version of the semantic that holds the malformed definition. */
     private SemanticEntityVersion malformedDefinition;
@@ -120,7 +120,7 @@ class ExceptionMessageIT {
 
     @Test
     void aHandleAskedForTheWrongKindNamesTheComponentByDescriptionAndUuid() {
-        int conceptNid = KernelTerm.ENGLISH_LANGUAGE.nid();
+        long conceptNid = KernelTerm.ENGLISH_LANGUAGE.nid();
 
         IllegalStateException failure = assertThrows(IllegalStateException.class,
                 () -> EntityHandle.get(conceptNid).expectSemantic());
@@ -211,7 +211,7 @@ class ExceptionMessageIT {
 
     @Test
     void aConceptThatIsNotAnAxiomMeaningIsNamed() {
-        int nid = KernelTerm.ENGLISH_LANGUAGE.nid();
+        long nid = KernelTerm.ENGLISH_LANGUAGE.nid();
 
         IllegalStateException failure = assertThrows(IllegalStateException.class, () -> LogicalAxiomSemantic.get(nid));
 
@@ -227,7 +227,7 @@ class ExceptionMessageIT {
                 undescribed.getMessage());
         assertNoNid(undescribed.getMessage());
 
-        int patternNid = KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid();
+        long patternNid = KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid();
         IllegalStateException noSemantic = assertThrows(IllegalStateException.class,
                 () -> ElkSnomedUtil.getLatestSemantic(view, patternNid, undescribedNid));
         assertEquals("No semantic of pattern " + DiagnosticText.component(patternNid) + " for component: UUID "
@@ -272,7 +272,7 @@ class ExceptionMessageIT {
     }
 
     /** Writes an entity into the store and the transaction. */
-    private static int put(Transaction transaction, Entity<?> entity) {
+    private static long put(Transaction transaction, Entity<?> entity) {
         EntityService.get().putEntity(entity);
         transaction.addComponent(entity);
         return entity.nid();

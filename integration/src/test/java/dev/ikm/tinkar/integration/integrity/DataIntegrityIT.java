@@ -17,9 +17,9 @@ package dev.ikm.tinkar.integration.integrity;
 
 import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.io.FileUtil;
@@ -73,7 +73,7 @@ public class DataIntegrityIT {
 
     @Test
     public void correctDataIntegrityTest() {
-        List<Integer> aggregatedNullNidList = new ArrayList<>();
+        List<Long> aggregatedNullNidList = new ArrayList<>();
         Map<String, List<? extends Entity>> typeNameEntityMap = new HashMap<>();
         typeNameEntityMap.put("Stamp", dataIntegrity.validateStampReferences(aggregatedNullNidList));
         typeNameEntityMap.put("Concept", dataIntegrity.validateConceptReferences(aggregatedNullNidList));
@@ -114,7 +114,7 @@ public class DataIntegrityIT {
                 "This extra field value should throw an error"
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -137,7 +137,7 @@ public class DataIntegrityIT {
                 KernelTerm.IDENTIFIER_SOURCE
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -162,7 +162,7 @@ public class DataIntegrityIT {
                 stamp
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -184,7 +184,7 @@ public class DataIntegrityIT {
                 "String"
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -206,7 +206,7 @@ public class DataIntegrityIT {
                 123
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -228,7 +228,7 @@ public class DataIntegrityIT {
                 1.0
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -250,7 +250,7 @@ public class DataIntegrityIT {
                 true
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -274,7 +274,7 @@ public class DataIntegrityIT {
                 byteArr
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -299,7 +299,7 @@ public class DataIntegrityIT {
 //                instantArr
 //        );
 //
-//        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+//        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
 //        StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
 //        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
 //        EntityService.get().putEntity(authoringStamp);
@@ -321,7 +321,7 @@ public class DataIntegrityIT {
         );
 
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -374,7 +374,7 @@ public class DataIntegrityIT {
                 expectedTree
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -416,7 +416,7 @@ public class DataIntegrityIT {
                 expectedTree
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -439,7 +439,7 @@ public class DataIntegrityIT {
                 currentTime
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -453,7 +453,7 @@ public class DataIntegrityIT {
 
     @Test
     public void semanticFieldsMatchComponentIdList() {
-        IntIdList list = IntIds.list.of(123, 456);
+        LongIdList list = LongIds.list.of(123, 456);
         ImmutableList<EntityProxy.Concept> patternFieldDefinitions = Lists.immutable.of(
                 KernelTerm.COMPONENT_ID_LIST_FIELD
         );
@@ -462,7 +462,7 @@ public class DataIntegrityIT {
                 list
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -476,7 +476,7 @@ public class DataIntegrityIT {
 
     @Test
     public void semanticFieldsMatchComponentIdSet() {
-        IntIdSet set = IntIds.set.of(123, 456);
+        LongIdSet set = LongIds.set.of(123, 456);
         ImmutableList<EntityProxy.Concept> patternFieldDefinitions = Lists.immutable.of(
                 KernelTerm.COMPONENT_ID_SET_FIELD
         );
@@ -485,7 +485,7 @@ public class DataIntegrityIT {
                 set
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -508,7 +508,7 @@ public class DataIntegrityIT {
                 longTest
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -531,7 +531,7 @@ public class DataIntegrityIT {
                 "String"
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -553,7 +553,7 @@ public class DataIntegrityIT {
                 123
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -575,7 +575,7 @@ public class DataIntegrityIT {
                 1.0
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -597,7 +597,7 @@ public class DataIntegrityIT {
                 true
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -621,7 +621,7 @@ public class DataIntegrityIT {
                 byteArr
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -646,7 +646,7 @@ public class DataIntegrityIT {
                 (Object) instantArr
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -668,7 +668,7 @@ public class DataIntegrityIT {
         );
 
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -702,7 +702,7 @@ public class DataIntegrityIT {
                 currentTime
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -716,7 +716,7 @@ public class DataIntegrityIT {
 
     @Test
     public void semanticFieldsMismatchComponentIdList() {
-        IntIdList list = IntIds.list.of(123, 456);
+        LongIdList list = LongIds.list.of(123, 456);
         ImmutableList<EntityProxy.Concept> patternFieldDefinitions = Lists.immutable.of(
                 KernelTerm.STRING
         );
@@ -725,7 +725,7 @@ public class DataIntegrityIT {
                 list
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -739,7 +739,7 @@ public class DataIntegrityIT {
 
     @Test
     public void semanticFieldsMismatchComponentIdSet() {
-        IntIdSet set = IntIds.set.of(123, 456);
+        LongIdSet set = LongIds.set.of(123, 456);
         ImmutableList<EntityProxy.Concept> patternFieldDefinitions = Lists.immutable.of(
                 KernelTerm.STRING
         );
@@ -748,7 +748,7 @@ public class DataIntegrityIT {
                 set
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -771,7 +771,7 @@ public class DataIntegrityIT {
                 longTest
         );
 
-        int referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
+        long referencedComponentNid = KernelTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
         Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
@@ -786,8 +786,8 @@ public class DataIntegrityIT {
 
     /*############# Semantic Helper Functions ##############*/
     private class SemanticTestHelper {
-        public static SemanticEntity<? extends SemanticEntityVersion> createSemanticWithSupplier(int referencedComponentNid,
-                                                                                                 int patternNid,
+        public static SemanticEntity<? extends SemanticEntityVersion> createSemanticWithSupplier(long referencedComponentNid,
+                                                                                                 long patternNid,
                                                                                                  ImmutableList<Object> fieldValues,
                                                                                                  Entity<? extends EntityVersion> authoringSTAMP) {
             RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
@@ -855,12 +855,12 @@ public class DataIntegrityIT {
             return PatternRecordBuilder.builder(patternRecord).versions(versions.toImmutable()).build();
         }
 
-        public static FieldDefinitionRecord fieldDefinition(int patternNid, EntityProxy.Concept dataType,
+        public static FieldDefinitionRecord fieldDefinition(long patternNid, EntityProxy.Concept dataType,
                                                             Entity<? extends EntityVersion> authoringSTAMP, int idx) {
             return fieldDefinition(patternNid, IkeTerms.MEANING, IkeTerms.PURPOSE, dataType, authoringSTAMP, idx);
         }
 
-        public static FieldDefinitionRecord fieldDefinition(int patternNid, EntityProxy.Concept meaning, EntityProxy.Concept purpose,
+        public static FieldDefinitionRecord fieldDefinition(long patternNid, EntityProxy.Concept meaning, EntityProxy.Concept purpose,
                                                             EntityProxy.Concept dataType, Entity<? extends EntityVersion> authoringSTAMP, int idx) {
             return FieldDefinitionRecordBuilder.builder()
                     .patternNid(patternNid)

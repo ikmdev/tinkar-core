@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
+import java.util.function.LongConsumer;
+
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityHandle;
@@ -34,7 +36,7 @@ public abstract class EntityAggregator {
     protected AtomicLong patternsAggregatedCount = new AtomicLong(0);
     protected AtomicLong stampsAggregatedCount = new AtomicLong(0);
 
-    public abstract EntityCountSummary aggregate(IntConsumer nidConsumer);
+    public abstract EntityCountSummary aggregate(LongConsumer nidConsumer);
 
     /**
      * Aggregates entities by resolving each nid produced by {@link #aggregate(IntConsumer)}
@@ -56,7 +58,7 @@ public abstract class EntityAggregator {
      */
     public EntityCountSummary aggregateEntities(Consumer<Entity<?>> entityConsumer) {
         AtomicLong orphanCount = new AtomicLong();
-        EntityCountSummary summary = aggregate((int nid) -> {
+        EntityCountSummary summary = aggregate((long nid) -> {
             Entity<?> entity = EntityHandle.get(nid).orNull();
             if (entity == null) {
                 orphanCount.incrementAndGet();

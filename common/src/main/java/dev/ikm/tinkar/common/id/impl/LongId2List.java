@@ -15,18 +15,26 @@
  */
 package dev.ikm.tinkar.common.id.impl;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.service.DiagnosticText;
+import dev.ikm.tinkar.common.id.LongIdCollection;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
 import java.util.Arrays;
 
-public class IntId2Set extends IntId2 implements IntIdSet {
-    public IntId2Set(int element, int element2) {
+public class LongId2List extends LongId2 implements LongIdList {
+    public LongId2List(long element, long element2) {
         super(element, element2);
-        if (element == element2) {
-            throw new IllegalStateException("Duplicate values in set: " + DiagnosticText.component(element));
+    }
+
+    @Override
+    public long get(int index) {
+        if (index == 0) {
+            return element;
         }
+        if (index == 1) {
+            return element2;
+        }
+        throw new IndexOutOfBoundsException("Index: " + index);
     }
 
     @Override
@@ -39,23 +47,21 @@ public class IntId2Set extends IntId2 implements IntIdSet {
         if (this == obj) {
             return true;
         }
-        if (obj instanceof IntIdSet intIdSet && intIdSet.size() == 2) {
-            int[] clone1 = this.toArray().clone();
-            int[] clone2 = intIdSet.toArray().clone();
-            Arrays.sort(clone1);
-            Arrays.sort(clone2);
-            return Arrays.equals(clone1, clone2);
+        if (obj instanceof LongIdList longIdList) {
+            if (longIdList.size() == 2 && Arrays.equals(this.toArray(), longIdList.toArray())) {
+                return true;
+            }
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return element + element2;
+        return 31 * (31 + LongIdCollection.hashOf(element)) + LongIdCollection.hashOf(element2);
     }
 
     @Override
     public String toString() {
-        return "IntIdSet[" + PrimitiveData.textWithNid(element) + ", " + PrimitiveData.textWithNid(element2) + "]";
+        return "LongIdList[" + PrimitiveData.textWithNid(element) + ", " + PrimitiveData.textWithNid(element2) + "]";
     }
 }

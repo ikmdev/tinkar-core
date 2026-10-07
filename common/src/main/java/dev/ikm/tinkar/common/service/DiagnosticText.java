@@ -71,7 +71,7 @@ public final class DiagnosticText {
      *         component has no description; and in place of the UUIDs, the nid as a nid of this
      *         store when the store has no public id for it
      */
-    public static String component(int nid) {
+    public static String component(long nid) {
         Optional<UUID[]> uuids = uuids(nid);
         String identifier = uuids.isPresent()
                 ? uuidLabel(uuids.get())
@@ -106,7 +106,7 @@ public final class DiagnosticText {
      * @return the description; the UUIDs when the component has no description; the nid as a
      *         nid of this store when the store has neither
      */
-    public static String name(int nid) {
+    public static String name(long nid) {
         Optional<String> description = description(nid);
         if (description.isPresent()) {
             return description.get();
@@ -116,7 +116,7 @@ public final class DiagnosticText {
     }
 
     /** A nid, written so that it cannot be read as a nid of any other store. */
-    private static String nidInThisStore(int nid) {
+    private static String nidInThisStore(long nid) {
         return "nid " + nid + " in this store";
     }
 
@@ -139,7 +139,7 @@ public final class DiagnosticText {
     }
 
     /** The UUIDs of the public id the store has for a nid, or empty when it has none. */
-    private static Optional<UUID[]> uuids(int nid) {
+    private static Optional<UUID[]> uuids(long nid) {
         try {
             return uuids(PrimitiveData.publicId(nid));
         } catch (RuntimeException noPublicIdForTheNid) {
@@ -161,7 +161,7 @@ public final class DiagnosticText {
     }
 
     /** The store's default description of a component, or empty when it has none. */
-    private static Optional<String> description(int nid) {
+    private static Optional<String> description(long nid) {
         try {
             return PrimitiveData.textOptional(nid).filter(text -> !text.isBlank());
         } catch (RuntimeException noDescription) {

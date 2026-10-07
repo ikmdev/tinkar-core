@@ -15,39 +15,41 @@
  */
 package dev.ikm.tinkar.common.id.impl;
 
-import java.util.function.IntConsumer;
-import java.util.stream.IntStream;
+import java.util.function.LongConsumer;
+import java.util.stream.LongStream;
 
-public class IntId2 {
-    protected final int element;
-    protected final int element2;
+/**
+ * LongId0 is an optimization for IntList or IntSet of size 0.
+ */
+public abstract class LongId0 {
+    public static final long[] elements = new long[0];
 
-    public IntId2(int element, int element2) {
-        this.element = element;
-        this.element2 = element2;
+    public long get(int index) {
+        throw new IndexOutOfBoundsException("Index: " + index + ", Size: 0");
     }
 
     public int size() {
-        return 2;
+        return 0;
     }
 
-    public void forEach(IntConsumer consumer) {
-        consumer.accept(element);
-        consumer.accept(element2);
+    public void forEach(LongConsumer consumer) {
+        // nothing to do...
     }
 
-    public IntStream intStream() {
-        return IntStream.of(element, element2);
+    public LongStream longStream() {
+        return LongStream.of(elements);
     }
 
-    public int[] toArray() {
-        return new int[]{element, element2};
+    public long[] toArray() {
+        return elements;
     }
 
-    public boolean contains(int value) {
-        if (value == element) {
-            return true;
-        }
-        return value == element2;
+    public boolean contains(long value) {
+        return false;
     }
+
+    public boolean isEmpty() {
+        return true;
+    }
+
 }

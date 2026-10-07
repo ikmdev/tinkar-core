@@ -15,7 +15,9 @@
  */
 package dev.ikm.tinkar.integration.format;
 
-import dev.ikm.tinkar.common.id.IntIds;
+import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.id.impl.NidCodec8;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.location.PlanarPoint;
@@ -98,12 +100,12 @@ class EntityFormat1FixturesTest {
     private static final Path SOURCE_DIRECTORY = Path.of("src", "test", "resources", RESOURCE_DIRECTORY);
 
     // Nids as an 8-bit store packs them: patterns below 128 give positive nids, 128 and above negative.
-    private static final int CONCEPT_NID = NidCodec8.encode(1, 101);
+    private static final long CONCEPT_NID = NidCodec8.encode(1, 101);
     private static final int CONCEPT_NID_HIGH = NidCodec8.encode(200, 102);
-    private static final int PATTERN_NID = NidCodec8.encode(255, 3);
-    private static final int SEMANTIC_NID = NidCodec8.encode(4, 104);
+    private static final long PATTERN_NID = NidCodec8.encode(255, 3);
+    private static final long SEMANTIC_NID = NidCodec8.encode(4, 104);
     private static final int SEMANTIC_NID_HIGH = NidCodec8.encode(130, 105);
-    private static final int STAMP_NID = NidCodec8.encode(2, 106);
+    private static final long STAMP_NID = NidCodec8.encode(2, 106);
     private static final int STAMP_NID_2 = NidCodec8.encode(2, 107);
     private static final long TIME = 1_767_225_600_777L;
 
@@ -131,8 +133,8 @@ class EntityFormat1FixturesTest {
         fields.put("field-semantic", () -> EntityProxy.Semantic.make(SEMANTIC_NID_HIGH));
         fields.put("field-pattern", () -> EntityProxy.Pattern.make(PATTERN_NID));
         fields.put("field-identified-thing", () -> EntityProxy.make(CONCEPT_NID));
-        fields.put("field-component-id-list", () -> IntIds.list.of(CONCEPT_NID_HIGH, CONCEPT_NID, SEMANTIC_NID_HIGH, CONCEPT_NID));
-        fields.put("field-component-id-set", () -> IntIds.set.of(CONCEPT_NID, CONCEPT_NID_HIGH, SEMANTIC_NID, SEMANTIC_NID_HIGH, PATTERN_NID));
+        fields.put("field-component-id-list", () -> LongIds.list.of(CONCEPT_NID_HIGH, CONCEPT_NID, SEMANTIC_NID_HIGH, CONCEPT_NID));
+        fields.put("field-component-id-set", () -> LongIds.set.of(CONCEPT_NID, CONCEPT_NID_HIGH, SEMANTIC_NID, SEMANTIC_NID_HIGH, PATTERN_NID));
         fields.put("field-object-array", () -> new Object[]{"element", 42, EntityProxy.Concept.make(CONCEPT_NID_HIGH)});
         fields.put("field-ditree", EntityFormat1FixturesTest::tree);
         fields.put("field-digraph", EntityFormat1FixturesTest::graph);
@@ -256,7 +258,7 @@ class EntityFormat1FixturesTest {
                 LongLists.immutable.empty(), SEMANTIC_NID_HIGH, PATTERN_NID, CONCEPT_NID_HIGH, versions);
         versions.add(new SemanticVersionRecord(semantic, STAMP_NID, Lists.immutable.of(
                 "description text", EntityProxy.Concept.make(CONCEPT_NID), EntityProxy.Concept.make(CONCEPT_NID_HIGH),
-                IntIds.set.of(CONCEPT_NID, CONCEPT_NID_HIGH), 7)));
+                LongIds.set.of(CONCEPT_NID, CONCEPT_NID_HIGH), 7)));
         versions.build();
         return semantic;
     }
@@ -275,7 +277,7 @@ class EntityFormat1FixturesTest {
     private static DiTreeEntity tree() {
         EntityVertex root = EntityVertex.make(UUID.fromString("55555555-5555-5555-5555-555555555501"), CONCEPT_NID);
         root.setVertexIndex(0);
-        MutableIntObjectMap<Object> properties = IntObjectMaps.mutable.empty();
+        MutableLongObjectMap<Object> properties = LongObjectMaps.mutable.empty();
         properties.put(CONCEPT_NID, EntityProxy.Concept.make(CONCEPT_NID_HIGH));
         properties.put(CONCEPT_NID_HIGH, 17);
         properties.put(SEMANTIC_NID_HIGH, "property");

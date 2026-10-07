@@ -126,7 +126,7 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
     public Optional<V> firstVertexWithMeaning(ConceptFacade vertexMeaning) {
         return firstVertexWithMeaning(vertexMeaning.nid());
     }
-    public Optional<V>  firstVertexWithMeaning(int vertexMeaningNid) {
+    public Optional<V>  firstVertexWithMeaning(long vertexMeaningNid) {
         for (V vertex : vertexMap) {
             if (vertex.meaningNid == vertexMeaningNid) {
                 return Optional.of(vertex);
@@ -139,7 +139,7 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
         return containsVertexWithMeaning(meaning.nid());
     }
 
-    public boolean containsVertexWithMeaning(int meaningNid) {
+    public boolean containsVertexWithMeaning(long meaningNid) {
         for (V vertex : vertexMap) {
             if (vertex.meaningNid == meaningNid) {
                 return true;

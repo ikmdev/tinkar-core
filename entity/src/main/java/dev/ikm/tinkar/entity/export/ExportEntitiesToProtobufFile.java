@@ -66,8 +66,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
     // parallel), so shared state is concurrent and stream writes are serialized
     // (IKE-Network/ike-issues#1142).
     // The modules and authors of the exported stamps, by nid: a public id is never a hash key.
-    private final Set<Integer> moduleNids = ConcurrentHashMap.newKeySet();
-    private final Set<Integer> authorNids = ConcurrentHashMap.newKeySet();
+    private final Set<Long> moduleNids = ConcurrentHashMap.newKeySet();
+    private final Set<Long> authorNids = ConcurrentHashMap.newKeySet();
     /** Guards writes to the zip stream and the skip tallies. */
     private final Object writeLock = new Object();
     // Per-type tallies of entities whose transform failed on a dangling reference and
@@ -252,7 +252,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
      * @param nids the components' nids
      * @return their public ids, in nid order
      */
-    public static List<PublicId> publicIds(Collection<Integer> nids) {
+    public static List<PublicId> publicIds(Collection<Long> nids) {
         return nids.stream().sorted().map(PrimitiveData::publicId).toList();
     }
 

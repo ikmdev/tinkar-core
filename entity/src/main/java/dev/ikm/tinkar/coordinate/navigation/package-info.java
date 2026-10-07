@@ -116,12 +116,12 @@
  *
  * // Custom navigation coordinate
  * NavigationCoordinateRecord custom = NavigationCoordinateRecord.make(
- *     IntIds.set.of(
+ *     LongIds.set.of(
  *         KernelTerm.INFERRED_NAVIGATION.nid(),
  *         MyTerms.CUSTOM_NAVIGATION.nid()
  *     ),
  *     StateSet.ACTIVE,                    // Only active concepts
- *     IntIds.list.of(                      // Sort patterns
+ *     LongIds.list.of(                      // Sort patterns
  *         MyTerms.SEVERITY_PATTERN.nid(),
  *         MyTerms.ALPHABETICAL_PATTERN.nid()
  *     ),
@@ -169,13 +169,13 @@
  * <p>Combining multiple patterns:</p>
  * <pre>{@code
  * NavigationCoordinateRecord mixed = NavigationCoordinateRecord.make(
- *     IntIds.set.of(
+ *     LongIds.set.of(
  *         KernelTerm.INFERRED_NAVIGATION.nid(),      // Taxonomy
  *         MyTerms.PART_OF_NAVIGATION.nid(),       // Part-of hierarchy
  *         MyTerms.PROCEDURE_SITE_NAVIGATION.nid() // Procedure sites
  *     ),
  *     StateSet.ACTIVE,
- *     IntIds.list.empty(),
+ *     LongIds.list.empty(),
  *     true
  * );
  * // Creates unified graph with edges from all three patterns
@@ -208,13 +208,13 @@
  * );
  *
  * // Get parents of a concept
- * IntIdSet parents = navCalc.parentsOf(conceptNid);
+ * LongIdSet parents = navCalc.parentsOf(conceptNid);
  *
  * // Get children of a concept (sorted if coordinate specifies)
- * IntIdSet children = navCalc.childrenOf(conceptNid);
+ * LongIdSet children = navCalc.childrenOf(conceptNid);
  *
  * // Get all ancestors (transitive closure of parents)
- * IntIdSet ancestors = navCalc.ancestorsOf(conceptNid);
+ * LongIdSet ancestors = navCalc.ancestorsOf(conceptNid);
  *
  * // Test subsumption
  * boolean isAncestor = navCalc.isDescendentOf(childNid, parentNid);

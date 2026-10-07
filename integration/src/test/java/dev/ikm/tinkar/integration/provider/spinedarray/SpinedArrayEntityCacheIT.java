@@ -152,7 +152,7 @@ class SpinedArrayEntityCacheIT {
         PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(conceptId);
 
         //Assign nids for PublicIds
-        int stampNid = EntityService.get().nidForPublicId(stampId);
+        long stampNid = EntityService.get().nidForPublicId(stampId);
 
         //Create Concept Chronology
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()

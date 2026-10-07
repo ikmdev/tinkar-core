@@ -15,6 +15,10 @@
  */
 package dev.ikm.tinkar.entity.graph.isomorphic;
 
+import org.eclipse.collections.api.factory.primitive.LongSets;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.ArrayUtil;
@@ -119,9 +123,14 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
      * @param sortedNids a sorted array of nids
      * @return a hashcode, other than -1
      */
-    public static final int makeNidListHash(int vertexMeaning, int[] sortedNids) {
-        int arrayHash = Arrays.hashCode(sortedNids);
-        arrayHash = 31 * arrayHash + vertexMeaning;
+    public static final int makeNidListHash(long vertexMeaning, long[] sortedNids) {
+        // Arrays.hashCode of the nids as they were when nids were int: Nid.hash of a nid that fits
+        // an int is the int, so the hash, and the solver's grouping by it, are unchanged.
+        int arrayHash = 1;
+        for (long nid : sortedNids) {
+            arrayHash = 31 * arrayHash + Nid.hash(nid);
+        }
+        arrayHash = 31 * arrayHash + Nid.hash(vertexMeaning);
         while (arrayHash == -1) {
             arrayHash = 31 * arrayHash + 7;
         }
@@ -138,11 +147,11 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
      * @param referenceTree  the reference tree
      * @param comparisonTree the comparison tree
      */
-    public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
+    public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, long referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
         super(referenceTree, comparisonTree, referencedConceptNid, stopwatch);
     }
 
-    public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid) {
+    public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, long referencedConceptNid) {
         super(referenceTree, comparisonTree, referencedConceptNid, null);
     }
 
@@ -152,8 +161,8 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
     }
 
     public void vertexStartProcessor(EntityVertex vertex, DiGraphAbstract<EntityVertex> graph, VVD visitData) {
-        MutableIntSet nidsReferencedByThisVertexOrAbove = visitData.nidsReferencedAtVertexOrAboveIndexMap.getIfAbsentPut(
-                vertex.vertexIndex(), () -> IntSets.mutable.empty());
+        MutableLongSet nidsReferencedByThisVertexOrAbove = visitData.nidsReferencedAtVertexOrAboveIndexMap.getIfAbsentPut(
+                vertex.vertexIndex(), () -> LongSets.mutable.empty());
         nidsReferencedByThisVertexOrAbove.add(vertex.getMeaningNid());
         // Add nids from this vertex.
         for (Object value : vertex.properties().values()) {
@@ -166,7 +175,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
         if (predecessorIndex.isPresent()) {
             // Add nids from predecessor, which transitively already has nids from its predecessor...
             visitData.nidsReferencedAtVertexOrAboveIndexMap.getIfAbsentPut(predecessorIndex.getAsInt(),
-                    () -> IntSets.mutable.empty()).forEach(conceptNid -> nidsReferencedByThisVertexOrAbove.add(conceptNid));
+                    () -> LongSets.mutable.empty()).forEach(conceptNid -> nidsReferencedByThisVertexOrAbove.add(conceptNid));
         }
         int vertexNidHash = makeNidListHash(vertex.getMeaningNid(), nidsReferencedByThisVertexOrAbove.toSortedArray());
         visitData.vertexHashArray[vertex.vertexIndex()] = vertexNidHash;

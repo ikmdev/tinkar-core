@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.terms;
 
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -38,7 +39,7 @@ public class EntityProxy implements EntityFacade, PublicId {
      */
     private volatile ImmutableList<UUID> uuidList;
 
-    private volatile int cachedNid = 0;
+    private volatile long cachedNid = 0;
 
     private String description;
 
@@ -48,7 +49,7 @@ public class EntityProxy implements EntityFacade, PublicId {
      *
      * @param nid
      */
-    protected EntityProxy(int nid) {
+    protected EntityProxy(long nid) {
         this.cachedNid = nid;
     }
 
@@ -92,7 +93,7 @@ public class EntityProxy implements EntityFacade, PublicId {
         return new EntityProxy(description, publicId);
     }
 
-    public static EntityProxy make(int nid) {
+    public static EntityProxy make(long nid) {
         return new EntityProxy(nid);
     }
 
@@ -106,7 +107,7 @@ public class EntityProxy implements EntityFacade, PublicId {
 
     @Override
     public int hashCode() {
-        return Integer.hashCode(nid());
+        return Nid.hash(nid());
     }
 
     @Override
@@ -146,8 +147,8 @@ public class EntityProxy implements EntityFacade, PublicId {
     }
 
     @Override
-    public final int nid() {
-        int result = cachedNid;
+    public final long nid() {
+        long result = cachedNid;
         if (result == 0) {
             synchronized (this) {
                 result = cachedNid;
@@ -200,7 +201,7 @@ public class EntityProxy implements EntityFacade, PublicId {
     public static class Concept extends EntityProxy implements ConceptFacade {
 
 
-        private Concept(int conceptNid) {
+        private Concept(long conceptNid) {
             super(conceptNid);
         }
 
@@ -220,7 +221,7 @@ public class EntityProxy implements EntityFacade, PublicId {
             return new Concept(name, publicId);
         }
 
-        public static Concept make(int nid) {
+        public static Concept make(long nid) {
             return new Concept(nid);
         }
 
@@ -238,7 +239,7 @@ public class EntityProxy implements EntityFacade, PublicId {
 
     public static class Pattern extends EntityProxy implements PatternFacade {
 
-        private Pattern(int nid) {
+        private Pattern(long nid) {
             super(nid);
         }
 
@@ -258,7 +259,7 @@ public class EntityProxy implements EntityFacade, PublicId {
             return new Pattern(null, publicId);
         }
 
-        public static Pattern make(int nid) {
+        public static Pattern make(long nid) {
             return new Pattern(nid);
         }
 
@@ -279,7 +280,7 @@ public class EntityProxy implements EntityFacade, PublicId {
             super(name, uuids);
         }
 
-        private Semantic(int nid) {
+        private Semantic(long nid) {
             super(nid);
         }
 
@@ -295,7 +296,7 @@ public class EntityProxy implements EntityFacade, PublicId {
             return new Semantic(null, publicId);
         }
 
-        public static Semantic make(int nid) {
+        public static Semantic make(long nid) {
             return new Semantic(nid);
         }
 
@@ -314,7 +315,7 @@ public class EntityProxy implements EntityFacade, PublicId {
             super(name, uuids);
         }
 
-        private Stamp(int nid) {
+        private Stamp(long nid) {
             super(nid);
         }
 
@@ -330,7 +331,7 @@ public class EntityProxy implements EntityFacade, PublicId {
             return new Stamp(null, publicId);
         }
 
-        public static Stamp make(int nid) {
+        public static Stamp make(long nid) {
             return new Stamp(nid);
         }
 

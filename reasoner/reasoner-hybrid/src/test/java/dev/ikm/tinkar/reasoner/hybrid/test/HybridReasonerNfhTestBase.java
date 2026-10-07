@@ -113,18 +113,18 @@ public abstract class HybridReasonerNfhTestBase extends HybridReasonerTestBase {
 				continue;
 			if (isas.hasAncestor(sctid, FamilyHistoryIds.no_family_history_swec))
 				continue;
-			int nid = ElkSnomedData.getNid(sctid);
+			long nid = ElkSnomedData.getNid(sctid);
 			{
-				Set<Integer> expected_parent_nids = isas.getParents(sctid)
+				Set<Long> expected_parent_nids = isas.getParents(sctid)
 						.collect(ElkSnomedData::getNid)
 						.toSet();
 				if (sctid == SnomedIds.root) {
 					expected_parent_nids = Set.of(KernelTerm.PHENOMENON.nid());
 					LOG.warn("Reset expected for " + sctid + " " + PrimitiveData.text(nid));
 				}
-				Set<Integer> expected_child_nids = isas.getChildren(sctid).collect(ElkSnomedData::getNid).toSet();
+				Set<Long> expected_child_nids = isas.getChildren(sctid).collect(ElkSnomedData::getNid).toSet();
 				try {
-					Set<Integer> actual_child_nids = ElkSnomedUtil.getInferredChildren(getViewCalculator(), sctid);
+					Set<Long> actual_child_nids = ElkSnomedUtil.getInferredChildren(getViewCalculator(), sctid);
 					if (!expected_child_nids.equals(actual_child_nids)) {
 						LOG.error("Children: " + sctid + " " + descr.getFsn(sctid));
 						child_miss++;
@@ -134,7 +134,7 @@ public abstract class HybridReasonerNfhTestBase extends HybridReasonerTestBase {
 					LOG.error(ex.getMessage());
 				}
 				try {
-					Set<Integer> actual_parent_nids = ElkSnomedUtil.getInferredParents(getViewCalculator(), sctid);
+					Set<Long> actual_parent_nids = ElkSnomedUtil.getInferredParents(getViewCalculator(), sctid);
 					if (!expected_parent_nids.equals(actual_parent_nids)) {
 						LOG.error("Parents: " + sctid + " " + descr.getFsn(sctid));
 						parent_miss++;

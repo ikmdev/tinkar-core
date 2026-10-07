@@ -15,31 +15,32 @@
  */
 package dev.ikm.tinkar.common.id.impl;
 
+import dev.ikm.tinkar.common.id.LongIdList;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
-
-public class IntId0Set extends IntId0 implements IntIdSet {
-    public static final IntId0Set INSTANCE = new IntId0Set();
+public class LongId0List extends LongId0 implements LongIdList {
+    public static final LongId0List INSTANCE = new LongId0List();
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
-        if (obj instanceof IntIdSet intIdSet) {
-            return intIdSet.isEmpty();
+        if (obj instanceof LongIdList longIdList) {
+            if (longIdList.isEmpty()) {
+                return true;
+            }
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return 0;
+        return 1;
     }
 
     @Override
     public String toString() {
-        return "IntIdSet[]";
+        return "LongIdList[]";
     }
 
 }

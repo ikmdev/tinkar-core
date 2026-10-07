@@ -192,10 +192,10 @@
  * <p>Determining if a stamp is visible on a coordinate's path:</p>
  *
  * <pre>{@code
- * boolean isVisibleOnPath(int stampNid) {
+ * boolean isVisibleOnPath(long stampNid) {
  *     StampEntity stamp = Entity.getStamp(stampNid);
- *     int stampPathNid = stamp.pathNid();
- *     int coordPathNid = stampCoord.pathNidForFilter();
+ *     long stampPathNid = stamp.pathNid();
+ *     long coordPathNid = stampCoord.pathNidForFilter();
  *
  *     // Direct path match
  *     if (stampPathNid == coordPathNid) {
@@ -264,7 +264,7 @@
  *
  * <pre>{@code
  * // Process all concepts in a set
- * IntIdSet conceptNids = ...;
+ * LongIdSet conceptNids = ...;
  *
  * calculator.forEachLatestVersion(conceptNids, latest -> {
  *     if (latest.isPresent()) {

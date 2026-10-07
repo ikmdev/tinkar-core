@@ -39,7 +39,7 @@ import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.factory.primitive.IntLists;
+import org.eclipse.collections.api.factory.primitive.LongLists;
 import org.eclipse.collections.api.factory.primitive.LongLists;
 import org.junit.jupiter.api.Test;
 
@@ -98,7 +98,7 @@ public abstract class PrimitiveDataServiceConformance {
     @Test
     void aUuidKeepsItsNid() {
         PublicId id = randomId();
-        int nid = EntityService.get().nidForConcept(id);
+        long nid = EntityService.get().nidForConcept(id);
         assertEquals(nid, EntityService.get().nidForConcept(id));
         assertEquals(nid, PrimitiveData.get().nidForUuids(id.asUuidArray()));
         assertEquals(nid, PrimitiveData.get().nidForPublicId(id));
@@ -106,7 +106,7 @@ public abstract class PrimitiveDataServiceConformance {
 
     @Test
     void distinctUuidsGetDistinctNids() {
-        Set<Integer> nids = new HashSet<>();
+        Set<Long> nids = new HashSet<>();
         for (int i = 0; i < 100; i++) {
             assertTrue(nids.add(EntityService.get().nidForConcept(randomId())), "nid repeated at " + i);
         }
@@ -116,7 +116,7 @@ public abstract class PrimitiveDataServiceConformance {
     void everyUuidOfAPublicIdHasItsNid() {
         UUID first = UUID.randomUUID();
         UUID second = UUID.randomUUID();
-        int nid = EntityService.get().nidForConcept(PublicIds.of(first, second));
+        long nid = EntityService.get().nidForConcept(PublicIds.of(first, second));
         assertEquals(nid, PrimitiveData.get().nidForUuids(first));
         assertEquals(nid, PrimitiveData.get().nidForUuids(second));
         assertEquals(nid, PrimitiveData.get().nidForUuids(second, first));
@@ -129,7 +129,7 @@ public abstract class PrimitiveDataServiceConformance {
     @Test
     void anAssignedNidIsNoSentinel() {
         for (int i = 0; i < 20; i++) {
-            int nid = EntityService.get().nidForConcept(randomId());
+            long nid = EntityService.get().nidForConcept(randomId());
             assertTrue(Nid.isValid(nid), "nid " + nid);
         }
     }
@@ -149,7 +149,7 @@ public abstract class PrimitiveDataServiceConformance {
     void anEntityKeyIsFoundForAUuidWithANid() {
         UUID uuid = UUID.randomUUID();
         assertTrue(PrimitiveData.get().getEntityKey(uuid).isEmpty());
-        int nid = EntityService.get().nidForConcept(PublicIds.of(uuid));
+        long nid = EntityService.get().nidForConcept(PublicIds.of(uuid));
         Optional<EntityKey> key = PrimitiveData.get().getEntityKey(uuid);
         assertTrue(key.isPresent());
         assertEquals(nid, key.get().nid());
@@ -169,7 +169,7 @@ public abstract class PrimitiveDataServiceConformance {
 
     @Test
     void aNidWithNoEntityHasNoBytes() {
-        int nid = EntityService.get().nidForConcept(randomId());
+        long nid = EntityService.get().nidForConcept(randomId());
         assertNull(EntityStore.current().getBytes(nid));
     }
 
@@ -179,7 +179,7 @@ public abstract class PrimitiveDataServiceConformance {
         StampRecord laterStamp = stamp(TIME + 1_000);
         byte[] returned = merge(laterVersionOf(world.concept(), laterStamp));
 
-        Set<Integer> expected = Set.of(world.stamp().nid(), laterStamp.nid());
+        Set<Long> expected = Set.of(world.stamp().nid(), laterStamp.nid());
         assertEquals(expected, stampNids(returned), "the bytes merge returns");
         assertEquals(expected, stampNids(EntityStore.current().getBytes(world.concept().nid())), "the bytes stored");
     }
@@ -196,7 +196,7 @@ public abstract class PrimitiveDataServiceConformance {
         PrimitiveData.save();
         byte[] returned = merge(laterVersionOf(world.concept(), laterStamp));
 
-        Set<Integer> expected = Set.of(world.stamp().nid(), laterStamp.nid());
+        Set<Long> expected = Set.of(world.stamp().nid(), laterStamp.nid());
         assertEquals(expected, stampNids(returned), "the bytes merge returns");
         assertEquals(expected, stampNids(EntityStore.current().getBytes(world.concept().nid())), "the bytes stored");
         PrimitiveData.save();
@@ -236,7 +236,7 @@ public abstract class PrimitiveDataServiceConformance {
     @Test
     void forEachVisitsEveryEntityWithItsBytes() {
         World world = makeWorld();
-        ConcurrentHashMap<Integer, byte[]> visited = new ConcurrentHashMap<>();
+        ConcurrentHashMap<Long, byte[]> visited = new ConcurrentHashMap<>();
         EntityStore.current().forEach((bytes, nid) -> visited.put(nid, bytes));
         for (Entity<? extends EntityVersion> entity : entities(world)) {
             assertArrayEquals(EntityStore.current().getBytes(entity.nid()), visited.get(entity.nid()),
@@ -247,8 +247,8 @@ public abstract class PrimitiveDataServiceConformance {
     @Test
     void forEachOfNidsVisitsThoseNids() {
         World world = makeWorld();
-        ConcurrentHashMap<Integer, byte[]> visited = new ConcurrentHashMap<>();
-        EntityStore.current().forEach(IntLists.immutable.of(world.concept().nid(), world.semantic().nid()),
+        ConcurrentHashMap<Long, byte[]> visited = new ConcurrentHashMap<>();
+        EntityStore.current().forEach(LongLists.immutable.of(world.concept().nid(), world.semantic().nid()),
                 (bytes, nid) -> visited.put(nid, bytes));
         assertEquals(Set.of(world.concept().nid(), world.semantic().nid()), visited.keySet());
     }
@@ -258,15 +258,15 @@ public abstract class PrimitiveDataServiceConformance {
         World world = makeWorld();
         assertTrue(collect(procedure -> EntityStore.current().forEachSemanticNidOfPattern(world.pattern().nid(), procedure))
                 .contains(world.semantic().nid()));
-        assertArrayEquals(new int[]{world.semantic().nid()}, EntityStore.current().semanticNidsOfPattern(world.pattern().nid()));
+        assertArrayEquals(new long[]{world.semantic().nid()}, EntityStore.current().semanticNidsOfPattern(world.pattern().nid()));
     }
 
     @Test
     void aSemanticIsIndexedUnderItsReferencedComponent() {
         World world = makeWorld();
-        assertArrayEquals(new int[]{world.semantic().nid()},
+        assertArrayEquals(new long[]{world.semantic().nid()},
                 EntityStore.current().semanticNidsForComponent(world.concept().nid()));
-        assertArrayEquals(new int[]{world.semantic().nid()},
+        assertArrayEquals(new long[]{world.semantic().nid()},
                 EntityStore.current().semanticNidsForComponentOfPattern(world.concept().nid(), world.pattern().nid()));
         assertEquals(0, EntityStore.current().semanticNidsForComponent(world.otherConcept().nid()).length);
         assertEquals(0, EntityStore.current()
@@ -305,8 +305,8 @@ public abstract class PrimitiveDataServiceConformance {
         makeWorld();
         for (EntityProxy.Pattern binding : List.of(EntityBinding.Concept.pattern(), EntityBinding.Stamp.pattern(),
                 EntityBinding.Pattern.pattern())) {
-            int patternNid = EntityService.get().nidForPattern(binding.publicId());
-            List<Integer> given = new java.util.ArrayList<>();
+            long patternNid = EntityService.get().nidForPattern(binding.publicId());
+            List<Long> given = new java.util.ArrayList<>();
             EntityService.get().forEachSemanticOfPattern(patternNid, semantic -> given.add(semantic.nid()));
             assertEquals(List.of(), given, binding.description());
             assertEquals(0, EntityService.get().semanticsOfPattern(patternNid).count(), binding.description());
@@ -334,11 +334,11 @@ public abstract class PrimitiveDataServiceConformance {
 
     private static StampRecord stamp(long time) {
         UUID uuid = UUID.randomUUID();
-        int nid = EntityService.get().nidForStamp(PublicIds.of(uuid));
+        long nid = EntityService.get().nidForStamp(PublicIds.of(uuid));
         RecordListBuilder<StampVersionRecord> versions = RecordListBuilder.make();
         StampRecord stamp = new StampRecord(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(),
                 LongLists.immutable.empty(), nid, versions);
-        int stampField = EntityService.get().nidForConcept(randomId());
+        long stampField = EntityService.get().nidForConcept(randomId());
         versions.add(new StampVersionRecord(stamp, stampField, time, stampField, stampField, stampField));
         versions.build();
         merge(stamp);
@@ -347,7 +347,7 @@ public abstract class PrimitiveDataServiceConformance {
 
     private static ConceptRecord concept(StampRecord stamp) {
         UUID uuid = UUID.randomUUID();
-        int nid = EntityService.get().nidForConcept(PublicIds.of(uuid));
+        long nid = EntityService.get().nidForConcept(PublicIds.of(uuid));
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
         ConceptRecord concept = new ConceptRecord(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(),
                 LongLists.immutable.empty(), nid, versions);
@@ -359,11 +359,11 @@ public abstract class PrimitiveDataServiceConformance {
 
     private static PatternRecord pattern(StampRecord stamp) {
         UUID uuid = UUID.randomUUID();
-        int nid = EntityService.get().nidForPattern(PublicIds.of(uuid));
+        long nid = EntityService.get().nidForPattern(PublicIds.of(uuid));
         RecordListBuilder<PatternVersionRecord> versions = RecordListBuilder.make();
         PatternRecord pattern = new PatternRecord(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(),
                 LongLists.immutable.empty(), nid, versions);
-        int meaning = EntityService.get().nidForConcept(randomId());
+        long meaning = EntityService.get().nidForConcept(randomId());
         versions.add(new PatternVersionRecord(pattern, stamp.nid(), meaning, meaning, Lists.immutable.of(
                 new FieldDefinitionRecord(meaning, meaning, meaning, stamp.nid(), nid, 0))));
         versions.build();
@@ -373,7 +373,7 @@ public abstract class PrimitiveDataServiceConformance {
 
     private static SemanticRecord semantic(StampRecord stamp, PatternRecord pattern, ConceptRecord referencedComponent) {
         UUID uuid = UUID.randomUUID();
-        int nid = EntityService.get().nidForSemantic(pattern.publicId(), PublicIds.of(uuid));
+        long nid = EntityService.get().nidForSemantic(pattern.publicId(), PublicIds.of(uuid));
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord semantic = new SemanticRecord(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(),
                 LongLists.immutable.empty(), nid, pattern.nid(), referencedComponent.nid(), versions);
@@ -406,8 +406,8 @@ public abstract class PrimitiveDataServiceConformance {
         return sameConcept;
     }
 
-    private static Set<Integer> stampNids(byte[] entityBytes) {
-        Set<Integer> stampNids = new HashSet<>();
+    private static Set<Long> stampNids(byte[] entityBytes) {
+        Set<Long> stampNids = new HashSet<>();
         EntityRecordFactory.make(entityBytes).versions().forEach(version -> stampNids.add(((EntityVersion) version).stampNid()));
         return stampNids;
     }
@@ -417,11 +417,11 @@ public abstract class PrimitiveDataServiceConformance {
     }
 
     private interface NidEnumeration {
-        void forEach(org.eclipse.collections.api.block.procedure.primitive.IntProcedure procedure);
+        void forEach(org.eclipse.collections.api.block.procedure.primitive.LongProcedure procedure);
     }
 
-    private static Set<Integer> collect(NidEnumeration enumeration) {
-        Set<Integer> nids = ConcurrentHashMap.newKeySet();
+    private static Set<Long> collect(NidEnumeration enumeration) {
+        Set<Long> nids = ConcurrentHashMap.newKeySet();
         enumeration.forEach(nids::add);
         return nids;
     }

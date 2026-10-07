@@ -1318,7 +1318,7 @@ public final class ChangeSetSummarizer {
         private Optional<String> lookupText(PublicId pid) {
             try {
                 if (!PrimitiveData.get().hasPublicId(pid)) return Optional.empty();
-                int nid = PrimitiveData.nid(pid);
+                long nid = PrimitiveData.nid(pid);
                 return PrimitiveData.textOptional(nid);
             } catch (RuntimeException e) {
                 return Optional.empty();

@@ -23,7 +23,7 @@ import dev.ikm.tinkar.common.binary.DecoderInput;
 import dev.ikm.tinkar.common.binary.Encodable;
 import dev.ikm.tinkar.common.binary.Encoder;
 import dev.ikm.tinkar.common.binary.EncoderOutput;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
@@ -37,11 +37,11 @@ import java.util.Objects;
 
 public final class StampPathImmutable implements StampPath, ImmutableCoordinate {
 
-    private static final Cache<Integer, StampPathImmutable> SINGLETONS = Caffeine.newBuilder().weakValues().build();
-    private final int pathConceptNid;
+    private static final Cache<Long, StampPathImmutable> SINGLETONS = Caffeine.newBuilder().weakValues().build();
+    private final long pathConceptNid;
     private final ImmutableSet<StampPositionRecord> pathOrigins;
 
-    private StampPathImmutable(int pathConceptNid, ImmutableSet<StampPositionRecord> pathOrigins) {
+    private StampPathImmutable(long pathConceptNid, ImmutableSet<StampPositionRecord> pathOrigins) {
         this.pathConceptNid = pathConceptNid;
         this.pathOrigins = pathOrigins;
     }
@@ -65,7 +65,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         this.pathOrigins = mutableOrigins.toImmutable();
     }
 
-    public static StampPathImmutable make(int pathConceptNid, ImmutableSet<StampPositionRecord> pathOrigins) {
+    public static StampPathImmutable make(long pathConceptNid, ImmutableSet<StampPositionRecord> pathOrigins) {
         if (pathConceptNid == KernelTerm.UNINITIALIZED_COMPONENT.nid()) {
             return new StampPathImmutable(pathConceptNid, pathOrigins);
         }
@@ -77,7 +77,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         return make(pathConcept.nid());
     }
 
-    public static StampPathImmutable make(int pathConceptNid) {
+    public static StampPathImmutable make(long pathConceptNid) {
         if (pathConceptNid == KernelTerm.UNINITIALIZED_COMPONENT.nid()) {
             return new StampPathImmutable(pathConceptNid, Sets.immutable.empty());
         }
@@ -105,7 +105,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     }
 
     @Override
-    public int pathConceptNid() {
+    public long pathConceptNid() {
         return this.pathConceptNid;
     }
 
@@ -121,7 +121,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     public static final StampCoordinateRecord getStampFilter(StampPath stampPath) {
         return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
                 StampPositionRecord.make(Long.MAX_VALUE, stampPath.pathConceptNid()),
-                IntIds.set.empty());
+                LongIds.set.empty());
     }
 
     /**

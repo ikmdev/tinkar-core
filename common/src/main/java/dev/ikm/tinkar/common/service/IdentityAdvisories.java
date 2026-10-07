@@ -50,7 +50,7 @@ public final class IdentityAdvisories {
      * @param held  the UUIDs it held
      * @param added the UUIDs added to it
      */
-    public static void uuidsAdded(int nid, Collection<UUID> held, Collection<UUID> added) {
+    public static void uuidsAdded(long nid, Collection<UUID> held, Collection<UUID> added) {
         UUIDS_ADDED.increment();
         String description = "Component " + nid + " " + held + " gained UUIDs " + added
                 + ": a public id sharing one of its UUIDs carried them, so the component now holds them too.";
@@ -65,7 +65,7 @@ public final class IdentityAdvisories {
      * @param uuids the public id's UUIDs
      * @param nids  the components they belong to
      */
-    public static void componentsShareUuids(Collection<UUID> uuids, Collection<Integer> nids) {
+    public static void componentsShareUuids(Collection<UUID> uuids, Collection<Long> nids) {
         COMPONENTS_SHARING_UUIDS.increment();
         String description = "The public id " + uuids + " names components " + nids
                 + ", which the store holds as distinct: they are one component by that public id,"

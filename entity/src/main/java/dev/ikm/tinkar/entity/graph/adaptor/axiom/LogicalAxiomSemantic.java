@@ -41,7 +41,7 @@ public enum LogicalAxiomSemantic {
     FEATURE(KernelTerm.FEATURE, LogicalAxiom.Atom.TypedAtom.Feature.class),
     INCLUSION_SET(KernelTerm.INCLUSION_SET, LogicalAxiom.Atom.LogicalSet.InclusionSet.class);
 
-    public final int nid;
+    public final long nid;
     public final Class<? extends LogicalAxiom> axiomClass;
 
     LogicalAxiomSemantic(ConceptFacade meaningFacade, Class<? extends LogicalAxiom> axiom) {
@@ -53,7 +53,7 @@ public enum LogicalAxiomSemantic {
         return get(meaningFacade.nid());
     }
 
-    public static LogicalAxiomSemantic get(int meaningNid) {
+    public static LogicalAxiomSemantic get(long meaningNid) {
         for (LogicalAxiomSemantic meaning : LogicalAxiomSemantic.values()) {
             if (meaning.nid == meaningNid) {
                 return meaning;

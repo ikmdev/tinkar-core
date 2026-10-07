@@ -206,7 +206,7 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("The resumed concept replays as one chronology: revisions, additions, axioms")
     void conceptLedgerReplay() {
-        int conceptNid = TEST_SET.conceptRef("Journal element (Test)").nid();
+        long conceptNid = TEST_SET.conceptRef("Journal element (Test)").nid();
         ConceptEntity<?> conceptEntity = EntityHandle.get(conceptNid).expectConcept();
         assertEquals(1, conceptEntity.versions().size(),
                 "birth only — later scopes touched descriptions, not the concept; and write() twice must not duplicate");
@@ -243,7 +243,7 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("Retirement scopes append inactive-stamped versions")
     void retirementLedger() {
-        int conceptNid = TEST_SET.conceptRef("Retiring kind (Test)").nid();
+        long conceptNid = TEST_SET.conceptRef("Retiring kind (Test)").nid();
         ConceptEntity<?> conceptEntity = EntityHandle.get(conceptNid).expectConcept();
         assertEquals(2, conceptEntity.versions().size(), "birth + retirement");
         StampEntity<?> lastStamp = Entity.getStamp(conceptEntity.versions().get(1).stampNid());
@@ -260,7 +260,7 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("Patterns replay: version tuple, ordered fields, restatement revises, retirement carries")
     void patternLedgerReplay() {
-        int manifestNid = TEST_SET.patternRef("Journal manifest pattern (Test)").nid();
+        long manifestNid = TEST_SET.patternRef("Journal manifest pattern (Test)").nid();
         PatternEntity<?> manifest = EntityHandle.get(manifestNid).expectPattern();
         assertEquals(1, manifest.versions().size());
         PatternEntityVersion manifestVersion = (PatternEntityVersion) manifest.versions().get(0);
@@ -273,7 +273,7 @@ class ChronologyBuilderIT {
         assertEquals(KernelTerm.STRING.nid(),
                 manifestVersion.fieldDefinitions().get(1).dataTypeNid());
 
-        int evolvingNid = TEST_SET.patternRef("Evolving pattern (Test)").nid();
+        long evolvingNid = TEST_SET.patternRef("Evolving pattern (Test)").nid();
         PatternEntity<?> evolving = EntityHandle.get(evolvingNid).expectPattern();
         assertEquals(3, evolving.versions().size(), "birth + restatement + retirement");
         assertEquals(0, ((PatternEntityVersion) evolving.versions().get(0)).fieldDefinitions().size(),

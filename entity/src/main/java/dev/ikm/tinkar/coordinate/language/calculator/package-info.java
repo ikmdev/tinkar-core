@@ -126,7 +126,7 @@
  * <p><b>Stage 3: Type, Dialect, and Module Ranking</b></p>
  * <pre>{@code
  * // Rank by description type priority
- * for (int typeNid : langCoord.descriptionTypePreferenceNidList()) {
+ * for (long typeNid : langCoord.descriptionTypePreferenceNidList()) {
  *     List<SemanticEntityVersion> ofType = descriptions.stream()
  *         .filter(v -> v.descriptionTypeNid() == typeNid)
  *         .collect(toList());
@@ -195,7 +195,7 @@
  * // First is most preferred, process in order
  * for (SemanticEntityVersion desc : descriptions) {
  *     String text = desc.fieldValues().get(0).toString();
- *     int typeNid = desc.fieldValues().get(1);
+ *     long typeNid = desc.fieldValues().get(1);
  *     // ... process description
  * }
  * }</pre>

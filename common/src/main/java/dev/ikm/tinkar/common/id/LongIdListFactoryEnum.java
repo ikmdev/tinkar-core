@@ -15,41 +15,41 @@
  */
 package dev.ikm.tinkar.common.id;
 
-import dev.ikm.tinkar.common.id.impl.IntId0List;
-import dev.ikm.tinkar.common.id.impl.IntId1List;
-import dev.ikm.tinkar.common.id.impl.IntId2List;
-import dev.ikm.tinkar.common.id.impl.IntIdListArray;
+import dev.ikm.tinkar.common.id.impl.LongId0List;
+import dev.ikm.tinkar.common.id.impl.LongId1List;
+import dev.ikm.tinkar.common.id.impl.LongId2List;
+import dev.ikm.tinkar.common.id.impl.LongIdListArray;
 
 /**
  *
  */
-enum IntIdListFactoryEnum implements IntIdListFactory {
+enum LongIdListFactoryEnum implements LongIdListFactory {
     INSTANCE;
 
     @Override
-    public IntIdList empty() {
-        return IntId0List.INSTANCE;
+    public LongIdList empty() {
+        return LongId0List.INSTANCE;
     }
 
     @Override
-    public IntIdList of() {
+    public LongIdList of() {
         return this.empty();
     }
 
     @Override
-    public IntIdList of(int one) {
-        return new IntId1List(one);
+    public LongIdList of(long one) {
+        return new LongId1List(one);
     }
 
     @Override
-    public IntIdList of(int one, int two) {
-        return new IntId2List(one, two);
+    public LongIdList of(long one, long two) {
+        return new LongId2List(one, two);
     }
 
     @Override
-    public IntIdList of(IntIdList list, int... elements) {
-        int[] combined = new int[list.size() + elements.length];
-        int[] listArray = list.toArray();
+    public LongIdList of(LongIdList list, long... elements) {
+        long[] combined = new long[list.size() + elements.length];
+        long[] listArray = list.toArray();
         int elementIndex = 0;
         for (int i = 0; i < combined.length; i++) {
             if (i < listArray.length) {
@@ -62,17 +62,17 @@ enum IntIdListFactoryEnum implements IntIdListFactory {
     }
 
     @Override
-    public IntIdList of(int... elements) {
+    public LongIdList of(long... elements) {
         if (elements == null || elements.length == 0) {
             return this.empty();
         }
         if (elements.length == 1) {
-            return new IntId1List(elements[0]);
+            return new LongId1List(elements[0]);
         }
         if (elements.length == 2) {
-            return new IntId2List(elements[0], elements[1]);
+            return new LongId2List(elements[0], elements[1]);
         }
-        return new IntIdListArray(elements);
+        return new LongIdListArray(elements);
     }
 
 

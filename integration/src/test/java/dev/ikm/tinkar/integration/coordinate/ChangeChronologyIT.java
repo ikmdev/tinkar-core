@@ -94,7 +94,7 @@ class ChangeChronologyIT {
 
     @Test
     void stampFieldsAreRecordedAgainstTheStampVersionPattern() {
-        int stampVersionPattern = EntityBinding.Stamp.Version.pattern().nid();
+        long stampVersionPattern = EntityBinding.Stamp.Version.pattern().nid();
         ChangeChronology chronology = Calculators.Stamp.DevelopmentLatest().changeChronology(KernelTerm.ROOT_VERTEX.nid());
         assertFalse(chronology.changeRecords().isEmpty(), "No change records for the root concept");
 

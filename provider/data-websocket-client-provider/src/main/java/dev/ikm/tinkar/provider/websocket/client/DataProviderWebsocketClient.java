@@ -15,6 +15,12 @@
  */
 package dev.ikm.tinkar.provider.websocket.client;
 
+import dev.ikm.tinkar.common.id.Nid;
+import org.eclipse.collections.api.block.procedure.primitive.LongProcedure;
+import java.util.function.ObjLongConsumer;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+
+import dev.ikm.tinkar.common.service.SequentialNids;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
@@ -100,11 +106,11 @@ public class DataProviderWebsocketClient
         String url = args.length != 0 ? args[0] : "ws://127.0.0.1:8080/";
         LOG.info("\nWeb Socket request: " + url);
         CompletableFuture<?> future = eventloop.submit(() -> {
-            getEntity(url, PrimitiveDataService.FIRST_NID);
+            getEntity(url, SequentialNids.FIRST_NID);
         });
         future.get();
         future = eventloop.submit(() -> {
-            getEntity(url, PrimitiveDataService.FIRST_NID + 1);
+            getEntity(url, SequentialNids.FIRST_NID + 1);
         });
         future.get();
     }
@@ -141,7 +147,7 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public int nidForUuids(UUID... uuids) {
+    public long nidForUuids(UUID... uuids) {
         try {
             return nidForLongArray(UuidUtil.asArray(uuids));
         } catch (ExecutionException | InterruptedException e) {
@@ -150,7 +156,7 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public int nidForUuids(ImmutableList<UUID> uuidList) {
+    public long nidForUuids(ImmutableList<UUID> uuidList) {
         try {
             return nidForLongArray(UuidUtil.asArray(uuidList));
         } catch (ExecutionException | InterruptedException e) {
@@ -169,31 +175,31 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public void forEach(ObjIntConsumer<byte[]> action) {
+    public void forEach(ObjLongConsumer<byte[]> action) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEachParallel(ObjIntConsumer<byte[]> action) {
+    public void forEachParallel(ObjLongConsumer<byte[]> action) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+    public void forEachParallel(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+    public void forEach(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public byte[] getBytes(int nid) {
+    public byte[] getBytes(long nid) {
 
         ByteBuf buf = ByteBufPool.allocate(32);
         buf.writeByte(RemoteOperations.GET_BYTES.token);
-        buf.writeInt(nid);
+        buf.writeInt(Nid.narrowChecked(nid));
         AtomicReference<byte[]> readDataReference = new AtomicReference<>();
         final WebSocket ws = webSocket();
 
@@ -222,7 +228,7 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
+    public byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
         throw new UnsupportedOperationException();
     }
 
@@ -242,37 +248,37 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
+    public void forEachSemanticNidOfPattern(long patternNid, LongProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEachPatternNid(IntProcedure procedure) {
+    public void forEachPatternNid(LongProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEachConceptNid(IntProcedure procedure) {
+    public void forEachConceptNid(LongProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEachStampNid(IntProcedure procedure) {
+    public void forEachStampNid(LongProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEachSemanticNid(IntProcedure procedure) {
+    public void forEachSemanticNid(LongProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
+    public void forEachSemanticNidForComponent(long componentNid, LongProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
+    public void forEachSemanticNidForComponentOfPattern(long componentNid, long patternNid, LongProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 

@@ -57,21 +57,21 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
 
     StampEntity stamp();
 
-    default int pathNid() {
+    default long pathNid() {
         if (lastVersion() != null) {
             return lastVersion().pathNid();
         }
         return KernelTerm.CANCELED_STATE.nid();
     }
 
-    default int moduleNid() {
+    default long moduleNid() {
         if (lastVersion() != null) {
             return lastVersion().moduleNid();
         }
         return KernelTerm.CANCELED_STATE.nid();
     }
 
-    default int authorNid() {
+    default long authorNid() {
         if (lastVersion() != null) {
             return lastVersion().authorNid();
         }
@@ -119,7 +119,7 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
         return Entity.super.canceled();
     }
 
-    default int stateNid() {
+    default long stateNid() {
         if (lastVersion() != null) {
             return lastVersion().stateNid();
         }

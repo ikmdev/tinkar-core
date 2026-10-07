@@ -371,7 +371,7 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
      * @param meaningNid  The meaningNid to search for.
      * @return {@code true} if a predecessor vertex with the given meaningNid exists, {@code false} otherwise.
      */
-    public boolean hasPredecessorVertexWithMeaning(int vertexIndex, int meaningNid) {
+    public boolean hasPredecessorVertexWithMeaning(int vertexIndex, long meaningNid) {
         if (vertex(vertexIndex).meaningNid == meaningNid) {
             return true;
         }

@@ -52,7 +52,7 @@ public interface EditCoordinate {
      *
      * @return the author nid
      */
-    int getAuthorNidForChanges();
+    long getAuthorNidForChanges();
 
     /**
      * The default module is the module for new content when developing. Modifications to existing
@@ -60,28 +60,28 @@ public interface EditCoordinate {
      *
      * @return
      */
-    int getDefaultModuleNid();
+    long getDefaultModuleNid();
 
     /**
      * The destination module is the module that existing content is moved to when Modularizing
      *
      * @return the nid of the destination module concept
      */
-    int getDestinationModuleNid();
+    long getDestinationModuleNid();
 
     /**
      * The path that new content is created on
      *
      * @return the nid of the promotion concept
      */
-    int getDefaultPathNid();
+    long getDefaultPathNid();
 
     /**
      * The promotion path is the path that existing content is moved to when Promoting
      *
      * @return the nid of the promotion concept
      */
-    int getPromotionPathNid();
+    long getPromotionPathNid();
 
     default ConceptFacade getAuthorForChanges() {
         return EntityHandle.get(getAuthorNidForChanges()).expectConcept();

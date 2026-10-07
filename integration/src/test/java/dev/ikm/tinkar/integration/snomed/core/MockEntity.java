@@ -32,7 +32,7 @@ import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.lo
  * **/
 public class MockEntity {
     private static int nidCount = 100;
-    private static final Map<UUID, Integer> mockDataMap = new HashMap<>();
+    private static final Map<UUID, Long> mockDataMap = new HashMap<>();
 
     // universal cache of type Object to persist entities (stamp, concept, semantics) to create multiple versions
     private static final Map<UUID, Object> entityCache = new HashMap();
@@ -49,7 +49,7 @@ public class MockEntity {
             JsonNode mockData = (JsonNode) itr.next();
             String value = mockData.get("value").asText();
             MockDataType type = MockDataType.getEnumType(mockData.get("type").asText());
-            Integer nid = mockData.get("nid").asInt();
+            Long nid = mockData.get("nid").asLong();
             MockEntity.populateMockData(value, type, nid);
         }
     }
@@ -59,7 +59,7 @@ public class MockEntity {
         nidCount+=1;
     }
 
-    private static void populateMockData(String textValue, MockDataType type, int nid) {
+    private static void populateMockData(String textValue, MockDataType type, long nid) {
         UUID value;
         switch(type) {
             case MODULE: {
@@ -82,7 +82,7 @@ public class MockEntity {
         mockDataMap.putIfAbsent(value, nid);
     }
 
-    public static int getNid(UUID key) {
+    public static long getNid(UUID key) {
         return mockDataMap.get(key);
     }
 

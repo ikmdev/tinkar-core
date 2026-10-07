@@ -435,4 +435,32 @@ public class NidTest {
         assertTrue(Nid.compose64(1, Nid.MAX_SEQUENCE_64) < Nid.compose64(2, 1));
         assertTrue(Nid.compose64(2, 1) < Nid.compose64(2, 2));
     }
+
+    @Test
+    public void nidOfReadsABoxedLong() {
+        Object boxed = 42L;
+        assertEquals(42L, Nid.nidOf(boxed));
+        Object negative = (long) Integer.MIN_VALUE + 1;
+        assertEquals(Integer.MIN_VALUE + 1, Nid.nidOf(negative));
+    }
+
+    @Test
+    public void nidOfWidensABoxedInteger() {
+        Object boxed = Integer.MIN_VALUE + 1;
+        assertEquals((long) Integer.MIN_VALUE + 1, Nid.nidOf(boxed),
+                "a nid boxed as an Integer widens to the same value, sign included");
+    }
+
+    @Test
+    public void nidOfReadsA64BitNid() {
+        Object boxed = Nid.compose64(3, 7);
+        assertEquals(Nid.compose64(3, 7), Nid.nidOf(boxed));
+    }
+
+    @Test
+    public void nidOfRefusesWhatIsNotANid() {
+        assertThrows(IllegalArgumentException.class, () -> Nid.nidOf(null));
+        assertThrows(IllegalArgumentException.class, () -> Nid.nidOf("42"));
+        assertThrows(IllegalArgumentException.class, () -> Nid.nidOf((short) 42));
+    }
 }

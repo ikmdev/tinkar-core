@@ -15,9 +15,12 @@
  */
 package dev.ikm.tinkar.integration.graph;
 
+import java.util.function.LongFunction;
+import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
 import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
@@ -75,13 +78,13 @@ class DiTreeTextIT {
     private static final Pattern STORE_NID = Pattern.compile("-2147[34]\\d{5}(?!\\d)");
 
     /** Names a component by its UUIDs, every one, as text for another store does when it has no description. */
-    private static final IntFunction<String> BY_UUID =
+    private static final LongFunction<String> BY_UUID =
             nid -> PrimitiveData.publicId(nid).asUuidList().collect(java.util.UUID::toString).makeString(",");
 
     private ViewCalculator view;
 
     /** Names a component by the description the default view selects. */
-    private IntFunction<String> byDescription;
+    private LongFunction<String> byDescription;
 
     @BeforeAll
     void startStore() {
@@ -126,14 +129,14 @@ class DiTreeTextIT {
     @Test
     void everyComponentIsNamedByTheCallersFunctionAndByNothingElse() {
         DiTreeEntity tree = aTreeWithEveryKindOfPropertyValue();
-        Set<Integer> named = new TreeSet<>();
+        Set<Long> named = new TreeSet<>();
 
         String text = DiTreeText.tree(tree, nid -> {
             named.add(nid);
             return "X";
         });
 
-        Set<Integer> components = new TreeSet<>();
+        Set<Long> components = new TreeSet<>();
         for (EntityFacade component : List.of(KernelTerm.DEFINITION_ROOT, KernelTerm.NECESSARY_SET, KernelTerm.AND,
                 KernelTerm.CONCEPT_REFERENCE, KernelTerm.LANGUAGE, KernelTerm.ROLE, KernelTerm.ROLE_TYPE,
                 IkeTerms.PART_OF, KernelTerm.ROLE_OPERATOR, KernelTerm.EXISTENTIAL_RESTRICTION,
@@ -158,14 +161,14 @@ class DiTreeTextIT {
         // of an id list, whatever the store describes; the assertion on it fails when that
         // changes, which is the moment to reconsider this class.
         DiTreeEntity tree = aTreeWithEveryKindOfPropertyValue();
-        int partOf = IkeTerms.PART_OF.nid();
+        long partOf = IkeTerms.PART_OF.nid();
 
         assertTrue(tree.toString().contains("<" + partOf + ">"),
                 "toString() writes the nid of each element of an id list");
 
         String text = DiTreeText.tree(tree, BY_UUID);
         assertNoNid("the tree named by UUID", text);
-        assertFalse(text.contains(Integer.toString(partOf)), text);
+        assertFalse(text.contains(Long.toString(partOf)), text);
         assertTrue(text.contains("[" + BY_UUID.apply(partOf) + ", " + BY_UUID.apply(KernelTerm.ROLE_TYPE.nid()) + "]"),
                 "an id list is the list of its components' names");
         assertTrue(text.startsWith("   [0]➞[1] " + BY_UUID.apply(KernelTerm.DEFINITION_ROOT.nid()) + "\n"),
@@ -183,7 +186,7 @@ class DiTreeTextIT {
                     continue;
                 }
                 DiTreeEntity tree = definition.get();
-                for (IntFunction<String> nameOf : List.of(byDescription, BY_UUID)) {
+                for (LongFunction<String> nameOf : List.of(byDescription, BY_UUID)) {
                     String text = DiTreeText.tree(tree, nameOf);
                     assertNoNid("the definition of " + concept.description(), text);
                     // toString() has the same lines between "DiTreeEntity{" and "}": one per
@@ -210,7 +213,7 @@ class DiTreeTextIT {
         EntityVertex bare = EntityVertex.make(KernelTerm.AND);
         assertEquals(name(KernelTerm.AND), DiTreeText.vertex(bare, byDescription));
 
-        int partOf = IkeTerms.PART_OF.nid();
+        long partOf = IkeTerms.PART_OF.nid();
         EntityVertex role = EntityVertex.make(KernelTerm.ROLE);
         setProperty(role, KernelTerm.ROLE_TYPE, IkeTerms.PART_OF);
         String text = DiTreeText.vertex(role, byDescription);
@@ -247,7 +250,7 @@ class DiTreeTextIT {
     @Test
     void aPropertyValueThatIsNotAComponentIsWrittenAsItsOwnText() {
         EntityVertex vertex = EntityVertex.make(KernelTerm.ROLE);
-        MutableIntObjectMap<Object> properties = IntObjectMaps.mutable.empty();
+        MutableLongObjectMap<Object> properties = LongObjectMaps.mutable.empty();
         properties.put(KernelTerm.ROLE_TYPE.nid(), "a string");
         properties.put(KernelTerm.ROLE_OPERATOR.nid(), 42);
         properties.put(KernelTerm.PROPERTY_SEQUENCE.nid(), true);
@@ -277,14 +280,14 @@ class DiTreeTextIT {
         setProperty(reference, KernelTerm.CONCEPT_REFERENCE, KernelTerm.LANGUAGE);
 
         EntityVertex role = EntityVertex.make(KernelTerm.ROLE);
-        MutableIntObjectMap<Object> roleProperties = IntObjectMaps.mutable.empty();
+        MutableLongObjectMap<Object> roleProperties = LongObjectMaps.mutable.empty();
         roleProperties.put(KernelTerm.ROLE_TYPE.nid(), IkeTerms.PART_OF);
         roleProperties.put(KernelTerm.ROLE_OPERATOR.nid(), KernelTerm.EXISTENTIAL_RESTRICTION);
         role.setProperties(roleProperties);
 
         EntityVertex propertySet = EntityVertex.make(KernelTerm.PROPERTY_SET);
         setProperty(propertySet, KernelTerm.PROPERTY_SEQUENCE,
-                IntIds.list.of(IkeTerms.PART_OF.nid(), KernelTerm.ROLE_TYPE.nid()));
+                LongIds.list.of(IkeTerms.PART_OF.nid(), KernelTerm.ROLE_TYPE.nid()));
 
         DiTreeEntity.Builder builder = DiTreeEntity.builder();
         builder.setRoot(root);
@@ -298,7 +301,7 @@ class DiTreeTextIT {
 
     /** Gives a vertex one property. */
     private static void setProperty(EntityVertex vertex, EntityFacade key, Object value) {
-        MutableIntObjectMap<Object> properties = IntObjectMaps.mutable.empty();
+        MutableLongObjectMap<Object> properties = LongObjectMaps.mutable.empty();
         properties.put(key.nid(), value);
         vertex.setProperties(properties);
     }

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.mvstore.internal;
 
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
@@ -36,7 +37,7 @@ public class Get {
     }
 
     public static int nidForUuids(ImmutableList<UUID> uuidList) {
-        return singleton.nidForUuids(uuidList);
+        return Nid.narrowChecked(singleton.nidForUuids(uuidList));
     }
 
     public static int stampNid(Stamp stamp) {

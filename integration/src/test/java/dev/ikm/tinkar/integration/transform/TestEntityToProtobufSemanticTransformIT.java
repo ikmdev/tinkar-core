@@ -55,10 +55,10 @@ public class TestEntityToProtobufSemanticTransformIT {
     private SemanticRecord createSemanticWithFields(int numVersions, int fieldsPerVersion) {
         UUID semanticUuid = UUID.randomUUID();
         PublicId semanticPublicId = PublicIds.of(semanticUuid);
-        int semanticNid = Entity.nid(semanticPublicId);
+        long semanticNid = Entity.nid(semanticPublicId);
 
-        int patternNid = createAndStorePattern(conceptMap);
-        int referencedComponentNid = Entity.nid(conceptMap.get(MODULE_CONCEPT_NAME).publicId());
+        long patternNid = createAndStorePattern(conceptMap);
+        long referencedComponentNid = Entity.nid(conceptMap.get(MODULE_CONCEPT_NAME).publicId());
 
         RecordListBuilder<SemanticVersionRecord> semanticVersions = RecordListBuilder.make();
         SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
@@ -71,7 +71,7 @@ public class TestEntityToProtobufSemanticTransformIT {
                 .build();
 
         for (int v = 0; v < numVersions; v++) {
-            int stampNid = createAndStoreStamp();
+            long stampNid = createAndStoreStamp();
             Object[] fields = new Object[fieldsPerVersion];
             for (int f = 0; f < fieldsPerVersion; f++) {
                 fields[f] = "Field value " + v + "-" + f;
@@ -122,7 +122,7 @@ public class TestEntityToProtobufSemanticTransformIT {
         assertThrows(Throwable.class, () -> {
             UUID semanticUuid = UUID.randomUUID();
             PublicId semanticPublicId = PublicIds.of(semanticUuid);
-            int semanticNid = Entity.nid(semanticPublicId);
+            long semanticNid = Entity.nid(semanticPublicId);
 
             RecordListBuilder<SemanticVersionRecord> semanticVersions = RecordListBuilder.make();
             SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
@@ -148,7 +148,7 @@ public class TestEntityToProtobufSemanticTransformIT {
         assertThrows(Throwable.class, () -> {
             UUID semanticUuid = UUID.randomUUID();
             PublicId semanticPublicId = PublicIds.of(semanticUuid);
-            int semanticNid = Entity.nid(semanticPublicId);
+            long semanticNid = Entity.nid(semanticPublicId);
 
             RecordListBuilder<SemanticVersionRecord> semanticVersions = RecordListBuilder.make();
             SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
@@ -160,7 +160,7 @@ public class TestEntityToProtobufSemanticTransformIT {
                     .versions(semanticVersions)
                     .build();
 
-            int stampNid = createAndStoreStamp();
+            long stampNid = createAndStoreStamp();
             SemanticVersionRecordBuilder.builder()
                     .chronology(semanticRecord)
                     .stampNid(stampNid)

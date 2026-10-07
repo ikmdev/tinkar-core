@@ -103,11 +103,11 @@
         <maven-jxr-plugin.version>3.6.0</maven-jxr-plugin.version>
         <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
         <!-- The nid build check: how it reports, which classes may narrow a nid (the providers
-             that keep int nids, the format 1 entity codec, the test of Nid itself, and, until
+             that keep int nids, the format 1 entity codec and layouts, the test of Nid itself, and, until
              the widening, the reasoner tests that map elk's long ids back to int nids), and
              javac's cap on warnings, high enough that no warning is dropped. -->
         <nid-check.report>error</nid-check.report>
-        <nid-check.allow>dev.ikm.tinkar.provider.,dev.ikm.tinkar.entity.EntityRecordFactory,dev.ikm.tinkar.common.id.NidTest,dev.ikm.tinkar.reasoner.elksnomed.test.,dev.ikm.tinkar.reasoner.hybrid.test.</nid-check.allow>
+        <nid-check.allow>dev.ikm.tinkar.provider.,dev.ikm.tinkar.common.id.EntityKey,dev.ikm.tinkar.common.id.impl.NidLayout,dev.ikm.tinkar.entity.EntityRecordFactory,dev.ikm.tinkar.entity.graph.EntityVertex,dev.ikm.tinkar.common.id.NidTest,dev.ikm.tinkar.integration.coordinate.CoordinateEncodingIT,dev.ikm.tinkar.reasoner.elksnomed.test.,dev.ikm.tinkar.reasoner.hybrid.test.</nid-check.allow>
         <javac.maxwarns>10000</javac.maxwarns>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
 
@@ -193,6 +193,8 @@
                             <arg>-Xplugin:NidCheck report=${nid-check.report} allow=${nid-check.allow}</arg>
                             <arg>-Xmaxwarns</arg>
                             <arg>${javac.maxwarns}</arg>
+                            <arg>-Xmaxerrs</arg>
+                            <arg>10000</arg>
                         </compilerArgs>
                         <annotationProcessorPaths combine.children="append">
                             <path>

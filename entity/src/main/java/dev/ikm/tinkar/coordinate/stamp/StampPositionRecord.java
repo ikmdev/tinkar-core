@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.stamp;
 
+import dev.ikm.tinkar.common.id.Nid;
 
 import dev.ikm.tinkar.common.binary.Decoder;
 import dev.ikm.tinkar.common.binary.DecoderInput;
@@ -34,18 +35,18 @@ import org.eclipse.collections.api.set.ImmutableSet;
 import java.time.Instant;
 
 @RecordBuilder
-public record StampPositionRecord(long time, int pathForPositionNid)
+public record StampPositionRecord(long time, long pathForPositionNid)
         implements StampPosition, Comparable<StampPosition>, ImmutableCoordinate, StampPositionRecordBuilder.With {
 
     public static StampPositionRecord make(Instant time, ConceptFacade pathForPosition) {
         return new StampPositionRecord(DateTimeUtil.instantToEpochMs(time), pathForPosition.nid());
     }
 
-    public static StampPositionRecord make(Instant time, int pathForPositionNid) {
+    public static StampPositionRecord make(Instant time, long pathForPositionNid) {
         return new StampPositionRecord(DateTimeUtil.instantToEpochMs(time), pathForPositionNid);
     }
 
-    public static StampPositionRecord make(long time, int pathForPositionNid) {
+    public static StampPositionRecord make(long time, long pathForPositionNid) {
         return new StampPositionRecord(time, pathForPositionNid);
     }
 
@@ -68,7 +69,7 @@ public record StampPositionRecord(long time, int pathForPositionNid)
     public static StampPositionRecord decode(DecoderInput in) {
         int version = Encodable.checkVersion(in);
         long time = in.readLong();
-        int pathForPositionNid = version >= Encodable.PATH_AS_PUBLIC_ID_VERSION ? in.readNid() : in.readInt();
+        long pathForPositionNid = version >= Encodable.PATH_AS_PUBLIC_ID_VERSION ? in.readNid() : in.readInt();
         return new StampPositionRecord(time, pathForPositionNid);
     }
 
@@ -109,11 +110,11 @@ public record StampPositionRecord(long time, int pathForPositionNid)
             return comparison;
         }
 
-        return Integer.compare(this.pathForPositionNid, o.getPathForPositionNid());
+        return Long.compare(this.pathForPositionNid, o.getPathForPositionNid());
     }
 
     @Override
-    public int getPathForPositionNid() {
+    public long getPathForPositionNid() {
         return this.pathForPositionNid;
     }
 
@@ -132,7 +133,7 @@ public record StampPositionRecord(long time, int pathForPositionNid)
     }
 
     @Override
-    public StampPositionRecord withPathForPositionNid(int pathForPositionNid) {
+    public StampPositionRecord withPathForPositionNid(long pathForPositionNid) {
         return StampPositionRecordBuilder.With.super.withPathForPositionNid(pathForPositionNid);
     }
 
@@ -174,7 +175,7 @@ public record StampPositionRecord(long time, int pathForPositionNid)
         int hash = 7;
 
         hash = 83 * hash + (int) (this.time ^ (this.time >>> 32));
-        hash = 83 * hash + Integer.hashCode(this.pathForPositionNid);
+        hash = 83 * hash + Nid.hash(this.pathForPositionNid);
         return hash;
     }
 

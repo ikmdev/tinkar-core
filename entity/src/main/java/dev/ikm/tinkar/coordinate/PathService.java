@@ -27,9 +27,9 @@ public interface PathService {
         return PathServiceFinder.INSTANCE.get();
     }
 
-    ImmutableSet<StampBranchRecord> getPathBranches(int pathNid);
+    ImmutableSet<StampBranchRecord> getPathBranches(long pathNid);
 
     ImmutableSet<StampPathImmutable> getPaths();
 
-    ImmutableSet<StampPositionRecord> getPathOrigins(int pathNid);
+    ImmutableSet<StampPositionRecord> getPathOrigins(long pathNid);
 }

@@ -15,9 +15,12 @@
  */
 package dev.ikm.tinkar.entity;
 
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+
 import dev.ikm.tinkar.common.alert.AlertStreams;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.Chronology;
@@ -27,9 +30,9 @@ import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.SemanticFacade;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -210,7 +213,7 @@ public interface Entity<V extends EntityVersion>
     // TODO: Make this and related interface sealed, but add ObservableEntity (or similarly named) as a non-sealed interface interface for extension
     Logger LOG = LoggerFactory.getLogger(Entity.class);
 
-    static int nid(Component component) {
+    static long nid(Component component) {
         return provider().nidForComponent(component);
     }
 
@@ -218,32 +221,32 @@ public interface Entity<V extends EntityVersion>
         return EntityService.get();
     }
 
-    static int nid(PublicId publicId) {
+    static long nid(PublicId publicId) {
         return provider().nidForPublicId(publicId);
     }
 
 
-    static int nidForSemantic(int patternNid, PublicId entityPublicId) {
+    static long nidForSemantic(long patternNid, PublicId entityPublicId) {
         return provider().nidFor(patternNid, entityPublicId);
     }
 
-    static int nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
+    static long nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
         return provider().nidForSemantic(patternPublicId, semanticPublicId);
     }
 
-    static int nidForSemantic(EntityFacade patternFacade, PublicId semanticPublicId) {
+    static long nidForSemantic(EntityFacade patternFacade, PublicId semanticPublicId) {
         return provider().nidForSemantic(patternFacade.publicId(), semanticPublicId);
     }
 
-    static int nidForPattern(PublicId patternPublicId) {
+    static long nidForPattern(PublicId patternPublicId) {
         return provider().nidForPattern(patternPublicId);
     }
 
-    static int nidForStamp(PublicId stampPublicId) {
+    static long nidForStamp(PublicId stampPublicId) {
         return provider().nidForStamp(stampPublicId);
     }
 
-    static int nidForConcept(PublicId conceptPublicId) {
+    static long nidForConcept(PublicId conceptPublicId) {
         return provider().nidForConcept(conceptPublicId);
     }
 
@@ -251,11 +254,11 @@ public interface Entity<V extends EntityVersion>
         return getConceptForSemantic(semanticFacade.nid());
     }
 
-    static <V extends EntityVersion> Optional<V> getVersion(int nid, int stampNid) {
+    static <V extends EntityVersion> Optional<V> getVersion(long nid, long stampNid) {
         return Optional.ofNullable(getVersionFast(nid, stampNid));
     }
 
-    static <V extends EntityVersion> V getVersionFast(int nid, int stampNid) {
+    static <V extends EntityVersion> V getVersionFast(long nid, long stampNid) {
         Entity<?> entity = EntityHandle.get(nid).orNull();
         if (entity != null) {
             for (EntityVersion version : entity.versions()) {
@@ -270,7 +273,7 @@ public interface Entity<V extends EntityVersion>
     @Override
     ImmutableList<V> versions();
 
-    static Optional<ConceptEntity> getConceptForSemantic(int semanticNid) {
+    static Optional<ConceptEntity> getConceptForSemantic(long semanticNid) {
         Optional<Entity<? extends EntityVersion>> optionalEntity =
                 EntityHandle.get(semanticNid).entity().filter(e -> !e.canceled());
         if (optionalEntity.isPresent()) {
@@ -286,15 +289,15 @@ public interface Entity<V extends EntityVersion>
         return Optional.empty();
     }
 
-    static <T extends StampEntity<? extends StampEntityVersion>> T getStamp(int nid) {
+    static <T extends StampEntity<? extends StampEntityVersion>> T getStamp(long nid) {
         return EntityService.get().getStampFast(nid);
     }
 
-    default Optional<V> getVersion(int stampNid) {
+    default Optional<V> getVersion(long stampNid) {
         return Optional.ofNullable(getVersionFast(stampNid));
     }
 
-    default V getVersionFast(int stampNid) {
+    default V getVersionFast(long stampNid) {
         for (V version : versions()) {
             if (version.stampNid() == stampNid) {
                 return version;
@@ -308,7 +311,7 @@ public interface Entity<V extends EntityVersion>
     }
 
     default V getVersionFast(PublicId stampId) {
-        int stampNid = nid(stampId);
+        long stampNid = nid(stampId);
         for (V version : versions()) {
             if (version.stampNid() == stampNid) {
                 return version;
@@ -317,12 +320,12 @@ public interface Entity<V extends EntityVersion>
         return null;
     }
 
-    default IntIdSet stampNids() {
-        MutableIntList stampNids = IntLists.mutable.withInitialCapacity(versions().size());
+    default LongIdSet stampNids() {
+        MutableLongList stampNids = LongLists.mutable.withInitialCapacity(versions().size());
         for (EntityVersion version : versions()) {
             stampNids.add(version.stampNid());
         }
-        return IntIds.set.of(stampNids.toArray());
+        return LongIds.set.of(stampNids.toArray());
     }
 
     byte[] getBytes();
@@ -369,7 +372,7 @@ public interface Entity<V extends EntityVersion>
         return sb.toString();
     }
 
-    int nid();
+    long nid();
 
     @Override
     default PublicId publicId() {
@@ -400,8 +403,8 @@ public interface Entity<V extends EntityVersion>
         return versions().stream().anyMatch(v -> v.uncommitted());
     }
 
-    default ImmutableIntList uncommittedStampNids() {
-        return IntLists.immutable.of(versions().stream()
-                .filter(v -> v.uncommitted()).mapToInt(v -> v.stampNid()).toArray());
+    default ImmutableLongList uncommittedStampNids() {
+        return LongLists.immutable.of(versions().stream()
+                .filter(v -> v.uncommitted()).mapToLong(v -> v.stampNid()).toArray());
     }
 }

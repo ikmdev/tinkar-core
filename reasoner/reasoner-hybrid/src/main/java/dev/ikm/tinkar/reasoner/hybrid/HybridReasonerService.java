@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
+
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.eclipse.collections.api.factory.primitive.IntSets;
@@ -92,27 +94,21 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	}
 
 	@Override
-	public ImmutableIntSet getEquivalent(int id) {
-		MutableLongSet eqs = sso.getEquivalentConcepts(id);
-		MutableIntSet eqsInt = IntSets.mutable.empty();
-		eqs.forEach(l -> eqsInt.add((int) l));
-		return eqsInt.toImmutable();
+	public ImmutableLongSet getEquivalent(long id) {
+		// the reasoner's ids are the nids
+		return sso.getEquivalentConcepts(id).toImmutable();
 	}
 
 	@Override
-	public ImmutableIntSet getParents(int id) {
-		MutableLongSet supers = sso.getSuperConcepts(id);
-		MutableIntSet eqsInt = IntSets.mutable.empty();
-		supers.forEach(l -> eqsInt.add((int) l));
-		return eqsInt.toImmutable();
+	public ImmutableLongSet getParents(long id) {
+		// the reasoner's ids are the nids
+		return sso.getSuperConcepts(id).toImmutable();
 	}
 
 	@Override
-	public ImmutableIntSet getChildren(int id) {
-		MutableLongSet subs = sso.getSubConcepts(id);
-		MutableIntSet eqsInt = IntSets.mutable.empty();
-		subs.forEach(l -> eqsInt.add((int) l));
-		return eqsInt.toImmutable();
+	public ImmutableLongSet getChildren(long id) {
+		// the reasoner's ids are the nids
+		return sso.getSubConcepts(id).toImmutable();
 	}
 
 }

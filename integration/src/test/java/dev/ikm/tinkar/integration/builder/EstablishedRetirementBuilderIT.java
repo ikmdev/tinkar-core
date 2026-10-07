@@ -203,7 +203,7 @@ class EstablishedRetirementBuilderIT {
     @Test
     @DisplayName("A born concept retires its own definition at a later inactive stamp")
     void bornConceptRetiresItsAxiomsLater() {
-        int conceptNid = LEDGER_SET.conceptRef("Born kind (Test)").nid();
+        long conceptNid = LEDGER_SET.conceptRef("Born kind (Test)").nid();
         List<SemanticEntity<SemanticEntityVersion>> axioms = EntityService.get().semanticsForComponentOfPattern(conceptNid,
                 KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
         assertEquals(1, axioms.size(), "one stated-axiom semantic");
@@ -261,7 +261,7 @@ class EstablishedRetirementBuilderIT {
     }
 
     /** Whether any concept-reference vertex of the expression names the concept. */
-    private static boolean namesConcept(DiTreeEntity tree, int conceptNid) {
+    private static boolean namesConcept(DiTreeEntity tree, long conceptNid) {
         for (EntityVertex vertex : tree.vertexMap()) {
             if (vertex != null && vertex.getMeaningNid() == KernelTerm.CONCEPT_REFERENCE.nid()) {
                 Object reference = vertex.propertyFast(KernelTerm.CONCEPT_REFERENCE);

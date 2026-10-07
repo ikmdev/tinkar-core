@@ -75,7 +75,7 @@ class AllowlistEntityAggregatorIT {
 
     @Test
     void allowlistIncludesOnlyTheAllowedModule() {
-        List<Integer> emitted = collect(new AllowlistEntityAggregator(List.of(moduleA.publicId())));
+        List<Long> emitted = collect(new AllowlistEntityAggregator(List.of(moduleA.publicId())));
 
         assertTrue(emitted.contains(moduleA.nid()), "the allowed module's own concept is exported");
         assertTrue(emitted.contains(thingA.nid()), "content authored in the allowed module is exported");
@@ -85,7 +85,7 @@ class AllowlistEntityAggregatorIT {
 
     @Test
     void patternsAreEmittedBeforeSemantics() {
-        List<Integer> emitted = collect(new AllowlistEntityAggregator(List.of(moduleA.publicId())));
+        List<Long> emitted = collect(new AllowlistEntityAggregator(List.of(moduleA.publicId())));
 
         int lastPatternIndex = -1;
         int firstSemanticIndex = Integer.MAX_VALUE;
@@ -126,7 +126,7 @@ class AllowlistEntityAggregatorIT {
         EntityCountSummary baseline = new AllowlistEntityAggregator(mod).aggregate(nid -> { });
         AllowlistEntityAggregator excluding = new AllowlistEntityAggregator(
                 mod, List.of(), List.of(), List.of(probePattern.publicId()), null);
-        List<Integer> emitted = collect(excluding);
+        List<Long> emitted = collect(excluding);
         EntityCountSummary excluded = new AllowlistEntityAggregator(
                 mod, List.of(), List.of(), List.of(probePattern.publicId()), null).aggregate(nid -> { });
 
@@ -148,8 +148,8 @@ class AllowlistEntityAggregatorIT {
         assertEquals(0, included.semanticCount(), "only semantics on the included pattern would cross");
     }
 
-    private static List<Integer> collect(AllowlistEntityAggregator aggregator) {
-        List<Integer> emitted = new ArrayList<>();
+    private static List<Long> collect(AllowlistEntityAggregator aggregator) {
+        List<Long> emitted = new ArrayList<>();
         aggregator.aggregate(emitted::add);
         return emitted;
     }

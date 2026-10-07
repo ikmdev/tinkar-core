@@ -17,8 +17,8 @@ package dev.ikm.tinkar.reasoner.service;
 
 import java.util.List;
 
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
@@ -69,9 +69,9 @@ public interface ReasonerService {
 		});
 	}
 
-	void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater);
+	void processIncremental(List<Long> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater);
 
-	default void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates) {
+	default void processIncremental(List<Long> deletes, List<SemanticEntityVersion> updates) {
 		this.processIncremental(deletes, updates, new TrackingCallable<Object>() {
 			@Override
 			protected Object compute() throws Exception {
@@ -103,14 +103,14 @@ public interface ReasonerService {
 
 	int getConceptCount();
 
-	ImmutableIntList getReasonerConceptSet();
+	ImmutableLongList getReasonerConceptSet();
 
-	ImmutableIntSet getEquivalent(int id);
+	ImmutableLongSet getEquivalent(long id);
 
-	ImmutableIntSet getParents(int id);
+	ImmutableLongSet getParents(long id);
 
-	ImmutableIntSet getChildren(int id);
+	ImmutableLongSet getChildren(long id);
 
-	LogicalExpression getNecessaryNormalForm(int id);
+	LogicalExpression getNecessaryNormalForm(long id);
 
 }

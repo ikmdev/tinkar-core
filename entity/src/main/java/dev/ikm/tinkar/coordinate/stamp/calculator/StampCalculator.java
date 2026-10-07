@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.stamp.calculator;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.NonExistentValue;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -43,9 +43,9 @@ import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
+import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,9 +100,9 @@ public interface StampCalculator {
      * @param stampNids a set of integers representing stamp identifiers
      * @return the integer stamp ID that occurs first based on time order
      */
-    static int firstStampTimeOnly(IntIdSet stampNids) {
-        int[] stampNidsArray = stampNids.toArray();
-        int first = stampNidsArray[0];
+    static long firstStampTimeOnly(LongIdSet stampNids) {
+        long[] stampNidsArray = stampNids.toArray();
+        long first = stampNidsArray[0];
         for (int i = 1; i < stampNidsArray.length; i++) {
             switch (getRelativePositionTimeOnly(first, stampNidsArray[i])) {
                 case BEFORE, EQUAL, CONTRADICTION, UNREACHABLE -> {}
@@ -120,7 +120,7 @@ public interface StampCalculator {
      * @return the relative position of the first stamp compared to the second stamp,
      *         indicating whether the first stamp is BEFORE, AFTER, or EQUAL in terms of time.
      */
-    static RelativePosition getRelativePositionTimeOnly(int stampNid1, int stampNid2) {
+    static RelativePosition getRelativePositionTimeOnly(long stampNid1, long stampNid2) {
         if (stampNid1 == stampNid2) {
             return RelativePosition.EQUAL;
         }
@@ -150,13 +150,13 @@ public interface StampCalculator {
      * @return one {@link Latest} per semantic chronology of the pattern; empty entries
      *         for semantics with no reachable, allowed-state, non-defaults version
      */
-    Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid);
+    Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(long patternNid);
 
     default Stream<SemanticEntityVersion> streamLatestActiveVersionForPattern(PatternFacade patternFacade) {
         return streamLatestActiveVersionForPattern(patternFacade.nid());
     }
 
-    default Stream<SemanticEntityVersion> streamLatestActiveVersionForPattern(int patternNid) {
+    default Stream<SemanticEntityVersion> streamLatestActiveVersionForPattern(long patternNid) {
         return streamLatestVersionForPattern(patternNid)
                 .filter(latestVersion -> latestVersion.ifAbsentOrFunction(() -> false, latest -> latest.active()))
                 .map(semanticEntityVersionLatest -> semanticEntityVersionLatest.get());
@@ -166,7 +166,7 @@ public interface StampCalculator {
         return streamReferencedComponentIfSemanticActiveForPattern(patternFacade.nid());
     }
 
-    default Stream<Entity> streamReferencedComponentIfSemanticActiveForPattern(int patternNid) {
+    default Stream<Entity> streamReferencedComponentIfSemanticActiveForPattern(long patternNid) {
         return streamLatestActiveVersionForPattern(patternNid)
                 .map(semanticEntityVersion -> EntityHandle.get(semanticEntityVersion.referencedComponentNid()).expectEntity());
     }
@@ -175,7 +175,7 @@ public interface StampCalculator {
         return referencedConceptsIfSemanticActiveForPattern(patternFacade.nid());
     }
 
-    default List<ConceptEntity> referencedConceptsIfSemanticActiveForPattern(int patternNid) {
+    default List<ConceptEntity> referencedConceptsIfSemanticActiveForPattern(long patternNid) {
         return streamReferencedComponentIfSemanticActiveForPattern(patternNid)
                 .filter(entity -> entity instanceof ConceptEntity)
                 .map(entity -> (ConceptEntity) entity).toList();
@@ -185,7 +185,7 @@ public interface StampCalculator {
         return isLatestActive(facade.nid());
     }
 
-    default boolean isLatestActive(int nid) {
+    default boolean isLatestActive(long nid) {
         Latest<EntityVersion> latest = latest(nid);
         if (latest.isPresent()) {
             return StateSet.ACTIVE.contains(latest.get().stamp().state());
@@ -204,7 +204,7 @@ public interface StampCalculator {
      * @param <V> the type of EntityVersion
      * @return the calculated latest version
      */
-    <V extends EntityVersion> Latest<V> latest(int nid);
+    <V extends EntityVersion> Latest<V> latest(long nid);
 
     /**
      * Calculates the latest version of the component identified by the nid without caching the result.
@@ -217,7 +217,7 @@ public interface StampCalculator {
      * @param <V> the type of EntityVersion
      * @return the calculated latest version
      */
-    <V extends EntityVersion> Latest<V> latestNoCache(int nid);
+    <V extends EntityVersion> Latest<V> latestNoCache(long nid);
 
     <V extends EntityVersion> List<DiTreeVersion<V>> getVersionGraphList(Entity<V> chronicle);
 
@@ -228,7 +228,7 @@ public interface StampCalculator {
      * @return Optional new semantic record containing new version. Caller is responsible to write to entity store
      * and manage associated transaction.
      */
-    default Optional<SemanticRecord> updateIfFieldsChanged(int semanticNid, ImmutableList<Object> fields, int stampNid) {
+    default Optional<SemanticRecord> updateIfFieldsChanged(long semanticNid, ImmutableList<Object> fields, long stampNid) {
         return updateIfFieldsChanged(EntityHandle.get(semanticNid).expectSemanticRecord(), fields, stampNid);
     }
 
@@ -239,7 +239,7 @@ public interface StampCalculator {
      * @return a new SemanticRecord with the new SemanticVersionRecord added. It is the responsibility of the caller
      * to write to the store, and manage transactions.
      */
-    default Optional<SemanticRecord> updateIfFieldsChanged(SemanticRecord chronicle, ImmutableList<Object> fields, int stampNid) {
+    default Optional<SemanticRecord> updateIfFieldsChanged(SemanticRecord chronicle, ImmutableList<Object> fields, long stampNid) {
         Latest<SemanticVersionRecord> latest = latest(chronicle);
         if (latest.isPresent()) {
             for (SemanticVersionRecord version : latest.getWithContradictions()) {
@@ -251,18 +251,18 @@ public interface StampCalculator {
         return Optional.of(chronicle.with(new SemanticVersionRecord(chronicle, stampNid, fields)).build());
     }
 
-    default SemanticRecord updateFields(int semanticNid, ImmutableList<Object> fields, int stampNid) {
+    default SemanticRecord updateFields(long semanticNid, ImmutableList<Object> fields, long stampNid) {
         return updateFields(EntityHandle.get(semanticNid).expectSemanticRecord(), fields, stampNid);
     }
 
     // TODO: maybe change references to Fields to SemanticFields in API? STAMP VALUES may also be considered fields.
-    default SemanticRecord updateFields(SemanticRecord chronicle, ImmutableList<Object> fields, int stampNid) {
+    default SemanticRecord updateFields(SemanticRecord chronicle, ImmutableList<Object> fields, long stampNid) {
         return chronicle.with(new SemanticVersionRecord(chronicle, stampNid, fields)).build();
     }
 
     <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle);
 
-    default Optional<SemanticRecord> updateIfFieldsChanged(int semanticNid, ImmutableList<Object> fields, StampEntity stampEntity) {
+    default Optional<SemanticRecord> updateIfFieldsChanged(long semanticNid, ImmutableList<Object> fields, StampEntity stampEntity) {
         return updateIfFieldsChanged(EntityHandle.get(semanticNid).expectSemanticRecord(), fields, stampEntity.nid());
     }
 
@@ -272,7 +272,7 @@ public interface StampCalculator {
         return relativePosition(v1.stampNid(), v2.stampNid());
     }
 
-    RelativePosition relativePosition(int stampNid, int stampNid2);
+    RelativePosition relativePosition(long stampNid, long stampNid2);
 
     /**
      * Return a comparison result compatible with java.lang.Comparable used
@@ -284,7 +284,7 @@ public interface StampCalculator {
      * @param stampNid
      * @param stampNid2
      */
-    default int comparePositions(int stampNid, int stampNid2) {
+    default int comparePositions(long stampNid, long stampNid2) {
         return switch (relativePosition(stampNid, stampNid2)) {
             case AFTER -> 1;
             case EQUAL, CONTRADICTION -> 0;
@@ -315,7 +315,7 @@ public interface StampCalculator {
      * @param patternNid the nid of the pattern whose semantics to iterate
      * @param procedure  receives each latest semantic version with the pattern's latest version
      */
-    void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
+    void forEachSemanticVersionOfPattern(long patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
 
     /**
      * Parallel form of {@link #forEachSemanticVersionOfPattern(int, BiConsumer)} — the
@@ -325,7 +325,7 @@ public interface StampCalculator {
      * @param patternNid the nid of the pattern whose semantics to iterate
      * @param procedure  receives each latest semantic version with the pattern's latest version
      */
-    void forEachSemanticVersionOfPatternParallel(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
+    void forEachSemanticVersionOfPatternParallel(long patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
 
     /**
      * Parallel form of {@link #forEachSemanticVersionOfPattern(int, BiConsumer)}
@@ -337,7 +337,7 @@ public interface StampCalculator {
      * @param patternNid     the nid of the pattern whose semantics to iterate
      * @param procedure      receives each latest semantic version with the pattern's latest version
      */
-    void forEachSemanticVersionInSetOfPatternParallel(ImmutableIntSet semanticNidSet, int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
+    void forEachSemanticVersionInSetOfPatternParallel(ImmutableLongSet semanticNidSet, long patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
 
     default void forEachSemanticVersionForComponent(EntityFacade component,
                                                     BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
@@ -354,7 +354,7 @@ public interface StampCalculator {
      * @param componentNid the nid of the referenced component
      * @param procedure    receives each latest semantic version with the component's latest version
      */
-    void forEachSemanticVersionForComponent(int componentNid,
+    void forEachSemanticVersionForComponent(long componentNid,
                                             BiConsumer<SemanticEntityVersion, EntityVersion> procedure);
 
     default void forEachSemanticVersionForComponentOfPattern(EntityFacade component,
@@ -375,14 +375,14 @@ public interface StampCalculator {
      * @param procedure    receives each latest semantic version with the component's and
      *                     pattern's latest versions
      */
-    void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid, TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure);
+    void forEachSemanticVersionForComponentOfPattern(long componentNid, long patternNid, TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure);
 
     default void forEachSemanticVersionWithFieldsOfPattern(PatternFacade patternFacade,
                                                            TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, PatternEntityVersion> procedure) {
         forEachSemanticVersionWithFieldsOfPattern(patternFacade.nid(), procedure);
     }
 
-    default void forEachSemanticVersionWithFieldsOfPattern(int patternNid, TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, PatternEntityVersion> procedure) {
+    default void forEachSemanticVersionWithFieldsOfPattern(long patternNid, TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, PatternEntityVersion> procedure) {
         forEachSemanticVersionOfPattern(patternNid, (semanticEntityVersion, patternVersion) -> procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(), patternVersion));
     }
 
@@ -392,7 +392,7 @@ public interface StampCalculator {
         forEachSemanticVersionWithFieldsForComponentOfPattern(component.nid(), patternFacade.nid(), procedure);
     }
 
-    default void forEachSemanticVersionWithFieldsForComponentOfPattern(int componentNid, int patternNid, QuadConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion, PatternEntityVersion> procedure) {
+    default void forEachSemanticVersionWithFieldsForComponentOfPattern(long componentNid, long patternNid, QuadConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion, PatternEntityVersion> procedure) {
         forEachSemanticVersionForComponentOfPattern(componentNid, patternNid, (semanticEntityVersion, entityVersion, patternEntityVersion) -> procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(), entityVersion, patternEntityVersion));
     }
 
@@ -401,24 +401,24 @@ public interface StampCalculator {
         forEachSemanticVersionWithFieldsForComponent(component.nid(), procedure);
     }
 
-    void forEachSemanticVersionWithFieldsForComponent(int componentNid,
+    void forEachSemanticVersionWithFieldsForComponent(long componentNid,
                                                       TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion> procedure);
 
     default Latest<PatternEntityVersion> latestPatternEntityVersion(PatternFacade patternFacade) {
         return latestPatternEntityVersion(patternFacade.nid());
     }
 
-    Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid);
+    Latest<PatternEntityVersion> latestPatternEntityVersion(long patternNid);
 
     default Latest<ConceptEntityVersion> latestConceptVersion(ConceptFacade conceptFacade) {
         return latest(conceptFacade.nid());
     }
 
-    default Latest<ConceptEntityVersion> latestConceptVersion(int conceptNid) {
+    default Latest<ConceptEntityVersion> latestConceptVersion(long conceptNid) {
         return latest(conceptNid);
     }
 
-    default Latest<SemanticEntityVersion> latestSemanticVersion(int semanticNid) {
+    default Latest<SemanticEntityVersion> latestSemanticVersion(long semanticNid) {
         return latest(semanticNid);
     }
 
@@ -486,16 +486,16 @@ public interface StampCalculator {
      *                          attachment concept, or a template purpose concept
      * @return the nid of the computed identity (minted if not yet present)
      */
-    private static int defaultsSemanticNid(PatternFacade pattern, EntityFacade attachmentConcept) {
+    private static long defaultsSemanticNid(PatternFacade pattern, EntityFacade attachmentConcept) {
         UUID semanticUuid = UuidT5Generator.singleSemanticUuid(
                 pattern.publicId(), attachmentConcept.publicId());
         return ScopedValue.where(PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID, pattern.publicId())
                 .call(() -> PrimitiveData.nid(semanticUuid));
     }
 
-    OptionalInt getIndexForMeaning(int patternNid, int meaningNid);
+    OptionalInt getIndexForMeaning(long patternNid, long meaningNid);
 
-    OptionalInt getIndexForPurpose(int patternNid, int meaningNid);
+    OptionalInt getIndexForPurpose(long patternNid, long meaningNid);
 
     default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(SemanticEntityVersion semanticVersion, EntityFacade meaning) {
         return getFieldForSemanticWithMeaning(Latest.of(semanticVersion), meaning);
@@ -514,38 +514,38 @@ public interface StampCalculator {
         return getFieldForSemantic(latestSemantic, meaning.nid(), FieldCriterion.PURPOSE);
     }
 
-    <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion);
+    <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, long criterionNid, FieldCriterion fieldCriterion);
 
-    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(SemanticEntityVersion semanticVersion, int meaningNid) {
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(SemanticEntityVersion semanticVersion, long meaningNid) {
         return getFieldForSemantic(Latest.of(semanticVersion), meaningNid, FieldCriterion.MEANING);
     }
-    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(SemanticEntityVersion semanticVersion, int purposeNid) {
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(SemanticEntityVersion semanticVersion, long purposeNid) {
         return getFieldForSemantic(Latest.of(semanticVersion), purposeNid, FieldCriterion.PURPOSE);
     }
 
-    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(Latest<SemanticEntityVersion> latestSemantic, int meaningNid) {
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(Latest<SemanticEntityVersion> latestSemantic, long meaningNid) {
         return getFieldForSemantic(latestSemantic, meaningNid, FieldCriterion.PURPOSE);
     }
 
-    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(Latest<SemanticEntityVersion> latestSemantic, int meaningNid) {
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(Latest<SemanticEntityVersion> latestSemantic, long meaningNid) {
         return getFieldForSemantic(latestSemantic, meaningNid, FieldCriterion.MEANING);
     }
 
-    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(int componentNid, EntityFacade meaning) {
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(long componentNid, EntityFacade meaning) {
         return getFieldForSemantic(componentNid, meaning.nid(), FieldCriterion.MEANING);
     }
 
-    <T> Latest<Field<T>> getFieldForSemantic(int componentNid, int criterionNid, FieldCriterion fieldCriterion);
+    <T> Latest<Field<T>> getFieldForSemantic(long componentNid, long criterionNid, FieldCriterion fieldCriterion);
 
     default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(EntityFacade component, EntityFacade meaning) {
         return getFieldForSemantic(component.nid(), meaning.nid(), FieldCriterion.MEANING);
     }
 
-    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(int componentNid, EntityFacade purpose) {
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(long componentNid, EntityFacade purpose) {
         return getFieldForSemantic(componentNid, purpose.nid(), FieldCriterion.PURPOSE);
     }
 
-    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(int componentNid, int purposeNid) {
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(long componentNid, long purposeNid) {
         return getFieldForSemantic(componentNid, purposeNid, FieldCriterion.PURPOSE);
     }
 
@@ -553,7 +553,7 @@ public interface StampCalculator {
         return getFieldForSemantic(component.nid(), purpose.nid(), FieldCriterion.PURPOSE);
     }
 
-    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(int componentNid, int meaningNid) {
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(long componentNid, long meaningNid) {
         return getFieldForSemantic(componentNid, meaningNid, FieldCriterion.MEANING);
     }
 
@@ -596,7 +596,7 @@ public interface StampCalculator {
 
     default ImmutableList<LatestVersionSearchResult> search(String query, int maxResultSize) throws Exception {
         PrimitiveDataSearchResult[] primitiveResults = PrimitiveData.get().search(query, maxResultSize);
-        final MutableIntObjectMap<LatestVersionSearchResult> semanticNidSearchResultMap = IntObjectMaps.mutable.ofInitialCapacity(primitiveResults.length);
+        final MutableLongObjectMap<LatestVersionSearchResult> semanticNidSearchResultMap = LongObjectMaps.mutable.ofInitialCapacity(primitiveResults.length);
         final AtomicInteger duplicates = new AtomicInteger();
         final AtomicInteger missingLatest = new AtomicInteger();
         for (PrimitiveDataSearchResult primitiveResult : primitiveResults) {
@@ -663,10 +663,10 @@ public interface StampCalculator {
         ImmutableList<LatestVersionSearchResult> latestVersionSearchResults = search(query, maxResultSize);
         MutableList<LatestVersionSearchResult> latestVersionSearchResultMutableList = Lists.mutable.empty();
 
-        IntIdSet descendantNids = navigationCalculator.descendentsOf(EntityService.get().nidForPublicId(ancestor));
+        LongIdSet descendantNids = navigationCalculator.descendentsOf(EntityService.get().nidForPublicId(ancestor));
 
         latestVersionSearchResults.forEach(latestVersionSearchResult -> {
-            int chronologyNid = latestVersionSearchResult.latestVersion().get().chronology().referencedComponent().nid();
+            long chronologyNid = latestVersionSearchResult.latestVersion().get().chronology().referencedComponent().nid();
             if (descendantNids.contains(chronologyNid)) {
                 latestVersionSearchResultMutableList.add(latestVersionSearchResult);
             }
@@ -683,7 +683,7 @@ public interface StampCalculator {
         return false;
     }
 
-    default boolean latestIsActive(int nid) {
+    default boolean latestIsActive(long nid) {
         Latest<EntityVersion> latest = latest(nid);
         if (latest.isPresent()) {
             return latest.get().active();
@@ -697,7 +697,7 @@ public interface StampCalculator {
      * @param nid native identifier for the component.
      * @return the ChangeChronology
      */
-    default ChangeChronology changeChronology(int nid) {
+    default ChangeChronology changeChronology(long nid) {
         return changeChronology(EntityHandle.getEntityOrThrow(nid));
     }
 

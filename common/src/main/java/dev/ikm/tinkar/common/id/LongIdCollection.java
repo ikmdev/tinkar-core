@@ -20,15 +20,28 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.IntConsumer;
-import java.util.function.IntFunction;
-import java.util.stream.IntStream;
+import java.util.function.LongConsumer;
+import java.util.function.LongFunction;
+import java.util.stream.LongStream;
 
-public interface IntIdCollection extends IdCollection {
+public interface LongIdCollection extends IdCollection {
 
-    IntStream intStream();
+    /**
+     * The hash of one id: its low half, which is {@link Integer#hashCode(int)} of the id for every
+     * nid that fits an {@code int}. Collections of nids widened from {@code int} keep the hash codes,
+     * and so the hash order, they had before. Not {@link Long#hashCode(long)}, which differs for every
+     * negative value, and every sequential nid is negative.
+     *
+     * @param id a nid
+     * @return the hash of the id
+     */
+    static int hashOf(long id) {
+        return Nid.hash(id);
+    }
 
-    boolean contains(int value);
+    LongStream longStream();
+
+    boolean contains(long value);
 
     default boolean notEmpty() {
         return !isEmpty();
@@ -36,32 +49,32 @@ public interface IntIdCollection extends IdCollection {
 
     boolean isEmpty();
 
-    default <T extends Object> T[] mapToArray(IntFunction<T> function, Class<T> clazz) {
+    default <T extends Object> T[] mapToArray(LongFunction<T> function, Class<T> clazz) {
         T[] array = (T[]) Array.newInstance(clazz, size());
-        int[] nids = toArray();
+        long[] nids = toArray();
         for (int i = 0; i < array.length; i++) {
             array[i] = function.apply(nids[i]);
         }
         return array;
     }
 
-    int[] toArray();
+    long[] toArray();
 
-    default <T extends Object> List<T> mapToList(IntFunction<T> function) {
+    default <T extends Object> List<T> mapToList(LongFunction<T> function) {
         ArrayList<T> list = new ArrayList<>(size());
         forEach(nid -> list.add(function.apply(nid)));
         return list;
     }
 
-    void forEach(IntConsumer consumer);
+    void forEach(LongConsumer consumer);
 
-    default <T extends Object> Set<T> mapToSet(IntFunction<T> function) {
+    default <T extends Object> Set<T> mapToSet(LongFunction<T> function) {
         HashSet<T> set = new HashSet<>(size());
         forEach(nid -> set.add(function.apply(nid)));
         return set;
     }
 
-    IntIdCollection with(int... valuesToAdd);
+    LongIdCollection with(long... valuesToAdd);
 
 
 }

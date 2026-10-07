@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.entity.constraint;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.terms.ConstraintTerm;
 import dev.ikm.tinkar.terms.EntityFacade;
@@ -120,12 +120,12 @@ public final class EqualMatchEvaluator implements MemberMatchEvaluator {
             }
             return true;
         }
-        if (value instanceof IntIdList valueList && member instanceof IntIdList memberList) {
+        if (value instanceof LongIdList valueList && member instanceof LongIdList memberList) {
             return Arrays.equals(valueList.toArray(), memberList.toArray());
         }
-        if (value instanceof IntIdSet valueSet && member instanceof IntIdSet memberSet) {
-            int[] valueMembers = valueSet.toArray();
-            int[] memberMembers = memberSet.toArray();
+        if (value instanceof LongIdSet valueSet && member instanceof LongIdSet memberSet) {
+            long[] valueMembers = valueSet.toArray();
+            long[] memberMembers = memberSet.toArray();
             Arrays.sort(valueMembers);
             Arrays.sort(memberMembers);
             return Arrays.equals(valueMembers, memberMembers);

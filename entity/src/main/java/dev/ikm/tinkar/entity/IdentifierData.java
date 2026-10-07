@@ -31,7 +31,7 @@ public interface IdentifierData extends PublicId {
     long mostSignificantBits();
     long leastSignificantBits();
     ImmutableLongList additionalUuidLongs();
-    int nid();
+    long nid();
 
     @Override
     default UUID[] asUuidArray() {

@@ -116,25 +116,25 @@ class GeneratorEndToEndIT {
         // the WRONG value into the RIGHT-shaped slot — no count-based assertion would
         // ever catch that. These snapshot actual FQN text and axiom parents so the
         // "after" checks below compare content, not just cardinality.
-        int userModuleNid = findByName("User module");
+        long userModuleNid = findByName("User module");
         String userModuleFqnBefore = languageCalculator.getFullyQualifiedNameText(
                 dev.ikm.tinkar.terms.EntityProxy.Concept.make(userModuleNid)).orElseThrow();
         String modelConceptFqnBefore = languageCalculator.getFullyQualifiedNameText(IkeTerms.MODEL_CONCEPT)
                 .orElseThrow();
-        Set<Integer> userModuleParentsBefore = latestIsAParents(userModuleNid, calculator);
+        Set<Long> userModuleParentsBefore = latestIsAParents(userModuleNid, calculator);
         int descriptionPatternVersionsBefore = EntityHandle.get(KernelTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
                 .versions().size();
         // Every stated definition, not a sample: each stated-axiom semantic's latest
         // expression in canonical form (concept references as nids, so the comparison is
         // independent of how the generated source names them), with the stamps it carried
         // before the round trip, so the version the replay adds can be told apart.
-        Map<Integer, String> statedExpressionsBefore = new HashMap<>();
-        Map<Integer, Integer> statedReferencedComponents = new HashMap<>();
-        Map<Integer, Set<Integer>> statedStampsBefore = new HashMap<>();
-        Set<Integer> beyondSimpleIsA = new HashSet<>();
+        Map<Long, String> statedExpressionsBefore = new HashMap<>();
+        Map<Long, Long> statedReferencedComponents = new HashMap<>();
+        Map<Long, Set<Long>> statedStampsBefore = new HashMap<>();
+        Set<Long> beyondSimpleIsA = new HashSet<>();
         calculator.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                 (semanticVersion, patternVersion) -> {
-                    int semanticNid = semanticVersion.nid();
+                    long semanticNid = semanticVersion.nid();
                     statedExpressionsBefore.put(semanticNid,
                             canonicalExpression((DiTreeEntity) semanticVersion.fieldValues().get(0)));
                     statedReferencedComponents.put(semanticNid, semanticVersion.referencedComponentNid());
@@ -142,7 +142,7 @@ class GeneratorEndToEndIT {
                             (DiTreeEntity) semanticVersion.fieldValues().get(0)).simpleIsA()) {
                         beyondSimpleIsA.add(semanticNid);
                     }
-                    Set<Integer> stamps = new HashSet<>();
+                    Set<Long> stamps = new HashSet<>();
                     semanticVersion.entity().stampNids().forEach(stamps::add);
                     statedStampsBefore.put(semanticNid, stamps);
                 });
@@ -237,7 +237,7 @@ class GeneratorEndToEndIT {
                 .orElseThrow();
         assertEquals(modelConceptFqnBefore, modelConceptFqnAfter,
                 "the round trip must not change the calculator-resolved FQN text");
-        Set<Integer> userModuleParentsAfter = latestIsAParents(userModuleNid, calculator);
+        Set<Long> userModuleParentsAfter = latestIsAParents(userModuleNid, calculator);
         assertEquals(userModuleParentsBefore, userModuleParentsAfter,
                 "the round trip must not change the calculator-resolved latest isA parents");
 
@@ -247,9 +247,9 @@ class GeneratorEndToEndIT {
         int restated = 0;
         int nonSimpleRestated = 0;
         List<String> roundTripFailures = new ArrayList<>();
-        for (Map.Entry<Integer, String> before : statedExpressionsBefore.entrySet()) {
-            int semanticNid = before.getKey();
-            Set<Integer> stampsBefore = statedStampsBefore.get(semanticNid);
+        for (Map.Entry<Long, String> before : statedExpressionsBefore.entrySet()) {
+            long semanticNid = before.getKey();
+            Set<Long> stampsBefore = statedStampsBefore.get(semanticNid);
             List<SemanticEntityVersion> added = new ArrayList<>();
             SemanticEntity<? extends SemanticEntityVersion> semantic = EntityHandle.get(semanticNid).expectSemantic();
             for (SemanticEntityVersion version : semantic.versions()) {
@@ -294,13 +294,13 @@ class GeneratorEndToEndIT {
         dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler.Result result =
                 dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler.decompile(tree);
         return result.decompiled()
-                ? result.builderLambda(concept -> Integer.toString(concept.nid()))
+                ? result.builderLambda(concept -> Long.toString(concept.nid()))
                 : "not decompiled: " + result.diagnosticDump();
     }
 
     /** The latest-active stated-axiom semantic's isA parent nids for one component, if simple isA. */
-    private static Set<Integer> latestIsAParents(int componentNid, StampCalculator calculator) {
-        Set<Integer> parents = new HashSet<>();
+    private static Set<Long> latestIsAParents(long componentNid, StampCalculator calculator) {
+        Set<Long> parents = new HashSet<>();
         calculator.forEachSemanticVersionForComponentOfPattern(
                 dev.ikm.tinkar.terms.EntityProxy.Concept.make(componentNid),
                 KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
@@ -328,8 +328,8 @@ class GeneratorEndToEndIT {
         return count[0];
     }
 
-    private static int findByName(String name) {
-        int[] found = {-1};
+    private static long findByName(String name) {
+        long[] found = {-1};
         EntityService.get().forEachConceptEntity(concept -> {
             if (found[0] == -1 && name.equals(dev.ikm.tinkar.common.service.PrimitiveData.text(concept.nid()))) {
                 found[0] = concept.nid();

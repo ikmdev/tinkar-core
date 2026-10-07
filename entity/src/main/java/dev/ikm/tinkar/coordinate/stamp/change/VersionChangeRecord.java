@@ -24,7 +24,7 @@ import org.eclipse.collections.api.list.ImmutableList;
  * @param stampNid
  * @param changes
  */
-public record VersionChangeRecord(int stampNid, ImmutableList<FieldChangeRecord> changes) {
+public record VersionChangeRecord(long stampNid, ImmutableList<FieldChangeRecord> changes) {
     @Override
     public String toString() {
         return "VersionChangeRecord{change at:" +

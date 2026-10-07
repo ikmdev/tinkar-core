@@ -15,8 +15,10 @@
  */
 package dev.ikm.tinkar.entity;
 
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+
 import dev.ikm.tinkar.common.service.internal.EntityStore;
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DataActivity;
@@ -36,7 +38,7 @@ import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 
 import java.io.File;
 import java.util.Arrays;
@@ -52,7 +54,7 @@ import java.util.stream.Stream;
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 import static dev.ikm.tinkar.entity.Entity.LOG;
 
-public interface EntityService extends ChronologyService, Broadcaster<Integer> {
+public interface EntityService extends ChronologyService, Broadcaster<Long> {
     static EntityService get() {
         return ServiceLifecycleManager.get()
                 .getRunningService(EntityService.class)
@@ -110,16 +112,16 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         return getChronology(nidForPublicId(component.publicId()));
     }
 
-    <T extends Chronology<V>, V extends Version> Optional<T> getChronology(int nid);
+    <T extends Chronology<V>, V extends Version> Optional<T> getChronology(long nid);
 
-    default int nidForUuids(UUID... uuids) {
+    default long nidForUuids(UUID... uuids) {
         return nidForPublicId(PublicIds.of(uuids));
     }
 
-    int nidForPublicId(PublicId publicId);
+    long nidForPublicId(PublicId publicId);
 
 
-        default int nidForUuids(ImmutableList<UUID> uuidList) {
+        default long nidForUuids(ImmutableList<UUID> uuidList) {
             return nidForPublicId(PublicIds.of(uuidList.toArray(new UUID[uuidList.size()])));
         }
 
@@ -127,7 +129,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         return getStamp(nidForPublicId(component.publicId()));
     }
 
-    default Optional<StampEntity<StampEntityVersion>> getStamp(int nid) {
+    default Optional<StampEntity<StampEntityVersion>> getStamp(long nid) {
         StampEntity entity = (StampEntity) EntityHandle.get(nid).orNull();
         if (entity == null || entity.canceled()) {
             return Optional.empty();
@@ -180,7 +182,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         });
     }
 
-    default void forEachEntity(ImmutableIntList entityNids, Consumer<Entity<?>> consumer) {
+    default void forEachEntity(ImmutableLongList entityNids, Consumer<Entity<?>> consumer) {
         EntityStore.current().forEach(entityNids, (bytes, _) -> {
             Entity<EntityVersion> entity = EntityRecordFactory.make(bytes);
             consumer.accept(entity);
@@ -221,7 +223,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         return getStampFast(nidForUuids(uuidList));
     }
 
-    <T extends StampEntity<? extends StampEntityVersion>> T getStampFast(int nid);
+    <T extends StampEntity<? extends StampEntityVersion>> T getStampFast(long nid);
 
     default StampEntity<StampEntityVersion> getStampFast(UUID... uuids) {
         return getStampFast(nidForUuids(uuids));
@@ -274,7 +276,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         putEntityQuietly(entity, DataActivity.SYNCHRONIZABLE_EDIT);
     }
 
-    default int nidForComponent(Component component) {
+    default long nidForComponent(Component component) {
         if (component instanceof ComponentWithNid) {
             return ((ComponentWithNid) component).nid();
         }
@@ -283,11 +285,11 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
     void invalidateCaches(Entity entity);
 
-    void invalidateCaches(int... nids);
+    void invalidateCaches(long... nids);
 
     <T extends Chronology<V>, V extends Version> T unmarshalChronology(byte[] bytes);
 
-    default void addSortedUuids(List<UUID> uuidList, IntIdList idList) throws NoSuchElementException {
+    default void addSortedUuids(List<UUID> uuidList, LongIdList idList) throws NoSuchElementException {
         addSortedUuids(uuidList, idList.toArray());
     }
 
@@ -300,8 +302,8 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param nids
      * @throws NoSuchElementException
      */
-    default void addSortedUuids(List<UUID> uuidList, int... nids) throws NoSuchElementException {
-        for (int nid : nids) {
+    default void addSortedUuids(List<UUID> uuidList, long... nids) throws NoSuchElementException {
+        for (long nid : nids) {
             UUID[] uuids = EntityHandle.get(nid).expectEntity().publicId().asUuidArray();
             Arrays.sort(uuids);
             for (UUID nidUuid : uuids) {
@@ -310,7 +312,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         }
     }
 
-    void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
+    void forEachSemanticOfPattern(long patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
     /**
      * The semantics of a pattern. Each is read as the stream reaches it, so a stream that stops
@@ -319,7 +321,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param patternNid the pattern
      * @return the pattern's semantics, in no particular order
      */
-    Stream<SemanticEntity<SemanticEntityVersion>> semanticsOfPattern(int patternNid);
+    Stream<SemanticEntity<SemanticEntityVersion>> semanticsOfPattern(long patternNid);
 
     /**
      * The semantics that reference a component, read as the stream reaches them.
@@ -327,7 +329,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param componentNid the referenced component
      * @return the semantics referencing it, in no particular order
      */
-    Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponent(int componentNid);
+    Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponent(long componentNid);
 
     /**
      * The semantics of a pattern that reference a component, read as the stream reaches them:
@@ -337,7 +339,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param patternNid   the pattern
      * @return the pattern's semantics referencing the component, in no particular order
      */
-    Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponentOfPattern(int componentNid, int patternNid);
+    Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponentOfPattern(long componentNid, long patternNid);
 
     /**
      * Every semantic in the store, of every pattern.
@@ -419,7 +421,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param patternNid the pattern
      * @return the number of semantics its index lists
      */
-    default int countSemanticsOfPattern(int patternNid) {
+    default int countSemanticsOfPattern(long patternNid) {
         if (keysNoSemantics(patternNid)) {
             return 0;
         }
@@ -434,7 +436,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param patternNid the pattern
      * @return {@code true} for the concept, stamp and pattern binding patterns
      */
-    static boolean keysNoSemantics(int patternNid) {
+    static boolean keysNoSemantics(long patternNid) {
         // By nid: most stores keep no map from a nid back to its public id.
         for (PublicId binding : List.of(EntityBinding.Concept.pattern().publicId(),
                 EntityBinding.Stamp.pattern().publicId(), EntityBinding.Pattern.pattern().publicId())) {
@@ -445,9 +447,9 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         return false;
     }
 
-    void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
+    void forEachSemanticForComponent(long componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
-    void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
+    void forEachSemanticForComponentOfPattern(long componentNid, long patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
     void notifyRefreshRequired(Transaction transaction);
 
@@ -484,7 +486,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param entityPublicId the public ID of the entity
      * @return the NID associated with the given entity within the specified pattern context
      */
-    default int nidFor(int patternNid, PublicId entityPublicId) {
+    default long nidFor(long patternNid, PublicId entityPublicId) {
         PublicId patternPublicId = EntityHandle.get(patternNid).expectEntity().publicId();
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
@@ -504,7 +506,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param semanticPublicId the public ID of the semantic entity
      * @return the NID associated with the given semantic within the specified pattern context
      */
-    default int nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
+    default long nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
                 .call(() -> nidForPublicId(semanticPublicId));
@@ -523,7 +525,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param patternPublicId the public ID of the pattern entity
      * @return the NID associated with the given pattern
      */
-    default int nidForPattern(PublicId patternPublicId) {
+    default long nidForPattern(PublicId patternPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Pattern.pattern())
                 .call(() -> nidForPublicId(patternPublicId));
@@ -542,7 +544,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param stampPublicId the public ID of the STAMP entity
      * @return the NID associated with the given STAMP
      */
-    default int nidForStamp(PublicId stampPublicId) {
+    default long nidForStamp(PublicId stampPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
                 .call(() -> nidForPublicId(stampPublicId));
@@ -561,7 +563,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param conceptPublicId the public ID of the concept entity
      * @return the NID associated with the given concept
      */
-    default int nidForConcept(PublicId conceptPublicId) {
+    default long nidForConcept(PublicId conceptPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
                 .call(() -> nidForPublicId(conceptPublicId));
@@ -576,9 +578,9 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      *
      * @param stampNids array of stamp NIDs to check for uncommitted stamps
      */
-    void listAndCancelUncommittedStamps(int[] stampNids);
+    void listAndCancelUncommittedStamps(long[] stampNids);
 
-    default String recursiveEntityToString(int nid) {
+    default String recursiveEntityToString(long nid) {
         return EntityStringUtil.recursiveEntityToString(nid);
     }
 

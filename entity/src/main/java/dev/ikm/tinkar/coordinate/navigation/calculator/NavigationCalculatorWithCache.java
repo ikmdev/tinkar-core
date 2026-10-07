@@ -15,14 +15,16 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import dev.ikm.tinkar.common.id.IntIdCollection;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdCollection;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -42,12 +44,12 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
-import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
+import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
+import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,7 +104,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return languageCalculator;
     }
 
-    private void addDescendents(int conceptNid, MutableIntSet nidSet) {
+    private void addDescendents(long conceptNid, MutableLongSet nidSet) {
         if (!nidSet.contains(conceptNid)) {
             childrenOf(conceptNid).forEach(childNid -> {
                 addDescendents(childNid, nidSet);
@@ -111,7 +113,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         }
     }
 
-    private void addAncestors(int conceptNid, MutableIntSet nidSet) {
+    private void addAncestors(long conceptNid, MutableLongSet nidSet) {
         if (!nidSet.contains(conceptNid)) {
             parentsOf(conceptNid).forEach(parentNid -> {
                 addAncestors(parentNid, nidSet);
@@ -136,78 +138,78 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
     @Override
-    public IntIdList sortedParentsOf(int conceptNid) {
-        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedParentsOf(conceptNid).toArray(), this));
+    public LongIdList sortedParentsOf(long conceptNid) {
+        return LongIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedParentsOf(conceptNid).toArray(), this));
     }
 
     @Override
-    public IntIdList unsortedParentsOf(int conceptNid) {
+    public LongIdList unsortedParentsOf(long conceptNid) {
         return getIntIdListForMeaning(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
-    public IntIdSet descendentsOf(int conceptNid) {
-        MutableIntSet nidSet = IntSets.mutable.empty();
+    public LongIdSet descendentsOf(long conceptNid) {
+        MutableLongSet nidSet = LongSets.mutable.empty();
         addDescendents(conceptNid, nidSet);
-        return IntIds.set.of(nidSet.toArray());
+        return LongIds.set.of(nidSet.toArray());
     }
 
     @Override
-    public IntIdSet ancestorsOf(int conceptNid) {
-        MutableIntSet nidSet = IntSets.mutable.empty();
+    public LongIdSet ancestorsOf(long conceptNid) {
+        MutableLongSet nidSet = LongSets.mutable.empty();
         addAncestors(conceptNid, nidSet);
-        return IntIds.set.of(nidSet.toArray());
+        return LongIds.set.of(nidSet.toArray());
     }
 
     @Override
-    public IntIdSet kindOf(int conceptNid) {
-        MutableIntSet kindOfSet = IntSets.mutable.of(conceptNid);
+    public LongIdSet kindOf(long conceptNid) {
+        MutableLongSet kindOfSet = LongSets.mutable.of(conceptNid);
         kindOfSet.addAll(descendentsOf(conceptNid).toArray());
-        return IntIds.set.of(kindOfSet.toArray());
+        return LongIds.set.of(kindOfSet.toArray());
     }
 
     @Override
-    public ImmutableList<Edge> sortedChildEdges(int conceptNid) {
+    public ImmutableList<Edge> sortedChildEdges(long conceptNid) {
         return VertexSortNaturalOrder.SINGLETON.sortEdges(unsortedChildEdges(conceptNid), this);
     }
 
     @Override
-    public ImmutableList<Edge> unsortedChildEdges(int conceptNid) {
+    public ImmutableList<Edge> unsortedChildEdges(long conceptNid) {
         return getEdges(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
     }
 
     @Override
-    public ImmutableList<Edge> sortedParentEdges(int conceptNid) {
+    public ImmutableList<Edge> sortedParentEdges(long conceptNid) {
         return VertexSortNaturalOrder.SINGLETON.sortEdges(unsortedParentEdges(conceptNid), this);
     }
 
     @Override
-    public ImmutableList<Edge> unsortedParentEdges(int conceptNid) {
+    public ImmutableList<Edge> unsortedParentEdges(long conceptNid) {
         return getEdges(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
-    public IntIdList sortedChildrenOf(int conceptNid) {
-        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedChildrenOf(conceptNid).toArray(), this));
+    public LongIdList sortedChildrenOf(long conceptNid) {
+        return LongIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedChildrenOf(conceptNid).toArray(), this));
     }
 
     @Override
-    public IntIdList unsortedChildrenOf(int conceptNid) {
+    public LongIdList unsortedChildrenOf(long conceptNid) {
         return getIntIdListForMeaning(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
     }
     @Override
-    public IntIdList unsortedUnversionedChildrenOf(int conceptNid) {
+    public LongIdList unsortedUnversionedChildrenOf(long conceptNid) {
         return getIntIdListForMeaningUnversioned(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
     }
     @Override
-    public IntIdList unsortedUnversionedParentsOf(int conceptNid) {
+    public LongIdList unsortedUnversionedParentsOf(long conceptNid) {
         return getIntIdListForMeaningUnversioned(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
-    public IntIdList toSortedList(IntIdList inputList) {
+    public LongIdList toSortedList(LongIdList inputList) {
         // TODO add pattern sort...
-        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(inputList.toArray(), this));
+        return LongIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(inputList.toArray(), this));
     }
 
     @Override
@@ -216,18 +218,18 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
     @Override
-    public IntIdList unsortedParentsOf(int conceptNid, int patternNid) {
+    public LongIdList unsortedParentsOf(long conceptNid, long patternNid) {
         return getIntIdListForMeaningFromPattern(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN, patternNid);
     }
 
-    private ImmutableList<Edge> getEdges(int conceptNid, EntityProxy.Concept relationshipDirection) {
-        MutableIntObjectMap<MutableEdge> edges = IntObjectMaps.mutable.empty();
-        for (int patternNid : navigationCoordinate.navigationPatternNids().toArray()) {
+    private ImmutableList<Edge> getEdges(long conceptNid, EntityProxy.Concept relationshipDirection) {
+        MutableLongObjectMap<MutableEdge> edges = LongObjectMaps.mutable.empty();
+        for (long patternNid : navigationCoordinate.navigationPatternNids().toArray()) {
             stampCalculator.latestPatternEntityVersion(patternNid).ifPresent(patternEntityVersion -> {
-                int typeNid = patternEntityVersion.semanticMeaningNid();
-                IntIdList parents = getIntIdListForMeaningFromPattern(conceptNid, relationshipDirection, patternNid);
-                for (int parentNid : parents.toArray()) {
-                    edges.updateValue(parentNid, () -> new MutableEdge(IntSets.mutable.empty(), parentNid, this.languageCalculator), mutableEdge -> {
+                long typeNid = patternEntityVersion.semanticMeaningNid();
+                LongIdList parents = getIntIdListForMeaningFromPattern(conceptNid, relationshipDirection, patternNid);
+                for (long parentNid : parents.toArray()) {
+                    edges.updateValue(parentNid, () -> new MutableEdge(LongSets.mutable.empty(), parentNid, this.languageCalculator), mutableEdge -> {
                         mutableEdge.types.add(typeNid);
                         return mutableEdge;
                     });
@@ -237,37 +239,37 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return Lists.immutable.ofAll(edges.stream().map(mutableEdge -> mutableEdge.toEdge()).toList());
     }
 
-    private IntIdList getIntIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning, int patternNid) {
-        MutableIntSet nidsInList = IntSets.mutable.empty();
+    private LongIdList getIntIdListForMeaningFromPattern(long referencedComponentNid, EntityProxy.Concept fieldMeaning, long patternNid) {
+        MutableLongSet nidsInList = LongSets.mutable.empty();
         intIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, patternNid, nidsInList, navigationCoordinate.vertexStates(), true);
-        return IntIds.list.of(nidsInList.toArray());
+        return LongIds.list.of(nidsInList.toArray());
     }
 
-    private IntIdList getIntIdListForMeaning(int referencedComponentNid, EntityProxy.Concept fieldMeaning) {
-        IntIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
-        MutableIntSet nidsInList = IntSets.mutable.empty();
+    private LongIdList getIntIdListForMeaning(long referencedComponentNid, EntityProxy.Concept fieldMeaning) {
+        LongIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
+        MutableLongSet nidsInList = LongSets.mutable.empty();
         navigationPatternNids.forEach(navPatternNid -> {
             intIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, navPatternNid, nidsInList, navigationCoordinate.vertexStates(), true);
         });
-        return IntIds.list.of(nidsInList.toArray());
+        return LongIds.list.of(nidsInList.toArray());
     }
 
-    private IntIdList getIntIdListForMeaningUnversioned(int referencedComponentNid, EntityProxy.Concept fieldMeaning) {
-        IntIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
-        MutableIntSet nidsInList = IntSets.mutable.empty();
+    private LongIdList getIntIdListForMeaningUnversioned(long referencedComponentNid, EntityProxy.Concept fieldMeaning) {
+        LongIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
+        MutableLongSet nidsInList = LongSets.mutable.empty();
         navigationPatternNids.forEach(navPatternNid -> {
             intIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, navPatternNid, nidsInList, navigationCoordinate.vertexStates(), false);
         });
-        return IntIds.list.of(nidsInList.toArray());
+        return LongIds.list.of(nidsInList.toArray());
     }
 
-    private void intIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning,
-                                                int patternNid, MutableIntSet nidsInList, StateSet states, boolean versioned) {
+    private void intIdListForMeaningFromPattern(long referencedComponentNid, EntityProxy.Concept fieldMeaning,
+                                                long patternNid, MutableLongSet nidsInList, StateSet states, boolean versioned) {
         Latest<PatternEntityVersion> latestPatternEntityVersion = stampCalculator().latest(patternNid);
         latestPatternEntityVersion.ifPresentOrElse(
                 (patternEntityVersion) -> {
                     int indexForMeaning = patternEntityVersion.indexForMeaning(fieldMeaning);
-                    int[] semantics = EntityStore.current().semanticNidsForComponentOfPattern(referencedComponentNid, patternNid);
+                    long[] semantics = EntityStore.current().semanticNidsForComponentOfPattern(referencedComponentNid, patternNid);
                     if (semantics.length > 1) {
                         LOG.warn("More than one navigation semantic for concept: " +
                                 PrimitiveData.text(referencedComponentNid) + " in " + PrimitiveData.text(patternNid) +
@@ -280,9 +282,9 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                         );
 
                         // Find the semantic with the matching UUID
-                        int correctSemanticNid = -1;
-                        MutableIntList incorrectSemanticNids = IntLists.mutable.empty();
-                        for (int semanticNid : semantics) {
+                        long correctSemanticNid = -1;
+                        MutableLongList incorrectSemanticNids = LongLists.mutable.empty();
+                        for (long semanticNid : semantics) {
                             if (EntityHandle.get(semanticNid).expectSemantic().publicId().contains(expectedUuid)) {
                                 correctSemanticNid = semanticNid;
                             } else {
@@ -299,7 +301,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                             latestNavigationSemantic.ifPresent(semanticEntityVersion -> {
                                 LOG.warn("Processing correct semantic: " + semanticEntityVersion);
                                 SemanticEntityVersion navigationSemantic = latestNavigationSemantic.get();
-                                IntIdCollection intIdSet = (IntIdCollection) navigationSemantic.fieldValues().get(indexForMeaning);
+                                LongIdCollection intIdSet = (LongIdCollection) navigationSemantic.fieldValues().get(indexForMeaning);
                                 // Filter here by allowed vertex state...
                                 if (versioned && states != StateSet.ACTIVE_INACTIVE_AND_WITHDRAWN) {
                                     intIdSet.forEach(nid ->
@@ -318,7 +320,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                         Latest<SemanticEntityVersion> latestNavigationSemantic = stampCalculator().latest(semantics[0]);
                         latestNavigationSemantic.ifPresent(semanticEntityVersion -> {
                             SemanticEntityVersion navigationSemantic = latestNavigationSemantic.get();
-                            IntIdCollection intIdSet = (IntIdCollection) navigationSemantic.fieldValues().get(indexForMeaning);
+                            LongIdCollection intIdSet = (LongIdCollection) navigationSemantic.fieldValues().get(indexForMeaning);
                             // Filter here by allowed vertex state...
                             if (versioned && states != StateSet.ACTIVE_INACTIVE_AND_WITHDRAWN) {
                                 intIdSet.forEach(nid ->
@@ -352,9 +354,9 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                                       NavigationCoordinateRecord navigationCoordinate) {
     }
 
-    record MutableEdge(MutableIntSet types, int destinationNid, LanguageCalculator languageCalculator) {
+    record MutableEdge(MutableLongSet types, long destinationNid, LanguageCalculator languageCalculator) {
         EdgeRecord toEdge() {
-            return new EdgeRecord(IntIds.set.of(types.toArray()), destinationNid, languageCalculator);
+            return new EdgeRecord(LongIds.set.of(types.toArray()), destinationNid, languageCalculator);
         }
     }
 

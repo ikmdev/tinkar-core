@@ -60,10 +60,10 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 	private void updatePremature() throws Exception {
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator();
 		// 103335007 |Duration (attribute)|
-		int duration_role_nid = ElkSnomedData.getNid(103335007);
+		long duration_role_nid = ElkSnomedData.getNid(103335007);
 		{
 			LogicalExpressionBuilder builder = new LogicalExpressionBuilder();
-			int attr_nid = ElkSnomedData.getNid(SnomedIds.concept_model_data_attribute);
+			long attr_nid = ElkSnomedData.getNid(SnomedIds.concept_model_data_attribute);
 			builder.IntervalPropertySet(builder.And(builder.ConceptAxiom(attr_nid)));
 			LogicalExpression le = builder.build();
 //			LOG.info("IntervalPropertySet:\n" + le);
@@ -71,7 +71,7 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 //			SemanticEntityVersion sev = ElkSnomedUtil.getStatedSemantic(vc, duration_role_nid);
 //			LOG.info("SEV:\n" + sev);
 		}
-		int pi_nid = ElkSnomedData.getNid(premature_infant_sctid);
+		long pi_nid = ElkSnomedData.getNid(premature_infant_sctid);
 		Concept pi_con = ElkSnomedUtil.getConcept(vc, pi_nid);
 		Path intervals_file = Paths.get("src/test/resources",
 				"intervals-" + getEditionDir() + "-" + getVersion() + ".txt");
@@ -79,9 +79,9 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 		for (String line : Files.readAllLines(intervals_file)) {
 			String[] fields = line.split("\t");
 			long sctid = Long.parseLong(fields[0]);
-			int nid = ElkSnomedData.getNid(sctid);
+			long nid = ElkSnomedData.getNid(sctid);
 			Interval interval = Interval.fromString(fields[1]);
-			int units_nid = ElkSnomedData.getNid(interval.getUnitOfMeasure().getId());
+			long units_nid = ElkSnomedData.getNid(interval.getUnitOfMeasure().getId());
 			interval.setUnitOfMeasure(new Concept(units_nid));
 //			LOG.info("Interval: " + interval + " " + sctid + " " + PrimitiveData.text(nid));
 //			SemanticEntityVersion sev = ElkSnomedUtil.getStatedSemantic(vc, nid);
@@ -114,7 +114,7 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 		return rs;
 	}
 
-	private int getNid(String line, int field) {
+	private long getNid(String line, int field) {
 		String con = line.split("\t")[field];
 		String id = con.substring(con.indexOf("[") + 1, con.indexOf(" "));
 		long sctid = Long.parseLong(id);
@@ -140,21 +140,21 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 		rs.computeInferences();
 		rs.buildNecessaryNormalForm();
 		rs.writeInferredResults();
-		int pi_nid = ElkSnomedData.getNid(premature_infant_sctid);
+		long pi_nid = ElkSnomedData.getNid(premature_infant_sctid);
 		LOG.info("-".repeat(20));
 		print(rs, pi_nid, 0);
 		{
 			String file_name = "intervals-sups-" + getEditionDir() + "-" + getVersion() + ".txt";
 			List<String> expect_lines = Files.lines(Paths.get("src/test/resources", file_name)).toList();
-			HashMap<Integer, Set<Integer>> expect = new HashMap<>();
+			HashMap<Long, Set<Long>> expect = new HashMap<>();
 			for (String line : expect_lines) {
-				int con = getNid(line, 0);
-				int sup = getNid(line, 1);
+				long con = getNid(line, 0);
+				long sup = getNid(line, 1);
 				expect.putIfAbsent(con, new HashSet<>());
 				expect.get(con).add(sup);
 			}
-			for (int con : expect.keySet()) {
-				HashSet<Integer> sups = new HashSet<>();
+			for (long con : expect.keySet()) {
+				HashSet<Long> sups = new HashSet<>();
 				rs.getParents(con).forEach(sups::add);
 				assertEquals(expect.get(con), sups);
 				LogicalExpression nnf = rs.getNecessaryNormalForm(con);
@@ -166,7 +166,7 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 		}
 	}
 
-	private void print(ReasonerService rs, int nid, int i) {
+	private void print(ReasonerService rs, long nid, int i) {
 		LOG.info("\t".repeat(i) + PrimitiveData.text(nid));
 		rs.getChildren(nid).forEach(x -> print(rs, x, i + 1));
 	}

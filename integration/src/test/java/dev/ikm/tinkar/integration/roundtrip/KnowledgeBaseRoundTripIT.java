@@ -210,7 +210,7 @@ class KnowledgeBaseRoundTripIT {
         void work(Properties in, Properties out) {
             ViewCalculator view = Calculators.View.Default();
             long start = System.currentTimeMillis();
-            int root = KernelTerm.ROOT_VERTEX.nid();
+            long root = KernelTerm.ROOT_VERTEX.nid();
             AtomicLong concepts = new AtomicLong();
             AtomicLong withoutDescription = new AtomicLong();
             EntityService.get().forEachConceptEntity(concept -> {
@@ -221,7 +221,7 @@ class KnowledgeBaseRoundTripIT {
             });
             var descendants = view.navigationCalculator().descendentsOf(root);
             AtomicLong withoutParents = new AtomicLong();
-            descendants.intStream().forEach(nid -> {
+            descendants.longStream().forEach(nid -> {
                 if (view.navigationCalculator().parentsOf(nid).isEmpty()) {
                     withoutParents.incrementAndGet();
                 }

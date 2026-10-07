@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.entity.transaction;
 
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+
 import dev.ikm.tinkar.common.binary.Decoder;
 import dev.ikm.tinkar.common.binary.DecoderInput;
 import dev.ikm.tinkar.common.binary.Encodable;
@@ -54,8 +56,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import org.eclipse.collections.api.factory.primitive.IntLists;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.factory.primitive.LongLists;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
@@ -66,13 +68,18 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * and components, as well as handling transactional operations.
  */
 public class Transaction implements Comparable<Transaction>, Encodable {
-    private static final int marshalVersion = 1;
+    /**
+     * Version 2 writes the components in the transaction by public id, as it writes the stamps;
+     * version 1 wrote them as {@code int} nids of the store that wrote it, and is still read.
+     */
+    private static final int marshalVersion = 2;
+    private static final int marshalVersionIntNids = 1;
 
     private static ConcurrentHashSet<Transaction> activeTransactions = new ConcurrentHashSet<>();
     private final UUID transactionUuid;
     private final String transactionName;
     ConcurrentHashSet<UUID> stampsInTransaction = new ConcurrentHashSet<>();
-    ConcurrentHashSet<Integer> componentsInTransaction = new ConcurrentHashSet<>();
+    ConcurrentHashSet<Long> componentsInTransaction = new ConcurrentHashSet<>();
     private long commitTime = Long.MAX_VALUE;
 
     /**
@@ -335,7 +342,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * @param pathNid The identifier of the path associated with the stamp.
      * @return The retrieved or newly created StampEntity.
      */
-    public StampEntity getStamp(State state, int authorNid, int moduleNid, int pathNid) {
+    public StampEntity getStamp(State state, long authorNid, long moduleNid, long pathNid) {
         return getStamp(state, Long.MAX_VALUE, authorNid, moduleNid, pathNid);
     }
 
@@ -354,7 +361,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * @return a {@code StampEntity} that matches the provided parameters
      * @throws IllegalStateException if any of the provided parameters are invalid
      */
-    public StampEntity getStamp(State state, long time, int authorNid, int moduleNid, int pathNid) {
+    public StampEntity getStamp(State state, long time, long authorNid, long moduleNid, long pathNid) {
         if (state == null) throw new IllegalStateException("State cannot be null...");
         if (time == Long.MIN_VALUE) throw new IllegalStateException("Time cannot be Long.MIN_VALUE...");
         if (authorNid == 0) throw new IllegalStateException("Author cannot be zero...");
@@ -375,7 +382,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * @param extraEntities additional entities to associate with the stamp
      * @return a StampEntity representing the combination of the specified parameters
      */
-    public StampEntity getStampForEntities(State state, int authorNid, int moduleNid, int pathNid, EntityFacade firstEntity, EntityFacade... extraEntities) {
+    public StampEntity getStampForEntities(State state, long authorNid, long moduleNid, long pathNid, EntityFacade firstEntity, EntityFacade... extraEntities) {
         StampEntity stampEntity = getStamp(state, Long.MAX_VALUE, authorNid, moduleNid, pathNid);
         addComponent(firstEntity);
         for (EntityFacade entityFacade : extraEntities) {
@@ -409,7 +416,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      *                  (must not be zero).
      * @throws IllegalStateException if the entity nid is zero.
      */
-    public void addComponent(int entityNid) {
+    public void addComponent(long entityNid) {
         if (entityNid == 0) {
             throw new IllegalStateException("Entity nid cannot = 0. ");
         }
@@ -444,13 +451,13 @@ public class Transaction implements Comparable<Transaction>, Encodable {
             AtomicInteger stampCount = new AtomicInteger();
             this.commitTime = System.currentTimeMillis();
             activeTransactions.remove(this);
-            MutableIntList finalizedStampNids = IntLists.mutable.empty();
+            MutableLongList finalizedStampNids = LongLists.mutable.empty();
             forEachStampInTransaction(stampUuid -> {
                 finalizedStampNids.add(commitStamp(stampUuid, this.commitTime));
                 stampCount.incrementAndGet();
             });
             Entity.provider().notifyRefreshRequired(this);
-            MutableIntList changedComponentNids = IntLists.mutable.empty();
+            MutableLongList changedComponentNids = LongLists.mutable.empty();
             forEachComponentInTransaction(componentNid -> changedComponentNids.add(componentNid));
             ending.set(Ending.COMMITTED);
             CommitBroadcaster.publish(new CommitBroadcaster.CommitNotification(
@@ -522,8 +529,8 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * @param stampUuid   The unique identifier of the stamp being committed.
      * @param commitTime  The timestamp to be associated with the stamp upon commitment.
      */
-    private int commitStamp(UUID stampUuid, long commitTime) {
-        int stampNid = ScopedValue
+    private long commitStamp(UUID stampUuid, long commitTime) {
+        long stampNid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern().publicId())
                 .call(() -> PrimitiveData.nid(stampUuid));
         StampRecord stampEntity = Entity.getStamp(stampNid);
@@ -551,9 +558,9 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * them to the given consumer action.
      *
      * @param action the {@code Consumer} to be applied to each component in the transaction.
-     *               The action consumes an integer, which represents a component nid.
+     *               The action consumes a component nid.
      */
-    public void forEachComponentInTransaction(Consumer<? super Integer> action) {
+    public void forEachComponentInTransaction(Consumer<? super Long> action) {
         componentsInTransaction.forEach(action);
     }
 
@@ -585,7 +592,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     private int cancelStamps() {
         AtomicInteger stampCount = new AtomicInteger();
         forEachStampInTransaction(stampUuid -> {
-            int stampNid = ScopedValue
+            long stampNid = ScopedValue
                     .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern().publicId())
                     .call(() -> PrimitiveData.nid(stampUuid));
             StampRecord stampEntity = Entity.getStamp(stampNid);
@@ -628,7 +635,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     public static Transaction decode(DecoderInput in) {
         int objectMarshalVersion = in.readInt();
         return switch (objectMarshalVersion) {
-            case marshalVersion -> {
+            case marshalVersion, marshalVersionIntNids -> {
                 Transaction transaction = new Transaction(in.readUuid(), in.readString(), in.readLong());
                 int stampsInTransactionCount = in.readInt();
                 for (int i = 0; i < stampsInTransactionCount; i++) {
@@ -636,7 +643,8 @@ public class Transaction implements Comparable<Transaction>, Encodable {
                 }
                 int componentsInTransactionCount = in.readInt();
                 for (int i = 0; i < componentsInTransactionCount; i++) {
-                    transaction.componentsInTransaction.add(in.readInt());
+                    long componentNid = objectMarshalVersion == marshalVersionIntNids ? in.readInt() : in.readNid();
+                    transaction.componentsInTransaction.add(componentNid);
                 }
                 yield transaction;
             }
@@ -664,8 +672,8 @@ public class Transaction implements Comparable<Transaction>, Encodable {
             out.writeUuid(stampUuid);
         }
         out.writeInt(componentsInTransaction.size());
-        for (int componentNid : componentsInTransaction) {
-            out.writeInt(componentNid);
+        for (long componentNid : componentsInTransaction) {
+            out.writeNid(componentNid);
         }
     }
 

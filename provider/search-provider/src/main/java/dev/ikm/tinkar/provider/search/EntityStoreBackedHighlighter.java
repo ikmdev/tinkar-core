@@ -111,7 +111,7 @@ final class EntityStoreBackedHighlighter extends UnifiedHighlighter {
      *                     stored {@code fieldOrdinal} field)
      * @return the rehydrated text, never {@code null}
      */
-    private static String rehydrate(int nid, int fieldOrdinal) {
+    private static String rehydrate(long nid, int fieldOrdinal) {
         Entity<?> entity = EntityHandle.get(nid).orNull();
         if (!(entity instanceof SemanticEntity<?> semantic)) {
             LOG.debug("rehydrate: nid {} is not a SemanticEntity (was {})",

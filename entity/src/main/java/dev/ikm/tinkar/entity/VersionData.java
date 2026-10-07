@@ -36,7 +36,7 @@ public interface VersionData extends Version, Stamp {
         return Entity.getStamp(stampNid());
     }
 
-    int stampNid();
+    long stampNid();
 
     default long time() {
         return stamp().time();
@@ -54,15 +54,15 @@ public interface VersionData extends Version, Stamp {
         return stamp().path();
     }
 
-    default int authorNid() {
+    default long authorNid() {
         return stamp().authorNid();
     }
 
-    default int moduleNid() {
+    default long moduleNid() {
         return stamp().moduleNid();
     }
 
-    default int pathNid() {
+    default long pathNid() {
         return stamp().pathNid();
     }
 

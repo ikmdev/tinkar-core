@@ -108,7 +108,7 @@ class KonceptExtractorSectionsIT {
         // anyway. What must never happen is two DIFFERENT root nids producing the same
         // section: value, so the check below groups by value and asserts one root each.
         Set<String> sectionValuesClaimedSoFar = new HashSet<>();
-        Map<String, Integer> rootNidByValue = new HashMap<>();
+        Map<String, Long> rootNidByValue = new HashMap<>();
         int nonEmptySectionCount = 0;
         for (Section section : sections) {
             if (section.members().isEmpty()) {
@@ -116,7 +116,7 @@ class KonceptExtractorSectionsIT {
             }
             nonEmptySectionCount++;
             Set<String> valuesInThisSection = new HashSet<>();
-            for (int memberNid : section.members()) {
+            for (long memberNid : section.members()) {
                 String extractedValue = null;
                 for (UUID memberUuid : PrimitiveData.publicId(memberNid).asUuidArray()) {
                     extractedValue = sectionByUuid.get(memberUuid);
@@ -137,7 +137,7 @@ class KonceptExtractorSectionsIT {
                             + valuesInThisSection + " for root nid " + section.rootNid());
             String theValue = valuesInThisSection.iterator().next();
             sectionValuesClaimedSoFar.add(theValue);
-            Integer priorRootNid = rootNidByValue.putIfAbsent(theValue, section.rootNid());
+            Long priorRootNid = rootNidByValue.putIfAbsent(theValue, section.rootNid());
             if (priorRootNid != null) {
                 assertEquals(priorRootNid, section.rootNid(),
                         "section: value \"" + theValue + "\" was produced by two different root nids: "

@@ -33,8 +33,8 @@ import io.soabase.recordbuilder.core.RecordBuilder;
  * @param versionStampNid
  */
 @RecordBuilder
-public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
-                              int patternNid, int indexInPattern)
+public record FieldRecord<DT>(DT value, long nid, long versionStampNid,
+                              long patternNid, int indexInPattern)
         implements Field<DT>, FieldRecordBuilder.With {
 
 

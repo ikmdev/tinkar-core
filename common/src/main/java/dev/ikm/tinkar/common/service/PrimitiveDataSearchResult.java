@@ -15,5 +15,5 @@
  */
 package dev.ikm.tinkar.common.service;
 
-public record PrimitiveDataSearchResult(int nid, int fieldIndex, float score, String highlightedString) {
+public record PrimitiveDataSearchResult(long nid, int fieldIndex, float score, String highlightedString) {
 }

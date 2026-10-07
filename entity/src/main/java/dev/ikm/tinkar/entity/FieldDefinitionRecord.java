@@ -21,8 +21,8 @@ import dev.ikm.tinkar.component.FeatureDefinition;
 import io.soabase.recordbuilder.core.RecordBuilder;
 
 @RecordBuilder
-public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaningNid, int patternVersionStampNid,
-                                    int patternNid, int indexInPattern)
+public record FieldDefinitionRecord(long dataTypeNid, long purposeNid, long meaningNid, long patternVersionStampNid,
+                                    long patternNid, int indexInPattern)
         implements FieldDefinitionForEntity, FieldDefinitionRecordBuilder.With {
 
     public FieldDefinitionRecord {
@@ -42,7 +42,7 @@ public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaning
         );
     }
 
-    public FieldDefinitionRecord(FeatureDefinition fieldDefinition, int patternVersionStampNid, int patternNid, int indexInPattern) {
+    public FieldDefinitionRecord(FeatureDefinition fieldDefinition, long patternVersionStampNid, long patternNid, int indexInPattern) {
         this(Entity.nid(fieldDefinition.dataType()),
                 Entity.nid(fieldDefinition.purpose()),
                 Entity.nid(fieldDefinition.meaning()),

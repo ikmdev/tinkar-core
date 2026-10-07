@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.fixtures;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.ConceptEntity;
@@ -91,7 +91,7 @@ public record StoreDigest(long concepts, long patterns, long stamps, long semant
      * A component named the way the digest names it: its public id as sorted UUIDs, the
      * same in every store.
      */
-    public static String ids(int nid) {
+    public static String ids(long nid) {
         return Accumulator.ids(nid);
     }
 
@@ -254,15 +254,15 @@ public record StoreDigest(long concepts, long patterns, long stamps, long semant
                 case Number number -> number.getClass().getSimpleName() + ":" + number;
                 case java.time.Instant instant -> "T:" + instant;
                 case byte[] bytes -> "B:" + bytes.length + ":" + Arrays.hashCode(bytes);
-                case IntIdSet set -> {
+                case LongIdSet set -> {
                     List<String> members = new ArrayList<>();
-                    set.intStream().forEach(nid -> members.add(ids(nid)));
+                    set.longStream().forEach(nid -> members.add(ids(nid)));
                     members.sort(null);
                     yield "SET" + members;
                 }
-                case IntIdList list -> {
+                case LongIdList list -> {
                     List<String> members = new ArrayList<>();
-                    list.intStream().forEach(nid -> members.add(ids(nid)));
+                    list.longStream().forEach(nid -> members.add(ids(nid)));
                     yield "LIST" + members;
                 }
                 case DiTreeEntity tree -> "TREE " + vertex(tree, tree.root());
@@ -310,7 +310,7 @@ public record StoreDigest(long concepts, long patterns, long stamps, long semant
             return text.append(")").toString();
         }
 
-        private static String ids(int nid) {
+        private static String ids(long nid) {
             return ids(PrimitiveData.publicId(nid));
         }
 

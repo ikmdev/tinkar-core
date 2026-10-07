@@ -21,8 +21,8 @@ import dev.ikm.tinkar.common.binary.DecoderInput;
 import dev.ikm.tinkar.common.binary.Encodable;
 import dev.ikm.tinkar.common.binary.Encoder;
 import dev.ikm.tinkar.common.binary.EncoderOutput;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.entity.Entity;
@@ -36,19 +36,19 @@ import org.eclipse.collections.api.list.ImmutableList;
 import java.util.Objects;
 
 @RecordBuilder
-public record LanguageCoordinateRecord(int languageConceptNid,
-                                             IntIdList descriptionPatternNidList,
-                                             IntIdList descriptionTypePreferenceNidList,
-                                             IntIdList dialectPatternPreferenceNidList,
-                                             IntIdList modulePreferenceNidListForLanguage)
+public record LanguageCoordinateRecord(long languageConceptNid,
+                                             LongIdList descriptionPatternNidList,
+                                             LongIdList descriptionTypePreferenceNidList,
+                                             LongIdList dialectPatternPreferenceNidList,
+                                             LongIdList modulePreferenceNidListForLanguage)
         implements LanguageCoordinate, ImmutableCoordinate, LanguageCoordinateRecordBuilder.With {
 
     private LanguageCoordinateRecord(DecoderInput in) {
         this(in.readNid(),
-                IntIds.list.of(in.readNidArray()),
-                IntIds.list.of(in.readNidArray()),
-                IntIds.list.of(in.readNidArray()),
-                IntIds.list.of(in.readNidArray()));
+                LongIds.list.of(in.readNidArray()),
+                LongIds.list.of(in.readNidArray()),
+                LongIds.list.of(in.readNidArray()),
+                LongIds.list.of(in.readNidArray()));
     }
 
     @Decoder
@@ -60,10 +60,10 @@ public record LanguageCoordinateRecord(int languageConceptNid,
     }
 
     public static LanguageCoordinateRecord make(ConceptFacade languageConcept,
-                                                IntIdList descriptionPatternList,
-                                                IntIdList descriptionTypePreferenceList,
-                                                IntIdList dialectAssemblagePreferenceList,
-                                                IntIdList modulePreferenceListForLanguage) {
+                                                LongIdList descriptionPatternList,
+                                                LongIdList descriptionTypePreferenceList,
+                                                LongIdList dialectAssemblagePreferenceList,
+                                                LongIdList modulePreferenceListForLanguage) {
         return new LanguageCoordinateRecord(languageConcept.nid(),
                 descriptionPatternList,
                 descriptionTypePreferenceList, dialectAssemblagePreferenceList,
@@ -72,11 +72,11 @@ public record LanguageCoordinateRecord(int languageConceptNid,
 
     public static LanguageCoordinateRecord make(ConceptFacade languageConcept,
                                                 PatternFacade patternFacade,
-                                                IntIdList descriptionTypePreferenceList,
-                                                IntIdList dialectAssemblagePreferenceList,
-                                                IntIdList modulePreferenceListForLanguage) {
+                                                LongIdList descriptionTypePreferenceList,
+                                                LongIdList dialectAssemblagePreferenceList,
+                                                LongIdList modulePreferenceListForLanguage) {
         return new LanguageCoordinateRecord(languageConcept.nid(),
-                IntIds.list.of(patternFacade.nid()),
+                LongIds.list.of(patternFacade.nid()),
                 descriptionTypePreferenceList, dialectAssemblagePreferenceList,
                 modulePreferenceListForLanguage);
     }
@@ -89,11 +89,11 @@ public record LanguageCoordinateRecord(int languageConceptNid,
      * @param modulePreferenceNidListForLanguage
      * @return
      */
-    public static LanguageCoordinateRecord make(int languageConceptNid,
-                                                IntIdList descriptionPatternNidList,
-                                                IntIdList descriptionTypePreferenceNidList,
-                                                IntIdList dialectPatternPreferenceNidList,
-                                                IntIdList modulePreferenceNidListForLanguage) {
+    public static LanguageCoordinateRecord make(long languageConceptNid,
+                                                LongIdList descriptionPatternNidList,
+                                                LongIdList descriptionTypePreferenceNidList,
+                                                LongIdList dialectPatternPreferenceNidList,
+                                                LongIdList modulePreferenceNidListForLanguage) {
 
         return new LanguageCoordinateRecord(languageConceptNid,
                 descriptionPatternNidList,
@@ -118,12 +118,12 @@ public record LanguageCoordinateRecord(int languageConceptNid,
     }
 
     @Override
-    public IntIdList descriptionPatternPreferenceNidList() {
+    public LongIdList descriptionPatternPreferenceNidList() {
         return this.descriptionPatternNidList;
     }
 
     @Override
-    public int languageConceptNid() {
+    public long languageConceptNid() {
         return this.languageConceptNid;
     }
 

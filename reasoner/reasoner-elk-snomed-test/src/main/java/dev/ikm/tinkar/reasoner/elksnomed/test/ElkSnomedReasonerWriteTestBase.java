@@ -65,7 +65,7 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 		rs.computeInferences();
 		rs.buildNecessaryNormalForm();
 		rs.writeInferredResults();
-		int inferredPatternNid = rs.getViewCalculator().viewCoordinateRecord().logicCoordinate()
+		long inferredPatternNid = rs.getViewCalculator().viewCoordinateRecord().logicCoordinate()
 				.inferredAxiomsPatternNid();
 		SnomedIsa isas = SnomedIsa.init(rels_file);
 		SnomedDescriptions descr = SnomedDescriptions.init(descriptions_file);
@@ -82,20 +82,20 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 		int mis_match_cnt = 0;
 		HashSet<Long> child_miss_sctids = new HashSet<>();
 		for (long sctid : isas.getOrderedConcepts().toArray()) {
-			int nid = ElkSnomedData.getNid(sctid);
+			long nid = ElkSnomedData.getNid(sctid);
 			{
-				Set<Integer> expected_parent_nids = isas.getParents(sctid)
+				Set<Long> expected_parent_nids = isas.getParents(sctid)
 						.collect(ElkSnomedData::getNid)
 						.toSet();
 				if (sctid == SnomedIds.root) {
 					expected_parent_nids = Set.of(KernelTerm.PHENOMENON.nid());
 					LOG.warn("Reset expected parents for " + sctid + " " + PrimitiveData.text(nid));
 				}
-				Set<Integer> expected_child_nids = isas.getChildren(sctid)
+				Set<Long> expected_child_nids = isas.getChildren(sctid)
 						.collect(ElkSnomedData::getNid)
 						.toSet();
 				try {
-					Set<Integer> actual_child_nids = ElkSnomedUtil.getInferredChildren(getViewCalculator(), sctid);
+					Set<Long> actual_child_nids = ElkSnomedUtil.getInferredChildren(getViewCalculator(), sctid);
 					if (!expected_child_nids.equals(actual_child_nids)) {
 						LOG.error("Children: " + sctid + " " + descr.getFsn(sctid));
 						child_miss++;
@@ -105,7 +105,7 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 					LOG.error(ex.getMessage());
 				}
 				try {
-					Set<Integer> actual_parent_nids = ElkSnomedUtil.getInferredParents(getViewCalculator(), sctid);
+					Set<Long> actual_parent_nids = ElkSnomedUtil.getInferredParents(getViewCalculator(), sctid);
 					if (!expected_parent_nids.equals(actual_parent_nids)) {
 						LOG.error("Parents: " + sctid + " " + descr.getFsn(sctid));
 						parent_miss++;

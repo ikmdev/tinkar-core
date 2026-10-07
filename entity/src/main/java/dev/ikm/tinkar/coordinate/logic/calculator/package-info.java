@@ -116,7 +116,7 @@
  *     calc.getAxiomTreeForEntity(conceptNid, premiseType);
  *
  * // Useful for algorithms that work with either premise type
- * public void processAxioms(int conceptNid, PremiseType premise) {
+ * public void processAxioms(long conceptNid, PremiseType premise) {
  *     Latest<DiTreeEntity> axioms =
  *         calc.getAxiomTreeForEntity(conceptNid, premise);
  *     // Process regardless of stated vs. inferred
@@ -161,7 +161,7 @@
  *
  * // Traverse tree vertices
  * axiomTree.vertices().forEach(vertex -> {
- *     int meaningNid = vertex.getMeaningNid();
+ *     long meaningNid = vertex.getMeaningNid();
  *     // Process vertex based on meaning (AND, OR, SOME, etc.)
  * });
  * }</pre>
@@ -176,7 +176,7 @@
  * Classifier classifier = getClassifier(logic.classifierNid());
  *
  * // Load stated axioms for all concepts
- * for (int conceptNid : conceptsToClassify) {
+ * for (long conceptNid : conceptsToClassify) {
  *     Latest<DiTreeEntity> statedAxioms =
  *         calc.getStatedAxiomTree(conceptNid);
  *
@@ -190,7 +190,7 @@
  * classifier.classify();
  *
  * // Store inferred results back to knowledge base
- * for (int conceptNid : conceptsToClassify) {
+ * for (long conceptNid : conceptsToClassify) {
  *     DiTreeEntity inferredAxioms = classifier.getInferredAxioms(conceptNid);
  *     // Write to pattern specified by logic.inferredAxiomsPatternNid()
  * }
@@ -250,7 +250,7 @@
  * <p><b>Checking for Definitions</b></p>
  * <pre>{@code
  * // Check if concept has sufficient definition
- * boolean isDefined(int conceptNid) {
+ * boolean isDefined(long conceptNid) {
  *     Latest<DiTreeEntity> stated = calc.getStatedAxiomTree(conceptNid);
  *     if (stated.isPresent()) {
  *         return stated.get().containsVertexWithMeaning(

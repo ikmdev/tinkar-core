@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
  */
 class DiagnosticTextTest {
 
-    private static final int NID = -2147483000;
+    private static final long NID = -2147483000;
     private static final String FIRST = "0b6f1f4c-3d3e-4a53-9c1d-7a2f0a9b1c11";
     private static final String SECOND = "5e2c7a90-6f41-4d7e-8b0a-3c9d2e1f4a22";
 

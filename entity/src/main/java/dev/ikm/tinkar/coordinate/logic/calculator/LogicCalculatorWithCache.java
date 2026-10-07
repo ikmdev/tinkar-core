@@ -85,10 +85,10 @@ public class LogicCalculatorWithCache implements LogicCalculator {
 
 
     @Override
-    public boolean hasSufficientSet(int nid) {
-        int axiomsPatternNid = logicCoordinateRecord.statedAxiomsPatternNid();
+    public boolean hasSufficientSet(long nid) {
+        long axiomsPatternNid = logicCoordinateRecord.statedAxiomsPatternNid();
 
-        int[] semanticNids = EntityStore.current().semanticNidsForComponentOfPattern(nid, axiomsPatternNid);
+        long[] semanticNids = EntityStore.current().semanticNidsForComponentOfPattern(nid, axiomsPatternNid);
         switch (semanticNids.length) {
             case 0:
                 // TODO Raise an alert... ?
@@ -123,8 +123,8 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     }
 
     @Override
-    public Latest<SemanticEntityVersion> getAxiomSemanticForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
-        int[] semanticNids = switch (premiseType) {
+    public Latest<SemanticEntityVersion> getAxiomSemanticForEntity(long entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
+        long[] semanticNids = switch (premiseType) {
             case STATED -> {
                 yield EntityStore.current().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().statedAxiomsPatternNid());
             }
@@ -146,8 +146,8 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     }
 
     @Override
-    public Latest<DiTreeEntity> getAxiomTreeForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
-        int[] semanticNids = switch (premiseType) {
+    public Latest<DiTreeEntity> getAxiomTreeForEntity(long entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
+        long[] semanticNids = switch (premiseType) {
             case STATED -> {
                 yield EntityStore.current().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().statedAxiomsPatternNid());
             }

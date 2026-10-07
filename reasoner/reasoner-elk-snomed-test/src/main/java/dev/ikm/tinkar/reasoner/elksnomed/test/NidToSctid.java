@@ -63,7 +63,7 @@ public class NidToSctid {
 			ConcreteRoleType new_role = new ConcreteRoleType(nid_to_sctid.get(nid));
 			new_concrete_roles.put(nid, new_role);
 		}
-		HashSet<Integer> primordial_nids = PrimitiveDataTestUtil.getPrimordialNids();
+		HashSet<Long> primordial_nids = PrimitiveDataTestUtil.getPrimordialNids();
 		for (Concept concept : data.getConcepts()) {
 			long nid = concept.getId();
 			if (nid_to_sctid.get(nid) == null) {

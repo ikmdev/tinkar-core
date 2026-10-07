@@ -80,7 +80,7 @@ public final class ComponentDecompiler {
         }
 
         calculator.forEachSemanticVersionForComponent(component, (semanticVersion, entityVersion) -> {
-            int patternNid = semanticVersion.patternNid();
+            long patternNid = semanticVersion.patternNid();
             if (patternNid == KernelTerm.STATED_NAVIGATION_PATTERN.nid()
                     || patternNid == KernelTerm.INFERRED_NAVIGATION_PATTERN.nid()
                     || patternNid == KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {

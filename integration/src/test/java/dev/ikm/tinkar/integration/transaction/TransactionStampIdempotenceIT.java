@@ -115,7 +115,7 @@ class TransactionStampIdempotenceIT {
 
         // Create a mock entity facade for testing
         PublicId entityId = PublicIds.of(UUID.randomUUID());
-        int entityNid = PrimitiveData.nid(entityId);
+        long entityNid = PrimitiveData.nid(entityId);
         dev.ikm.tinkar.terms.EntityFacade entityFacade = dev.ikm.tinkar.terms.EntityFacade.make(entityNid);
 
         // Call getStampForEntities() multiple times with the same parameters

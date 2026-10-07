@@ -18,12 +18,12 @@ package dev.ikm.tinkar.common.service.internal;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
-import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
-import org.eclipse.collections.api.factory.primitive.IntLists;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.block.procedure.primitive.LongProcedure;
+import org.eclipse.collections.api.factory.primitive.LongLists;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 
-import java.util.function.ObjIntConsumer;
+import java.util.function.ObjLongConsumer;
 
 /**
  * The part of a data store's contract that only the entity layer uses: an entity's bytes, the
@@ -54,18 +54,18 @@ public interface EntityStore {
                 + service.getClass().getName());
     }
 
-    void forEach(ObjIntConsumer<byte[]> action);
+    void forEach(ObjLongConsumer<byte[]> action);
 
-    void forEachParallel(ObjIntConsumer<byte[]> action);
+    void forEachParallel(ObjLongConsumer<byte[]> action);
 
-    void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action);
+    void forEach(ImmutableLongList nids, ObjLongConsumer<byte[]> action);
 
-    void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action);
+    void forEachParallel(ImmutableLongList nids, ObjLongConsumer<byte[]> action);
 
-    byte[] getBytes(int nid);
+    byte[] getBytes(long nid);
 
     /**
-     * If the specified nid (native identifier -- an int) is not already associated
+     * If the specified nid (native identifier) is not already associated
      * with a value or is associated with null, associates it with the given non-null value.
      * Otherwise, replaces the associated value with the results of a remapping function
      * (the provider provides remapping function), or removes if the result is {@code null}.
@@ -75,7 +75,7 @@ public interface EntityStore {
      *
      * Defaults to an activity of DataActivity.SYNCHRONIZABLE_EDIT.
      *
-     * @param nid                    native identifier (an int) with which the resulting value is to be associated
+     * @param nid                    native identifier with which the resulting value is to be associated
      * @param patternNid             if the bytes are for a semantic, its pattern nid, otherwise
      *                               the not-applicable sentinel, {@code Integer.MAX_VALUE}
      *                               ({@link dev.ikm.tinkar.common.id.Nid#NOT_APPLICABLE})
@@ -88,18 +88,18 @@ public interface EntityStore {
      * @return the new value associated with the specified nid, or null if no
      * value is associated with the nid
      */
-    default byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject) {
+    default byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject) {
         return this.merge(nid, patternNid, referencedComponentNid, value, sourceObject, DataActivity.SYNCHRONIZABLE_EDIT);
     }
 
     /**
-     * If the specified nid (native identifier -- an int) is not already associated with a value or is associated
+     * If the specified nid (native identifier) is not already associated with a value or is associated
      * with null, associates it with the given non-null value. Otherwise, replaces the associated value with the
      * results of a remapping function (the provider provides remapping function), or removes if the result is
      * null. This method may be of use when combining multiple mapped values for a nid. For example, merging multiple
      * versions of an entity, where each version is represented as a byte[].
      *
-     * @param nid Native identifier (an int) with which the resulting value is to be associated.
+     * @param nid Native identifier with which the resulting value is to be associated.
      * @param patternNid If the bytes are for a semantic, its pattern nid, otherwise the
      *                   not-applicable sentinel, {@code Integer.MAX_VALUE}
      *                   ({@link dev.ikm.tinkar.common.id.Nid#NOT_APPLICABLE}).
@@ -113,37 +113,37 @@ public interface EntityStore {
      * @return The new value associated with the specified nid, or null if no
      *         value is associated with the nid.
      */
-    byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity);
+    byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity);
 
-    default int[] semanticNidsOfPattern(int patternNid) {
-        MutableIntList intList = IntLists.mutable.empty();
-        forEachSemanticNidOfPattern(patternNid, nid -> intList.add(nid));
-        return intList.toArray();
+    default long[] semanticNidsOfPattern(long patternNid) {
+        MutableLongList nidList = LongLists.mutable.empty();
+        forEachSemanticNidOfPattern(patternNid, nid -> nidList.add(nid));
+        return nidList.toArray();
     }
 
-    void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure);
+    void forEachSemanticNidOfPattern(long patternNid, LongProcedure procedure);
 
-    void forEachPatternNid(IntProcedure procedure);
+    void forEachPatternNid(LongProcedure procedure);
 
-    void forEachConceptNid(IntProcedure procedure);
+    void forEachConceptNid(LongProcedure procedure);
 
-    void forEachStampNid(IntProcedure procedure);
+    void forEachStampNid(LongProcedure procedure);
 
-    void forEachSemanticNid(IntProcedure procedure);
+    void forEachSemanticNid(LongProcedure procedure);
 
-    default int[] semanticNidsForComponent(int componentNid) {
-        MutableIntList intList = IntLists.mutable.empty();
-        forEachSemanticNidForComponent(componentNid, nid -> intList.add(nid));
-        return intList.toArray();
+    default long[] semanticNidsForComponent(long componentNid) {
+        MutableLongList nidList = LongLists.mutable.empty();
+        forEachSemanticNidForComponent(componentNid, nid -> nidList.add(nid));
+        return nidList.toArray();
     }
 
-    void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure);
+    void forEachSemanticNidForComponent(long componentNid, LongProcedure procedure);
 
-    default int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid) {
-        MutableIntList intList = IntLists.mutable.empty();
-        forEachSemanticNidForComponentOfPattern(componentNid, patternNid, nid -> intList.add(nid));
-        return intList.toArray();
+    default long[] semanticNidsForComponentOfPattern(long componentNid, long patternNid) {
+        MutableLongList nidList = LongLists.mutable.empty();
+        forEachSemanticNidForComponentOfPattern(componentNid, patternNid, nid -> nidList.add(nid));
+        return nidList.toArray();
     }
 
-    void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure);
+    void forEachSemanticNidForComponentOfPattern(long componentNid, long patternNid, LongProcedure procedure);
 }

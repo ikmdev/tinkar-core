@@ -80,7 +80,7 @@
  * <pre>{@code
  * // Access vertex meaning
  * EntityVertex vertex = diTree.vertex(vertexIndex);
- * int meaningNid = vertex.getMeaningNid();
+ * long meaningNid = vertex.getMeaningNid();
  * ConceptEntity meaning = Entity.getConceptForNid(meaningNid);
  *
  * // Check for specific meanings
@@ -141,8 +141,8 @@
  *         } else if (meaning == MyTerms.SOME.nid()) {
  *             // Existential - get role and filler
  *             IntList successors = tree.successors(child).toList();
- *             int roleNid = tree.vertex(successors.get(0)).getMeaningNid();
- *             int fillerNid = tree.vertex(successors.get(1)).getMeaningNid();
+ *             long roleNid = tree.vertex(successors.get(0)).getMeaningNid();
+ *             long fillerNid = tree.vertex(successors.get(1)).getMeaningNid();
  *             // ... process restriction
  *         }
  *     });

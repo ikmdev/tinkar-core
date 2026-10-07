@@ -36,7 +36,7 @@ public final class EntityStringUtil {
      * @param nid nid to render
      * @return recursive toString for the nid and its semantics
      */
-    public static String recursiveEntityToString(int nid) {
+    public static String recursiveEntityToString(long nid) {
         StringBuilder sb = new StringBuilder();
         appendRecursiveEntityToString(nid, sb);
         return sb.toString();
@@ -53,11 +53,11 @@ public final class EntityStringUtil {
         return recursiveEntityToString(entityFacade.nid());
     }
 
-    private static void appendRecursiveEntityToString(int nid, StringBuilder sb) {
+    private static void appendRecursiveEntityToString(long nid, StringBuilder sb) {
         EntityHandle.get(nid).ifPresent(entity -> {
             sb.append(entity);
             sb.append("\n\n");
-            for (int semanticNid : EntityStore.current().semanticNidsForComponent(nid)) {
+            for (long semanticNid : EntityStore.current().semanticNidsForComponent(nid)) {
                 appendRecursiveEntityToString(semanticNid, sb);
             }
         });

@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
@@ -405,11 +405,11 @@ public class LogicalExpressionBuilder {
         return new LogicalAxiomAdaptor.RoleAxiomAdaptor(logicalExpression, role.vertexIndex());
     }
 
-    public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(int conceptNid) {
+    public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(long conceptNid) {
         return ConceptAxiom(mintVertexUuid(), ConceptFacade.make(conceptNid));
     }
 
-    public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(UUID vertexUuid, int conceptNid) {
+    public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(UUID vertexUuid, long conceptNid) {
         return ConceptAxiom(vertexUuid, ConceptFacade.make(conceptNid));
     }
 
@@ -468,7 +468,7 @@ public class LogicalExpressionBuilder {
 //        boolean isPropertySeqPresent = EntityService.get().getEntity(KernelTerm.PROPERTY_SEQUENCE.publicId()).isPresent();
 //        EntityProxy.Concept propertyGroupConcept = isPropertySeqPresent ? KernelTerm.PROPERTY_SEQUENCE : KernelTerm.PROPERTY_SET;
         propertySequenceImplicationAxiom.putUncommittedProperty(KernelTerm.PROPERTY_SEQUENCE.nid(),
-                IntIds.list.of(propertySequence.castToList(), (ConceptFacade conceptFacade) -> conceptFacade.nid()));
+                LongIds.list.of(propertySequence.castToList(), (ConceptFacade conceptFacade) -> conceptFacade.nid()));
         propertySequenceImplicationAxiom.putUncommittedProperty(KernelTerm.PROPERTY_SEQUENCE_IMPLICATION.nid(),
                 implication);
 
@@ -582,7 +582,7 @@ public class LogicalExpressionBuilder {
      * @param conceptAxiom           The concept axiom whose concept reference is to be updated.
      * @param newConceptReferenceNid The new concept reference ID.
      */
-    public void updateConceptReference(LogicalAxiom.Atom.ConceptAxiom conceptAxiom, int newConceptReferenceNid) {
+    public void updateConceptReference(LogicalAxiom.Atom.ConceptAxiom conceptAxiom, long newConceptReferenceNid) {
         updateConceptReference(conceptAxiom, EntityProxy.Concept.make(PrimitiveData.text(newConceptReferenceNid),
                 PrimitiveData.publicId(newConceptReferenceNid)));
     }

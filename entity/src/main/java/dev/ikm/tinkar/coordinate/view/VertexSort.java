@@ -40,7 +40,7 @@ public interface VertexSort extends Encodable {
         return getVertexLabel(Entity.nid(vertexConcept), languageCalculator);
     }
 
-    String getVertexLabel(int vertexConceptNid, LanguageCalculator languageCalculator);
+    String getVertexLabel(long vertexConceptNid, LanguageCalculator languageCalculator);
 
     /**
      * Sort the vertex concept nids with respect to settings from the
@@ -50,7 +50,7 @@ public interface VertexSort extends Encodable {
      * @param navigationCalculator
      * @return sorted vertexConceptNids
      */
-    int[] sortVertexes(int[] vertexConceptNids, NavigationCalculator navigationCalculator);
+    long[] sortVertexes(long[] vertexConceptNids, NavigationCalculator navigationCalculator);
 
     ImmutableList<Edge> sortEdges(ImmutableCollection<Edge> edges, NavigationCalculator navigationCalculator);
 }

@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.collection;
 
 import dev.ikm.tinkar.common.alert.AlertStreams;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.common.service.SequentialNids;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.ArrayUtil;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
@@ -202,7 +202,7 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         for (int indexInSpine = 0; indexInSpine < spineSize; indexInSpine++) {
             E element = spine.get(indexInSpine);
             if (element != null) {
-                int nid = PrimitiveDataService.FIRST_NID + index;
+                int nid = SequentialNids.FIRST_NID + index;
                 consumer.accept(element, nid);
                 processed++;
             }

@@ -25,7 +25,7 @@ public interface StampEntityVersion extends EntityVersion, StampVersion {
         return State.fromConceptNid(stateNid());
     }
 
-    int stateNid();
+    long stateNid();
 
     long time();
 
@@ -44,9 +44,9 @@ public interface StampEntityVersion extends EntityVersion, StampVersion {
         return EntityHandle.get(pathNid()).expectConcept();
     }
 
-    int authorNid();
+    long authorNid();
 
-    int moduleNid();
+    long moduleNid();
 
-    int pathNid();
+    long pathNid();
 }

@@ -83,7 +83,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
      *
      * @return the nid of the referenced component
      */
-    default int referencedComponentNid() {
+    default long referencedComponentNid() {
         return chronology().referencedComponentNid();
     }
 
@@ -102,7 +102,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
      *
      * @return the nid of the pattern for this semantic
      */
-    default int patternNid() {
+    default long patternNid() {
         return chronology().patternNid();
     }
 
@@ -623,7 +623,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as an EntityFacade.
-     * <p>     * Accepts EntityFacade directly, Component (resolved via publicId), or an int nid resolved via
+     * <p>     * Accepts EntityFacade directly, Component (resolved via publicId), or an long nid resolved via
      * EntityService. Any other type results in an error.
      * <p>     * Throws:
      * - NullPointerException if the field value is null

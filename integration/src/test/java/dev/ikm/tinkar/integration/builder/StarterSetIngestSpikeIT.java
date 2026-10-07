@@ -128,7 +128,7 @@ class StarterSetIngestSpikeIT {
             checkStamp(version.stampNid());
         }
 
-        int patternNid = semantic.patternNid();
+        long patternNid = semantic.patternNid();
         if (patternNid == KernelTerm.DESCRIPTION_PATTERN.nid()) {
             tally(GAPS, "declared-identity description semantics");
             SemanticEntityVersion latest = semantic.versions().getLast();
@@ -167,7 +167,7 @@ class StarterSetIngestSpikeIT {
     }
 
     /** A stamp whose UUID is not the tuple derivation demands declared-identity stamps. */
-    private static void checkStamp(int stampNid) {
+    private static void checkStamp(long stampNid) {
         StampEntity<?> stamp = Entity.getStamp(stampNid);
         // Mirrors Stamp.stampUuid: each dimension's least UUID.
         String canonical = stamp.state().publicId().leastUuid()
@@ -181,7 +181,7 @@ class StarterSetIngestSpikeIT {
         }
     }
 
-    private static UUID leastUuid(int nid) {
+    private static UUID leastUuid(long nid) {
         PublicId publicId = PrimitiveData.publicId(nid);
         return publicId.leastUuid();
     }

@@ -15,6 +15,12 @@
  */
 package dev.ikm.tinkar.provider.ephemeral;
 
+import org.eclipse.collections.api.block.procedure.primitive.LongProcedure;
+import java.util.function.ObjLongConsumer;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.common.service.SequentialNids;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
@@ -65,7 +71,7 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     final ConcurrentHashSet<Integer> stampNids = new ConcurrentHashSet();
     private final ConcurrentHashMap<Integer, byte[]> nidComponentMap = ConcurrentHashMap.newMap();
     private final ConcurrentHashMap<UUID, Integer> uuidNidMap = new ConcurrentHashMap<>();
-    private final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
+    private final AtomicInteger nextNid = new AtomicInteger(SequentialNids.FIRST_NID);
     final SetOnce<SearchService> searchService = new SetOnce<>();
     private volatile boolean loadPhase = false;
 
@@ -98,7 +104,7 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     }
 
     @Override
-    public PublicId publicIdForNid(int nid) {
+    public PublicId publicIdForNid(long nid) {
         // Reverse lookup over the identity map: correctness over speed — used by
         // export paths for referenced components that are not present as entities.
         List<UUID> uuids = new ArrayList<>();
@@ -114,8 +120,8 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     }
 
     @Override
-    public int nidForUuids(UUID... uuids) {
-        return PrimitiveDataService.nidForUuids(uuidNidMap, this, uuids);
+    public long nidForUuids(UUID... uuids) {
+        return SequentialNids.nidForUuids(uuidNidMap, () -> Nid.narrowChecked(newNid()), uuids);
     }
 
     @Override
@@ -124,8 +130,8 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     }
 
     @Override
-    public int nidForUuids(ImmutableList<UUID> uuidList) {
-        return PrimitiveDataService.nidForUuids(uuidNidMap, this, uuidList);
+    public long nidForUuids(ImmutableList<UUID> uuidList) {
+        return SequentialNids.nidForUuids(uuidNidMap, () -> Nid.narrowChecked(newNid()), uuidList);
     }
 
     @Override
@@ -134,12 +140,12 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     }
 
     @Override
-    public void forEach(ObjIntConsumer<byte[]> action) {
+    public void forEach(ObjLongConsumer<byte[]> action) {
         nidComponentMap.forEach((integer, bytes) -> action.accept(bytes, integer));
     }
 
     @Override
-    public void forEachParallel(ObjIntConsumer<byte[]> action) {
+    public void forEachParallel(ObjLongConsumer<byte[]> action) {
         int threadCount = TinkExecutor.threadPool().getMaximumPoolSize();
         List<Procedure2<Integer, byte[]>> blocks = new ArrayList<>(threadCount);
         for (int i = 0; i < threadCount; i++) {
@@ -149,9 +155,9 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     }
 
     @Override
-    public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+    public void forEachParallel(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
         nids.primitiveParallelStream().forEach(nid -> {
-            byte[] bytes = nidComponentMap.get(nid);
+            byte[] bytes = nidComponentMap.get(Nid.narrowChecked(nid));
             if (bytes != null) {
                 action.accept(bytes, nid);
             }
@@ -159,9 +165,9 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     }
 
     @Override
-    public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+    public void forEach(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
         nids.forEach(nid -> {
-            byte[] bytes = nidComponentMap.get(nid);
+            byte[] bytes = nidComponentMap.get(Nid.narrowChecked(nid));
             if (bytes != null) {
                 action.accept(bytes, nid);
             }
@@ -169,37 +175,37 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     }
 
     @Override
-    public byte[] getBytes(int nid) {
-        return nidComponentMap.get(nid);
+    public byte[] getBytes(long nid) {
+        return nidComponentMap.get(Nid.narrowChecked(nid));
     }
 
     @Override
-    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
-        if (!nidToPatternNidMap.containsKey(nid)) {
+    public byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
+        if (!nidToPatternNidMap.containsKey(Nid.narrowChecked(nid))) {
             // A concept, pattern or stamp comes with the not-applicable sentinel,
             // Integer.MAX_VALUE (Nid.NOT_APPLICABLE), as its pattern; only a semantic is indexed.
-            this.nidToPatternNidMap.put(nid, patternNid);
-            if (patternNid != Integer.MAX_VALUE) {
+            this.nidToPatternNidMap.put(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
+            if (!Nid.isNotApplicable(patternNid)) {
 
-                this.nidToPatternNidMap.put(nid, patternNid);
-                if (patternNid != Integer.MAX_VALUE) {
-                    long citationLong = IntsInLong.ints2Long(nid, patternNid);
-                    this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
+                this.nidToPatternNidMap.put(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
+                if (!Nid.isNotApplicable(patternNid)) {
+                    long citationLong = IntsInLong.ints2Long(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
+                    this.nidToCitingComponentsNidMap.merge(Nid.narrowChecked(referencedComponentNid), new long[]{citationLong},
                             PrimitiveDataService::mergeCitations);
-                    this.patternToElementNidsMap.getIfAbsentPut(nid, () -> new ConcurrentSkipListSet<>()).add(nid);
+                    this.patternToElementNidsMap.getIfAbsentPut(Nid.narrowChecked(nid), () -> new ConcurrentSkipListSet<>()).add(Nid.narrowChecked(nid));
                 }
             }
         }
         if (sourceObject instanceof ConceptEntity concept) {
-            this.conceptNids.add(concept.nid());
+            this.conceptNids.add(Nid.narrowChecked(concept.nid()));
         } else if (sourceObject instanceof SemanticEntity semanticEntity) {
-            this.semanticNids.add(semanticEntity.nid());
+            this.semanticNids.add(Nid.narrowChecked(semanticEntity.nid()));
         } else if (sourceObject instanceof PatternEntity patternEntity) {
-            this.patternNids.add(patternEntity.nid());
+            this.patternNids.add(Nid.narrowChecked(patternEntity.nid()));
         } else if (sourceObject instanceof StampEntity stampEntity) {
-            this.stampNids.add(stampEntity.nid());
+            this.stampNids.add(Nid.narrowChecked(stampEntity.nid()));
         }
-        byte[] mergedBytes = nidComponentMap.merge(nid, value, PrimitiveDataService::merge);
+        byte[] mergedBytes = nidComponentMap.merge(Nid.narrowChecked(nid), value, PrimitiveDataService::merge);
         writeSequence.increment();
 
         // Delegate indexing to SearchProvider.
@@ -251,7 +257,7 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     }
 
     @Override
-    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
+    public void forEachSemanticNidOfPattern(long patternNid, LongProcedure procedure) {
         nidToPatternNidMap.forEach((nid, setNid) -> {
             if (patternNid == setNid) {
                 procedure.accept(nid);
@@ -260,28 +266,28 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     }
 
     @Override
-    public void forEachPatternNid(IntProcedure procedure) {
+    public void forEachPatternNid(LongProcedure procedure) {
         this.patternNids.forEach(procedure::accept);
     }
 
     @Override
-    public void forEachConceptNid(IntProcedure procedure) {
+    public void forEachConceptNid(LongProcedure procedure) {
         this.conceptNids.forEach(procedure::accept);
     }
 
     @Override
-    public void forEachStampNid(IntProcedure procedure) {
+    public void forEachStampNid(LongProcedure procedure) {
         this.stampNids.forEach(procedure::accept);
     }
 
     @Override
-    public void forEachSemanticNid(IntProcedure procedure) {
+    public void forEachSemanticNid(LongProcedure procedure) {
         this.semanticNids.forEach(procedure::accept);
     }
 
     @Override
-    public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
-        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+    public void forEachSemanticNidForComponent(long componentNid, LongProcedure procedure) {
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(Nid.narrowChecked(componentNid));
         if (citationLongs != null) {
             for (long citationLong : citationLongs) {
                 int citingComponentNid = (int) (citationLong >> 32);
@@ -291,8 +297,8 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     }
 
     @Override
-    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
-        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+    public void forEachSemanticNidForComponentOfPattern(long componentNid, long patternNid, LongProcedure procedure) {
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(Nid.narrowChecked(componentNid));
         if (citationLongs != null) {
             for (long citationLong : citationLongs) {
                 int citingComponentNid = (int) (citationLong >> 32);
@@ -310,7 +316,7 @@ public class ProviderEphemeral implements PrimitiveDataService, EntityStore, Nid
     }
 
     @Override
-    public int newNid() {
+    public long newNid() {
         return nextNid.getAndIncrement();
     }
 

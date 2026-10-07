@@ -17,8 +17,8 @@ package dev.ikm.tinkar.integration.provider.spinedarray;
 
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.id.impl.IntIdListArray;
-import dev.ikm.tinkar.common.id.impl.IntIdSetArray;
+import dev.ikm.tinkar.common.id.impl.LongIdListArray;
+import dev.ikm.tinkar.common.id.impl.LongIdSetArray;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.Coordinates;
@@ -114,8 +114,8 @@ class ExportImportDataIT {
         EntityProxy.Concept COMPONENT_LIST_FIELD_MEANING = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("f0847cd3-2034-43f5-b25f-2bd6e923d228")));
 
         PatternEntityVersion latestPattern = (PatternEntityVersion) Calculators.Stamp.DevelopmentLatest().latest(EXAMPLE_PATTERN_TWO).get();
-        AtomicReference<IntIdSetArray> intIdSet = new AtomicReference<>();
-        AtomicReference<IntIdListArray> intIdList = new AtomicReference<>();
+        AtomicReference<LongIdSetArray> intIdSet = new AtomicReference<>();
+        AtomicReference<LongIdListArray> intIdList = new AtomicReference<>();
         AtomicBoolean atomicBoolean = new AtomicBoolean(false);
 
         //Get the Set and List elements from newSemantic
@@ -128,7 +128,7 @@ class ExportImportDataIT {
                 assertTrue(intIdSet.get().contains(KernelTerm.ACTIVE_STATE.nid()));
 
                 intIdList.set(latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive2.get()));
-                int [] tempListArray2 = intIdList.get().toArray();
+                long [] tempListArray2 = intIdList.get().toArray();
                 assertEquals(KernelTerm.ACTIVE_STATE.nid(), tempListArray2 [0]);
 
                 atomicBoolean.set(true);
@@ -181,9 +181,9 @@ class ExportImportDataIT {
             EntityService.get().forEachSemanticForComponentOfPattern(concept.nid(), EXAMPLE_PATTERN_TWO.nid(), semanticEntity -> {
                 Latest<SemanticEntityVersion> latestActive = stampCalcActive.latest(semanticEntity);
                 if (latestActive.isPresent()) {
-                    IntIdSetArray intIdSet = latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive.get());
+                    LongIdSetArray intIdSet = latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive.get());
                     intIdSet.toArray()[0] = KernelTerm.ACTIVE_STATE.nid();
-                    IntIdListArray intIdList = latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive.get());
+                    LongIdListArray intIdList = latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive.get());
                     intIdList.toArray()[0] = KernelTerm.ACTIVE_STATE.nid();
                 }
             });

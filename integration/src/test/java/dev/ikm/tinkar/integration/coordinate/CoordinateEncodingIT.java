@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.binary.Encodable;
 import dev.ikm.tinkar.common.binary.EncoderOutput;
@@ -137,13 +138,13 @@ class CoordinateEncodingIT {
     @Test
     void aStampPositionOfTheFirstVersionIsStillRead() throws IOException {
         long time = 1_600_000_000_000L;
-        int pathNid = KernelTerm.DEVELOPMENT_PATH.nid();
+        long pathNid = KernelTerm.DEVELOPMENT_PATH.nid();
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(stream);
         writeHeader(out, Encodable.FIRST_VERSION, StampPositionRecord.class);
         out.writeLong(time);
-        out.writeInt(pathNid);   // the first version's layout: the nid itself
+        out.writeInt(Nid.narrowChecked(pathNid));   // the first version's layout: the nid itself
 
         StampPositionRecord decoded = Encodable.decode(stream.toByteArray());
         assertEquals(new StampPositionRecord(time, pathNid), decoded);
@@ -152,15 +153,15 @@ class CoordinateEncodingIT {
     @Test
     void aViewCoordinateReadsBackAsItWasWrittenAndHoldsNoNid() {
         ViewCoordinateRecord view = Coordinates.View.DefaultView();
-        int pathNid = view.stampCoordinate().stampPosition().getPathForPositionNid();
+        long pathNid = view.stampCoordinate().stampPosition().getPathForPositionNid();
 
         byte[] stream = view.toBytes();
         assertEquals(Encodable.LATEST_VERSION, ByteBuffer.wrap(stream).getInt());
         assertEquals(view, Encodable.<ViewCoordinateRecord>decode(stream));
 
-        assertFalse(contains(stream, intBytes(pathNid)),
+        assertFalse(contains(stream, intBytes(Nid.narrowChecked(pathNid))),
                 "the stream written now does not hold the path's nid");
-        assertTrue(contains(firstVersionStream(view), intBytes(pathNid)),
+        assertTrue(contains(firstVersionStream(view), intBytes(Nid.narrowChecked(pathNid))),
                 "the first version's stream did, which is what the search above would have found");
     }
 
@@ -255,7 +256,7 @@ class CoordinateEncodingIT {
         out.writeString(ViewCoordinateRecord.class.getName());
         stamp.allowedStates().encode(out);
         out.writeLong(stamp.stampPosition().time());
-        out.writeInt(stamp.stampPosition().getPathForPositionNid());
+        out.writeInt(Nid.narrowChecked(stamp.stampPosition().getPathForPositionNid()));
         out.writeNidArray(stamp.moduleNids().toArray());
         out.writeNidArray(stamp.excludedModuleNids().toArray());
         out.writeNidArray(stamp.modulePriorityNidList().toArray());

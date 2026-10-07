@@ -180,14 +180,14 @@
  * // Custom coordinate preferring technical definitions in US English
  * LanguageCoordinateRecord technical = LanguageCoordinateRecord.make(
  *     KernelTerm.ENGLISH_LANGUAGE.nid(),
- *     IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
- *     IntIds.list.of(
+ *     LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+ *     LongIds.list.of(
  *         KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid(),      // Prefer definitions
  *         KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
  *         KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
  *     ),
- *     IntIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid()),
- *     IntIds.list.of(MyTerms.TECHNICAL_MODULE.nid())      // Custom module priority
+ *     LongIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid()),
+ *     LongIds.list.of(MyTerms.TECHNICAL_MODULE.nid())      // Custom module priority
  * );
  * }</pre>
  *

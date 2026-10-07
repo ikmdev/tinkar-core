@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.entity.builder;
 
 import dev.ikm.tinkar.common.service.internal.EntityStore;
-import dev.ikm.tinkar.common.id.IntIdCollection;
+import dev.ikm.tinkar.common.id.LongIdCollection;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -521,7 +521,7 @@ public final class KnowledgeSet {
     private static void requireFieldReferencesPresent(List<String> dangling, Entity<?> source, Object field) {
         switch (field) {
             case EntityFacade facade -> requirePresent(dangling, source, "field value", facade.nid());
-            case IntIdCollection members -> members.forEach(memberNid ->
+            case LongIdCollection members -> members.forEach(memberNid ->
                     requirePresent(dangling, source, "component-id field member", memberNid));
             case DiGraphAbstract<?> graph -> {
                 for (EntityVertex vertex : graph.vertexMap()) {
@@ -547,7 +547,7 @@ public final class KnowledgeSet {
      * @param role         the role the reference plays (e.g. {@code "pattern"})
      * @param referenceNid the referenced component's nid
      */
-    private static void requirePresent(List<String> dangling, Entity<?> source, String role, int referenceNid) {
+    private static void requirePresent(List<String> dangling, Entity<?> source, String role, long referenceNid) {
         if (EntityHandle.get(referenceNid).isPresent()) {
             return;
         }

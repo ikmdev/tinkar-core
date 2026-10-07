@@ -26,7 +26,7 @@ import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
 
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.graph.DiTreeAbstract;
 import dev.ikm.tinkar.entity.graph.DiTreeText;
@@ -333,10 +333,10 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		@Override
 		public ImmutableList<ConceptFacade> propertySequence() {
-			Optional<IntIdList> optionalPattern = this.adaptedExpression.sourceGraph.vertex(this.vertexIndex)
+			Optional<LongIdList> optionalPattern = this.adaptedExpression.sourceGraph.vertex(this.vertexIndex)
 					.property(KernelTerm.PROPERTY_SEQUENCE);
 			if (optionalPattern.isPresent()) {
-				IntIdList pattern = optionalPattern.get();
+				LongIdList pattern = optionalPattern.get();
 				return pattern.map(nid -> EntityProxy.Concept.make(nid));
 			}
 			throw new IllegalStateException("No property sequence found... ");

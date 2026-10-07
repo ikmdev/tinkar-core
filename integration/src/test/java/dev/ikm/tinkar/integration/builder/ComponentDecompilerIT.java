@@ -68,9 +68,9 @@ class ComponentDecompilerIT {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
         BindingReferenceResolver resolver = BindingReferenceResolver.build();
 
-        List<Integer> conceptNids = new ArrayList<>();
+        List<Long> conceptNids = new ArrayList<>();
         EntityService.get().forEachConceptEntity(concept -> conceptNids.add(concept.nid()));
-        List<Integer> patternNids = new ArrayList<>();
+        List<Long> patternNids = new ArrayList<>();
         EntityService.get().forEachPatternEntity(pattern -> patternNids.add(pattern.nid()));
 
         int totalComponents = conceptNids.size() + patternNids.size();
@@ -79,9 +79,9 @@ class ComponentDecompilerIT {
         Map<String, Integer> verbKindCounts = new TreeMap<>();
         List<String> allNotes = new ArrayList<>();
 
-        List<Integer> allNids = new ArrayList<>(conceptNids);
+        List<Long> allNids = new ArrayList<>(conceptNids);
         allNids.addAll(patternNids);
-        for (Integer nid : allNids) {
+        for (Long nid : allNids) {
             EntityFacade component = EntityFacade.make(nid);
             ComponentSource source = ComponentDecompiler.decompile(component, calculator, resolver);
             totalVerbLines += source.verbLines().size();

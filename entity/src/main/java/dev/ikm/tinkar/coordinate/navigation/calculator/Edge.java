@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdSet;
 
 /**
  * The type and destination parts of a relationship displayed in a tree.
@@ -26,13 +26,13 @@ public interface Edge {
      *
      * @return the concept nid for the type of the linkage to the destination
      */
-    IntIdSet typeNids();
+    LongIdSet typeNids();
 
     /**
      *
      * @return the destination concept nid.
      */
-    int destinationNid();
+    long destinationNid();
 
     String comparisonString();
 }

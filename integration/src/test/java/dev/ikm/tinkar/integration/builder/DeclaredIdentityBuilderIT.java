@@ -17,9 +17,9 @@ package dev.ikm.tinkar.integration.builder;
 
 import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -226,7 +226,7 @@ class DeclaredIdentityBuilderIT {
     @Test
     @DisplayName("A declared-identity stamp is written with its established identity, not the tuple derivation")
     void declaredIdentityStamp() {
-        int stampNid = PrimitiveData.nid(STAMP_ID);
+        long stampNid = PrimitiveData.nid(STAMP_ID);
         StampEntity<?> stamp = Entity.getStamp(stampNid);
         assertTrue(PublicId.equals(STAMP_ID, stamp.publicId()));
         UUID tupleDerived = Stamp.stampUuid(State.ACTIVE, declaredBirth.time(),
@@ -253,7 +253,7 @@ class DeclaredIdentityBuilderIT {
     @Test
     @DisplayName("A multi-UUID declared stamp resolves by every UUID to one stamp entity")
     void multiUuidDeclaredStamp() {
-        int stampNid = PrimitiveData.nid(MULTI_STAMP_ID);
+        long stampNid = PrimitiveData.nid(MULTI_STAMP_ID);
         for (UUID uuid : MULTI_STAMP_ID.asUuidArray()) {
             assertEquals(stampNid, PrimitiveData.nid(PublicIds.of(uuid)), "every declared UUID registers to the one nid");
         }
@@ -264,7 +264,7 @@ class DeclaredIdentityBuilderIT {
     @Test
     @DisplayName("A multi-UUID declared concept identity is adopted in full")
     void multiUuidConceptIdentity() {
-        int conceptNid = PrimitiveData.nid(CONCEPT_ID);
+        long conceptNid = PrimitiveData.nid(CONCEPT_ID);
         for (UUID uuid : CONCEPT_ID.asUuidArray()) {
             assertEquals(conceptNid, PrimitiveData.nid(PublicIds.of(uuid)), "every declared UUID registers to the one nid");
         }
@@ -279,7 +279,7 @@ class DeclaredIdentityBuilderIT {
     @Test
     @DisplayName("An explicitly declared FQN description suppresses the derived auto-seed — no extra semantics")
     void explicitFqnSuppressesAutoSeed() {
-        int conceptNid = PrimitiveData.nid(CONCEPT_ID);
+        long conceptNid = PrimitiveData.nid(CONCEPT_ID);
         List<SemanticEntity<SemanticEntityVersion>> attached = semanticsFor(conceptNid);
         // Description, membership, identifier, path-origin, axiom — and nothing derived.
         assertEquals(5, attached.size(),
@@ -345,7 +345,7 @@ class DeclaredIdentityBuilderIT {
     @Test
     @DisplayName("An authored concept still auto-seeds its FQN description — the convenience default holds")
     void autoSeedStillHoldsForAuthoredContent() {
-        int conceptNid = PrimitiveData.nid(
+        long conceptNid = PrimitiveData.nid(
                 PublicIds.of(TEST_SET.uuidFor("Multi-stamp kind (Test)")));
         long descriptions = semanticsFor(conceptNid).stream()
                 .filter(semantic -> semantic.patternNid() == KernelTerm.DESCRIPTION_PATTERN.nid())
@@ -356,7 +356,7 @@ class DeclaredIdentityBuilderIT {
     @Test
     @DisplayName("A generic non-FQN description leaves the derived FQN auto-seed in place")
     void genericNonFqnDescriptionKeepsAutoSeed() {
-        int conceptNid = PrimitiveData.nid(PublicIds.of(TEST_SET.uuidFor("Keyword kind (Test)")));
+        long conceptNid = PrimitiveData.nid(PublicIds.of(TEST_SET.uuidFor("Keyword kind (Test)")));
         List<String> descriptionTypes = new ArrayList<>();
         for (SemanticEntity<SemanticEntityVersion> semantic : semanticsFor(conceptNid)) {
             if (semantic.patternNid() == KernelTerm.DESCRIPTION_PATTERN.nid()) {
@@ -456,11 +456,11 @@ class DeclaredIdentityBuilderIT {
         SemanticEntityVersion version = semantic.versions().getFirst();
         assertEquals(new java.math.BigDecimal("1.25"), version.fieldValues().get(0));
         assertArrayEquals(BYTES_FIELD, (byte[]) version.fieldValues().get(1));
-        IntIdList components = (IntIdList) version.fieldValues().get(2);
+        LongIdList components = (LongIdList) version.fieldValues().get(2);
         assertEquals(2, components.size());
         assertTrue(components.contains(IkeTerms.MODEL_CONCEPT.nid()));
         assertTrue(components.contains(KernelTerm.USER.nid()));
-        IntIdSet componentSet = (IntIdSet) version.fieldValues().get(3);
+        LongIdSet componentSet = (LongIdSet) version.fieldValues().get(3);
         assertTrue(componentSet.contains(KernelTerm.DEVELOPMENT_PATH.nid()));
     }
 
@@ -534,7 +534,7 @@ class DeclaredIdentityBuilderIT {
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Double field (Test)")
                 .at(stamp).semantic(KernelTerm.IDENTIFIER_PATTERN, identity, 1.5d));
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Nid field (Test)")
-                .at(stamp).semantic(KernelTerm.IDENTIFIER_PATTERN, identity, IntIds.list.of(1, 2)));
+                .at(stamp).semantic(KernelTerm.IDENTIFIER_PATTERN, identity, LongIds.list.of(1, 2)));
 
         // One version per stamp per semantic — merge would silently replace.
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Same stamp (Test)")
@@ -641,7 +641,7 @@ class DeclaredIdentityBuilderIT {
         return semantic;
     }
 
-    private static List<SemanticEntity<SemanticEntityVersion>> semanticsFor(int componentNid) {
+    private static List<SemanticEntity<SemanticEntityVersion>> semanticsFor(long componentNid) {
         List<SemanticEntity<SemanticEntityVersion>> attached = new ArrayList<>();
         EntityService.get().forEachSemanticForComponent(componentNid, attached::add);
         return attached;

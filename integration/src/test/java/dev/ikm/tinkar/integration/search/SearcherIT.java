@@ -290,7 +290,7 @@ public class SearcherIT {
         return semanticProxy;
     }
 
-    private Optional<PrimitiveDataSearchResult> findByNid(PrimitiveDataSearchResult[] results, int nid) {
+    private Optional<PrimitiveDataSearchResult> findByNid(PrimitiveDataSearchResult[] results, long nid) {
         return Arrays.stream(results).filter(r -> r.nid() == nid).findFirst();
     }
 

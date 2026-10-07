@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculatorDelegate;
@@ -32,7 +32,7 @@ public interface NavigationCalculatorDelegate extends NavigationCalculator, Lang
     NavigationCalculator navigationCalculator();
 
     @Override
-    default IntIdList toSortedList(IntIdList inputList) {
+    default LongIdList toSortedList(LongIdList inputList) {
         return navigationCalculator().toSortedList(inputList);
     }
 
@@ -57,32 +57,32 @@ public interface NavigationCalculatorDelegate extends NavigationCalculator, Lang
     }
 
     @Override
-    default IntIdList unsortedParentsOf(int conceptNid) {
+    default LongIdList unsortedParentsOf(long conceptNid) {
         return navigationCalculator().unsortedParentsOf(conceptNid);
     }
 
     @Override
-    default IntIdList unsortedChildrenOf(int conceptNid) {
+    default LongIdList unsortedChildrenOf(long conceptNid) {
         return navigationCalculator().unsortedChildrenOf(conceptNid);
     }
 
     @Override
-    default IntIdList unsortedUnversionedChildrenOf(int conceptNid) {
+    default LongIdList unsortedUnversionedChildrenOf(long conceptNid) {
         return navigationCalculator().unsortedUnversionedChildrenOf(conceptNid);
     }
 
     @Override
-    default IntIdList unsortedUnversionedParentsOf(int conceptNid) {
+    default LongIdList unsortedUnversionedParentsOf(long conceptNid) {
         return navigationCalculator().unsortedUnversionedParentsOf(conceptNid);
     }
 
     @Override
-    default IntIdList sortedParentsOf(int conceptNid) {
+    default LongIdList sortedParentsOf(long conceptNid) {
         return navigationCalculator().sortedParentsOf(conceptNid);
     }
 
     @Override
-    default IntIdList sortedChildrenOf(int conceptNid) {
+    default LongIdList sortedChildrenOf(long conceptNid) {
         return navigationCalculator().sortedChildrenOf(conceptNid);
     }
 
@@ -91,7 +91,7 @@ public interface NavigationCalculatorDelegate extends NavigationCalculator, Lang
     }
 
     @Override
-    default IntIdList unsortedParentsOf(int conceptNid, int patternNid) {
+    default LongIdList unsortedParentsOf(long conceptNid, long patternNid) {
         return navigationCalculator().unsortedParentsOf(conceptNid, patternNid);
     }
 
@@ -106,37 +106,37 @@ public interface NavigationCalculatorDelegate extends NavigationCalculator, Lang
     }
 
     @Override
-    default IntIdSet kindOf(int conceptNid) {
+    default LongIdSet kindOf(long conceptNid) {
         return navigationCalculator().kindOf(conceptNid);
     }
 
     @Override
-    default ImmutableList<Edge> sortedParentEdges(int conceptNid) {
+    default ImmutableList<Edge> sortedParentEdges(long conceptNid) {
         return navigationCalculator().sortedParentEdges(conceptNid);
     }
 
     @Override
-    default ImmutableList<Edge> unsortedParentEdges(int conceptNid) {
+    default ImmutableList<Edge> unsortedParentEdges(long conceptNid) {
         return navigationCalculator().unsortedParentEdges(conceptNid);
     }
 
     @Override
-    default ImmutableList<Edge> sortedChildEdges(int conceptNid) {
+    default ImmutableList<Edge> sortedChildEdges(long conceptNid) {
         return navigationCalculator().sortedChildEdges(conceptNid);
     }
 
     @Override
-    default ImmutableList<Edge> unsortedChildEdges(int conceptNid) {
+    default ImmutableList<Edge> unsortedChildEdges(long conceptNid) {
         return navigationCalculator().unsortedChildEdges(conceptNid);
     }
 
     @Override
-    default IntIdSet descendentsOf(int conceptNid) {
+    default LongIdSet descendentsOf(long conceptNid) {
         return navigationCalculator().descendentsOf(conceptNid);
     }
 
     @Override
-    default IntIdSet ancestorsOf(int conceptNid) {
+    default LongIdSet ancestorsOf(long conceptNid) {
         return navigationCalculator().ancestorsOf(conceptNid);
     }
 }

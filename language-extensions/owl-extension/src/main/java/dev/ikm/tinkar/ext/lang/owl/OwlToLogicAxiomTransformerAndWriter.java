@@ -15,9 +15,10 @@
  */
 package dev.ikm.tinkar.ext.lang.owl;
 
+import dev.ikm.tinkar.common.id.Nid;
 
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
@@ -52,12 +53,12 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
 
     private static final Logger LOG = LoggerFactory.getLogger(OwlToLogicAxiomTransformerAndWriter.class);
 
-    private final int destinationPatternNid;
+    private final long destinationPatternNid;
     private final List<TransformationGroup> transformationRecords;
     private Transaction transaction;
-    private int authorNid = KernelTerm.USER.nid();
-    private int moduleNid = Integer.MAX_VALUE;
-    private int pathNid = Integer.MAX_VALUE;
+    private long authorNid = KernelTerm.USER.nid();
+    private long moduleNid = Integer.MAX_VALUE;
+    private long pathNid = Integer.MAX_VALUE;
 
     /**
 	 * @param transaction           - if supplied, this does NOT commit the
@@ -66,7 +67,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
      * @param transformationRecords
      */
     public OwlToLogicAxiomTransformerAndWriter(Transaction transaction, List<TransformationGroup> transformationRecords,
-                                               int destinationPatternNid) {
+                                               long destinationPatternNid) {
 
         this.transaction = transaction;
         this.transformationRecords = transformationRecords;
@@ -77,7 +78,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
     }
 
     public OwlToLogicAxiomTransformerAndWriter(Transaction transaction, List<TransformationGroup> transformationRecords,
-                                               int destinationPatternNid, int authorNid, int moduleNid, int pathNid) {
+                                               long destinationPatternNid, long authorNid, long moduleNid, long pathNid) {
         this(transaction, transformationRecords, destinationPatternNid);
         this.authorNid = authorNid;
         this.moduleNid = moduleNid;
@@ -118,28 +119,28 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
      *
      * @param premiseType the stated
      */
-    private void transformOwlExpressions(int conceptNid, int[] owlNids, PremiseType premiseType) throws Exception {
+    private void transformOwlExpressions(long conceptNid, long[] owlNids, PremiseType premiseType) throws Exception {
         updateMessage("Converting " + premiseType + " Owl expressions");
 
         List<SemanticEntity> owlEntitiesForConcept = new ArrayList<>();
         Set<StampCoordinateRecord> stampCoordinates = new HashSet<>();
 
-        for (int owlNid : owlNids) {
+        for (long owlNid : owlNids) {
             EntityHandle.get(owlNid).entity().filter(e -> !e.canceled()).ifPresent(owlSemantic -> {
                 owlEntitiesForConcept.add((SemanticEntity) owlSemantic);
             });
         }
 
         for (SemanticEntity<? extends SemanticEntityVersion> owlChronology : owlEntitiesForConcept) {
-            for (int stampNid : owlChronology.stampNids().toArray()) {
+            for (long stampNid : owlChronology.stampNids().toArray()) {
                 StampEntity<? extends StampEntityVersion> stamp = EntityService.get().getStampFast(stampNid);
                 StampPositionRecord stampPos = StampPositionRecord.make(stamp.time(), stamp.pathNid());
-                int[] moduleWithOrigins = StampCalculatorWithCache.getModuleWithOrigins(stampPos, stamp.moduleNid());
+                long[] moduleWithOrigins = StampCalculatorWithCache.getModuleWithOrigins(stampPos, stamp.moduleNid());
                 StampCoordinateRecord stampCoordinate = StampCoordinateRecord.make(StateSet.ACTIVE, stampPos)
-                        .withModuleNids(IntIds.set.of(moduleWithOrigins))
-                        .withModulePriorityNidList(IntIds.list.of(moduleWithOrigins));
-                int writeModuleNid = (moduleNid != Integer.MAX_VALUE ? moduleNid : stamp.moduleNid());
-                int writePathNid = (pathNid != Integer.MAX_VALUE ? pathNid : stamp.pathNid());
+                        .withModuleNids(LongIds.set.of(moduleWithOrigins))
+                        .withModulePriorityNidList(LongIds.list.of(moduleWithOrigins));
+                long writeModuleNid = (!Nid.isNotApplicable(moduleNid) ? moduleNid : stamp.moduleNid());
+                long writePathNid = (!Nid.isNotApplicable(pathNid) ? pathNid : stamp.pathNid());
                 StampVersionRecordBuilder writeStampBuilder = StampVersionRecordBuilder.builder()
                         .stateNid(State.ACTIVE.nid())
                         .time(stamp.time())
@@ -158,8 +159,8 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                 if (logicalExpression == null) {
                     // When the logical expression is null, write a version with the STAMP's original (likely Inactive) status
                     stampCoordinate = StampCoordinateRecord.make(StateSet.of(stamp.state()), stampPos)
-                            .withModuleNids(IntIds.set.of(moduleWithOrigins))
-                            .withModulePriorityNidList(IntIds.list.of(moduleWithOrigins));
+                            .withModuleNids(LongIds.set.of(moduleWithOrigins))
+                            .withModulePriorityNidList(LongIds.list.of(moduleWithOrigins));
                     writeStampBuilder.stateNid(stamp.stateNid());
                     logicalExpression = generateLogicalExpression(conceptNid, owlEntitiesForConcept, stampCoordinate);
                 }
@@ -184,7 +185,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
         }
     }
 
-    private LogicalExpression generateLogicalExpression(int ConceptNid, List<SemanticEntity> owlEntities, StampCoordinateRecord stampCoordinate) {
+    private LogicalExpression generateLogicalExpression(long ConceptNid, List<SemanticEntity> owlEntities, StampCoordinateRecord stampCoordinate) {
         List<String> owlExpressionsToProcess = new ArrayList<>();
         StampCalculator stampCalc = stampCoordinate.stampCalculator();
         int owlSyntaxIdx = stampCalc.getIndexForMeaning(KernelTerm.OWL_AXIOM_SYNTAX_PATTERN.nid(), KernelTerm.AXIOM_SYNTAX.nid()).orElse(0);
@@ -208,12 +209,12 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
         return logicalExpression;
     }
 
-    private void newSemanticWithVersion(int conceptNid, LogicalExpression logicalExpression, StampVersionRecord writeStamp) {
+    private void newSemanticWithVersion(long conceptNid, LogicalExpression logicalExpression, StampVersionRecord writeStamp) {
         // Create UUID from seed and assign SemanticBuilder the value
         Entity<EntityVersion> patternEntity = EntityHandle.get(destinationPatternNid).expectPattern();
         UUID generartedSemanticUuid = UuidT5Generator.singleSemanticUuid(patternEntity,
                 EntityHandle.get(conceptNid).expectEntity());
-        int semanticNid = ScopedValue
+        long semanticNid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternEntity.publicId())
                 .call(() -> PrimitiveData.nid(generartedSemanticUuid));
 
@@ -228,8 +229,8 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
         addNewVersion(logicalExpression, newSemanticBuilder.build(), writeStamp);
     }
 
-    private void addSemanticVersionIfAbsent(int conceptNid, LogicalExpression logicalExpression, StampVersionRecord writeStamp,
-                                            StampCoordinateRecord stampCoordinate, int semanticNid) {
+    private void addSemanticVersionIfAbsent(long conceptNid, LogicalExpression logicalExpression, StampVersionRecord writeStamp,
+                                            StampCoordinateRecord stampCoordinate, long semanticNid) {
         SemanticRecord existingSemantic = EntityHandle.get(semanticNid).expectSemanticRecord();
         Latest<SemanticEntityVersion> latestSemanticVersion = stampCoordinate.stampCalculator().latest(semanticNid);
         if (latestSemanticVersion.isPresent()) {

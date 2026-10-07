@@ -15,6 +15,12 @@
  */
 package dev.ikm.tinkar.provider.entity;
 
+import dev.ikm.tinkar.common.id.Nid;
+import java.util.stream.LongStream;
+
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
+
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -30,8 +36,8 @@ import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.common.service.ServiceKeys;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.api.factory.primitive.IntLists;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.factory.primitive.LongLists;
 import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
 import dev.ikm.tinkar.common.service.ProviderController;
 import dev.ikm.tinkar.common.service.PublicIdService;
@@ -54,11 +60,11 @@ import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Sets;
-import org.eclipse.collections.api.factory.primitive.IntSets;
+import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.api.set.MutableSet;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,14 +82,14 @@ import static dev.ikm.tinkar.terms.KernelTerm.DESCRIPTION_PATTERN;
 public class EntityProvider implements EntityService, EntityLookup, PublicIdService, DefaultDescriptionForNidService, EntityDataRepair {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityProvider.class);
-    private static final Cache<Integer, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
-    private static final Cache<Integer, Entity> ENTITY_CACHE = Caffeine.newBuilder().maximumSize(10240).build();
-    private static final Cache<Integer, StampEntity> STAMP_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
+    private static final Cache<Long, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
+    private static final Cache<Long, Entity> ENTITY_CACHE = Caffeine.newBuilder().maximumSize(10240).build();
+    private static final Cache<Long, StampEntity> STAMP_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
 
 
     //Multi<Entity<? extends EntityVersion>> chronologyBroadcaster = BroadcastProcessor.create().toHotStream();
     //  <T extends Entity<? extends EntityVersion>>
-    final Broadcaster<Integer> processor;
+    final Broadcaster<Long> processor;
 
     private boolean loadPhase = false;
 
@@ -103,19 +109,19 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
         return loadPhaseSearchPolicy;
     }
 
-    public void addSubscriberWithWeakReference(Subscriber<Integer> subscriber) {
+    public void addSubscriberWithWeakReference(Subscriber<Long> subscriber) {
         this.processor.addSubscriberWithWeakReference(subscriber);
     }
 
     @Override
-    public String textFast(int nid) {
+    public String textFast(long nid) {
 
         // TODO use a default language coordinate instead of this hardcode routine.
         return STRING_CACHE.get(nid, integer -> {
-            int[] semanticNids = EntityStore.current().semanticNidsForComponentOfPattern(nid, DESCRIPTION_PATTERN.nid());
+            long[] semanticNids = EntityStore.current().semanticNidsForComponentOfPattern(nid, DESCRIPTION_PATTERN.nid());
             String anyString = null;
             String fqnString = null;
-            for (int semanticNid : semanticNids) {
+            for (long semanticNid : semanticNids) {
                 EntityHandle descriptionSemanticHandle = EntityHandle.get(semanticNid);
                 if (descriptionSemanticHandle.isSemantic() && descriptionSemanticHandle.expectEntity() instanceof SemanticEntity<?> descriptionSemantic) {
                     EntityHandle patternHandle = EntityHandle.get(descriptionSemantic.patternNid());
@@ -177,7 +183,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
     }
 
     @Override
-    public <T extends Chronology<V>, V extends Version> Optional<T> getChronology(int nid) {
+    public <T extends Chronology<V>, V extends Version> Optional<T> getChronology(long nid) {
         Entity entity = getEntityFast(nid);
         if (entity == null || entity.canceled()) {
             return Optional.empty();
@@ -189,7 +195,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
      * Example call when resolving via RocksDB:
      *
      * <pre>{@code
-     * int nid = ScopedValue
+     * long nid = ScopedValue
      *         .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternFacade.publicId())
      *         .call(() -> PrimitiveData.nid(semanticUUID));
      * }</pre>
@@ -198,7 +204,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
      * @return the nid corresponding to the provided UUIDs
      */
     @Override
-    public int nidForUuids(UUID... uuids) {
+    public long nidForUuids(UUID... uuids) {
         return PrimitiveData.get().nidForUuids(uuids);
     }
 
@@ -206,7 +212,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
      * Example call when resolving via RocksDB:
      *
      * <pre>{@code
-     * int nid = ScopedValue
+     * long nid = ScopedValue
      *         .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternFacade.publicId())
      *         .call(() -> PrimitiveData.nid(semanticUUID));
      * }</pre>
@@ -215,7 +221,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
      * @return the nid corresponding to the provided UUIDs
      */
     @Override
-    public int nidForPublicId(PublicId publicId) {
+    public long nidForPublicId(PublicId publicId) {
         return PrimitiveData.get().nidForUuids(publicId.asUuidArray());
     }
 
@@ -226,7 +232,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
      * @return the entity, or {@code null} if the store holds none for the nid
      */
     @Override
-    public Entity<?> entityOrNull(int nid) {
+    public Entity<?> entityOrNull(long nid) {
         return getEntityFast(nid);
     }
 
@@ -234,7 +240,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
      * Reads an entity through the cache, cast unchecked to the type the caller in this class
      * expects. Private: outside the provider, entities are looked up through {@link EntityHandle}.
      */
-    private <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid) {
+    private <T extends Entity<V>, V extends EntityVersion> T getEntityFast(long nid) {
         return (T) ENTITY_CACHE.get(nid, entityNid -> {
             byte[] bytes = EntityStore.current().getBytes(nid);
             if (bytes == null) {
@@ -245,12 +251,12 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
     }
 
     @Override
-    public int nidForUuids(ImmutableList<UUID> uuidList) {
+    public long nidForUuids(ImmutableList<UUID> uuidList) {
         return PrimitiveData.get().nidForUuids(uuidList);
     }
 
     @Override
-    public StampEntity getStampFast(int nid) {
+    public StampEntity getStampFast(long nid) {
         return STAMP_CACHE.get(nid, stampNid -> {
                     byte[] bytes = EntityStore.current().getBytes(nid);
                     if (bytes == null) {
@@ -357,8 +363,8 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
     }
 
     @Override
-    public void invalidateCaches(int... nids) {
-        for (int nid : nids) {
+    public void invalidateCaches(long... nids) {
+        for (long nid : nids) {
             STRING_CACHE.invalidate(nid);
             ENTITY_CACHE.invalidate(nid);
             STAMP_CACHE.invalidate(nid);
@@ -371,15 +377,15 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
     }
 
     @Override
-    public void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
+    public void forEachSemanticOfPattern(long patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
         if (EntityService.keysNoSemantics(patternNid)) {
             return;
         }
-        EntityStore.current().forEachSemanticNidOfPattern(patternNid, (int nid) -> acceptSemantic(nid, procedure));
+        EntityStore.current().forEachSemanticNidOfPattern(patternNid, (long nid) -> acceptSemantic(nid, procedure));
     }
 
     @Override
-    public Stream<SemanticEntity<SemanticEntityVersion>> semanticsOfPattern(int patternNid) {
+    public Stream<SemanticEntity<SemanticEntityVersion>> semanticsOfPattern(long patternNid) {
         if (EntityService.keysNoSemantics(patternNid)) {
             return Stream.empty();
         }
@@ -387,12 +393,12 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
     }
 
     @Override
-    public Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponent(int componentNid) {
+    public Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponent(long componentNid) {
         return semantics(EntityStore.current().semanticNidsForComponent(componentNid));
     }
 
     @Override
-    public Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponentOfPattern(int componentNid, int patternNid) {
+    public Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponentOfPattern(long componentNid, long patternNid) {
         return semantics(EntityStore.current().semanticNidsForComponentOfPattern(componentNid, patternNid));
     }
 
@@ -401,8 +407,8 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
      * whose entity is not a semantic, is passed over.
      */
     @SuppressWarnings("unchecked")
-    private Stream<SemanticEntity<SemanticEntityVersion>> semantics(int[] nids) {
-        return IntStream.of(nids)
+    private Stream<SemanticEntity<SemanticEntityVersion>> semantics(long[] nids) {
+        return LongStream.of(nids)
                 .mapToObj(nid -> (Entity<?>) getEntityFast(nid))
                 .filter(entity -> entity instanceof SemanticEntity)
                 .map(entity -> (SemanticEntity<SemanticEntityVersion>) entity);
@@ -410,20 +416,20 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
 
     /** Gives the consumer the semantic with this nid, unless no entity has it or it is not a semantic. */
     @SuppressWarnings("unchecked")
-    private void acceptSemantic(int nid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
+    private void acceptSemantic(long nid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
         if ((Entity<?>) getEntityFast(nid) instanceof SemanticEntity semantic) {
             procedure.accept((SemanticEntity<SemanticEntityVersion>) semantic);
         }
     }
 
     @Override
-    public void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
-        EntityStore.current().forEachSemanticNidForComponent(componentNid, (int nid) -> acceptSemantic(nid, procedure));
+    public void forEachSemanticForComponent(long componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
+        EntityStore.current().forEachSemanticNidForComponent(componentNid, (long nid) -> acceptSemantic(nid, procedure));
     }
 
     @Override
-    public void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
-        EntityStore.current().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, (int nid) -> acceptSemantic(nid, procedure));
+    public void forEachSemanticForComponentOfPattern(long componentNid, long patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
+        EntityStore.current().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, (long nid) -> acceptSemantic(nid, procedure));
     }
 
     @Override
@@ -435,7 +441,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
     }
 
     @Override
-    public PublicId publicId(int nid) {
+    public PublicId publicId(long nid) {
         Entity<?> entity = getEntityFast(nid);
         if (entity != null) {
             return entity.publicId();
@@ -472,12 +478,12 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
     }
 
     @Override
-    public void dispatch(Integer item) {
+    public void dispatch(Long item) {
         this.processor.dispatch(item);
     }
 
     @Override
-    public void removeSubscriber(Subscriber<Integer> subscriber) {
+    public void removeSubscriber(Subscriber<Long> subscriber) {
         this.processor.removeSubscriber(subscriber);
     }
 
@@ -515,13 +521,13 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
 
     private static Future<Entity> mergeEntities(Entity<?> entityToMergeInto, Entity<?> entityToMergeFrom) {
         // TODO Need to handle different IDs. ?
-        ImmutableIntSet entityOneStampNidSet = IntSets.immutable.ofAll(entityToMergeInto.versions().stream().mapToInt(version -> version.stampNid()));
-        ImmutableIntSet entityTwoStampNidSet = IntSets.immutable.ofAll(entityToMergeFrom.versions().stream().mapToInt(version -> version.stampNid()));
-        ImmutableIntSet stampDifferenceNids = entityOneStampNidSet.difference(entityTwoStampNidSet);
-        ImmutableIntSet stampUnionNids = entityOneStampNidSet.intersect(entityTwoStampNidSet);
-        ImmutableIntSet allStampNids = stampDifferenceNids.newWithAll(stampUnionNids);
+        ImmutableLongSet entityOneStampNidSet = LongSets.immutable.ofAll(entityToMergeInto.versions().stream().mapToLong(version -> version.stampNid()));
+        ImmutableLongSet entityTwoStampNidSet = LongSets.immutable.ofAll(entityToMergeFrom.versions().stream().mapToLong(version -> version.stampNid()));
+        ImmutableLongSet stampDifferenceNids = entityOneStampNidSet.difference(entityTwoStampNidSet);
+        ImmutableLongSet stampUnionNids = entityOneStampNidSet.intersect(entityTwoStampNidSet);
+        ImmutableLongSet allStampNids = stampDifferenceNids.newWithAll(stampUnionNids);
 
-        for (int unionStamp : stampUnionNids.toArray()) {
+        for (long unionStamp : stampUnionNids.toArray()) {
             if (!entityToMergeInto.getVersion(unionStamp).equals(entityToMergeFrom.getVersion(unionStamp))) {
                 return EntityMergeServiceFinder.adjudicatedMerge(entityToMergeInto, entityToMergeFrom);
             }
@@ -532,9 +538,9 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
         }
 
         // Check to see if any of the stampDifferenceNids versions have the same time, module, and path
-        for (int differenceStampNid : stampDifferenceNids.toArray()) {
+        for (long differenceStampNid : stampDifferenceNids.toArray()) {
             StampEntity differenceStamp = EntityService.get().getStampFast(differenceStampNid);
-            for (int anyStampNid : allStampNids.toArray()) {
+            for (long anyStampNid : allStampNids.toArray()) {
                 if (differenceStampNid != anyStampNid) {
                     StampEntity anyStamp = EntityService.get().getStampFast(anyStampNid);
                     if (differenceStamp.time() == anyStamp.time() &&
@@ -624,7 +630,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
         loadPhase = false;
         PrimitiveData.get().setLoadPhase(false);
         runningSearchService().ifPresent(search -> search.setLoadPhase(false));
-        processor.dispatch(Integer.MIN_VALUE);
+        processor.dispatch((long) Nid.NONE); // everything changed: the none sentinel, widened
     }
 
     private static Optional<SearchService> runningSearchService() {
@@ -638,9 +644,9 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
      *
      * @param stampNids the collection of stamp NIDs to check for uncommitted stamps
      */
-    public void listAndCancelUncommittedStamps(int[] stampNids) {
+    public void listAndCancelUncommittedStamps(long[] stampNids) {
         LOG.debug("Searching for canceled stamps in set of size {}", stampNids.length);
-        for (int stampNid : stampNids) {
+        for (long stampNid : stampNids) {
             try {
                 StampEntity stamp = getStampFast(stampNid);
                 if (stamp == null) {
@@ -670,13 +676,13 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
      * starts, after the data store has opened and before anything has read from it.
      */
     void cancelUncommittedStamps() {
-        MutableIntList stampNids = IntLists.mutable.empty().asSynchronized();
+        MutableLongList stampNids = LongLists.mutable.empty().asSynchronized();
         EntityStore.current().forEachStampNid(stampNids::add);
         LOG.info("Canceling uncommitted stamps at startup, among {} stamps", stampNids.size());
         listAndCancelUncommittedStamps(stampNids.toSortedArray());
     }
 
-    private void cancelUncommittedStamp(int stampNid, StampRecord stamp) {
+    private void cancelUncommittedStamp(long stampNid, StampRecord stamp) {
         LOG.warn("Canceling uncommitted stamp: {}", stamp.publicId().asUuidList());
         StampVersionRecord lastVersion = stamp.lastVersion();
         StampVersionRecord canceledVersion = lastVersion.with()

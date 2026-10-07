@@ -63,7 +63,7 @@ class TaxonomySectionerIT {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
         TaxonomySectioner sectioner = TaxonomySectioner.fromStatedNavigation(calculator);
 
-        int platformRoot = KernelTerm.ROOT_VERTEX.nid();
+        long platformRoot = KernelTerm.ROOT_VERTEX.nid();
         assertEquals(2, sectioner.childrenOf(platformRoot).size(),
                 "the platform root's stated-nav children, Model concept and Phenomenon, seed the depth-1 sections");
 

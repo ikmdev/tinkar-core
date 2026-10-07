@@ -68,7 +68,7 @@ public abstract class HybridReasonerServiceTestBase extends HybridReasonerTestBa
 	public void ids() throws Exception {
 		for (long sctid : List.of(StatementSnomedOntology.swec_id, StatementSnomedOntology.finding_context_id,
 				StatementSnomedOntology.known_absent_id)) {
-			int nid = ElkSnomedData.getNid(sctid);
+			long nid = ElkSnomedData.getNid(sctid);
 			LOG.info(PrimitiveData.text(nid) + " " + nid + " " + sctid);
 		}
 		SwecIds swecNids = HybridReasonerService.getSwecNids();
@@ -77,11 +77,11 @@ public abstract class HybridReasonerServiceTestBase extends HybridReasonerTestBa
 			LOG.info(PrimitiveData.text(Nid.narrowChecked(nid)) + " " + nid);
 		}
 		{
-			int nid = ElkSnomedData.getNid(SnomedIds.root);
+			long nid = ElkSnomedData.getNid(SnomedIds.root);
 			LOG.info(PrimitiveData.text(nid) + " " + nid);
 		}
 		{
-			int nid = KernelTerm.ROOT_VERTEX.nid();
+			long nid = KernelTerm.ROOT_VERTEX.nid();
 			LOG.info(PrimitiveData.text(nid) + " " + nid);
 		}
 	}

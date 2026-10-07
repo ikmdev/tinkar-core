@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder.generator;
 
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
@@ -169,7 +169,7 @@ public final class AxiomDecompiler {
             }
             case PROPERTY_SEQUENCE_IMPLICATION -> {
                 expectProperties(vertex, KernelTerm.PROPERTY_SEQUENCE, KernelTerm.PROPERTY_SEQUENCE_IMPLICATION);
-                IntIdList sequence = property(vertex, KernelTerm.PROPERTY_SEQUENCE, IntIdList.class);
+                LongIdList sequence = property(vertex, KernelTerm.PROPERTY_SEQUENCE, LongIdList.class);
                 List<ConceptFacade> properties = new ArrayList<>(sequence.size());
                 sequence.forEach(nid -> properties.add(EntityProxy.Concept.make(nid)));
                 yield new PropertySequenceImplication(List.copyOf(properties),
@@ -213,11 +213,11 @@ public final class AxiomDecompiler {
      * dropped, since no builder verb carries it.
      */
     private static void expectProperties(EntityVertex vertex, EntityProxy.Concept... expected) {
-        Set<Integer> expectedNids = new HashSet<>();
+        Set<Long> expectedNids = new HashSet<>();
         for (EntityProxy.Concept property : expected) {
             expectedNids.add(property.nid());
         }
-        Set<Integer> actualNids = new HashSet<>();
+        Set<Long> actualNids = new HashSet<>();
         vertex.properties().forEachKeyValue((nid, value) -> {
             if (value != null) {
                 actualNids.add(nid);

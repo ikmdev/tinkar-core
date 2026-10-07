@@ -55,11 +55,11 @@ public interface StampBranch
             return comparison;
         }
 
-        return Integer.compare(this.getPathOfBranchNid(), o.getPathOfBranchNid());
+        return Long.compare(this.getPathOfBranchNid(), o.getPathOfBranchNid());
     }
 
 
-    int getPathOfBranchNid();
+    long getPathOfBranchNid();
 
     /**
      * Gets the stamp path ConceptFacade.

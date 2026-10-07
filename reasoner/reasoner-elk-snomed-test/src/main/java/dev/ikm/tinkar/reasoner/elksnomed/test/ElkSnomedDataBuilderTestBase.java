@@ -109,7 +109,7 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 		AtomicInteger inactive_cnt = new AtomicInteger();
 		primordial_vc.forEachSemanticVersionOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid(),
 				(semanticEntityVersion, _) -> {
-					int conceptNid = semanticEntityVersion.referencedComponentNid();
+					long conceptNid = semanticEntityVersion.referencedComponentNid();
 					if (primordial_vc.latestIsActive(conceptNid)) {
 						active_cnt.incrementAndGet();
 					} else {
@@ -131,7 +131,7 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 		AtomicInteger cnt = new AtomicInteger();
 		primordial_vc.forEachSemanticVersionOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid(),
 				(semanticEntityVersion, _) -> {
-					int conceptNid = semanticEntityVersion.referencedComponentNid();
+					long conceptNid = semanticEntityVersion.referencedComponentNid();
 					ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator();
 					Latest<PatternEntityVersion> latestIdPattern = vc
 							.latestPatternEntityVersion(KernelTerm.IDENTIFIER_PATTERN);

@@ -90,7 +90,7 @@ public enum PremiseType implements dev.ikm.tinkar.component.Concept, ComponentWi
     }
 
     @Override
-    public int nid() {
+    public long nid() {
         return premiseTypeConcept.nid();
     }
 }

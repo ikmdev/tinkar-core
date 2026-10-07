@@ -185,7 +185,7 @@ public final class ConceptBuilder {
      */
     void writeInto() {
         ledger.requireBornForWrite();
-        int conceptNid = ledger.componentNid();
+        long conceptNid = ledger.componentNid();
         // A retirement scope on an established concept that names only semantics
         // records no concept version: the concept stays as the base has it
         // (IKE-Network/ike-issues#1130).

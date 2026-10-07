@@ -16,22 +16,22 @@
 package dev.ikm.tinkar.common.id;
 
 
-import dev.ikm.tinkar.common.id.impl.IntId0Set;
-import dev.ikm.tinkar.common.id.impl.IntId1Set;
-import dev.ikm.tinkar.common.id.impl.IntId2Set;
-import dev.ikm.tinkar.common.id.impl.IntIdSetArray;
-import dev.ikm.tinkar.common.id.impl.IntIdSetRoaring;
+import dev.ikm.tinkar.common.id.impl.LongId0Set;
+import dev.ikm.tinkar.common.id.impl.LongId1Set;
+import dev.ikm.tinkar.common.id.impl.LongId2Set;
+import dev.ikm.tinkar.common.id.impl.LongIdSetArray;
+import dev.ikm.tinkar.common.id.impl.LongIdSetRoaring;
 
 import java.util.Arrays;
 
 
-enum IntIdSetFactoryEnum implements IntIdSetFactory {
+enum LongIdSetFactoryEnum implements LongIdSetFactory {
     INSTANCE;
 
     @Override
-    public IntIdSet of(IntIdSet idSet, int... elements) {
-        int[] combined = new int[idSet.size() + elements.length];
-        int[] listArray = idSet.toArray();
+    public LongIdSet of(LongIdSet idSet, long... elements) {
+        long[] combined = new long[idSet.size() + elements.length];
+        long[] listArray = idSet.toArray();
         int elementIndex = 0;
         for (int i = 0; i < combined.length; i++) {
             if (i < listArray.length) {
@@ -45,31 +45,31 @@ enum IntIdSetFactoryEnum implements IntIdSetFactory {
     }
 
     @Override
-    public IntIdSet empty() {
-        return IntId0Set.INSTANCE;
+    public LongIdSet empty() {
+        return LongId0Set.INSTANCE;
     }
 
     @Override
-    public IntIdSet of() {
+    public LongIdSet of() {
         return this.empty();
     }
 
     @Override
-    public IntIdSet of(int one) {
-        return new IntId1Set(one);
+    public LongIdSet of(long one) {
+        return new LongId1Set(one);
     }
 
 
     @Override
-    public IntIdSet of(int one, int two) {
+    public LongIdSet of(long one, long two) {
         if (one != two) {
-            return new IntId2Set(one, two);
+            return new LongId2Set(one, two);
         }
         return of(one);
     }
 
     @Override
-    public IntIdSet of(int... elements) {
+    public LongIdSet of(long... elements) {
         if (elements == null || elements.length == 0) {
             return empty();
         }
@@ -85,13 +85,13 @@ enum IntIdSetFactoryEnum implements IntIdSetFactory {
             }
         }
         if (elements.length < 1024) {
-            return IntIdSetArray.newIntIdSet(elements);
+            return LongIdSetArray.newLongIdSet(elements);
         }
-        return IntIdSetRoaring.newIntIdSet(elements);
+        return LongIdSetRoaring.newLongIdSet(elements);
     }
 
     @Override
-    public IntIdSet ofAlreadySorted(int... elements) {
+    public LongIdSet ofAlreadySorted(long... elements) {
         if (elements == null || elements.length == 0) {
             return empty();
         }
@@ -106,8 +106,8 @@ enum IntIdSetFactoryEnum implements IntIdSetFactory {
             }
         }
         if (elements.length < 1024) {
-            return IntIdSetArray.newIntIdSetAlreadySorted(elements);
+            return LongIdSetArray.newLongIdSetAlreadySorted(elements);
         }
-        return IntIdSetRoaring.newIntIdSetAlreadySorted(elements);
+        return LongIdSetRoaring.newLongIdSetAlreadySorted(elements);
     }
 }

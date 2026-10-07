@@ -1,5 +1,7 @@
 package dev.ikm.tinkar.common.id.impl;
 
+import dev.ikm.tinkar.common.id.Nid;
+
 /**
  * The nid layout of the open knowledge base — how a 32-bit nid packs a pattern
  * sequence and an element sequence (IKE-Network/ike-issues#1138).
@@ -28,18 +30,18 @@ public enum NidLayout {
         }
 
         @Override
-        public int decodePatternSequence(int nid) {
-            return NidCodec6.decodePatternSequence(nid);
+        public int decodePatternSequence(long nid) {
+            return NidCodec6.decodePatternSequence(Nid.narrowChecked(nid));
         }
 
         @Override
-        public long decodeElementSequence(int nid) {
-            return NidCodec6.decodeElementSequence(nid);
+        public long decodeElementSequence(long nid) {
+            return NidCodec6.decodeElementSequence(Nid.narrowChecked(nid));
         }
 
         @Override
-        public long rocksKeyForNid(int nid) {
-            return NidCodec6.rocksKeyForNid(nid);
+        public long rocksKeyForNid(long nid) {
+            return NidCodec6.rocksKeyForNid(Nid.narrowChecked(nid));
         }
 
         @Override
@@ -48,8 +50,8 @@ public enum NidLayout {
         }
 
         @Override
-        public void validateNid(int nid) {
-            NidCodec6.validateNid(nid);
+        public void validateNid(long nid) {
+            NidCodec6.validateNid(Nid.narrowChecked(nid));
         }
     },
 
@@ -61,18 +63,18 @@ public enum NidLayout {
         }
 
         @Override
-        public int decodePatternSequence(int nid) {
-            return NidCodec8.decodePatternSequence(nid);
+        public int decodePatternSequence(long nid) {
+            return NidCodec8.decodePatternSequence(Nid.narrowChecked(nid));
         }
 
         @Override
-        public long decodeElementSequence(int nid) {
-            return NidCodec8.decodeElementSequence(nid);
+        public long decodeElementSequence(long nid) {
+            return NidCodec8.decodeElementSequence(Nid.narrowChecked(nid));
         }
 
         @Override
-        public long rocksKeyForNid(int nid) {
-            return NidCodec8.rocksKeyForNid(nid);
+        public long rocksKeyForNid(long nid) {
+            return NidCodec8.rocksKeyForNid(Nid.narrowChecked(nid));
         }
 
         @Override
@@ -81,8 +83,8 @@ public enum NidLayout {
         }
 
         @Override
-        public void validateNid(int nid) {
-            NidCodec8.validateNid(nid);
+        public void validateNid(long nid) {
+            NidCodec8.validateNid(Nid.narrowChecked(nid));
         }
     },
 
@@ -92,7 +94,7 @@ public enum NidLayout {
      * spined-array, MVStore, ephemeral, gRPC and websocket providers, which activate it when they
      * open. A sequential nid does not carry its pattern: its pattern sequence is 0, and its
      * element sequence is its offset from {@code Integer.MIN_VALUE}, as in
-     * {@link dev.ikm.tinkar.common.id.EntityKey#ofSequentialNid(int)}. There is no
+     * {@link dev.ikm.tinkar.common.id.EntityKey#ofSequentialNid(long)}. There is no
      * pattern-of-patterns.
      */
     SEQUENTIAL("sequential", 0, NidLayout.ENTITY_FORMAT_1) {
@@ -110,17 +112,17 @@ public enum NidLayout {
         }
 
         @Override
-        public int decodePatternSequence(int nid) {
+        public int decodePatternSequence(long nid) {
             return 0;
         }
 
         @Override
-        public long decodeElementSequence(int nid) {
-            return ((long) nid) - Integer.MIN_VALUE;
+        public long decodeElementSequence(long nid) {
+            return ((long) Nid.narrowChecked(nid)) - Integer.MIN_VALUE;
         }
 
         @Override
-        public long rocksKeyForNid(int nid) {
+        public long rocksKeyForNid(long nid) {
             return decodeElementSequence(nid);
         }
 
@@ -130,8 +132,8 @@ public enum NidLayout {
         }
 
         @Override
-        public void validateNid(int nid) {
-            if (nid == 0 || nid == Integer.MIN_VALUE || nid == Integer.MAX_VALUE) {
+        public void validateNid(long nid) {
+            if (nid == 0 || nid <= Integer.MIN_VALUE || nid >= Integer.MAX_VALUE) {
                 throw new IllegalArgumentException("Forbidden nid value: " + nid);
             }
         }
@@ -258,7 +260,7 @@ public enum NidLayout {
      * @param nid the nid
      * @return the pattern sequence
      */
-    public abstract int decodePatternSequence(int nid);
+    public abstract int decodePatternSequence(long nid);
 
     /**
      * Extracts the element sequence from a nid.
@@ -266,7 +268,7 @@ public enum NidLayout {
      * @param nid the nid
      * @return the element sequence
      */
-    public abstract long decodeElementSequence(int nid);
+    public abstract long decodeElementSequence(long nid);
 
     /**
      * Converts a nid to the RocksDB key {@code [patternSequence:16][elementSequence:48]}.
@@ -274,7 +276,7 @@ public enum NidLayout {
      * @param nid the nid
      * @return the rocks key
      */
-    public abstract long rocksKeyForNid(int nid);
+    public abstract long rocksKeyForNid(long nid);
 
     /**
      * Converts a RocksDB key to a nid.
@@ -290,5 +292,5 @@ public enum NidLayout {
      * @param nid the nid
      * @throws IllegalArgumentException if the nid is invalid for this layout
      */
-    public abstract void validateNid(int nid);
+    public abstract void validateNid(long nid);
 }

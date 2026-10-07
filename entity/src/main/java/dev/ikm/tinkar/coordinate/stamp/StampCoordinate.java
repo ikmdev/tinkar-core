@@ -15,9 +15,9 @@
  */
 package dev.ikm.tinkar.coordinate.stamp;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityHandle;
@@ -81,7 +81,7 @@ public interface StampCoordinate
      * @return an unmodifiable set of module nids to include in results based on this
      * stamp coordinate.
      */
-    IntIdSet moduleNids();
+    LongIdSet moduleNids();
 
     /**
      * Gets the module preference list for versions. Used to adjudicate which component to
@@ -91,7 +91,7 @@ public interface StampCoordinate
      * @return an unmodifiable module preference list for versions.
      */
 
-    IntIdList modulePriorityNidList();
+    LongIdList modulePriorityNidList();
 
     StampCoordinate withAllowedStates(StateSet stateSet);
 
@@ -99,7 +99,7 @@ public interface StampCoordinate
         return EntityProxy.Concept.make(pathNidForFilter());
     }
 
-    int pathNidForFilter();
+    long pathNidForFilter();
 
     /**
      * Create a new StampFilter identical to the this filter, but with the modules modified.
@@ -108,22 +108,22 @@ public interface StampCoordinate
      * @return the new path coordinate
      */
     default StampCoordinate withModules(Collection<ConceptFacade> modules) {
-        return withModuleNids(IntIds.set.of(modules, EntityFacade::toNid));
+        return withModuleNids(LongIds.set.of(modules, EntityFacade::toNid));
     }
 
-    StampCoordinate withModuleNids(IntIdSet moduleNids);
+    StampCoordinate withModuleNids(LongIdSet moduleNids);
 
     default StampCoordinate withExcludedModules(Collection<ConceptFacade> excludedModules) {
-        return withExcludedModuleNids(IntIds.set.of(excludedModules, EntityFacade::toNid));
+        return withExcludedModuleNids(LongIds.set.of(excludedModules, EntityFacade::toNid));
     }
 
-    StampCoordinate withExcludedModuleNids(IntIdSet excludedModuleNids);
+    StampCoordinate withExcludedModuleNids(LongIdSet excludedModuleNids);
 
     default StampCoordinate withModulePriorityNidList(List<ConceptFacade> excludedModules) {
-        return withModulePriorityNidList(IntIds.list.of(excludedModules, EntityFacade::toNid));
+        return withModulePriorityNidList(LongIds.list.of(excludedModules, EntityFacade::toNid));
     }
 
-    StampCoordinate withModulePriorityNidList(IntIdList modulePriorityNidList);
+    StampCoordinate withModulePriorityNidList(LongIdList modulePriorityNidList);
 
     /**
      * Create a new Filter ImmutableCoordinate identical to the this coordinate, but with the path for position replaced.
@@ -185,7 +185,7 @@ public interface StampCoordinate
      * @return an unmodifiable set of module nids to exclude in results based on this
      * stamp filter.
      */
-    IntIdSet excludedModuleNids();
+    LongIdSet excludedModuleNids();
 
     default StampCoordinateRecord toStampCoordinateRecord() {
         return StampCoordinateRecord.make(allowedStates(),

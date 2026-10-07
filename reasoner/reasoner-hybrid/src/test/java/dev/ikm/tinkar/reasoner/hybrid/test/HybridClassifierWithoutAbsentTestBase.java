@@ -50,7 +50,7 @@ public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReason
 
 	private static final Logger LOG = LoggerFactory.getLogger(HybridClassifierWithoutAbsentTestBase.class);
 
-	private HashMap<Integer, Long> nid_sctid_map;
+	private HashMap<Long, Long> nid_sctid_map;
 
 	private Set<Long> toSctids(LongIterable nids) {
 		Set<Long> sctids = new HashSet<>();
@@ -88,7 +88,7 @@ public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReason
 		SnomedDescriptions descr = SnomedDescriptions.init(descriptions_file);
 		nid_sctid_map = new HashMap<>();
 		for (long sctid : isas.getOrderedConcepts().toArray()) {
-			int nid = ElkSnomedData.getNid(sctid);
+			long nid = ElkSnomedData.getNid(sctid);
 			nid_sctid_map.put(nid, sctid);
 			if (ontology.getConcept(nid) == null)
 				LOG.info("No concept for: " + sctid + " " + descr.getFsn(sctid));
@@ -123,7 +123,7 @@ public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReason
 		for (int i = 0; i < limit; i++) {
 			long sctid = selectedIds.get(i);
 			UUID uuid = UuidUtil.fromSNOMED("" + sctid);
-			int nid = PrimitiveData.nid(uuid);
+			long nid = PrimitiveData.nid(uuid);
 			LOG.error("Miss: " + sctid + " " + PrimitiveData.text(nid));
 			Set<Long> sups = toSctids(sso.getSuperConcepts(nid));
 

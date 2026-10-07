@@ -8,7 +8,7 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 
 import dev.ikm.elk.snomed.model.Concept;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
@@ -24,7 +24,7 @@ import dev.ikm.tinkar.terms.State;
 
 public class ElkSnomedUtil {
 
-	private static int getStatedSemanticNid(int conceptNid) {
+	private static long getStatedSemanticNid(long conceptNid) {
 		List<SemanticEntity<SemanticEntityVersion>> statedSemantics = EntityService.get()
 				.semanticsForComponentOfPattern(conceptNid, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
 		if (statedSemantics.isEmpty())
@@ -34,8 +34,8 @@ public class ElkSnomedUtil {
 		return statedSemantics.getFirst().nid();
 	}
 
-	public static SemanticEntityVersion getStatedSemantic(ViewCalculator viewCalculator, int conceptNid) {
-		int statedSemanticNid = getStatedSemanticNid(conceptNid);
+	public static SemanticEntityVersion getStatedSemantic(ViewCalculator viewCalculator, long conceptNid) {
+		long statedSemanticNid = getStatedSemanticNid(conceptNid);
 		Latest<SemanticEntityVersion> latestStatedSemantic = viewCalculator.latest(statedSemanticNid);
 		return latestStatedSemantic.get();
 	}
@@ -45,14 +45,14 @@ public class ElkSnomedUtil {
 		return builder.buildConcept(semanticEntityVersion);
 	}
 
-	public static Concept getConcept(ViewCalculator viewCalculator, int conceptNid) {
+	public static Concept getConcept(ViewCalculator viewCalculator, long conceptNid) {
 		SemanticEntityVersion sev = ElkSnomedUtil.getStatedSemantic(viewCalculator, conceptNid);
 		return ElkSnomedUtil.buildConcept(sev);
 	}
 
-	public static void updateStatedSemantic(ViewCalculator viewCalculator, int conceptNid,
+	public static void updateStatedSemantic(ViewCalculator viewCalculator, long conceptNid,
 			LogicalExpression newStatedExpression) {
-		int statedSemanticNid = getStatedSemanticNid(conceptNid);
+		long statedSemanticNid = getStatedSemanticNid(conceptNid);
 		Transaction updateStatedTransaction = Transaction.make();
 		StampEntity<?> updateStamp = updateStatedTransaction.getStamp(State.ACTIVE,
 				viewCalculator.viewCoordinateRecord().getAuthorNidForChanges(),
@@ -86,7 +86,7 @@ public class ElkSnomedUtil {
 
 	}
 
-	public static SemanticEntityVersion getLatestSemantic(ViewCalculator vc, int patternNid, int nid) {
+	public static SemanticEntityVersion getLatestSemantic(ViewCalculator vc, long patternNid, long nid) {
 		List<SemanticEntity<SemanticEntityVersion>> semantics = EntityService.get()
 				.semanticsForComponentOfPattern(nid, patternNid).toList();
 		if (semantics.size() == 1) {
@@ -103,19 +103,19 @@ public class ElkSnomedUtil {
 				+ " for component: " + DiagnosticText.component(nid));
 	}
 
-	public static Set<Integer> getInferredParents(ViewCalculator vc, long sctid) {
-		int nid = ElkSnomedData.getNid(sctid);
+	public static Set<Long> getInferredParents(ViewCalculator vc, long sctid) {
+		long nid = ElkSnomedData.getNid(sctid);
 		SemanticEntityVersion sev = getLatestSemantic(vc, KernelTerm.INFERRED_NAVIGATION_PATTERN.nid(), nid);
 		ImmutableList<Object> latestInferredNavigationFields = sev.fieldValues();
-		IntIdSet parent_nids = (IntIdSet) latestInferredNavigationFields.get(1);
+		LongIdSet parent_nids = (LongIdSet) latestInferredNavigationFields.get(1);
 		return parent_nids.mapToSet(x -> x);
 	}
 
-	public static Set<Integer> getInferredChildren(ViewCalculator vc, long sctid) {
-		int nid = ElkSnomedData.getNid(sctid);
+	public static Set<Long> getInferredChildren(ViewCalculator vc, long sctid) {
+		long nid = ElkSnomedData.getNid(sctid);
 		SemanticEntityVersion sev = getLatestSemantic(vc, KernelTerm.INFERRED_NAVIGATION_PATTERN.nid(), nid);
 		ImmutableList<Object> latestInferredNavigationFields = sev.fieldValues();
-		IntIdSet parent_nids = (IntIdSet) latestInferredNavigationFields.get(0);
+		LongIdSet parent_nids = (LongIdSet) latestInferredNavigationFields.get(0);
 		return parent_nids.mapToSet(x -> x);
 	}
 

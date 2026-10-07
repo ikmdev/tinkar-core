@@ -17,13 +17,13 @@ public class IntervalUtil {
 	@SuppressWarnings("unused")
 	private static final Logger LOG = LoggerFactory.getLogger(IntervalUtil.class);
 
-	public static int getNid(EntityVertex node, dev.ikm.tinkar.terms.EntityProxy.Concept concept) {
+	public static long getNid(EntityVertex node, dev.ikm.tinkar.terms.EntityProxy.Concept concept) {
 		ConceptFacade cf = node.propertyFast(concept);
 		return cf.nid();
 	}
 
 	public static String getIntervalRoleString(ViewCalculator vc, EntityVertex node) {
-		int role_type_nid = getNid(node, KernelTerm.INTERVAL_ROLE_TYPE);
+		long role_type_nid = getNid(node, KernelTerm.INTERVAL_ROLE_TYPE);
 		Interval interval = makeInterval(node);
 		return vc.getPreferredDescriptionTextWithFallbackOrNid(role_type_nid) + " \u2192 " + interval.toString(false)
 				+ " " + vc.getPreferredDescriptionTextWithFallbackOrNid((int) interval.getUnitOfMeasure().getId());
@@ -34,7 +34,7 @@ public class IntervalUtil {
 		boolean lowerOpen = node.propertyFast(KernelTerm.LOWER_BOUND_OPEN);
 		BigDecimal upperBound = node.propertyFast(KernelTerm.INTERVAL_UPPER_BOUND);
 		boolean upperOpen = node.propertyFast(KernelTerm.UPPER_BOUND_OPEN);
-		int unit_nid = getNid(node, KernelTerm.UNIT_OF_MEASURE);
+		long unit_nid = getNid(node, KernelTerm.UNIT_OF_MEASURE);
 		return new Interval(lowerBound, lowerOpen, upperBound, upperOpen, new Concept(unit_nid));
 	}
 

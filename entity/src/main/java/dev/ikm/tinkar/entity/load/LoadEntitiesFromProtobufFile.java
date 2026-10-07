@@ -193,7 +193,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
     private void traceIfWatched(Entity<? extends EntityVersion> entity) {
         if (!watchList.isEmpty() && isWatched(entity.publicId())) {
-            LOG.info("Stored watched entity nid {} (0x{}): {}", entity.nid(), Integer.toHexString(entity.nid()), entity);
+            LOG.info("Stored watched entity nid {} (0x{}): {}", entity.nid(), Long.toHexString(entity.nid()), entity);
         }
     }
 
@@ -210,7 +210,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 continue;
             }
             StringBuilder sb = new StringBuilder();
-            int nid = PrimitiveData.get().nidForUuids(uuid);
+            long nid = PrimitiveData.get().nidForUuids(uuid);
             int patternSequence = PrimitiveData.patternSequenceForNid(nid);
             long elementSequence = PrimitiveData.elementSequenceForNid(nid);
             byte[] entityBytes = EntityStore.current().getBytes(nid);
@@ -302,7 +302,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                                                     if (identifierCount.incrementAndGet() % 1000 == 0) {
                                                         updateProgress(countingIn.getBytesRead(), this.importFile.length() * 2);
                                                     }
-                                                    int nid = switch (pbTinkarMsg.getValueCase()) {
+                                                    long nid = switch (pbTinkarMsg.getValueCase()) {
                                                         case CONCEPT_CHRONOLOGY ->
                                                                 makeNid(EntityBinding.Concept.pattern(), pbTinkarMsg.getConceptChronology().getPublicId());
                                                         case SEMANTIC_CHRONOLOGY ->
@@ -401,7 +401,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             StringBuilder stringBuilder = new StringBuilder();
 
             patternIds.forEach(patternId -> {
-                int nid = PrimitiveData.get().nidForUuids(patternId.asUuidArray());
+                long nid = PrimitiveData.get().nidForUuids(patternId.asUuidArray());
                 PatternEntity patternEntity = EntityHandle.get(nid).asPattern().orElse(null);
                 StampCoordinate stampCoordinate = Coordinates.Stamp.DevelopmentLatest();
                 String entityText = PrimitiveData.textWithNid(nid);
@@ -524,7 +524,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      * Generate NID for a protobuf message to register the entity in the datastore.
      * This allows Pass 2 to resolve references.
      */
-    private int makeNidForMessage(TinkarMsg pbTinkarMsg) {
+    private long makeNidForMessage(TinkarMsg pbTinkarMsg) {
         return switch (pbTinkarMsg.getValueCase()) {
             case CONCEPT_CHRONOLOGY -> 
                 Entity.nidForConcept(getEntityPublicId(pbTinkarMsg.getConceptChronology().getPublicId()));
@@ -663,25 +663,25 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         return expectedImports;
     }
 
-    private int makeNid(SemanticChronology semanticChronology) {
+    private long makeNid(SemanticChronology semanticChronology) {
         return makeNid(EntityProxy.Pattern.make(getEntityPublicId(semanticChronology.getPatternForSemanticPublicId())),
                 semanticChronology.getPublicId());
     }
 
 
-    private int makeNid(EntityProxy.Pattern pattern, dev.ikm.tinkar.schema.PublicId pbPublicId) {
+    private long makeNid(EntityProxy.Pattern pattern, dev.ikm.tinkar.schema.PublicId pbPublicId) {
         PublicId publicId = getEntityPublicId(pbPublicId);
-        int nid = makeNid(pattern, getEntityPublicId(pbPublicId));
+        long nid = makeNid(pattern, getEntityPublicId(pbPublicId));
         for (UUID uuid : publicId.asUuidArray()) {
             if (watchList.contains(uuid)) {
                 LOG.info("Found watch: {} for: \n\n{}", uuid, SCOPED_TINKAR_MSG.get());
                 LOG.info("nid for {} is: {}", uuid, nid);
-                LOG.info("nid for {} in hex is: {}", uuid, Integer.toHexString(nid));
+                LOG.info("nid for {} in hex is: {}", uuid, Long.toHexString(nid));
             }
         }
         return nid;
     }
-    private int makeNid(EntityProxy.Pattern pattern, PublicId entityId) {
+    private long makeNid(EntityProxy.Pattern pattern, PublicId entityId) {
         dev.ikm.tinkar.common.id.EntityKey entityKey = PrimitiveData.getEntityKey(pattern.publicId(), entityId);
         return entityKey.nid();
     }

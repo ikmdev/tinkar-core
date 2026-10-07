@@ -158,14 +158,14 @@
  * <pre>{@code
  * // Access STAMP for a version
  * ConceptVersion version = latest.get();
- * int stampNid = version.stampNid();
+ * long stampNid = version.stampNid();
  * StampEntity stamp = Entity.getStamp(stampNid);
  *
  * State state = stamp.state();        // ACTIVE or INACTIVE
  * long time = stamp.time();            // Timestamp
- * int authorNid = stamp.authorNid();   // Who
- * int moduleNid = stamp.moduleNid();   // What module
- * int pathNid = stamp.pathNid();       // What path
+ * long authorNid = stamp.authorNid();   // Who
+ * long moduleNid = stamp.moduleNid();   // What module
+ * long pathNid = stamp.pathNid();       // What path
  * }</pre>
  *
  * <p><b>Entity Identity: NIDs and PublicIds</b></p>
@@ -225,7 +225,7 @@
  * StampCoordinateRecord historicStamp = StampCoordinateRecord.make(
  *     StateSet.ACTIVE,
  *     StampPositionRecord.make(historicTime, path),
- *     IntIds.set.empty()
+ *     LongIds.set.empty()
  * );
  * StampCalculator calc = StampCalculatorWithCache.getCalculator(historicStamp);
  * Latest<ConceptVersion> historicVersion = calc.latest(concept);
@@ -245,7 +245,7 @@
  *         // Process each description semantic
  *         SemanticEntityVersion version = semantic.lastVersion();
  *         String text = (String) version.fieldValues().get(0);
- *         int typeNid = (Integer) version.fieldValues().get(1);
+ *         long typeNid = (Integer) version.fieldValues().get(1);
  *     }
  * );
  *

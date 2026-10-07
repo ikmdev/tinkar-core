@@ -58,7 +58,7 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
      * @param that The tree that is considered secondary with respect to preserving vertex ids.
      * @return a copy of that which is updated with correlated vertex ids based on isomorphic analysis.
      */
-    public DiTreeEntity makeCorrelatedTree(DiTreeEntity that, int referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
+    public DiTreeEntity makeCorrelatedTree(DiTreeEntity that, long referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
 
         // A special case for correlation when this and that are equal and vertexes are indexed the same.
         if (this.vertexMap.size() == that.vertexMap.size()) {

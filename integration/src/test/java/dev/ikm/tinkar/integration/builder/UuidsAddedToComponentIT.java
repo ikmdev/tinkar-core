@@ -68,7 +68,7 @@ class UuidsAddedToComponentIT {
         KnowledgeSet first = KnowledgeSet.of("6a1f2b3c-4d5e-5f60-8a7b-9c0d1e2f3a00");
         first.concept("Shared concept (Test)", PublicIds.of(HELD)).at(stamp).isA(IkeTerms.MODEL_CONCEPT);
         first.write();
-        int nid = PrimitiveData.nid(PublicIds.of(HELD));
+        long nid = PrimitiveData.nid(PublicIds.of(HELD));
         long advisoriesBefore = IdentityAdvisories.uuidsAddedCount();
 
         // Another source names the same component under one more UUID.
@@ -98,12 +98,12 @@ class UuidsAddedToComponentIT {
         separate.concept("Component x (Test)", PublicIds.of(x)).at(stamp).isA(IkeTerms.MODEL_CONCEPT);
         separate.concept("Component y (Test)", PublicIds.of(y)).at(stamp).isA(IkeTerms.MODEL_CONCEPT);
         separate.write();
-        int nidX = PrimitiveData.nid(PublicIds.of(x));
-        int nidY = PrimitiveData.nid(PublicIds.of(y));
+        long nidX = PrimitiveData.nid(PublicIds.of(x));
+        long nidY = PrimitiveData.nid(PublicIds.of(y));
         long advisoriesBefore = IdentityAdvisories.componentsSharingUuidsCount();
 
         // Another source names them as one component; the store goes on, and says so.
-        int resolved = PrimitiveData.nid(PublicIds.of(y, x));
+        long resolved = PrimitiveData.nid(PublicIds.of(y, x));
 
         assertEquals(advisoriesBefore + 1, IdentityAdvisories.componentsSharingUuidsCount(), "one advisory");
         assertEquals(nidX, PrimitiveData.nid(PublicIds.of(x)), "x still names its own component");

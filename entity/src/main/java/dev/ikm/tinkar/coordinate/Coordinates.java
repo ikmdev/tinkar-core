@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.coordinate;
 
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.coordinate.edit.EditCoordinateRecord;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
@@ -67,10 +67,10 @@ public class Coordinates {
         public static LanguageCoordinateRecord AnyLanguageRegularName() {
             return LanguageCoordinateRecord.make(
                     KernelTerm.LANGUAGE,
-                    IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.empty(),
-                    IntIds.list.empty()
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.empty(),
+                    LongIds.list.empty()
             );
         }
 
@@ -83,10 +83,10 @@ public class Coordinates {
         public static LanguageCoordinateRecord AnyLanguageFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
                     KernelTerm.LANGUAGE,
-                    IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.empty(),
-                    IntIds.list.empty()
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.empty(),
+                    LongIds.list.empty()
             );
         }
 
@@ -100,10 +100,10 @@ public class Coordinates {
         public static LanguageCoordinateRecord AnyLanguageDefinition() {
             return LanguageCoordinateRecord.make(
                     KernelTerm.LANGUAGE,
-                    IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.empty(),
-                    IntIds.list.empty()
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.empty(),
+                    LongIds.list.empty()
             );
         }
 
@@ -113,11 +113,11 @@ public class Coordinates {
         public static LanguageCoordinateRecord UsEnglishFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
                     KernelTerm.ENGLISH_LANGUAGE.nid(),
-                    IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
                             KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid(), KernelTerm.GB_DIALECT_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    LongIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid(), KernelTerm.GB_DIALECT_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
 
@@ -127,57 +127,57 @@ public class Coordinates {
         public static LanguageCoordinateRecord UsEnglishRegularName() {
             return LanguageCoordinateRecord.make(
                     KernelTerm.ENGLISH_LANGUAGE.nid(),
-                    IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
                             KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid(), KernelTerm.GB_DIALECT_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    LongIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid(), KernelTerm.GB_DIALECT_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord GbEnglishFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
                     KernelTerm.ENGLISH_LANGUAGE.nid(),
-                    IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
                             KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.of(KernelTerm.GB_DIALECT_PATTERN.nid(),
+                    LongIds.list.of(KernelTerm.GB_DIALECT_PATTERN.nid(),
                             KernelTerm.US_DIALECT_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord GbEnglishPreferredName() {
             return LanguageCoordinateRecord.make(
                     KernelTerm.ENGLISH_LANGUAGE.nid(),
-                    IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
                             KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.of(KernelTerm.GB_DIALECT_PATTERN.nid(),
+                    LongIds.list.of(KernelTerm.GB_DIALECT_PATTERN.nid(),
                             KernelTerm.US_DIALECT_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord SpanishFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
                     KernelTerm.SPANISH_LANGUAGE.nid(),
-                    IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
                             KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.empty(),
-                    IntIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    LongIds.list.empty(),
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord SpanishPreferredName() {
             return LanguageCoordinateRecord.make(
                     KernelTerm.SPANISH_LANGUAGE.nid(),
-                    IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
                             KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.empty(),
-                    IntIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    LongIds.list.empty(),
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
     }
@@ -186,32 +186,32 @@ public class Coordinates {
         public static StampCoordinateRecord DevelopmentLatestInactiveOnly() {
             return StampCoordinateRecord.make(StateSet.INACTIVE,
                     Position.LatestOnDevelopment(),
-                    IntIds.set.empty());
+                    LongIds.set.empty());
         }
 
 
         public static StampCoordinateRecord DevelopmentLatest() {
             return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
                     Position.LatestOnDevelopment(),
-                    IntIds.set.empty());
+                    LongIds.set.empty());
         }
 
         public static StampCoordinateRecord DevelopmentLatestActiveOnly() {
             return StampCoordinateRecord.make(StateSet.ACTIVE,
                     Position.LatestOnDevelopment(),
-                    IntIds.set.empty());
+                    LongIds.set.empty());
         }
 
         public static StampCoordinateRecord MasterLatest() {
             return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
                     Position.LatestOnMaster(),
-                    IntIds.set.empty());
+                    LongIds.set.empty());
         }
 
         public static StampCoordinateRecord MasterLatestActiveOnly() {
             return StampCoordinateRecord.make(StateSet.ACTIVE,
                     Position.LatestOnMaster(),
-                    IntIds.set.empty());
+                    LongIds.set.empty());
         }
     }
 

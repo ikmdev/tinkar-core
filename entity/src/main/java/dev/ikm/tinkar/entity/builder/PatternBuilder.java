@@ -192,7 +192,7 @@ public final class PatternBuilder {
             throw new IllegalStateException(
                     "A pattern declaration requires meaning and purpose in its birth scope: " + ledger.birthFqn);
         }
-        int patternNid = ledger.componentNid();
+        long patternNid = ledger.componentNid();
         writePattern(patternNid);
         ledger.writeDescriptions(patternNid);
         ledger.writeGenericSemantics(patternNid);
@@ -207,7 +207,7 @@ public final class PatternBuilder {
                     "A pattern version restates as a whole: meaning and purpose are both required in a scope"
                             + " that declares any of meaning, purpose, or field — " + ledger.birthFqn);
         }
-        Set<Integer> meaningNids = new HashSet<>();
+        Set<Long> meaningNids = new HashSet<>();
         for (FieldDeclaration field : pendingFields) {
             if (!meaningNids.add(field.meaning().nid())) {
                 throw new IllegalStateException(
@@ -508,11 +508,11 @@ public final class PatternBuilder {
 
     // ------------------------------------------------------------------ replay
 
-    private void writePattern(int patternNid) {
+    private void writePattern(long patternNid) {
         RecordListBuilder<PatternVersionRecord> versions = RecordListBuilder.make();
         PatternRecord bootstrap = PatternRecord.makeNew(ledger.componentId, versions);
         for (VersionEntry<PatternContent> version : patternVersions) {
-            int stampNid = ledger.writeStamp(version.stamp());
+            long stampNid = ledger.writeStamp(version.stamp());
             MutableList<FieldDefinitionRecord> fieldDefinitions = Lists.mutable.empty();
             List<FieldDeclaration> fields = version.value().fields();
             for (int index = 0; index < fields.size(); index++) {

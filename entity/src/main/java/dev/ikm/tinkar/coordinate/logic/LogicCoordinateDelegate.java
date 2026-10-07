@@ -28,42 +28,42 @@ public interface LogicCoordinateDelegate extends LogicCoordinate {
    LogicCoordinate getLogicCoordinate();
 
    @Override
-   default int classifierNid() {
+   default long classifierNid() {
       return getLogicCoordinate().classifierNid();
    }
 
    @Override
-   default int rootNid() {
+   default long rootNid() {
       return getLogicCoordinate().rootNid();
    }
 
    @Override
-   default int descriptionLogicProfileNid() {
+   default long descriptionLogicProfileNid() {
       return getLogicCoordinate().descriptionLogicProfileNid();
    }
 
    @Override
-   default int inferredAxiomsPatternNid() {
+   default long inferredAxiomsPatternNid() {
       return getLogicCoordinate().inferredAxiomsPatternNid();
    }
 
    @Override
-   default int statedAxiomsPatternNid() {
+   default long statedAxiomsPatternNid() {
       return getLogicCoordinate().statedAxiomsPatternNid();
    }
 
    @Override
-   default int conceptMemberPatternNid() {
+   default long conceptMemberPatternNid() {
       return getLogicCoordinate().conceptMemberPatternNid();
    }
 
    @Override
-   default int statedNavigationPatternNid() {
+   default long statedNavigationPatternNid() {
       return getLogicCoordinate().statedNavigationPatternNid();
    }
 
    @Override
-   default int inferredNavigationPatternNid() { return getLogicCoordinate().statedNavigationPatternNid(); }
+   default long inferredNavigationPatternNid() { return getLogicCoordinate().statedNavigationPatternNid(); }
 
    @Override
    default LogicCoordinateRecord toLogicCoordinateRecord() {

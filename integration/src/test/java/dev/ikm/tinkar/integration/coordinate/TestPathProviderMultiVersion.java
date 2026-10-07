@@ -68,7 +68,7 @@ class TestPathProviderMultiVersion {
 
     @Test
     void multiVersionPathOriginsResolveToLatestVersion() {
-        int developmentPathNid = KernelTerm.DEVELOPMENT_PATH.nid();
+        long developmentPathNid = KernelTerm.DEVELOPMENT_PATH.nid();
         List<SemanticEntity<SemanticEntityVersion>> originSemantics = EntityService.get().semanticsForComponentOfPattern(
                 developmentPathNid, KernelTerm.PATH_ORIGINS_PATTERN.nid()).toList();
         assertEquals(1, originSemantics.size(),

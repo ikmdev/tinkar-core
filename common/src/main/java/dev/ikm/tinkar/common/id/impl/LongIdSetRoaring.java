@@ -15,27 +15,32 @@
  */
 package dev.ikm.tinkar.common.id.impl;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import org.roaringbitmap.RoaringBitmap;
+import org.roaringbitmap.longlong.Roaring64Bitmap;
 
 import java.util.Arrays;
-import java.util.function.IntConsumer;
-import java.util.stream.IntStream;
+import java.util.function.LongConsumer;
+import java.util.stream.LongStream;
 
-public class IntIdSetRoaring extends RoaringBitmap implements IntIdSet {
-    private IntIdSetRoaring() {
+/**
+ * A large {@link LongIdSet}, as a 64-bit roaring bitmap. Its order is unsigned, as the 32-bit
+ * bitmap's was, so a set of nids widened from {@code int} iterates in the order it did before:
+ * the non-negative ids ascending, then the negative ones ascending.
+ */
+public class LongIdSetRoaring extends Roaring64Bitmap implements LongIdSet {
+    private LongIdSetRoaring() {
     }
 
-    public static IntIdSet newIntIdSet(int... newElements) {
+    public static LongIdSet newLongIdSet(long... newElements) {
         Arrays.sort(newElements);
-        IntIdSetRoaring roaring = new IntIdSetRoaring();
+        LongIdSetRoaring roaring = new LongIdSetRoaring();
         roaring.add(newElements);
         return roaring;
     }
 
-    public static IntIdSet newIntIdSetAlreadySorted(int... newElements) {
-        IntIdSetRoaring roaring = new IntIdSetRoaring();
+    public static LongIdSet newLongIdSetAlreadySorted(long... newElements) {
+        LongIdSetRoaring roaring = new LongIdSetRoaring();
         roaring.add(newElements);
         return roaring;
     }
@@ -45,30 +50,32 @@ public class IntIdSetRoaring extends RoaringBitmap implements IntIdSet {
         if (this == obj) {
             return true;
         }
-        if (obj instanceof IntIdSet intIdSet) {
-            if (this.size() != intIdSet.size()) {
+        if (obj instanceof LongIdSet longIdSet) {
+            if (this.size() != longIdSet.size()) {
                 return false;
             }
-            if (intIdSet instanceof IntIdSetRoaring intIdSetRoaring) {
-                return IntIdSetRoaring.this.equals(intIdSetRoaring);
+            if (longIdSet instanceof LongIdSetRoaring longIdSetRoaring) {
+                return super.equals(longIdSetRoaring);
             }
-            int[] elements1 = this.toArray();
+            long[] elements1 = this.toArray();
             Arrays.sort(elements1);
-            int[] elements2 = intIdSet.toArray();
+            long[] elements2 = longIdSet.toArray().clone();
             Arrays.sort(elements2);
-
-
             return Arrays.equals(elements1, elements2);
         }
         return false;
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder("IntIdSet[");
-        boolean limited = size() > TO_STRING_LIMIT;
+    public int hashCode() {
+        return super.hashCode();
+    }
 
-        intStream().limit(TO_STRING_LIMIT).forEach(nid -> {
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("LongIdSet[");
+        boolean limited = size() > TO_STRING_LIMIT;
+        longStream().limit(TO_STRING_LIMIT).forEach(nid -> {
             sb.append(PrimitiveData.textWithNid(nid)).append(", ");
         });
         if (limited) {
@@ -81,30 +88,29 @@ public class IntIdSetRoaring extends RoaringBitmap implements IntIdSet {
 
     @Override
     public int size() {
-        return this.getCardinality();
+        return this.getIntCardinality();
     }
 
     @Override
-    public IntStream intStream() {
-        return stream();
+    public LongStream longStream() {
+        return LongStream.of(toArray());
     }
 
     @Override
-    public void forEach(IntConsumer consumer) {
+    public void forEach(LongConsumer consumer) {
         forEach(new ConsumerAdaptor(consumer));
     }
 
-    private static class ConsumerAdaptor implements org.roaringbitmap.IntConsumer {
-        java.util.function.IntConsumer adaptee;
+    private static class ConsumerAdaptor implements org.roaringbitmap.longlong.LongConsumer {
+        final LongConsumer adaptee;
 
-        public ConsumerAdaptor(IntConsumer adaptee) {
+        ConsumerAdaptor(LongConsumer adaptee) {
             this.adaptee = adaptee;
         }
 
         @Override
-        public void accept(int value) {
+        public void accept(long value) {
             this.adaptee.accept(value);
         }
     }
-
 }

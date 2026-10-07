@@ -15,9 +15,12 @@
  */
 package dev.ikm.tinkar.entity.graph.isomorphic;
 
+import org.eclipse.collections.api.factory.primitive.LongSets;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.entity.graph.DiTreeAbstract;
 import dev.ikm.tinkar.entity.graph.DiTreeText;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
@@ -37,8 +40,8 @@ public class SetElementKey
     /** The concepts referenced at node or below. */
     final int vertexIndex;
     final LogicalAxiomSemantic enclosingSetType;
-    // Using IntIdList, so that toString method will include text of concept, not just nids.
-    final IntIdList conceptsReferencedAtNodeOrBelow;
+    // Using LongIdList, so that toString method will include text of concept, not just nids.
+    final LongIdList conceptsReferencedAtNodeOrBelow;
     final int hashCode;
 
     //~--- constructors --------------------------------------------------------
@@ -52,9 +55,9 @@ public class SetElementKey
     public SetElementKey(int vertexIndex, DiTreeAbstract<EntityVertex> expression) {
         this.vertexIndex = vertexIndex;
         this.enclosingSetType = getEnclosingSetType(vertexIndex, expression);
-        MutableIntSet conceptsReferencedAtNodeOrBelowCollector = IntSets.mutable.empty();
+        MutableLongSet conceptsReferencedAtNodeOrBelowCollector = LongSets.mutable.empty();
         processVertexAndChildren(vertexIndex, expression, conceptsReferencedAtNodeOrBelowCollector);
-        this.conceptsReferencedAtNodeOrBelow = IntIds.list.of(conceptsReferencedAtNodeOrBelowCollector.toSortedList().toArray());
+        this.conceptsReferencedAtNodeOrBelow = LongIds.list.of(conceptsReferencedAtNodeOrBelowCollector.toSortedList().toArray());
         this.hashCode = Objects.hash(enclosingSetType,
                 IsomorphicResultsLeafHash.makeNidListHash(expression.vertex(vertexIndex).getMeaningNid(),
                         this.conceptsReferencedAtNodeOrBelow.toArray()));
@@ -102,7 +105,7 @@ public class SetElementKey
      * @param vertexIndex the vertex index
      * @param tree the tree
      */
-    private void processVertexAndChildren(int vertexIndex, DiTreeAbstract<EntityVertex> tree, MutableIntSet conceptsReferencedAtNodeOrBelowCollector) {
+    private void processVertexAndChildren(int vertexIndex, DiTreeAbstract<EntityVertex> tree, MutableLongSet conceptsReferencedAtNodeOrBelowCollector) {
         final EntityVertex vertex = tree.vertex(vertexIndex);
 
         tree.vertex(vertexIndex).addConceptsReferencedByVertex(conceptsReferencedAtNodeOrBelowCollector);
@@ -133,12 +136,12 @@ public class SetElementKey
             return comparison;
         }
 
-        final int[] thisKeys  = this.conceptsReferencedAtNodeOrBelow.toArray();
-        final int[] otherKeys = o.conceptsReferencedAtNodeOrBelow.toArray();
+        final long[] thisKeys  = this.conceptsReferencedAtNodeOrBelow.toArray();
+        final long[] otherKeys = o.conceptsReferencedAtNodeOrBelow.toArray();
 
         for (int i = 0; i < thisKeys.length; i++) {
             if (thisKeys[i] != otherKeys[i]) {
-                return Integer.compare(thisKeys[i], otherKeys[i]);
+                return Long.compare(thisKeys[i], otherKeys[i]);
             }
         }
         return 0;

@@ -65,7 +65,7 @@ class TransactionEndsOnceTest {
     @Test
     void commitGivesTheStampTheCommitTime() {
         Transaction transaction = Transaction.make();
-        int stampNid = uncommittedStamp(transaction);
+        long stampNid = uncommittedStamp(transaction);
 
         transaction.commit();
 
@@ -78,7 +78,7 @@ class TransactionEndsOnceTest {
     @Test
     void cancelGivesTheStampTheCanceledTime() {
         Transaction transaction = Transaction.make();
-        int stampNid = uncommittedStamp(transaction);
+        long stampNid = uncommittedStamp(transaction);
 
         transaction.cancel();
 
@@ -93,7 +93,7 @@ class TransactionEndsOnceTest {
     @Test
     void cancelAfterCommitLeavesTheCommittedStampCommitted() {
         Transaction transaction = Transaction.make();
-        int stampNid = uncommittedStamp(transaction);
+        long stampNid = uncommittedStamp(transaction);
         transaction.commit();
         long commitTime = transaction.commitTime();
 
@@ -116,7 +116,7 @@ class TransactionEndsOnceTest {
     @Test
     void commitAfterCancelAnnouncesNoStamp() {
         Transaction transaction = Transaction.make();
-        int stampNid = uncommittedStamp(transaction);
+        long stampNid = uncommittedStamp(transaction);
         transaction.cancel();
 
         endAgain(transaction::commit);
@@ -140,7 +140,7 @@ class TransactionEndsOnceTest {
     @Test
     void commitTwiceAnnouncesTheCommitOnce() {
         Transaction transaction = Transaction.make();
-        int stampNid = uncommittedStamp(transaction);
+        long stampNid = uncommittedStamp(transaction);
         transaction.commit();
 
         endAgain(transaction::commit);
@@ -161,7 +161,7 @@ class TransactionEndsOnceTest {
     @Test
     void cancelTwiceIsSilent() {
         Transaction transaction = Transaction.make();
-        int stampNid = uncommittedStamp(transaction);
+        long stampNid = uncommittedStamp(transaction);
         assertEquals(1, transaction.cancel());
 
         assertEquals(0, transaction.cancel(), "a repeated cancel cancels nothing");
@@ -200,7 +200,7 @@ class TransactionEndsOnceTest {
     // ---------- support ----------
 
     /** Makes an uncommitted stamp in the transaction, with fresh author, module and path. */
-    private static int uncommittedStamp(Transaction transaction) {
+    private static long uncommittedStamp(Transaction transaction) {
         StampEntity stamp = transaction.getStamp(State.ACTIVE, Long.MAX_VALUE,
                 PublicIds.of(UUID.randomUUID()), PublicIds.of(UUID.randomUUID()), PublicIds.of(UUID.randomUUID()));
         assertEquals(Long.MAX_VALUE, stamp.time(), "a new stamp is uncommitted");
@@ -217,11 +217,11 @@ class TransactionEndsOnceTest {
     }
 
     /** The stamp nids announced as committed for this transaction, over every announcement. */
-    private List<Integer> announcedStampNids(Transaction transaction) {
-        List<Integer> stampNids = new ArrayList<>();
+    private List<Long> announcedStampNids(Transaction transaction) {
+        List<Long> stampNids = new ArrayList<>();
         for (CommitBroadcaster.CommitNotification notification : notifications) {
             if (notification.transactionUuid().equals(transaction.transactionUuid())) {
-                for (int stampNid : notification.stampNids()) {
+                for (long stampNid : notification.stampNids()) {
                     stampNids.add(stampNid);
                 }
             }

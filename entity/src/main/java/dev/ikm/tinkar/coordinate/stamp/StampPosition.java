@@ -67,11 +67,11 @@ public interface StampPosition
             return comparison;
         }
 
-        return Integer.compare(this.getPathForPositionNid(), o.getPathForPositionNid());
+        return Long.compare(this.getPathForPositionNid(), o.getPathForPositionNid());
     }
 
 
-    int getPathForPositionNid();
+    long getPathForPositionNid();
 
     /**
      * Gets the stamp path ConceptFacade.
@@ -85,7 +85,7 @@ public interface StampPosition
 
     StampPosition withTime(long time);
 
-    StampPosition withPathForPositionNid(int pathForPositionNid);
+    StampPosition withPathForPositionNid(long pathForPositionNid);
 
     StampPositionRecord toStampPositionImmutable();
 

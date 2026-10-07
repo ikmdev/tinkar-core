@@ -33,13 +33,13 @@ public interface StampVersion extends Stamp, VersionData {
                 " p:" + PrimitiveData.text(pathNid());
     }
 
-    int stateNid();
+    long stateNid();
 
-    int authorNid();
+    long authorNid();
 
-    int moduleNid();
+    long moduleNid();
 
-    int pathNid();
+    long pathNid();
 
     default State state() {
         return State.fromConceptNid(stateNid());

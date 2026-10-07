@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.integration.coordinate;
 
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.Coordinates;
@@ -131,20 +131,20 @@ class CoordinatesIT {
     void navigate() {
         LOG.info("navigate()");
         ViewCalculator viewCalculator = Calculators.View.Default();
-        IntIdList children = viewCalculator.childrenOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
+        LongIdList children = viewCalculator.childrenOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
         StringBuilder sb = new StringBuilder("Focus: [");
         Optional<String> optionalName = viewCalculator.getRegularDescriptionText(KernelTerm.DESCRIPTION_ACCEPTABILITY);
         optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(KernelTerm.DESCRIPTION_ACCEPTABILITY.nid()));
         sb.append("]\nchildren: [");
-        for (int childNid : children.toArray()) {
+        for (long childNid : children.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(childNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(childNid));
             sb.append(", ");
         }
         sb.delete(sb.length() - 2, sb.length());
         sb.append("]\nparents: [");
-        IntIdList parents = viewCalculator.parentsOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
-        for (int parentNid : parents.toArray()) {
+        LongIdList parents = viewCalculator.parentsOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
+        for (long parentNid : parents.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(parentNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(parentNid));
             sb.append(", ");
@@ -159,20 +159,20 @@ class CoordinatesIT {
     void sortedNavigate() {
         LOG.info("sortedNavigate()");
         ViewCalculator viewCalculator = Calculators.View.Default();
-        IntIdList children = viewCalculator.sortedChildrenOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
+        LongIdList children = viewCalculator.sortedChildrenOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
         StringBuilder sb = new StringBuilder("Focus: [");
         Optional<String> optionalName = viewCalculator.getRegularDescriptionText(KernelTerm.DESCRIPTION_ACCEPTABILITY);
         optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(KernelTerm.DESCRIPTION_ACCEPTABILITY.nid()));
         sb.append("]\nsorted children: [");
-        for (int childNid : children.toArray()) {
+        for (long childNid : children.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(childNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(childNid));
             sb.append(", ");
         }
         sb.delete(sb.length() - 2, sb.length());
         sb.append("]\nsorted parents: [");
-        IntIdList parents = viewCalculator.sortedParentsOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
-        for (int parentNid : parents.toArray()) {
+        LongIdList parents = viewCalculator.sortedParentsOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
+        for (long parentNid : parents.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(parentNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(parentNid));
             sb.append(", ");

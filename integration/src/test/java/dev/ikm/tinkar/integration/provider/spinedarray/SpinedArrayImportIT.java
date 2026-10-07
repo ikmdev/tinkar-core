@@ -102,12 +102,12 @@ class SpinedArrayImportIT {
         //STAMP Changes
         UUID changedStampUUID = UUID.fromString("3d296499-654f-566a-83ea-334cbec2c2e1");
         var changedStamp = EntityService.get().getStamp(changedStampUUID).get();
-        int changedStampNid = Entity.nid(PublicIds.of(changedStampUUID));
+        long changedStampNid = Entity.nid(PublicIds.of(changedStampUUID));
 
         //Semantic Changes
         UUID changedSemanticUUID = UUID.fromString("65378077-2984-413d-a9f5-b43e1c611732");
         var changedSemantic = EntityHandle.get(changedSemanticUUID).expectEntity();
-        int changedSemanticNid = Entity.nid(PublicIds.of(changedSemanticUUID));
+        long changedSemanticNid = Entity.nid(PublicIds.of(changedSemanticUUID));
 
         var incorrectSemantic = viewCalc.latest(changedSemanticNid).get();
         var correctSemantic = viewCalc.latest(EntityHandle.get(changedSemanticNid).expectEntity()).get();
@@ -140,12 +140,12 @@ class SpinedArrayImportIT {
         //STAMP Changes
         UUID changedStampUUID = UUID.fromString("cf1e9214-42be-51fe-99f1-4eaf3e6c95ad");
         var changedStamp = EntityService.get().getStamp(changedStampUUID).get();
-        int changedStampNid = Entity.nid(PublicIds.of(changedStampUUID));
+        long changedStampNid = Entity.nid(PublicIds.of(changedStampUUID));
 
         //Semantic Changes
         UUID changedSemanticUUID = UUID.fromString("101cea57-bfe4-4840-9cf4-da61ffb8463e");
         var changedSemantic = EntityHandle.get(changedSemanticUUID).expectEntity();
-        int changedSemanticNid = Entity.nid(PublicIds.of(changedSemanticUUID));
+        long changedSemanticNid = Entity.nid(PublicIds.of(changedSemanticUUID));
 
         var incorrectSemantic = viewCalc.latest(changedSemanticNid).get();  //Directly from the cache
         var correctSemantic = viewCalc.latest(EntityHandle.get(changedSemanticNid).expectEntity()).get(); //iterating over the object

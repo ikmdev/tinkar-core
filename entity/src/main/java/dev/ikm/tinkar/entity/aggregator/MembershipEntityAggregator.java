@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
+import java.util.function.LongConsumer;
+
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.FieldDataType;
@@ -39,12 +41,12 @@ public class MembershipEntityAggregator extends EntityAggregator {
     }
 
     @Override
-    public EntityCountSummary aggregate(IntConsumer nidConsumer) {
+    public EntityCountSummary aggregate(LongConsumer nidConsumer) {
         initCounts();
-        Set<Integer> stampNidSet = new HashSet<>();
+        Set<Long> stampNidSet = new HashSet<>();
 
         membershipTags.forEach((membershipTagId) -> {
-            int patternNid = PrimitiveData.nid(membershipTagId);
+            long patternNid = PrimitiveData.nid(membershipTagId);
 
             // Aggregate Patterns and Stamps
             nidConsumer.accept(patternNid);
@@ -53,7 +55,7 @@ public class MembershipEntityAggregator extends EntityAggregator {
             patternEntity.stampNids().forEach(stampNidSet::add);
 
             EntityService.get().forEachSemanticOfPattern(patternNid, (semanticEntityOfPattern) -> {
-                int referencedComponentNid = semanticEntityOfPattern.referencedComponentNid();
+                long referencedComponentNid = semanticEntityOfPattern.referencedComponentNid();
 
                 if (referencedComponentNid != patternNid) {
                     // Aggregate Concept and Stamps
@@ -70,7 +72,7 @@ public class MembershipEntityAggregator extends EntityAggregator {
                 }
 
                 // Aggregate Semantics and Stamps
-                Queue<Integer> queue = new LinkedList<>();
+                Queue<Long> queue = new LinkedList<>();
                 queue.add(referencedComponentNid);
                 while (!queue.isEmpty()) {
                     EntityService.get().forEachSemanticForComponent(queue.remove(), (semanticEntity) -> {

@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.integration.builder;
 
 import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.Entity;
@@ -33,8 +33,8 @@ import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.State;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.api.factory.primitive.IntLists;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.factory.primitive.LongLists;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -71,8 +71,8 @@ class StarterSetSectionSpikeIT {
     /** Buckets larger than this get a depth-2 breakdown in the report. */
     private static final int BUCKET_SPLIT_THRESHOLD = 60;
 
-    private static final Map<Integer, MutableIntList> PARENTS = new HashMap<>();
-    private static final Map<Integer, MutableIntList> CHILDREN = new HashMap<>();
+    private static final Map<Long, MutableLongList> PARENTS = new HashMap<>();
+    private static final Map<Long, MutableLongList> CHILDREN = new HashMap<>();
     private static final Map<String, Integer> FULL_SET_TALLIES = new TreeMap<>();
     private static final Map<String, Integer> SEMANTICS_BY_PATTERN = new TreeMap<>();
 
@@ -93,12 +93,12 @@ class StarterSetSectionSpikeIT {
         int parentsFieldIndex = statedNavigationParentsIndex();
         buildTaxonomy(parentsFieldIndex);
 
-        List<Integer> concepts = new ArrayList<>();
+        List<Long> concepts = new ArrayList<>();
         EntityService.get().forEachConceptEntity(concept -> concepts.add(concept.nid()));
-        List<Integer> patterns = new ArrayList<>();
+        List<Long> patterns = new ArrayList<>();
         EntityService.get().forEachPatternEntity(pattern -> patterns.add(pattern.nid()));
 
-        List<Integer> roots = concepts.stream()
+        List<Long> roots = concepts.stream()
                 .filter(nid -> !PARENTS.containsKey(nid) && CHILDREN.containsKey(nid))
                 .toList();
 
@@ -107,20 +107,20 @@ class StarterSetSectionSpikeIT {
                 concepts.size(), patterns.size(),
                 roots.stream().map(PrimitiveData::text).toList()));
 
-        Map<Integer, Integer> conceptToBucket = new HashMap<>();
-        Set<Integer> multiBucket = new HashSet<>();
-        for (Integer root : roots) {
-            for (int depthOne : CHILDREN.getOrDefault(root, IntLists.mutable.empty()).toArray()) {
+        Map<Long, Long> conceptToBucket = new HashMap<>();
+        Set<Long> multiBucket = new HashSet<>();
+        for (Long root : roots) {
+            for (long depthOne : CHILDREN.getOrDefault(root, LongLists.mutable.empty()).toArray()) {
                 assignSubtree(depthOne, depthOne, conceptToBucket, multiBucket);
             }
         }
 
-        Map<String, List<Integer>> buckets = new TreeMap<>();
-        for (Map.Entry<Integer, Integer> entry : conceptToBucket.entrySet()) {
+        Map<String, List<Long>> buckets = new TreeMap<>();
+        for (Map.Entry<Long, Long> entry : conceptToBucket.entrySet()) {
             buckets.computeIfAbsent(PrimitiveData.text(entry.getValue()), key -> new ArrayList<>())
                     .add(entry.getKey());
         }
-        List<Integer> unanchored = concepts.stream()
+        List<Long> unanchored = concepts.stream()
                 .filter(nid -> !conceptToBucket.containsKey(nid))
                 .filter(nid -> !roots.contains(nid))
                 .toList();
@@ -135,13 +135,13 @@ class StarterSetSectionSpikeIT {
 
         report.append("\n── Taxonomy buckets (children of root; the section candidates) ──\n");
         report.append(String.format("  %-58s %8s %10s%n", "bucket", "concepts", "verbs~"));
-        for (Map.Entry<String, List<Integer>> bucket : buckets.entrySet()) {
+        for (Map.Entry<String, List<Long>> bucket : buckets.entrySet()) {
             int verbEstimate = bucket.getValue().stream().mapToInt(this::verbEstimate).sum();
             report.append(String.format("  %-58s %8d %10d%n",
                     bucket.getKey(), bucket.getValue().size(), verbEstimate));
             if (bucket.getValue().size() > BUCKET_SPLIT_THRESHOLD) {
-                Integer bucketNid = conceptToBucket.get(bucket.getValue().getFirst());
-                for (Integer member : bucket.getValue()) {
+                Long bucketNid = conceptToBucket.get(bucket.getValue().getFirst());
+                for (Long member : bucket.getValue()) {
                     if (PrimitiveData.text(member).equals(bucket.getKey())) {
                         bucketNid = member;
                         break;
@@ -152,7 +152,7 @@ class StarterSetSectionSpikeIT {
         }
 
         report.append("\n── Pattern components (their own section) ──\n");
-        for (Integer patternNid : patterns) {
+        for (Long patternNid : patterns) {
             PatternEntity<?> pattern = EntityHandle.get(patternNid).expectPattern();
             report.append(String.format("  %-70s versions=%d%n",
                     PrimitiveData.text(patternNid), pattern.versions().size()));
@@ -199,41 +199,41 @@ class StarterSetSectionSpikeIT {
             if (semantic.patternNid() != KernelTerm.STATED_NAVIGATION_PATTERN.nid()) {
                 continue;
             }
-            int child = semantic.referencedComponentNid();
+            long child = semantic.referencedComponentNid();
             Object field = semantic.versions().getLast().fieldValues().get(parentsFieldIndex);
-            if (field instanceof IntIdSet parents) {
+            if (field instanceof LongIdSet parents) {
                 parents.forEach(parent -> {
-                    PARENTS.computeIfAbsent(child, key -> IntLists.mutable.empty()).add(parent);
-                    CHILDREN.computeIfAbsent(parent, key -> IntLists.mutable.empty()).add(child);
+                    PARENTS.computeIfAbsent(child, key -> LongLists.mutable.empty()).add(parent);
+                    CHILDREN.computeIfAbsent(parent, key -> LongLists.mutable.empty()).add(child);
                 });
             }
         }
     }
 
-    private static void assignSubtree(int start, int bucket, Map<Integer, Integer> conceptToBucket,
-                                      Set<Integer> multiBucket) {
-        Deque<Integer> pending = new ArrayDeque<>();
+    private static void assignSubtree(long start, long bucket, Map<Long, Long> conceptToBucket,
+                                      Set<Long> multiBucket) {
+        Deque<Long> pending = new ArrayDeque<>();
         pending.push(start);
         while (!pending.isEmpty()) {
-            int nid = pending.pop();
-            Integer assigned = conceptToBucket.putIfAbsent(nid, bucket);
+            long nid = pending.pop();
+            Long assigned = conceptToBucket.putIfAbsent(nid, bucket);
             if (assigned != null) {
                 if (assigned != bucket) {
                     multiBucket.add(nid);
                 }
                 continue;
             }
-            for (int child : CHILDREN.getOrDefault(nid, IntLists.mutable.empty()).toArray()) {
+            for (long child : CHILDREN.getOrDefault(nid, LongLists.mutable.empty()).toArray()) {
                 pending.push(child);
             }
         }
     }
 
     /** Recursive subtree sizing: oversized nodes break down one level further, to depth 4. */
-    private void breakdown(int nodeNid, int depth, StringBuilder report) {
+    private void breakdown(long nodeNid, int depth, StringBuilder report) {
         Map<String, Integer> childSizes = new TreeMap<>();
-        Map<String, Integer> childNids = new TreeMap<>();
-        for (int child : CHILDREN.getOrDefault(nodeNid, IntLists.mutable.empty()).toArray()) {
+        Map<String, Long> childNids = new TreeMap<>();
+        for (long child : CHILDREN.getOrDefault(nodeNid, LongLists.mutable.empty()).toArray()) {
             childSizes.put(PrimitiveData.text(child), subtreeSize(child));
             childNids.put(PrimitiveData.text(child), child);
         }
@@ -247,14 +247,14 @@ class StarterSetSectionSpikeIT {
         });
     }
 
-    private int subtreeSize(int start) {
-        Set<Integer> subtree = new HashSet<>();
-        Deque<Integer> pending = new ArrayDeque<>();
+    private int subtreeSize(long start) {
+        Set<Long> subtree = new HashSet<>();
+        Deque<Long> pending = new ArrayDeque<>();
         pending.push(start);
         while (!pending.isEmpty()) {
-            int nid = pending.pop();
+            long nid = pending.pop();
             if (subtree.add(nid)) {
-                for (int child : CHILDREN.getOrDefault(nid, IntLists.mutable.empty()).toArray()) {
+                for (long child : CHILDREN.getOrDefault(nid, LongLists.mutable.empty()).toArray()) {
                     pending.push(child);
                 }
             }
@@ -263,7 +263,7 @@ class StarterSetSectionSpikeIT {
     }
 
     /** Rough verb count: one birth + one per semantic version, navigation excluded. */
-    private int verbEstimate(int conceptNid) {
+    private int verbEstimate(long conceptNid) {
         int[] verbs = {1};
         EntityService.get().forEachSemanticForComponent(conceptNid, semantic -> {
             if (semantic.patternNid() != KernelTerm.STATED_NAVIGATION_PATTERN.nid()
@@ -275,12 +275,12 @@ class StarterSetSectionSpikeIT {
         return verbs[0];
     }
 
-    private static void tallyFullSet(List<Integer> concepts, List<Integer> patterns) {
-        List<Integer> components = new ArrayList<>();
+    private static void tallyFullSet(List<Long> concepts, List<Long> patterns) {
+        List<Long> components = new ArrayList<>();
         components.addAll(concepts);
         components.addAll(patterns);
-        Set<Integer> stampNids = new HashSet<>();
-        for (Integer componentNid : components) {
+        Set<Long> stampNids = new HashSet<>();
+        for (Long componentNid : components) {
             Entity<?> entity = EntityHandle.get(componentNid).expectEntity();
             if (entity.publicId().uuidCount() > 1) {
                 tally("multi-UUID public ids on components");
@@ -294,7 +294,7 @@ class StarterSetSectionSpikeIT {
             EntityService.get().forEachSemanticForComponent(componentNid, semantic ->
                     classifySemantic(semantic, stampNids, patterns.contains(componentNid)));
         }
-        for (Integer stampNid : stampNids) {
+        for (Long stampNid : stampNids) {
             StampEntity<?> stamp = Entity.getStamp(stampNid);
             if (!tupleDerived(stamp)) {
                 tally("declared-identity stamps required");
@@ -310,7 +310,7 @@ class StarterSetSectionSpikeIT {
     }
 
     private static void classifySemantic(SemanticEntity<SemanticEntityVersion> semantic,
-                                         Set<Integer> stampNids, boolean onPattern) {
+                                         Set<Long> stampNids, boolean onPattern) {
         SEMANTICS_BY_PATTERN.merge(PrimitiveData.text(semantic.patternNid()), 1, Integer::sum);
         if (semantic.publicId().uuidCount() > 1) {
             tally("multi-UUID semantic identities");
@@ -324,7 +324,7 @@ class StarterSetSectionSpikeIT {
                 tally("inactive semantic versions");
             }
         }
-        int patternNid = semantic.patternNid();
+        long patternNid = semantic.patternNid();
         if (patternNid == KernelTerm.DESCRIPTION_PATTERN.nid()) {
             SemanticEntityVersion latest = semantic.versions().getLast();
             if (nidOf(latest.fieldValues().get(0)) != KernelTerm.ENGLISH_LANGUAGE.nid()) {
@@ -354,14 +354,14 @@ class StarterSetSectionSpikeIT {
         return stamp.publicId().contains(tuple);
     }
 
-    private static int nidOf(Object fieldValue) {
+    private static long nidOf(Object fieldValue) {
         if (fieldValue instanceof dev.ikm.tinkar.terms.EntityFacade facade) {
             return facade.nid();
         }
         return 0;
     }
 
-    private static UUID leastUuid(int nid) {
+    private static UUID leastUuid(long nid) {
         return PrimitiveData.publicId(nid).leastUuid();
     }
 

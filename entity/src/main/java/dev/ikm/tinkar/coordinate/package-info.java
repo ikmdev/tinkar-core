@@ -154,7 +154,7 @@
  * String description = calculator.getDescriptionText(conceptNid);
  *
  * // Navigate the hierarchy
- * IntIdSet parents = calculator.parentsOf(conceptNid);
+ * LongIdSet parents = calculator.parentsOf(conceptNid);
  *
  * // Customize for specific needs
  * ViewCoordinateRecord spanishView = view.withLanguageCoordinate(

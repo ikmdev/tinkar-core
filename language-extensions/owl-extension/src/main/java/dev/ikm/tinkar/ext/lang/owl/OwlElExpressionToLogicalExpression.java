@@ -28,11 +28,11 @@ public class OwlElExpressionToLogicalExpression extends OwlElToLogicalExpression
 
 	private List<String> owlExpressions;
 
-	private int conceptNid;
+	private long conceptNid;
 
 	private SnomedOntology ontology;
 
-	public OwlElExpressionToLogicalExpression(List<String> owlExpressions, int conceptNid) {
+	public OwlElExpressionToLogicalExpression(List<String> owlExpressions, long conceptNid) {
 		super();
 		this.owlExpressions = owlExpressions;
 		this.conceptNid = conceptNid;
@@ -47,7 +47,7 @@ public class OwlElExpressionToLogicalExpression extends OwlElToLogicalExpression
 		// TODO make this a param in the owl el transform
 		if (!sub_object_property && KernelTerm.ROLE_GROUP.contains(uuid))
 			return String.valueOf(SnomedIds.role_group);
-		int nid = PrimitiveData.nid(uuid);
+		long nid = PrimitiveData.nid(uuid);
 		return String.valueOf(nid);
 	}
 

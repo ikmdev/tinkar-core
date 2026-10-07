@@ -1,5 +1,7 @@
 package dev.ikm.tinkar.entity.aggregator;
 
+import java.util.function.LongConsumer;
+
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -17,7 +19,7 @@ abstract public class EntityAggregatorFilter extends EntityAggregator {
         this.entityAggregator = entityAggregator;
     }
 
-    public abstract EntityCountSummary aggregate(IntConsumer nidConsumer);
+    public abstract EntityCountSummary aggregate(LongConsumer nidConsumer);
 
     public void adjustCounts(EntityCountSummary unfilteredSummary) {
         this.conceptsAggregatedCount.set(unfilteredSummary.conceptCount() - conceptsFilteredCount.get());

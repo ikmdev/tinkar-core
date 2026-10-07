@@ -241,7 +241,7 @@
  * boolean isDefined = view.isDefined(conceptNid);
  *
  * // Get all ancestors (subsumers) via inferred navigation
- * IntIdSet ancestors = view.ancestorsOf(conceptNid);
+ * LongIdSet ancestors = view.ancestorsOf(conceptNid);
  * }</pre>
  *
  * <p><b>Integration with Navigation</b></p>

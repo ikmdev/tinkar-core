@@ -15,45 +15,39 @@
  */
 package dev.ikm.tinkar.common.id.impl;
 
-import java.util.function.IntConsumer;
-import java.util.stream.IntStream;
+import java.util.function.LongConsumer;
+import java.util.stream.LongStream;
 
-public class IntId1 {
-    protected final int element;
+public class LongId2 {
+    protected final long element;
+    protected final long element2;
 
-    public IntId1(int element) {
+    public LongId2(long element, long element2) {
         this.element = element;
+        this.element2 = element2;
     }
 
     public int size() {
-        return 1;
+        return 2;
     }
 
-    public void forEach(IntConsumer consumer) {
+    public void forEach(LongConsumer consumer) {
         consumer.accept(element);
+        consumer.accept(element2);
     }
 
-    public IntStream intStream() {
-        return IntStream.of(element);
+    public LongStream longStream() {
+        return LongStream.of(element, element2);
     }
 
-    public int[] toArray() {
-        return new int[]{element};
+    public long[] toArray() {
+        return new long[]{element, element2};
     }
 
-    public boolean contains(int value) {
-        return value == element;
-    }
-
-    public int get(int index) {
-        if (index == 0) {
-            return element;
+    public boolean contains(long value) {
+        if (value == element) {
+            return true;
         }
-        throw new IndexOutOfBoundsException();
+        return value == element2;
     }
-
-    public boolean isEmpty() {
-        return false;
-    }
-
 }

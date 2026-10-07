@@ -20,7 +20,7 @@ import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinate;
@@ -58,15 +58,15 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     private static final Cache<StampLangRecord, LanguageCalculatorWithCache> SINGLETONS = Caffeine.newBuilder().weakValues().build();
     final StampCalculator stampCalculator;
     final ImmutableList<LanguageCoordinateRecord> languageCoordinateList;
-    private final Cache<Integer, String> preferredCache =
+    private final Cache<Long, String> preferredCache =
             Caffeine.newBuilder().maximumSize(10240).build();
-    private final Cache<Integer, String> fqnCache =
+    private final Cache<Long, String> fqnCache =
             Caffeine.newBuilder().maximumSize(10240).build();
-    private final Cache<Integer, String> descriptionCache =
+    private final Cache<Long, String> descriptionCache =
             Caffeine.newBuilder().maximumSize(10240).build();
-    private final Cache<Integer, String> definitionCache =
+    private final Cache<Long, String> definitionCache =
             Caffeine.newBuilder().maximumSize(1024).build();
-    private final Cache<Integer, ImmutableList<SemanticEntity>> descriptionsForComponentCache =
+    private final Cache<Long, ImmutableList<SemanticEntity>> descriptionsForComponentCache =
             Caffeine.newBuilder().maximumSize(1024).build();
 
     private final CacheInvalidationSubscriber cacheInvalidationSubscriber = new CacheInvalidationSubscriber();
@@ -89,7 +89,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
                 filterKey -> new LanguageCalculatorWithCache(stampFilter, languageCoordinateList));
     }
 
-    private Latest<PatternEntityVersion> getPattern(int patternNid) {
+    private Latest<PatternEntityVersion> getPattern(long patternNid) {
         return stampCalculator.latestPatternEntityVersion(patternNid);
     }
 
@@ -127,13 +127,13 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     }
 
     @Override
-    public ImmutableList<SemanticEntity> getDescriptionsForComponent(int componentNid) {
+    public ImmutableList<SemanticEntity> getDescriptionsForComponent(long componentNid) {
         return descriptionsForComponentCache.get(componentNid, nid -> {
             // Need semantics for each pattern in the language coordinate. If none in first priority,
             // repeat for each additional.
             for (LanguageCoordinate languageCoordinate : languageCoordinateList) {
                 MutableList<SemanticEntity> descriptionList = Lists.mutable.ofInitialCapacity(16);
-                for (int descPatternNid : languageCoordinate.descriptionPatternPreferenceNidList().toArray()) {
+                for (long descPatternNid : languageCoordinate.descriptionPatternPreferenceNidList().toArray()) {
                     EntityService.get().forEachSemanticForComponentOfPattern(componentNid, descPatternNid, semanticEntity -> {
                         descriptionList.add(semanticEntity);
                     });
@@ -151,7 +151,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
 
 
     @Override
-    public Optional<String> getDescriptionTextForComponentOfType(int entityNid, int descriptionTypeNid) {
+    public Optional<String> getDescriptionTextForComponentOfType(long entityNid, long descriptionTypeNid) {
         for (SemanticEntityVersion version : getDescriptionsForComponentOfType(entityNid, descriptionTypeNid)) {
             return getTextFromSemanticVersion(version);
         }
@@ -159,11 +159,11 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     }
 
     @Override
-    public ImmutableList<SemanticEntityVersion> getDescriptionsForComponentOfType(int componentNid,
-                                                                                  int descriptionTypeNid) {
+    public ImmutableList<SemanticEntityVersion> getDescriptionsForComponentOfType(long componentNid,
+                                                                                  long descriptionTypeNid) {
         for (LanguageCoordinate languageCoordinate : languageCoordinateList()) {
             MutableList<SemanticEntityVersion> descriptionList = Lists.mutable.empty();
-            for (int descriptionPatternNid : languageCoordinate.descriptionPatternPreferenceNidList().toArray()) {
+            for (long descriptionPatternNid : languageCoordinate.descriptionPatternPreferenceNidList().toArray()) {
                 OptionalInt optionalTypeIndex = stampCalculator.getIndexForMeaning(descriptionPatternNid,
                         KernelTerm.DESCRIPTION_TYPE.nid());
                 if (optionalTypeIndex.isPresent()) {
@@ -205,7 +205,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     }
 
     public Latest<SemanticEntityVersion> getSpecifiedDescription(ImmutableList<SemanticEntity> descriptionList,
-                                                                 IntIdList descriptionTypePriority) {
+                                                                 LongIdList descriptionTypePriority) {
         for (LanguageCoordinate languageCoordinate : languageCoordinateList()) {
             Latest<SemanticEntityVersion> latestDescription = getSpecifiedDescription(descriptionList,
                     descriptionTypePriority, languageCoordinate);
@@ -218,12 +218,12 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     }
 
     private Latest<SemanticEntityVersion> getSpecifiedDescription(ImmutableList<SemanticEntity> descriptionList,
-                                                                  IntIdList descriptionTypePriority,
+                                                                  LongIdList descriptionTypePriority,
                                                                   LanguageCoordinate languageCoordinate) {
         final MutableList<SemanticEntityVersion> descriptionsForLanguageOfType = Lists.mutable.empty();
         //Find all descriptions that match the language and description type - moving through the desired description types until
         //we find at least one.
-        for (final int descTypeNid : descriptionTypePriority.toArray()) {
+        for (final long descTypeNid : descriptionTypePriority.toArray()) {
             for (SemanticEntity descriptionChronicle : descriptionList) {
                 final Latest<SemanticEntityVersion> latestDescription = stampCalculator.latest(descriptionChronicle);
 
@@ -263,7 +263,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         final Latest<SemanticEntityVersion> preferredForDialect = new Latest<>(SemanticEntityVersion.class);
 
         if (languageCoordinate.dialectPatternPreferenceNidList() != null) {
-            for (int dialectPatternNid : languageCoordinate.dialectPatternPreferenceNidList().toArray()) {
+            for (long dialectPatternNid : languageCoordinate.dialectPatternPreferenceNidList().toArray()) {
                 if (preferredForDialect.isAbsent()) {
                     stampCalculator.latest(dialectPatternNid).ifPresent(versionObject -> {
                         if (versionObject instanceof PatternEntityVersion patternEntityVersion) {
@@ -293,7 +293,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
 
         // add in module preferences if there is more than one.
         if (languageCoordinate.modulePreferenceNidListForLanguage() != null && languageCoordinate.modulePreferenceNidListForLanguage().notEmpty()) {
-            for (int preference : languageCoordinate.modulePreferenceNidListForLanguage().toArray()) {
+            for (long preference : languageCoordinate.modulePreferenceNidListForLanguage().toArray()) {
                 for (SemanticEntityVersion descriptionVersion : preferredForDialect.versionList()) {
                     if (descriptionVersion.stamp().moduleNid() == preference) {
                         Latest<SemanticEntityVersion> preferredForModule = new Latest<>(descriptionVersion);
@@ -313,7 +313,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     }
 
     @Override
-    public Optional<String> getDescriptionText(int componentNid) {
+    public Optional<String> getDescriptionText(long componentNid) {
         return Optional.ofNullable(descriptionCache.get(componentNid, nid -> {
             Latest<SemanticEntityVersion> latestDescription
                     = getDescription(getDescriptionsForComponent(componentNid));
@@ -336,7 +336,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     }
 
     @Override
-    public Optional<String> getRegularDescriptionText(int entityNid) {
+    public Optional<String> getRegularDescriptionText(long entityNid) {
         return Optional.ofNullable(preferredCache.get(entityNid, nid -> {
             Latest<SemanticEntityVersion> latestDescription
                     = getRegularDescription(getDescriptionsForComponent(entityNid));
@@ -356,7 +356,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     }
 
     @Override
-    public Optional<String> getFullyQualifiedNameText(int componentNid) {
+    public Optional<String> getFullyQualifiedNameText(long componentNid) {
         return Optional.ofNullable(fqnCache.get(componentNid, nid -> {
             Latest<SemanticEntityVersion> latestDescription
                     = getFullyQualifiedDescription(getDescriptionsForComponent(componentNid));
@@ -368,7 +368,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     }
 
     @Override
-    public Optional<String> getDefinitionDescriptionText(int componentNid) {
+    public Optional<String> getDefinitionDescriptionText(long componentNid) {
         return Optional.ofNullable(definitionCache.get(componentNid, nid -> {
             Latest<SemanticEntityVersion> latestDescription
                     = getDefinitionDescription(getDescriptionsForComponent(componentNid));
@@ -380,7 +380,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     }
 
     @Override
-    public Optional<String> getSemanticText(int nid) {
+    public Optional<String> getSemanticText(long nid) {
         Latest<Field<String>> textField = stampCalculator.getFieldForSemantic(nid,
                 KernelTerm.TEXT_FOR_DESCRIPTION.nid(),
                 StampCalculator.FieldCriterion.MEANING);
