@@ -282,6 +282,20 @@ public abstract class PrimitiveDataServiceConformance {
     }
 
     /**
+     * Concepts and semantics are counted without reading them (IKE-Network/ike-issues#1249). A
+     * pattern-keyed store also counts a concept nid assigned and never written, as this world's
+     * stamp and pattern fields are, so concepts are counted at least, semantics exactly.
+     */
+    @Test
+    void conceptsAndSemanticsAreCounted() {
+        long concepts = EntityService.get().countConcepts();
+        long semantics = EntityService.get().countSemantics();
+        makeWorld();
+        assertTrue(EntityService.get().countConcepts() - concepts >= 2, "two concepts written");
+        assertEquals(1, EntityService.get().countSemantics() - semantics, "one semantic written");
+    }
+
+    /**
      * The concept, stamp and pattern binding patterns have no semantics. A pattern-keyed store
      * keys concepts, stamps and patterns under them, so their index lists those; the entity layer
      * must not give them out as semantics (IKE-Network/ike-issues#1248).

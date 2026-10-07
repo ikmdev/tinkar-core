@@ -84,7 +84,8 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private int computeTotalCount() {
-		return (int) EntityService.get().semanticsOfPattern(statedAxiomPattern.nid()).count();
+		// Counted without reading them: the build reads them after (IKE-Network/ike-issues#1249).
+		return EntityService.get().countSemanticsOfPattern(statedAxiomPattern.nid());
 	}
 
 	public void build() throws Exception {

@@ -387,6 +387,30 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     }
 
     /**
+     * How many concepts the store lists, counted without reading them. A pattern-keyed store
+     * lists every nid it has assigned to a concept, including any assigned and never written.
+     *
+     * @return the number of concepts the store lists
+     */
+    default long countConcepts() {
+        java.util.concurrent.atomic.LongAdder count = new java.util.concurrent.atomic.LongAdder();
+        EntityStore.current().forEachConceptNid(_ -> count.increment());
+        return count.sum();
+    }
+
+    /**
+     * How many semantics the store lists, counted without reading them. A pattern-keyed store
+     * lists every nid it has assigned to a semantic, including any assigned and never written.
+     *
+     * @return the number of semantics the store lists
+     */
+    default long countSemantics() {
+        java.util.concurrent.atomic.LongAdder count = new java.util.concurrent.atomic.LongAdder();
+        EntityStore.current().forEachSemanticNid(_ -> count.increment());
+        return count.sum();
+    }
+
+    /**
      * How many semantics of a pattern the store holds, counted without reading them: the length
      * of the pattern's index. A view that shows the first few semantics of a pattern and the
      * number of the rest uses this, with {@link #semanticsOfPattern(int)} limited, so it reads
