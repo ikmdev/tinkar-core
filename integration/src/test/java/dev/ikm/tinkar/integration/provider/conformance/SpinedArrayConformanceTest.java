@@ -16,6 +16,13 @@
 package dev.ikm.tinkar.integration.provider.conformance;
 
 import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
+import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.entity.EntityService;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import dev.ikm.tinkar.fixtures.PrimitiveDataServiceConformance;
 import dev.ikm.tinkar.fixtures.WithKeyValueProvider;
 
@@ -25,4 +32,16 @@ import dev.ikm.tinkar.fixtures.WithKeyValueProvider;
  */
 @WithKeyValueProvider(controllerClass = SpinedArrayProvider.OpenController.class, cleanOnStart = true)
 class SpinedArrayConformanceTest extends PrimitiveDataServiceConformance {
+
+    /**
+     * The reverse of minting: a nid resolves back to the public id it was minted from, from the
+     * identity map alone, with no entity written for it. The export paths and the diagnostics
+     * name a referenced-but-absent component this way (IKE-Network/ike-issues#1264).
+     */
+    @Test
+    void aNidResolvesBackToThePublicIdItWasMintedFrom() {
+        PublicId id = PublicIds.newRandom();
+        long nid = EntityService.get().nidForConcept(id);
+        assertArrayEquals(id.asUuidArray(), PrimitiveData.get().publicIdForNid(nid).asUuidArray());
+    }
 }

@@ -44,7 +44,7 @@ import java.util.Optional;
  * <h2>When to Use</h2>
  * <ul>
  *   <li><b>Use DataServiceController</b> for user-selectable data sources that need UI integration
- *       (e.g., RocksDB, MVStore, Ephemeral providers)</li>
+ *       (e.g., Rocks, the spined array)</li>
  *   <li><b>Use ProviderController only</b> for automatic background services that don't need
  *       user selection (e.g., SearchProvider, ExecutorProvider)</li>
  * </ul>
@@ -100,7 +100,7 @@ public interface DataServiceController<P> {
      * already open in another process, so the selection UI can warn the user
      * before launch instead of failing deep in startup.
      * <p>The default returns empty (no conflict) — appropriate for providers
-     * whose stores cannot conflict (ephemeral, websocket) and for "new store"
+     * whose stores cannot conflict (ephemeral) and for "new store"
      * targets. Providers backed by an on-disk store override this to probe the
      * store's lock non-destructively.
      * <p>This is advisory and subject to a time-of-check/time-of-use race; the

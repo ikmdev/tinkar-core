@@ -24,7 +24,7 @@ import java.util.concurrent.Future;
  * Service for loading data files during the DATA_LOAD phase.
  * <p>This service provides a unified mechanism for loading protobuf changeset files
  * into the data store. It is designed to be provider-agnostic - the same changeset
- * format works with RocksDB, SpinedArray, MVStore, and Ephemeral providers.
+ * format works with Rocks and the spined array, persistent or ephemeral.
  * <p>The service supports loading multiple files in order and provides progress tracking
  * through TrackingCallable implementations.
  * <p>Example usage:

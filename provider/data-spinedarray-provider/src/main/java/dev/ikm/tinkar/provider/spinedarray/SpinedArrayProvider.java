@@ -82,10 +82,10 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 /**
- * Maybe a hybrid of SpinedArrayProvider and MVStoreProvider is worth considering.
- * <p>SpinedArrayProvider is performing horribly because of dependency on ConcurrentUuidIntHashMap serialization.
- * TODO: consider if we remove ConcurrentUuidIntHashMap, or improve.
- * <p>MVStore performs worse when iterating over entities.
+ * The default store: spined arrays of entity bytes, indexed by nid, held in memory and written to
+ * disk by spine, or held in memory only in the ephemeral mode. The fastest store on every
+ * retrieval path and the one with no native dependency; the Rocks plugin provider takes over
+ * at the scale that outgrows it (IKE-Network/ike-issues#1267).
  */
 public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, NidGenerator, PrimitiveDataRepair {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);

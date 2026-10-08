@@ -364,7 +364,7 @@ public interface PrimitiveDataService {
 
     /**
      * Gets or creates an EntityKey for the given pattern and entity.
-     * <p>     * Default implementation for providers using sequential NIDs (SpinedArray, MVStore, Ephemeral).
+     * <p>     * Default implementation for providers using sequential NIDs (the spined array, persistent or ephemeral).
      * These providers don't encode pattern information in the NID, so this returns a
      * {@link EntityKey.SequentialNidEntityKey} that wraps the sequential NID directly.
      * <p>     * Providers using pattern-encoded NIDs (e.g., RocksDB) should override this method.
@@ -414,7 +414,7 @@ public interface PrimitiveDataService {
      * <p>     * Providers that encode pattern information in NIDs (like RocksDB) return {@code true}
      * because they need to discover all patterns in the first pass before assigning 
      * pattern-encoded NIDs in the second pass.
-     * <p>     * Providers using sequential NIDs (SpinedArray, MVStore, Ephemeral) return {@code false}
+     * <p>     * Providers using sequential NIDs (the spined array, persistent or ephemeral) return {@code false}
      * because NIDs are assigned on-demand without pattern encoding.
      * 
      * @return true if multi-pass import is required, false for single-pass

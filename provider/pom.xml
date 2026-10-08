@@ -10,10 +10,7 @@
     <name>TINKAR Providers</name>
 
     <subprojects>
-        <subproject>data-mvstore-provider</subproject>
         <subproject>data-spinedarray-provider</subproject>
-        <subproject>data-websocket-client-provider</subproject>
-        <subproject>data-websocket-server-provider</subproject>
         <subproject>entity-provider</subproject>
         <subproject>executor-provider</subproject>
         <subproject>search-provider</subproject>

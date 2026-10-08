@@ -40,7 +40,6 @@ public enum ServiceExclusionGroup {
      * <p>     * Mutually exclusive storage implementations:
      * <ul>
      *   <li><b>SpinedArrayProvider</b> - Memory-based storage with persistence</li>
-     *   <li><b>MVStoreProvider</b> - H2 MVStore-based storage</li>
      *   <li><b>RocksDBProvider</b> - RocksDB-based storage</li>
      *   <li><b>SpinedArrayProvider</b>, ephemeral mode - In-memory only, nothing on disk (testing)</li>
      * </ul>

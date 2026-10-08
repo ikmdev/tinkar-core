@@ -57,7 +57,7 @@ public enum ServiceLifecyclePhase {
 
     /**
      * Data storage initialization - database connections, file systems.
-     * <p>     * Examples: SpinedArrayProvider, MVStore, RocksDB initialization
+     * <p>     * Examples: SpinedArrayProvider, RocksDB initialization
      * <p>Base value: 200</p>
      */
     DATA_STORAGE(200),
@@ -85,7 +85,7 @@ public enum ServiceLifecyclePhase {
      * that write entities and require full service availability.
      * <p>     * The DataLoadController singleton runs in this phase and provides a consistent
      * mechanism for loading protobuf changesets. All data providers (RocksDB, SpinedArray,
-     * MVStore, Ephemeral) can configure the DataLoadController with files to import.
+     * ephemeral) can configure the DataLoadController with files to import.
      * <p>     * Examples: Initial data imports via DataLoadController, changeset loading,
      * database population from protobuf files
      * <p>Base value: 500</p>
