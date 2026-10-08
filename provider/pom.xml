@@ -10,7 +10,6 @@
     <name>TINKAR Providers</name>
 
     <subprojects>
-        <subproject>data-ephemeral-provider</subproject>
         <subproject>data-mvstore-provider</subproject>
         <subproject>data-spinedarray-provider</subproject>
         <subproject>data-websocket-client-provider</subproject>

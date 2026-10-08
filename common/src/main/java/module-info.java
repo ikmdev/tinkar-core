@@ -60,7 +60,6 @@ module dev.ikm.tinkar.common {
             dev.ikm.tinkar.provider.entity,
             dev.ikm.tinkar.provider.spinedarray,
             dev.ikm.tinkar.provider.mvstore,
-            dev.ikm.tinkar.provider.ephemeral,
             dev.ikm.tinkar.provider.websocket.client,
             dev.ikm.tinkar.provider.websocket.server,
             dev.ikm.tinkar.provider.grpc,

@@ -231,7 +231,7 @@ public class PrimitiveData {
      * by requiring the actual controller class at compile time, preventing runtime
      * errors from typos or references to non-existent controllers.
      *
-     * @param controllerClass the controller class to select (e.g., {@code ProviderEphemeral.NewController.class})
+     * @param controllerClass the controller class to select (e.g., {@code SpinedArrayProvider.LoadController.class})
      * @throws IllegalStateException if no matching controller is found
      */
     public static void selectControllerByClass(Class<? extends DataServiceController<?>> controllerClass) {

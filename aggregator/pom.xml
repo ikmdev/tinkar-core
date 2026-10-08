@@ -37,11 +37,6 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>data-ephemeral-provider</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>data-mvstore-provider</artifactId>
         </dependency>
 

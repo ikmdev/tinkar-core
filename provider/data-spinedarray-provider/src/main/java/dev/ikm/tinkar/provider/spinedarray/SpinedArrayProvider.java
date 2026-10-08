@@ -29,6 +29,7 @@ import dev.ikm.tinkar.collection.store.ByteArrayNoStore;
 import dev.ikm.tinkar.collection.store.IntLongArrayNoStore;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
@@ -399,6 +400,31 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             throw new RuntimeException(e);
         }
         return publicId.asUuidList().stream().anyMatch(uuidToNidMap::containsKey);
+    }
+
+    /**
+     * The reverse of {@link #nidForUuids}, read from the identity map, which is kept one way:
+     * a scan of it, correctness over speed, for a referenced component no entity was written
+     * for. The entity layer asks only after it found no entity for the nid.
+     */
+    @Override
+    public PublicId publicIdForNid(long nid) {
+        try {
+            this.uuidsLoadedLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        int narrowed = Nid.narrowChecked(nid);
+        List<UUID> uuids = new ArrayList<>();
+        uuidToNidMap.forEach((uuid, mappedNid) -> {
+            if (mappedNid == narrowed) {
+                uuids.add(uuid);
+            }
+        });
+        if (uuids.isEmpty()) {
+            throw new IllegalStateException("No public id minted for nid " + nid + " in this store");
+        }
+        return PublicIds.of(uuids);
     }
 
     @Override
@@ -1073,12 +1099,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
      * Loads a knowledge base into a store held in memory only. Nothing is read from or written
      * to disk: the data-store root is not touched, no change set is written, and the store ends
      * with its JVM. The data URI option names the protobuf export to load at start; with none,
-     * the store starts empty. This is the role the ephemeral provider filled, on the spined
-     * array's own structures, so the two answer every question alike
-     * (IKE-Network/ike-issues#1264).
+     * the store starts empty. This is the role the retired ephemeral provider filled, under
+     * the name it had, on the spined array's own structures (IKE-Network/ike-issues#1264).
      */
     public static class LoadController extends Controller {
-        public static final String CONTROLLER_NAME = "Load Ephemeral SpinedArrayStore";
+        public static final String CONTROLLER_NAME = "Load Ephemeral Store";
         private String importDataFileString;
         private final AtomicBoolean loading = new AtomicBoolean(false);
 

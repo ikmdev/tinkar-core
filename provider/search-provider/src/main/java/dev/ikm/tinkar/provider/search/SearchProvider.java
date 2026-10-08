@@ -76,7 +76,7 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
                 })
                 .orElseGet(() -> {
                     LOG.warn("DATA_STORE_ROOT not set in ServiceProperties");
-                    LOG.warn("This is expected for ephemeral/in-memory stores (ProviderEphemeral)");
+                    LOG.warn("This is expected for an in-memory store (the spined array's ephemeral mode)");
                     LOG.warn("For persistent stores (RocksProvider, MVStoreProvider, SpinedArrayProvider), ensure DATA_STORE_ROOT is set during DATA_STORAGE phase");
                     // Use a unique directory based on JVM UUID to avoid lock conflicts in tests
                     String jvmUuid = ServiceProperties.jvmUuid();

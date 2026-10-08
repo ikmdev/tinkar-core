@@ -42,7 +42,7 @@ public enum ServiceExclusionGroup {
      *   <li><b>SpinedArrayProvider</b> - Memory-based storage with persistence</li>
      *   <li><b>MVStoreProvider</b> - H2 MVStore-based storage</li>
      *   <li><b>RocksDBProvider</b> - RocksDB-based storage</li>
-     *   <li><b>EphemeralProvider</b> - In-memory only (testing)</li>
+     *   <li><b>SpinedArrayProvider</b>, ephemeral mode - In-memory only, nothing on disk (testing)</li>
      * </ul>
      * <p>     * Only one data storage provider should be active. Selection is typically
      * based on performance requirements, memory constraints, and persistence needs.
