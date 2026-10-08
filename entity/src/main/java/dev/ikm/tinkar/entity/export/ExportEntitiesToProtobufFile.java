@@ -152,13 +152,6 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     return; // the aggregation throws once it notices, ending the export
                 }
                 try {
-                    if (entity instanceof StampEntity stampEntity) {
-                        // Store Module & Author Dependencies for Manifest
-                        // Resolve via the nid->publicId map: module/author concepts need
-                        // not be present as entities in the exporting store.
-                        moduleNids.add(stampEntity.moduleNid());
-                        authorNids.add(stampEntity.authorNid());
-                    }
                     // A committed stamp still holds the uncommitted version its commit
                     // superseded; an exported file carries committed knowledge only.
                     Entity<?> written = entity instanceof StampRecord stampRecord
@@ -172,6 +165,15 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     }
                     // After the record is written, so the index lists exactly what the file carries.
                     identities.add(pbTinkarMsg);
+                    if (entity instanceof StampEntity stampEntity) {
+                        // Store Module & Author Dependencies for Manifest — only for a stamp that
+                        // was written: a skipped one (below) can name a module or author with no
+                        // public id, and the manifest would then fail the whole export.
+                        // Resolve via the nid->publicId map: module/author concepts need
+                        // not be present as entities in the exporting store.
+                        moduleNids.add(stampEntity.moduleNid());
+                        authorNids.add(stampEntity.authorNid());
+                    }
                     completedUnitOfWork();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
