@@ -18,6 +18,7 @@ package dev.ikm.tinkar.entity.load;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,8 @@ public class DataLoadProvider implements DataLoadService {
 
     private final List<File> loadQueue = new ArrayList<>();
     private volatile boolean loadingAllowed = false;
+    /** Whether every file loaded left the search index current; see {@link #searchIndexSettled()}. */
+    private volatile boolean searchIndexSettled = true;
     private final long creationTimestamp;
 
     /**
@@ -140,6 +143,7 @@ public class DataLoadProvider implements DataLoadService {
         long totalSemantics = 0;
         long totalPatterns = 0;
         long totalStamps = 0;
+        searchIndexSettled = true;
 
         for (int i = 0; i < loadQueue.size(); i++) {
             File file = loadQueue.get(i);
@@ -155,6 +159,7 @@ public class DataLoadProvider implements DataLoadService {
             Future<?> loadFuture = loader.load(file);
             Object result = loadFuture.get(); // Block until complete
 
+            searchIndexSettled &= EntityService.get().loadPhaseSearchPolicy().searchIndexSettled();
             if (result instanceof EntityCountSummary summary) {
                 totalConcepts += summary.conceptCount();
                 totalSemantics += summary.semanticCount();
@@ -180,6 +185,16 @@ public class DataLoadProvider implements DataLoadService {
     @Override
     public Future<EntityCountSummary> loadAllAsync() {
         return TinkExecutor.ioThreadPool().submit(this::loadAll);
+    }
+
+    /**
+     * Whether the files loaded by {@link #loadAll()} left the search index current: each
+     * change set was indexed live, or its import ran the full recreate itself. When true, a
+     * recreate after the load would index the same entities again
+     * (IKE-Network/ike-issues#1274).
+     */
+    public boolean searchIndexSettled() {
+        return searchIndexSettled;
     }
 
     @Override

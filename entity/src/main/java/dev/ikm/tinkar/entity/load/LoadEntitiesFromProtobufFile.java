@@ -629,16 +629,19 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 dev.ikm.tinkar.entity.LoadPhaseSearchPolicy.threshold());
         Optional<SearchService> searchService = ServiceLifecycleManager.get()
                 .getRunningService(SearchService.class);
-        searchService.ifPresent(service -> {
-            try {
-                Object future = service.recreateIndex();
-                if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
-                    cf.get();
-                }
-            } catch (Exception e) {
-                LOG.warn("Failed to recreate Lucene index after import", e);
+        if (searchService.isEmpty()) {
+            policy.markRecreated(); // no index to bring current
+            return;
+        }
+        try {
+            Object future = searchService.get().recreateIndex();
+            if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
+                cf.get();
             }
-        });
+            policy.markRecreated();
+        } catch (Exception e) {
+            LOG.warn("Failed to recreate Lucene index after import", e);
+        }
     }
 
     private long analyzeManifest(List<Map.Entry<PublicId, String>> manifestEntryData) {

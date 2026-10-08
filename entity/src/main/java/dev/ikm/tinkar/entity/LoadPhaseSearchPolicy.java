@@ -82,6 +82,7 @@ public final class LoadPhaseSearchPolicy {
 
     private final AtomicLong indexedCount = new AtomicLong();
     private volatile boolean overflowed = false;
+    private volatile boolean recreated = false;
 
     /**
      * Decides whether this merge should be live-indexed. Side-effect:
@@ -117,6 +118,21 @@ public final class LoadPhaseSearchPolicy {
         return overflowed;
     }
 
+    /** Records that a full recreate ran after this load phase, so the index is current again. */
+    public void markRecreated() {
+        recreated = true;
+    }
+
+    /**
+     * Whether the search index is current after this load phase: the change set was indexed
+     * live, or it overflowed and a full recreate ran. A caller that would otherwise recreate
+     * after a load checks this first, so an import that already rebuilt the index is not
+     * followed by a second rebuild of the same entities (IKE-Network/ike-issues#1274).
+     */
+    public boolean searchIndexSettled() {
+        return !overflowed || recreated;
+    }
+
     /**
      * @return the number of merges that were live-indexed (counts up to
      *         and including the merge that crossed the threshold).
@@ -137,5 +153,6 @@ public final class LoadPhaseSearchPolicy {
     public void reset() {
         indexedCount.set(0);
         overflowed = false;
+        recreated = false;
     }
 }

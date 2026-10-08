@@ -80,8 +80,14 @@ public class DataLoadController extends ProviderController<DataLoadProvider>
             PrimitiveData.save();
             LOG.info("Datastore saved successfully");
 
-            // Recreate Lucene index after data import
-            recreateLuceneIndexAfterLoad();
+            // An import that indexed live or ran the full recreate itself leaves nothing to
+            // rebuild; a second recreate of the same entities cost 33 s on the DeX migration
+            // (IKE-Network/ike-issues#1274).
+            if (provider.searchIndexSettled()) {
+                LOG.info("Search index settled by the import; no recreate after load");
+            } else {
+                recreateLuceneIndexAfterLoad();
+            }
         } else {
             LOG.info("DataLoadController: No files queued for loading");
         }
