@@ -69,7 +69,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -316,44 +315,16 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         }
     }
 
+    /**
+     * The nid of a public id, through the sequential providers' shared resolution
+     * ({@link SequentialNids}): one UUID is looked up or minted; several resolve by the least
+     * UUID the store knows, and UUIDs known for different components are advised, never
+     * reconciled, so a UUID another component holds keeps its nid (IKE-Network/ike-issues#1227).
+     */
     @Override
     public long nidForUuids(UUID... uuids) {
-        try {
-            this.uuidsLoadedLatch.await();
-            if (uuids.length == 1) {
-                return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> Nid.narrowChecked(newNid()));
-            }
-
-            OptionalInt optionalNid = optionalNid(uuids);
-
-            // Integer.MAX_VALUE, which is never a nid, marks "no nid yet" until one of the UUIDs
-            // has one or the first is given a new one.
-            int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
-
-            for (UUID uuid : uuids) {
-                if (Nid.isNotApplicable(nid)) {
-                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> Nid.narrowChecked(newNid()));
-                } else {
-                    uuidToNidMap.put(uuid, nid);
-                }
-            }
-            if (nid == Integer.MIN_VALUE) {
-                throw new IllegalStateException("nid cannot be Integer.MIN_VALUE");
-            }
-            return nid;
-        } catch (InterruptedException e) {
-            LOG.error(e.getLocalizedMessage(), e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    private OptionalInt optionalNid(UUID... uuids) {
-        for (UUID uuid : uuids) {
-            if (uuidToNidMap.containsKey(uuid)) {
-                return OptionalInt.of(uuidToNidMap.get(uuid));
-            }
-        }
-        return OptionalInt.empty();
+        awaitUuids();
+        return SequentialNids.nidForUuids(uuidToNidMap, () -> Nid.narrowChecked(newNid()), uuids);
     }
 
     @Override
@@ -363,31 +334,16 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
 
     @Override
     public long nidForUuids(ImmutableList<UUID> uuidList) {
+        awaitUuids();
+        return SequentialNids.nidForUuids(uuidToNidMap, () -> Nid.narrowChecked(newNid()), uuidList);
+    }
+
+    /** Waits for the identity map, which open rebuilds from the entities on another thread. */
+    private void awaitUuids() {
         try {
             this.uuidsLoadedLatch.await();
-            if (uuidList.size() == 1) {
-                return uuidToNidMap.computeIfAbsent(uuidList.get(0), uuidKey -> Nid.narrowChecked(newNid()));
-            }
-
-            OptionalInt optionalNid = optionalNid(uuidList.toArray(new UUID[uuidList.size()]));
-
-            // Integer.MAX_VALUE, which is never a nid, marks "no nid yet" until one of the UUIDs
-            // has one or the first is given a new one.
-            int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
-
-            for (UUID uuid : uuidList) {
-                if (Nid.isNotApplicable(nid)) {
-                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> Nid.narrowChecked(newNid()));
-                } else {
-                    uuidToNidMap.put(uuid, nid);
-                }
-            }
-            if (nid == Integer.MIN_VALUE) {
-                throw new IllegalStateException("nid cannot be Integer.MIN_VALUE");
-            }
-            return nid;
         } catch (InterruptedException e) {
-            LOG.error(e.getLocalizedMessage(), e);
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }

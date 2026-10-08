@@ -37,10 +37,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * {@link DiagnosticText} against a spined-array store, which reads the public id of a nid from
- * the entity and keeps no other index from nid to UUID ({@code IKE-Network/ike-issues#1189}).
- * For a component that is referred to but was never written, the nid is the only identifier
- * this store has, and the text keeps it.
+ * {@link DiagnosticText} against a persistent spined-array store ({@code IKE-Network/ike-issues#1189}).
+ * The store resolves a nid to its public id from its identity map, so a component that is
+ * referred to but was never written is named by its UUID, as under the ephemeral mode
+ * ({@code DiagnosticTextIT}); only a nid the store never minted is written as a nid.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DiagnosticTextSpinedArrayIT {
@@ -78,22 +78,24 @@ class DiagnosticTextSpinedArrayIT {
     }
 
     @Test
-    void aComponentThatIsReferredToButWasNeverWrittenIsItsNidInThisStore() {
-        long nid = PrimitiveData.nid(PublicIds.of(UUID.randomUUID().toString()));
+    void aComponentThatIsReferredToButWasNeverWrittenIsItsUuidInThisStore() {
+        String referredTo = UUID.randomUUID().toString();
+        long nid = PrimitiveData.nid(PublicIds.of(referredTo));
 
-        assertEquals("nid " + nid + " in this store, which has no public id for it", DiagnosticText.component(nid));
-        assertEquals("nid " + nid + " in this store", DiagnosticText.name(nid));
+        assertEquals("UUID " + referredTo, DiagnosticText.component(nid));
+        assertEquals(referredTo, DiagnosticText.name(nid));
     }
 
     @Test
-    void aHandleForAComponentThatWasNeverWrittenSaysWhichNidWasAskedFor() {
-        long nid = PrimitiveData.nid(PublicIds.of(UUID.randomUUID().toString()));
+    void aHandleForAComponentThatWasNeverWrittenSaysWhichUuidWasAskedFor() {
+        String referredTo = UUID.randomUUID().toString();
+        long nid = PrimitiveData.nid(PublicIds.of(referredTo));
 
         IllegalStateException failure = assertThrows(IllegalStateException.class,
                 () -> EntityHandle.get(nid).expectEntity());
 
-        assertEquals("Expected entity to be present but entity was absent: nid " + nid
-                + " in this store, which has no public id for it", failure.getMessage());
+        assertEquals("Expected entity to be present but entity was absent: UUID " + referredTo,
+                failure.getMessage());
     }
 
     @Test
