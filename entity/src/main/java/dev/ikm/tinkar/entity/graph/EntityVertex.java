@@ -64,6 +64,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongConsumer;
 
+import dev.ikm.tinkar.common.service.EntityRecordFormat2;
+import dev.ikm.tinkar.entity.EntityCodec2;
+
 import static dev.ikm.tinkar.entity.EntityRecordFactory.ENTITY_FORMAT_VERSION;
 
 public class EntityVertex implements Vertex, VertexId {
@@ -214,7 +217,7 @@ public class EntityVertex implements Vertex, VertexId {
 	}
 
 	public static EntityVertex make(ByteBuf readBuf, byte entityFormatVersion) {
-		if (entityFormatVersion == ENTITY_FORMAT_VERSION) {
+		if (entityFormatVersion == ENTITY_FORMAT_VERSION || entityFormatVersion == EntityCodec2.FORMAT) {
 			EntityVertex entityVertex = new EntityVertex();
 			entityVertex.fill(readBuf, entityFormatVersion);
 			return entityVertex;
@@ -223,16 +226,21 @@ public class EntityVertex implements Vertex, VertexId {
 		}
 	}
 
+	/**
+	 * Reads what {@link #getBytes(byte)} wrote: in format 1 the nids as four bytes and the
+	 * property count as an int; in format 2 the nids as varint pairs and the count as a varint.
+	 */
 	private void fill(ByteBuf readBuf, byte formatVersion) {
+		boolean format2 = formatVersion == EntityCodec2.FORMAT;
 		this.mostSignificantBits = readBuf.readLong();
 		this.leastSignificantBits = readBuf.readLong();
 		this.vertexIndex = readBuf.readInt();
-		this.meaningNid = readBuf.readInt();
-		int propertyCount = readBuf.readInt();
+		this.meaningNid = format2 ? EntityRecordFormat2.readNid(readBuf) : readBuf.readInt();
+		int propertyCount = format2 ? readBuf.readVarInt() : readBuf.readInt();
 		if (propertyCount > 0) {
 			MutableLongObjectMap<Object> mutableProperties = LongObjectMaps.mutable.ofInitialCapacity(propertyCount);
 			for (int i = 0; i < propertyCount; i++) {
-				long conceptNid = readBuf.readInt();
+				long conceptNid = format2 ? EntityRecordFormat2.readNid(readBuf) : readBuf.readInt();
 				FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
 				Object value = EntityRecordFactory.readFieldData(readBuf, dataType, formatVersion);
 				mutableProperties.put(conceptNid, value);
@@ -476,7 +484,22 @@ public class EntityVertex implements Vertex, VertexId {
 		this.properties = properties.toImmutable();
 	}
 
+	/** The vertex in entity format 1. */
 	public final byte[] getBytes() {
+		return getBytes(ENTITY_FORMAT_VERSION);
+	}
+
+	/**
+	 * The vertex's bytes in an entity format: the UUID, the vertex index, the meaning's nid, and
+	 * the properties, each a concept's nid and a field value. Format 1 writes a nid as four bytes
+	 * and the count as an int; format 2 writes a nid as its two halves as varints and the count
+	 * as a varint, and its field values through {@link EntityCodec2}.
+	 *
+	 * @param entityFormatVersion the format, 1 or 2
+	 * @return the bytes
+	 */
+	public final byte[] getBytes(byte entityFormatVersion) {
+		boolean format2 = entityFormatVersion == EntityCodec2.FORMAT;
 		int bufSize = DEFAULT_SIZE;
         AtomicReference<ByteBuf> byteBufRef =
                 new AtomicReference<>(ByteBufPool.allocate(bufSize));
@@ -486,14 +509,26 @@ public class EntityVertex implements Vertex, VertexId {
 				byteBuf.writeLong(mostSignificantBits);
 				byteBuf.writeLong(leastSignificantBits);
 				byteBuf.writeInt(vertexIndex);
-				byteBuf.writeInt(Nid.narrowChecked(meaningNid));
-				if (properties == null) {
-					byteBuf.writeInt(0);
+				if (format2) {
+					EntityRecordFormat2.writeNid(byteBuf, meaningNid);
 				} else {
-					byteBuf.writeInt(properties.size());
+					byteBuf.writeInt(Nid.narrowChecked(meaningNid));
+				}
+				int propertyCount = properties == null ? 0 : properties.size();
+				if (format2) {
+					byteBuf.writeVarInt(propertyCount);
+				} else {
+					byteBuf.writeInt(propertyCount);
+				}
+				if (properties != null) {
 					properties.forEachKeyValue((nid, value) -> {
-						byteBuf.writeInt(Nid.narrowChecked(nid));
-						EntityRecordFactory.writeField(byteBuf, value);
+						if (format2) {
+							EntityRecordFormat2.writeNid(byteBuf, nid);
+							EntityCodec2.writeField(byteBuf, value);
+						} else {
+							byteBuf.writeInt(Nid.narrowChecked(nid));
+							EntityRecordFactory.writeField(byteBuf, value);
+						}
 					});
 				}
 				return byteBuf.asArray();

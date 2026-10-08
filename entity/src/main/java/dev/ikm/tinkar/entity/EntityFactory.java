@@ -31,15 +31,13 @@ public class EntityFactory {
      * TODO: We should search for all methods that do this silent type casting, and replace them with
      * a fluent API that better manages type determination.
      */
+    /**
+     * The entity a record holds, in whichever format the record is: {@link EntityRecordFactory#make(byte[])}
+     * reads the format from the record itself (format 2 begins with its format byte, format 1
+     * with its part count), so a 64-bit store's records read here too (IKE-Network/ike-issues#1258).
+     */
     public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
-        // TODO change to use DecoderInput instead of ByteBuf directly.
-        // TODO remove the parts where it computes size.
-        ByteBuf buf = ByteBuf.wrapForReading(data);
-        // bytes starts with number of arrays (int = 4 bytes), then size of first array (int = 4 bytes), then type token, -1 since index starts at 0...
-        int numberOfArrays = buf.readInt();
-        int sizeOfFirstArray = buf.readInt();
-        byte formatVersion = buf.readByte();
-        return make(buf, formatVersion);
+        return EntityRecordFactory.make(data);
     }
 
     /**

@@ -15,14 +15,12 @@
  */
 package dev.ikm.tinkar.provider.search;
 
-import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.IntField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -212,8 +210,7 @@ public class Indexer {
         try {
             // Replace any prior docs for this nid. Cheap as a single live-write
             // operation; pathological in a tight loop — see indexFresh().
-            indexWriter.deleteDocuments(
-                    IntField.newExactQuery(IndexerSchema.NID.name(), Nid.narrowChecked(semanticEntity.nid())));
+            indexWriter.deleteDocuments(IndexerSchema.nidQuery(semanticEntity.nid()));
         } catch (IOException e) {
             LOG.error("Exception buffering delete-by-nid for entity {}", semanticEntity, e);
             return 0;
@@ -263,7 +260,7 @@ public class Indexer {
                         continue;
                     }
                     Document doc = new Document();
-                    doc.add(IndexerSchema.NID.make(Nid.narrowChecked(semanticEntity.nid())));
+                    doc.add(IndexerSchema.nidField(semanticEntity.nid()));
                     doc.add(IndexerSchema.INDEXED_FIELD_ORDINAL.make(i));
                     doc.add(IndexerSchema.TEXT.make(text));
                     indexWriter.addDocument(doc);

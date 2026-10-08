@@ -243,7 +243,7 @@ public class Searcher {
             for (int i = 0; i < hits.length; i++) {
                 int docId = hits[i].doc;
                 Document hitDoc = indexSearcher.storedFields().document(docId, IndexerSchema.FIELDS_TO_LOAD);
-                long nid = IndexerSchema.NID.read(hitDoc);
+                long nid = IndexerSchema.readNid(hitDoc);
                 int fieldOrdinal = IndexerSchema.INDEXED_FIELD_ORDINAL.read(hitDoc);
                 results[i] = new PrimitiveDataSearchResult(nid, fieldOrdinal, hits[i].score, snippets[i]);
             }

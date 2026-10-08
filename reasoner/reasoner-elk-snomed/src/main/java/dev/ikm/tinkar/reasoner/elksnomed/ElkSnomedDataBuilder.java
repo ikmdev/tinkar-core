@@ -129,7 +129,7 @@ public class ElkSnomedDataBuilder {
 				data.getReasonerConceptSet().size(), data.getConcepts().size());
 		for (Concept con : data.getConcepts()) {
 			if (con.getDefinitions().isEmpty())
-				LOG.warn("No definitions: " + con.getId() + " " + PrimitiveData.text((int) con.getId()));
+				LOG.warn("No definitions: " + con.getId() + " " + PrimitiveData.text(con.getId()));
 		}
 		updateProgress(totalCount, totalCount);
 		if (progressUpdater != null)
@@ -152,10 +152,10 @@ public class ElkSnomedDataBuilder {
 		var dataAttributeRoot = ElkSnomedData.tryGetNid(SnomedIds.concept_model_data_attribute);
 		for (RoleType role : data.getRoleTypes()) {
 			if (objectAttributeRoot.isPresent() && objectAttributeRoot.getAsLong() == role.getId()) {
-				LOG.info("Skipping root " + PrimitiveData.text((int) role.getId()));
+				LOG.info("Skipping root " + PrimitiveData.text(role.getId()));
 				continue;
 			}
-			Concept con = data.getOrCreateConcept((int) role.getId());
+			Concept con = data.getOrCreateConcept(role.getId());
 			if (!con.getDefinitions().isEmpty()) {
 				LOG.error("Has defs: " + con);
 				con.removeAllDefinitions();
@@ -164,16 +164,16 @@ public class ElkSnomedDataBuilder {
 			def.setDefinitionType(DefinitionType.SubConcept);
 			con.addDefinition(def);
 			for (RoleType sup_role : role.getSuperRoleTypes()) {
-				Concept sup_con = data.getOrCreateConcept((int) sup_role.getId());
+				Concept sup_con = data.getOrCreateConcept(sup_role.getId());
 				def.addSuperConcept(sup_con);
 			}
 		}
 		for (ConcreteRoleType role : data.getConcreteRoleTypes()) {
 			if (dataAttributeRoot.isPresent() && dataAttributeRoot.getAsLong() == role.getId()) {
-				LOG.info("Skipping root " + PrimitiveData.text((int) role.getId()));
+				LOG.info("Skipping root " + PrimitiveData.text(role.getId()));
 				continue;
 			}
-			Concept con = data.getOrCreateConcept((int) role.getId());
+			Concept con = data.getOrCreateConcept(role.getId());
 			if (!con.getDefinitions().isEmpty()) {
 				LOG.error("Has defs: " + con);
 				con.removeAllDefinitions();
@@ -182,7 +182,7 @@ public class ElkSnomedDataBuilder {
 			def.setDefinitionType(DefinitionType.SubConcept);
 			con.addDefinition(def);
 			for (ConcreteRoleType sup_role : role.getSuperConcreteRoleTypes()) {
-				Concept sup_con = data.getOrCreateConcept((int) sup_role.getId());
+				Concept sup_con = data.getOrCreateConcept(sup_role.getId());
 				def.addSuperConcept(sup_con);
 			}
 		}

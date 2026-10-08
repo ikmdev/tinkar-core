@@ -87,6 +87,11 @@ public interface PrimitiveDataService {
         if (Arrays.equals(oldBytes, newBytes)) {
             return oldBytes;
         }
+        // Format 2 records, those of a 64-bit store, begin with their format byte; a format 1
+        // record begins with the high byte of its part count, which is 0.
+        if (EntityRecordFormat2.isFormat2(newBytes) || EntityRecordFormat2.isFormat2(oldBytes)) {
+            return EntityRecordFormat2.merge(oldBytes, newBytes);
+        }
         try {
             MutableSet<ByteList> byteArraySet = Sets.mutable.empty();
             MutableLongList stampList = LongLists.mutable.withInitialCapacity(16);

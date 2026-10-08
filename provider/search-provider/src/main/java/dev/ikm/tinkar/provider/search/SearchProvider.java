@@ -199,14 +199,14 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
             LOG.info("Lucene index already exists ({} documents, schema v{})",
                     String.format("%,d", docCount), schemaVersion);
 
-            boolean schemaStale = schemaVersion < IndexerSchema.VERSION;
+            boolean schemaStale = schemaVersion < IndexerSchema.version();
             boolean emptyButHasData = dataExists && docCount == 0;
 
             if (schemaStale || emptyButHasData) {
                 RecreateReason reason;
                 if (schemaStale) {
                     LOG.warn("Lucene index schema v{} predates current v{} — scheduling index recreation",
-                            schemaVersion, IndexerSchema.VERSION);
+                            schemaVersion, IndexerSchema.version());
                     reason = RecreateReason.SCHEMA_OUTDATED;
                 } else {
                     LOG.warn("Lucene index is empty but database exists — scheduling index recreation");

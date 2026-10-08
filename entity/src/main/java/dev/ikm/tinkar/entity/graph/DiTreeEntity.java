@@ -139,14 +139,15 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
     }
 
     public static DiTreeEntity make(ByteBuf readBuf, byte entityFormatVersion) {
-        if (entityFormatVersion != ENTITY_FORMAT_VERSION) {
+        boolean format2 = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec2.FORMAT;
+        if (entityFormatVersion != ENTITY_FORMAT_VERSION && !format2) {
             throw new IllegalStateException("Unsupported entity format version: " + entityFormatVersion);
         }
 
         ImmutableList<EntityVertex> vertexMap = readVertexEntities(readBuf, entityFormatVersion);
-        ImmutableIntObjectMap<ImmutableIntList> successorMap = readIntIntListMap(readBuf);
+        ImmutableIntObjectMap<ImmutableIntList> successorMap = readIntIntListMap(readBuf, entityFormatVersion);
 
-        int predecessorMapSize = readBuf.readInt();
+        int predecessorMapSize = format2 ? readBuf.readVarInt() : readBuf.readInt();
         MutableIntIntMap predecessorMap = IntIntMaps.mutable.ofInitialCapacity(predecessorMapSize);
         for (int i = 0; i < predecessorMapSize; i++) {
             predecessorMap.put(readBuf.readInt(), readBuf.readInt());

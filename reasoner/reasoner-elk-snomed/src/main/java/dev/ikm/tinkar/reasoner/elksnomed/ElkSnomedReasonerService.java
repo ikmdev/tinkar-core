@@ -271,32 +271,32 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		return data.getReasonerConceptSet();
 	}
 
-	protected ImmutableLongSet toIntSet(MutableLongSet classes) {
+	/**
+	 * The reasoner's concept ids are nids, as longs; nothing narrows them (a 64-bit store's nids
+	 * do not fit an int, IKE-Network/ike-issues#1258).
+	 */
+	protected ImmutableLongSet toLongSet(MutableLongSet classes) {
 		if (classes == null)
 			return null;
-		MutableLongSet parentNids = LongSets.mutable.withInitialCapacity(classes.size());
-		for (long parent : classes.toArray()) {
-			parentNids.add((int) parent);
-		}
-		return parentNids.toImmutable();
+		return classes.toImmutable();
 	}
 
 	@Override
 	public ImmutableLongSet getEquivalent(long id) {
 		MutableLongSet eqs = reasoner.getEquivalentConcepts(id);
-		return toIntSet(eqs);
+		return toLongSet(eqs);
 	}
 
 	@Override
 	public ImmutableLongSet getParents(long id) {
 		MutableLongSet supers = reasoner.getSuperConcepts(id);
-		return toIntSet(supers);
+		return toLongSet(supers);
 	}
 
 	@Override
 	public ImmutableLongSet getChildren(long id) {
 		MutableLongSet subs = reasoner.getSubConcepts(id);
-		return toIntSet(subs);
+		return toLongSet(subs);
 	}
 
 	@Override

@@ -26,6 +26,8 @@ import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.id.PublicIdSet;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
+import dev.ikm.tinkar.common.service.EntityRecordFormat2;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.component.Chronology;
@@ -73,6 +75,14 @@ import static dev.ikm.tinkar.component.FieldDataType.COMPONENT_ID_LIST;
 import static dev.ikm.tinkar.component.FieldDataType.SEMANTIC_CHRONOLOGY;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+/**
+ * The facade over the entity codecs. Format 1 is the code here, frozen: every reference four
+ * bytes, the format of every 6-bit, 8-bit and sequential store. Format 2 is {@link EntityCodec2},
+ * the format of a 64-bit store. A write uses the format the open store's layout names
+ * ({@link NidLayout#entityFormat()}); a read dispatches on the record's first byte, which is 0
+ * for format 1 (the high byte of its part count) and {@value NidLayout#ENTITY_FORMAT_2} for
+ * format 2 (design {@code design-2026-10-07-64-bit-rocks-store}).
+ */
 public class EntityRecordFactory {
     private static final Logger LOG = LoggerFactory.getLogger(EntityRecordFactory.class);
     public static final byte ENTITY_FORMAT_VERSION = 1;
@@ -82,6 +92,9 @@ public class EntityRecordFactory {
     public static volatile int MAX_VERSION_SIZE = DEFAULT_VERSION_SIZE;
 
     public static byte[] getBytes(Entity<? extends EntityVersion> entity) {
+        if (NidLayout.active().entityFormat() == NidLayout.ENTITY_FORMAT_2) {
+            return EntityCodec2.write(entity);
+        }
         // TODO: write directly to a single ByteBuf, rather that the approach below.
         boolean complete = false;
         while (!complete) {
@@ -422,6 +435,9 @@ public class EntityRecordFactory {
      * a fluent API that better manages type determination.
      */
     public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
+        if (EntityRecordFormat2.isFormat2(data)) {
+            return EntityCodec2.read(data);
+        }
         // TODO change to use DecoderInput instead of ByteBuf directly.
         // TODO remove the parts where it computes size.
         ByteBuf buf = ByteBuf.wrapForReading(data);
@@ -624,6 +640,9 @@ public class EntityRecordFactory {
     }
 
     public static Object readFieldData(ByteBuf readBuf, FieldDataType dataType, byte formatVersion) {
+        if (formatVersion == NidLayout.ENTITY_FORMAT_2) {
+            return EntityCodec2.readField(readBuf, dataType);
+        }
         return switch (dataType) {
             case BOOLEAN -> readBuf.readBoolean();
             case FLOAT -> readBuf.readFloat();

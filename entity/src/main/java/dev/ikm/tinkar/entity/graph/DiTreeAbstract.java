@@ -94,7 +94,21 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         return predecessorMap;
     }
 
+    /** The tree in entity format 1. */
     public final byte[] getBytes() {
+        return getBytes(ENTITY_FORMAT_VERSION);
+    }
+
+    /**
+     * The tree's bytes in an entity format: the vertices, the successor map, the predecessor
+     * map, and the root's index. Format 2 writes the counts as varints and the vertices in
+     * format 2; vertex indexes are ints in every format.
+     *
+     * @param entityFormatVersion the format, 1 or 2
+     * @return the bytes
+     */
+    public final byte[] getBytes(byte entityFormatVersion) {
+        boolean format2 = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec2.FORMAT;
         int defaultSize = estimatedBytes();
         int bufSize = defaultSize;
         AtomicReference<ByteBuf> byteBufRef =
@@ -102,10 +116,14 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         while (true) {
             try {
                 ByteBuf byteBuf = byteBufRef.get();
-                writeVertexMap(byteBuf);
-                writeIntIntListMap(byteBuf, successorMap());
+                writeVertexMap(byteBuf, entityFormatVersion);
+                writeIntIntListMap(byteBuf, successorMap(), entityFormatVersion);
 
-                byteBuf.writeInt(predecessorMap.size());
+                if (format2) {
+                    byteBuf.writeVarInt(predecessorMap.size());
+                } else {
+                    byteBuf.writeInt(predecessorMap.size());
+                }
                 predecessorMap.forEachKeyValue((vertex, predecessor) -> {
                     byteBuf.writeInt(vertex);
                     byteBuf.writeInt(predecessor);

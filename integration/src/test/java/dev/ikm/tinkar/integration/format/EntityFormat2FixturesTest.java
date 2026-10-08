@@ -15,16 +15,18 @@
  */
 package dev.ikm.tinkar.integration.format;
 
-import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
-import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.LongIds;
-import dev.ikm.tinkar.common.id.impl.NidCodec8;
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
+import dev.ikm.tinkar.common.service.EntityRecordFormat2;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityCodec2;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.FieldDefinitionRecord;
@@ -46,9 +48,12 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.primitive.LongLists;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
+import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -58,8 +63,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -74,51 +77,50 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The bytes of entity format 1, pinned: one serialized entity of each type and one field of each
- * data type, compared in both directions with fixtures captured before the move to {@code long}
- * nids (design {@code design-2026-09-30-64-bit-nids}, step "Specification and fixtures").
- * <p>Format 1 must not change while any 6-bit, 8-bit or sequential store exists, and the codec
- * work of the later steps could change it without another test failing. So each case is checked
- * both ways: what the codec writes for a fixed value equals the fixture, and what it reads from the
- * fixture writes the fixture again. The id set holds members on both sides of the packed sign bit,
- * which fixes the order in which a set is written.
- * <p>Three field types do not round-trip today, and the fixtures record them as they are:
- * a {@code Double} is written as a {@code float} and read as a {@code Float}; a {@link PlanarPoint}
- * writes its token twice and is read as two ints, leaving one byte unread; a
- * {@link SpatialPoint} is written as an int and two floats and read as three ints.
+ * The bytes of entity format 2, the format of a 64-bit store, pinned: one serialized entity of
+ * each type and one field of each data type, compared in both directions with fixtures captured
+ * when the format was made (design {@code design-2026-10-07-64-bit-rocks-store};
+ * IKE-Network/ike-issues#1258). As with format 1, each case is checked both ways: what the codec
+ * writes for a fixed value equals the fixture, and what it reads from the fixture writes the
+ * fixture again. The nids are 64-bit nids, from patterns below and above 128 and elements
+ * below and above 2<sup>24</sup>, so that the varints take one to four bytes.
+ * <p>Two of format 1's three defects are fixed here: a {@link PlanarPoint} and a
+ * {@link SpatialPoint} round-trip. A {@link Double} is still written as a float, as the
+ * interchange schema has no double.
  * <p>To capture the fixtures again, which is only right before a deliberate format change, run
- * with {@code -Dentity.format1.capture=true}; the files are written under
- * {@code src/test/resources/entity-format-1}.
+ * with {@code -Dentity.format2.capture=true}; the files are written under
+ * {@code src/test/resources/entity-format-2}.
  */
 @ExtendWith(NewEphemeralKeyValueProvider.class)
-class EntityFormat1FixturesTest {
+class EntityFormat2FixturesTest {
 
-    private static final String RESOURCE_DIRECTORY = "entity-format-1";
-    private static final boolean CAPTURE = Boolean.getBoolean("entity.format1.capture");
+    private static final String RESOURCE_DIRECTORY = "entity-format-2";
+    private static final boolean CAPTURE = Boolean.getBoolean("entity.format2.capture");
     private static final Path SOURCE_DIRECTORY = Path.of("src", "test", "resources", RESOURCE_DIRECTORY);
 
-    // Nids as an 8-bit store packs them: patterns below 128 give positive nids, 128 and above negative.
-    private static final long CONCEPT_NID = NidCodec8.encode(1, 101);
-    private static final int CONCEPT_NID_HIGH = NidCodec8.encode(200, 102);
-    private static final long PATTERN_NID = NidCodec8.encode(255, 3);
-    private static final long SEMANTIC_NID = NidCodec8.encode(4, 104);
-    private static final int SEMANTIC_NID_HIGH = NidCodec8.encode(130, 105);
-    private static final long STAMP_NID = NidCodec8.encode(2, 106);
-    private static final int STAMP_NID_2 = NidCodec8.encode(2, 107);
+    private static final long CONCEPT_NID = Nid.compose64(2, 101);
+    private static final long CONCEPT_NID_HIGH = Nid.compose64(200, 20_000_002);
+    private static final long PATTERN_NID = Nid.compose64(1, 3);
+    private static final long SEMANTIC_NID = Nid.compose64(4, 104);
+    private static final long SEMANTIC_NID_HIGH = Nid.compose64(130, 105);
+    private static final long STAMP_NID = Nid.compose64(3, 106);
+    private static final long STAMP_NID_2 = Nid.compose64(3, 107);
     private static final long TIME = 1_767_225_600_777L;
 
     private static final UUID UUID_1 = UUID.fromString("0f6c6a6e-6b1d-4c0c-8b8e-3f1a2b3c4d01");
     private static final UUID UUID_2 = UUID.fromString("0f6c6a6e-6b1d-4c0c-8b8e-3f1a2b3c4d02");
 
+    @AfterEach
+    void restoreTheLayout() {
+        NidLayout.activate(NidLayout.SEQUENTIAL);
+    }
+
     // ---------- fields ----------
 
-    /**
-     * One value of each field data type, by fixture name.
-     *
-     * @return the values, in a stable order
-     */
     static Map<String, Supplier<Object>> fields() {
         Map<String, Supplier<Object>> fields = new LinkedHashMap<>();
         fields.put("field-boolean", () -> Boolean.TRUE);
@@ -128,16 +130,19 @@ class EntityFormat1FixturesTest {
         fields.put("field-long", () -> 0x0123_4567_89AB_CDEFL);
         fields.put("field-decimal", () -> new BigDecimal("-12345.678900"));
         fields.put("field-instant", () -> Instant.ofEpochSecond(1_767_225_600L, 777_000_123));
-        fields.put("field-string", () -> "Format 1 — ünïcode");
+        fields.put("field-string", () -> "Format 2 — ünïcode");
         fields.put("field-concept", () -> EntityProxy.Concept.make(CONCEPT_NID_HIGH));
         fields.put("field-semantic", () -> EntityProxy.Semantic.make(SEMANTIC_NID_HIGH));
         fields.put("field-pattern", () -> EntityProxy.Pattern.make(PATTERN_NID));
         fields.put("field-identified-thing", () -> EntityProxy.make(CONCEPT_NID));
         fields.put("field-component-id-list", () -> LongIds.list.of(CONCEPT_NID_HIGH, CONCEPT_NID, SEMANTIC_NID_HIGH, CONCEPT_NID));
-        fields.put("field-component-id-set", () -> LongIds.set.of(CONCEPT_NID, CONCEPT_NID_HIGH, SEMANTIC_NID, SEMANTIC_NID_HIGH, PATTERN_NID));
+        fields.put("field-component-id-set", () -> LongIds.set.of(CONCEPT_NID, CONCEPT_NID_HIGH, SEMANTIC_NID, SEMANTIC_NID_HIGH, PATTERN_NID,
+                Nid.compose64(2, 102), Nid.compose64(2, 300)));
         fields.put("field-object-array", () -> new Object[]{"element", 42, EntityProxy.Concept.make(CONCEPT_NID_HIGH)});
-        fields.put("field-ditree", EntityFormat1FixturesTest::tree);
-        fields.put("field-digraph", EntityFormat1FixturesTest::graph);
+        fields.put("field-planar-point", () -> new PlanarPoint(1.5f, -2.5f));
+        fields.put("field-spatial-point", () -> new SpatialPoint(7.75f, 1.5f, -2.5f));
+        fields.put("field-ditree", EntityFormat2FixturesTest::tree);
+        fields.put("field-digraph", EntityFormat2FixturesTest::graph);
         return fields;
     }
 
@@ -148,8 +153,7 @@ class EntityFormat1FixturesTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("roundTrippingFields")
     void fieldIsWrittenAsTheFixture(String name) {
-        byte[] written = writeField(fields().get(name).get());
-        assertFixture(name, written);
+        assertFixture(name, writeField(fields().get(name).get()));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -163,48 +167,36 @@ class EntityFormat1FixturesTest {
     }
 
     @Test
-    void doubleIsWrittenAsAFloatAndReadAsAFloat() {
+    void theIdSetReadsBackAsItsMembersInOrder() {
+        LongIdSet set = (LongIdSet) fields().get("field-component-id-set").get();
+        ByteBuf readBuf = ByteBuf.wrapForReading(writeField(set));
+        LongIdSet read = assertInstanceOf(LongIdSet.class, readField(readBuf));
+        long[] expected = set.toArray();
+        java.util.Arrays.sort(expected);
+        assertArrayEquals(expected, read.toArray());
+    }
+
+    @Test
+    void doubleIsWrittenAsAFloat() {
         byte[] written = writeField(0.1d);
         assertFixture("field-double", written);
-        ByteBuf readBuf = ByteBuf.wrapForReading(fixture("field-double"));
-        Object value = readField(readBuf);
-        assertEquals(0.1f, value, "read back as the float it was narrowed to");
-        assertEquals(0, readBuf.readRemaining());
+        assertEquals(0.1f, readField(ByteBuf.wrapForReading(written)), "narrowed to a float, as the schema has no double");
     }
 
     @Test
-    void planarPointWritesItsTokenTwiceAndIsReadAsInts() {
-        byte[] written = writeField(new PlanarPoint(1.5f, -2.5f));
-        assertFixture("field-planar-point", written);
-        ByteBuf readBuf = ByteBuf.wrapForReading(fixture("field-planar-point"));
-        Object value = readField(readBuf);
-        PlanarPoint point = assertInstanceOf(PlanarPoint.class, value);
-        // The second token and three bytes of x make the first int; the rest of x and three bytes of y the second.
-        assertEquals(new PlanarPoint(readIntAt(fixture("field-planar-point"), 1), readIntAt(fixture("field-planar-point"), 5)), point);
-        assertEquals(1, readBuf.readRemaining(), "the last byte of y is left unread");
-    }
-
-    @Test
-    void spatialPointIsWrittenAsAnIntAndTwoFloatsAndReadAsInts() {
-        byte[] written = writeField(new SpatialPoint(7.75f, 1.5f, -2.5f));
-        assertFixture("field-spatial-point", written);
-        byte[] fixture = fixture("field-spatial-point");
-        ByteBuf readBuf = ByteBuf.wrapForReading(fixture);
-        SpatialPoint point = assertInstanceOf(SpatialPoint.class, readField(readBuf));
-        assertEquals(new SpatialPoint(7, Float.floatToIntBits(1.5f), Float.floatToIntBits(-2.5f)), point,
-                "x truncated to an int; y and z read as the int bits of their floats");
-        assertEquals(new SpatialPoint(readIntAt(fixture, 1), readIntAt(fixture, 5), readIntAt(fixture, 9)), point);
-        assertEquals(0, readBuf.readRemaining());
+    void theWriterRefusesANidThatIsNot64Bit() {
+        assertThrows(IllegalArgumentException.class, () -> writeField(EntityProxy.Concept.make(12_345)));
+        assertThrows(IllegalArgumentException.class, () -> writeField(LongIds.set.of(CONCEPT_NID, -7L)));
     }
 
     // ---------- entities ----------
 
     static Map<String, Supplier<Entity<? extends EntityVersion>>> entities() {
         Map<String, Supplier<Entity<? extends EntityVersion>>> entities = new LinkedHashMap<>();
-        entities.put("entity-concept", EntityFormat1FixturesTest::concept);
-        entities.put("entity-pattern", EntityFormat1FixturesTest::pattern);
-        entities.put("entity-semantic", EntityFormat1FixturesTest::semantic);
-        entities.put("entity-stamp", EntityFormat1FixturesTest::stamp);
+        entities.put("entity-concept", EntityFormat2FixturesTest::concept);
+        entities.put("entity-pattern", EntityFormat2FixturesTest::pattern);
+        entities.put("entity-semantic", EntityFormat2FixturesTest::semantic);
+        entities.put("entity-stamp", EntityFormat2FixturesTest::stamp);
         return entities;
     }
 
@@ -215,16 +207,41 @@ class EntityFormat1FixturesTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("entityNames")
     void entityIsWrittenAsTheFixture(String name) {
-        assertFixture(name, EntityRecordFactory.getBytes(entities().get(name).get()));
+        assertFixture(name, EntityCodec2.write(entities().get(name).get()));
     }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("entityNames")
     void entityReadFromTheFixtureIsWrittenAsTheFixture(String name) {
         byte[] fixture = fixture(name);
+        assertTrue(EntityRecordFormat2.isFormat2(fixture));
+        // The facade dispatches a read on the record's first byte, whatever layout is active.
         Entity<? extends EntityVersion> entity = EntityRecordFactory.make(fixture);
         assertNotNull(entity);
-        assertArrayEquals(fixture, EntityRecordFactory.getBytes(entity), name + " must be written again as it was read");
+        assertEquals(entities().get(name).get().nid(), entity.nid());
+        assertArrayEquals(fixture, EntityCodec2.write(entity), name + " must be written again as it was read");
+    }
+
+    @Test
+    void theFacadeWritesFormat2UnderTheSixtyFourBitLayout() {
+        NidLayout.activate(NidLayout.SIXTY_FOUR_BIT);
+        byte[] written = EntityRecordFactory.getBytes(semantic());
+        assertTrue(EntityRecordFormat2.isFormat2(written));
+        assertArrayEquals(fixture("entity-semantic"), written);
+        SemanticRecord read = EntityRecordFactory.make(written);
+        assertEquals(SEMANTIC_NID_HIGH, read.nid());
+        assertEquals(PATTERN_NID, read.patternNid());
+        assertEquals(CONCEPT_NID_HIGH, read.referencedComponentNid());
+        assertEquals(1, read.versions().size());
+        assertEquals("description text", read.versions().get(0).fieldValues().get(0));
+    }
+
+    @Test
+    void format2IsSmallerThanFormat1ForTheSameEntity() {
+        // The same semantic with 8-bit nids, as format 1 holds it, against format 2's varints.
+        int format1 = EntityFormat1FixturesTest.semanticBytes().length;
+        int format2 = EntityCodec2.write(semantic()).length;
+        assertTrue(format2 < format1, "format 2 " + format2 + " bytes, format 1 " + format1);
     }
 
     /** A concept with two UUIDs and two versions. */
@@ -251,12 +268,7 @@ class EntityFormat1FixturesTest {
         return pattern;
     }
 
-    /** The format 1 bytes of the semantic fixture, for the size comparison of {@link EntityFormat2FixturesTest}. */
-    static byte[] semanticBytes() {
-        return EntityRecordFactory.getBytes(semantic());
-    }
-
-    /** A semantic with one version whose fields reference components on both sides of the sign bit. */
+    /** A semantic with one version whose fields reference components of small and large sequences. */
     private static SemanticRecord semantic() {
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord semantic = new SemanticRecord(UUID_2.getMostSignificantBits(), UUID_2.getLeastSignificantBits(),
@@ -278,7 +290,7 @@ class EntityFormat1FixturesTest {
         return stamp;
     }
 
-    /** A three-vertex tree whose root carries properties keyed on both sides of the sign bit. */
+    /** A three-vertex tree whose root carries properties keyed by small and large nids. */
     private static DiTreeEntity tree() {
         EntityVertex root = EntityVertex.make(UUID.fromString("55555555-5555-5555-5555-555555555501"), CONCEPT_NID);
         root.setVertexIndex(0);
@@ -315,17 +327,13 @@ class EntityFormat1FixturesTest {
 
     private static byte[] writeField(Object value) {
         ByteBuf writeBuf = ByteBufPool.allocate(4096);
-        EntityRecordFactory.writeField(writeBuf, value);
+        EntityCodec2.writeField(writeBuf, value);
         return writeBuf.asArray();
     }
 
     private static Object readField(ByteBuf readBuf) {
         FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
-        return EntityRecordFactory.readFieldData(readBuf, dataType, EntityRecordFactory.ENTITY_FORMAT_VERSION);
-    }
-
-    private static int readIntAt(byte[] bytes, int offset) {
-        return ByteBuffer.wrap(bytes, offset, 4).getInt();
+        return EntityRecordFactory.readFieldData(readBuf, dataType, EntityCodec2.FORMAT);
     }
 
     private static void assertFixture(String name, byte[] written) {
@@ -333,39 +341,26 @@ class EntityFormat1FixturesTest {
             capture(name, written);
             return;
         }
-        assertArrayEquals(fixture(name), written, name + " is no longer written as entity format 1 was");
+        assertArrayEquals(fixture(name), written, name + " is no longer written as entity format 2 was");
     }
 
     private static byte[] fixture(String name) {
         String resource = RESOURCE_DIRECTORY + "/" + name + ".hex";
-        // While capturing, read what was just written to the sources, not the copy on the classpath.
         try (InputStream in = CAPTURE ? Files.newInputStream(SOURCE_DIRECTORY.resolve(name + ".hex"))
-                : EntityFormat1FixturesTest.class.getClassLoader().getResourceAsStream(resource)) {
+                : EntityFormat2FixturesTest.class.getClassLoader().getResourceAsStream(resource)) {
             if (in == null) {
                 throw new IllegalStateException("No fixture " + resource);
             }
-            StringBuilder hex = new StringBuilder();
-            for (String line : new String(in.readAllBytes(), StandardCharsets.UTF_8).split("\n")) {
-                if (!line.startsWith("#")) {
-                    hex.append(line.strip());
-                }
-            }
-            return HexFormat.of().parseHex(hex);
+            return HexFormat.of().parseHex(new String(in.readAllBytes()).strip());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    private static void capture(String name, byte[] bytes) {
-        StringBuilder text = new StringBuilder("# Entity format 1: ").append(name).append(", ")
-                .append(bytes.length).append(" bytes. Captured by EntityFormat1FixturesTest; do not edit.\n");
-        String hex = HexFormat.of().formatHex(bytes);
-        for (int start = 0; start < hex.length(); start += 64) {
-            text.append(hex, start, Math.min(hex.length(), start + 64)).append('\n');
-        }
+    private static void capture(String name, byte[] written) {
         try {
             Files.createDirectories(SOURCE_DIRECTORY);
-            Files.writeString(SOURCE_DIRECTORY.resolve(name + ".hex"), text);
+            Files.writeString(SOURCE_DIRECTORY.resolve(name + ".hex"), HexFormat.of().formatHex(written) + "\n");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

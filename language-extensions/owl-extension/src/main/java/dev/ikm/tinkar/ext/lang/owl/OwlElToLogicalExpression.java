@@ -52,15 +52,14 @@ public class OwlElToLogicalExpression {
 	}
 
 	private ConceptFacade getConceptFacade(long id) {
-		// TODO Maybe (ConceptFacade) EntityProxy.Concept.make((int) role_type.getId()
-		Optional<? extends ConceptFacade> role_type_cf = EntityHandle.get((int) id).asConcept();
+		Optional<? extends ConceptFacade> role_type_cf = EntityHandle.get(id).asConcept();
 		return role_type_cf.get();
 	}
 
 	protected void process(RoleType role_type) {
 		List<Atom> exprs = new ArrayList<>();
 		for (RoleType sup : role_type.getSuperRoleTypes()) {
-			exprs.add(builder.ConceptAxiom((int) sup.getId()));
+			exprs.add(builder.ConceptAxiom(sup.getId()));
 		}
 		if (role_type.isTransitive())
 			exprs.add(builder.ConceptAxiom(KernelTerm.TRANSITIVE_PROPERTY));
@@ -78,7 +77,7 @@ public class OwlElToLogicalExpression {
 	protected void process(ConcreteRoleType role_type) {
 		List<Atom> exprs = new ArrayList<>();
 		for (ConcreteRoleType sup : role_type.getSuperConcreteRoleTypes()) {
-			exprs.add(builder.ConceptAxiom((int) sup.getId()));
+			exprs.add(builder.ConceptAxiom(sup.getId()));
 		}
 		And expr = builder.And(toArray(exprs));
 		builder.DataPropertySet(expr);
@@ -100,7 +99,7 @@ public class OwlElToLogicalExpression {
 	protected void processDefinition(Definition def, boolean gci) {
 		List<Atom> exprs = new ArrayList<>();
 		for (Concept sup : def.getSuperConcepts()) {
-			exprs.add(builder.ConceptAxiom((int) sup.getId()));
+			exprs.add(builder.ConceptAxiom(sup.getId()));
 		}
 		exprs.addAll(buildRoles(def.getUngroupedRoles()));
 		exprs.addAll(buildConcreteRoles(def.getUngroupedConcreteRoles()));
@@ -124,7 +123,7 @@ public class OwlElToLogicalExpression {
 		List<LogicalAxiom.Atom> exprs = new ArrayList<>();
 		for (Role role : roles) {
 			exprs.add(builder.SomeRole(getConceptFacade(role.getRoleType().getId()),
-					builder.ConceptAxiom((int) role.getConcept().getId())));
+					builder.ConceptAxiom(role.getConcept().getId())));
 		}
 		return exprs;
 	}

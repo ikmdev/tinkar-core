@@ -129,17 +129,21 @@ public interface Nid {
     }
 
     /**
-     * The hash code of a nid: its low half. For every nid that fits an {@code int}, which is every
-     * nid of a 6-bit, 8-bit, or sequential store, it equals {@link Integer#hashCode(int)} of the
-     * {@code int} the nid widened from, so hash codes, and the order of hash collections, are
-     * what they were before nids widened. {@link Long#hashCode(long)} differs for every negative
-     * value, and every sequential nid is negative.
+     * The hash code of a nid. For a nid that fits an {@code int}, which is every nid of a 6-bit,
+     * 8-bit, or sequential store, it is the low half, which equals {@link Integer#hashCode(int)}
+     * of the {@code int} the nid widened from, so hash codes, and the order of hash collections,
+     * are what they were before nids widened ({@link Long#hashCode(long)} differs for every
+     * negative value, and every sequential nid is negative). For a 64-bit nid it is
+     * {@link Long#hashCode(long)}, which mixes both halves: the low half alone is the element
+     * sequence, under which element 17 of every pattern would hash alike (settled 2026-10-07,
+     * design {@code design-2026-10-07-64-bit-rocks-store}).
      *
      * @param nid a nid
      * @return its hash code
      */
     static int hash(long nid) {
-        return (int) nid;
+        int low = (int) nid;
+        return low == nid ? low : Long.hashCode(nid);
     }
 
     /**

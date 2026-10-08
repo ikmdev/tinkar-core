@@ -12,26 +12,25 @@ public interface EntityKey {
     int MAX_16BIT_UNSIGNED = (1 << 16) - 1;
 
     /**
-     * The RocksDB store key: {@code [patternSequence:16][elementSequence:48]}. Used only by
-     * rocks-kb, to key its column families.
-     * <p>Not a nid. A typical rocks key passes the validity test for a 64-bit nid
-     * ({@link Nid#isValid64(long)}), which is 32/32, so one passed as a nid shows up only as a
-     * lookup that finds nothing; hence the name, which keeps the two {@code long} forms of an
-     * entity apart (design {@code design-2026-09-30-64-bit-nids}).
+     * The RocksDB store key, as the active {@link NidLayout} composes it: in the legacy layouts
+     * {@code [patternSequence:16][elementSequence:48]}, which is not a nid (a typical one passes
+     * {@link Nid#isValid64(long)}, so one passed as a nid shows up only as a lookup that finds
+     * nothing; hence the name); in the 64-bit layout the nid itself. Used only by rocks-kb, to
+     * key its column families (design {@code design-2026-09-30-64-bit-nids}).
      *
      * @return the rocks key
      */
     long rocksKey();
 
     /**
-     * The pattern sequence. A 16-bit unsigned number.
-     * @return an int &gt; 0 and &lt; 2^16 (65,536)
+     * The pattern sequence: 16 bits in the legacy layouts, 31 in the 64-bit one.
+     * @return an int &gt; 0 and at most {@value Nid#MAX_SEQUENCE_64}
      */
     int patternSequence();
 
     /**
-     * The element sequence. A 48-bit unsigned number.
-     * @return an int &gt; 0 and &lt; 2^48 (281,474,976,710,656)
+     * The element sequence: 48 bits in the legacy layouts, 31 in the 64-bit one.
+     * @return a long &gt; 0 and &lt; 2^48 (281,474,976,710,656)
      */
     long elementSequence();
 
@@ -55,8 +54,9 @@ public interface EntityKey {
         return EntityKey.ofRocksKey(KeyUtil.byteArrayToLong(bytes));
     }
 
+    /** The store key as eight big-endian bytes; the same bytes in every layout. */
     default byte[] key() {
-        return KeyUtil.patternSequenceElementSequenceToKey(patternSequence(), elementSequence());
+        return KeyUtil.longToByteArray(rocksKey());
     }
 
     static EntityKey of(int patternSequence, long elementSequence) {
@@ -93,14 +93,14 @@ public interface EntityKey {
     record EntityKeyRecord(int patternSequence, long elementSequence) implements EntityKey {
         @Override
         public long rocksKey() {
-            return KeyUtil.patternSequenceElementSequenceToRocksKey(patternSequence(), elementSequence());
+            return NidLayout.active().rocksKey(patternSequence(), elementSequence());
         }
         public EntityKeyRecord {
             checkPatternSequence(patternSequence());
             checkElementSequence(elementSequence());
         }
         public EntityKeyRecord(long rocksKey) {
-            this(KeyUtil.rocksKeyToPatternSequence(rocksKey), KeyUtil.rocksKeyToElementSequence(rocksKey));
+            this(NidLayout.active().patternSequenceOfRocksKey(rocksKey), NidLayout.active().elementSequenceOfRocksKey(rocksKey));
         }
     }
 
@@ -117,8 +117,9 @@ public interface EntityKey {
         }
     }
 
+    /** A pattern sequence is non-negative and at most {@value Nid#MAX_SEQUENCE_64}; each layout narrows the range further when it encodes. */
     static void checkPatternSequence(int patternSequence) {
-        if (patternSequence < 0 || patternSequence > MAX_16BIT_UNSIGNED) {
+        if (patternSequence < 0 || patternSequence > Nid.MAX_SEQUENCE_64) {
             throw new IllegalArgumentException("patternSequence is out of range: " + patternSequence);
         }
     }

@@ -90,7 +90,7 @@ final class EntityStoreBackedHighlighter extends UnifiedHighlighter {
         int docId;
         while ((docId = docIter.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
             Document hitDoc = storedFields.document(docId, STORED_FIELDS_FOR_REHYDRATION);
-            Integer nid = IndexerSchema.NID.read(hitDoc);
+            Long nid = IndexerSchema.readNid(hitDoc);
             Integer fieldOrdinal = IndexerSchema.INDEXED_FIELD_ORDINAL.read(hitDoc);
             String text = (nid == null || fieldOrdinal == null)
                     ? ""

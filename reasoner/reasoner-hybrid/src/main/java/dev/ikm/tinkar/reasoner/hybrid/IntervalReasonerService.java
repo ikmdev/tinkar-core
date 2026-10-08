@@ -53,7 +53,7 @@ public class IntervalReasonerService extends ElkSnomedReasonerService {
 		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
 		LOG.info("Create reasoner");
 		List<ConcreteRoleType> intervalRoles = List.copyOf(data.getIntervalRoleTypes());
-		intervalRoles.forEach(x -> LOG.info("IR: " + PrimitiveData.text((int) x.getId())));
+		intervalRoles.forEach(x -> LOG.info("IR: " + PrimitiveData.text(x.getId())));
 		reasoner = IntervalReasoner.create(ontology, intervalRoles);
 	};
 
