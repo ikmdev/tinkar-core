@@ -19,18 +19,18 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
- * A int-to-int-array store that keeps nothing, for a spined map held in memory only: it reports no spines,
+ * A byte-array store that keeps nothing, for a spined map held in memory only: it reports no spines,
  * reads none and writes none, so the map starts empty and nothing reaches disk. The
  * ephemeral spined-array store runs on these.
  */
-public class IntIntArrayNoStore implements IntIntArrayStore {
+public class ByteArrayNoStore implements ByteArrayStore {
     @Override
-    public Optional<AtomicReferenceArray<int[]>> get(int spineIndex) {
+    public Optional<AtomicReferenceArray<byte[]>> get(int spineIndex) {
         return Optional.empty();
     }
 
     @Override
-    public void put(int spineIndex, AtomicReferenceArray<int[]> spine) {
+    public void put(int spineIndex, AtomicReferenceArray<byte[]> spine) {
     }
 
     @Override

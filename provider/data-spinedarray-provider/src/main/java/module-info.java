@@ -43,9 +43,9 @@ module dev.ikm.tinkar.provider.spinedarray {
     exports dev.ikm.tinkar.provider.spinedarray.constants;
 
     provides DataServiceController
-            with SpinedArrayProvider.OpenController, SpinedArrayProvider.NewController;
+            with SpinedArrayProvider.OpenController, SpinedArrayProvider.NewController, SpinedArrayProvider.LoadController;
     provides ServiceLifecycle
-            with SpinedArrayProvider.OpenController, SpinedArrayProvider.NewController;
+            with SpinedArrayProvider.OpenController, SpinedArrayProvider.NewController, SpinedArrayProvider.LoadController;
 
     uses LoadDataFromFileController;
     uses ChangeSetWriterService;

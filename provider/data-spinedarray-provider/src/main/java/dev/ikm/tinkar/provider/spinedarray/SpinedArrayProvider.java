@@ -25,6 +25,8 @@ import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.SpinedByteArrayMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
+import dev.ikm.tinkar.collection.store.ByteArrayNoStore;
+import dev.ikm.tinkar.collection.store.IntLongArrayNoStore;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
@@ -72,6 +74,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -134,34 +137,61 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     final SetOnce<SearchService> searchService = new SetOnce<>();
     private volatile boolean loadPhase = false;
     final String name;
+    /** Whether the store lives in memory only: nothing read from or written to disk. */
+    final boolean ephemeral;
+    /** The {@link #name()} of an ephemeral store, the same text the retired ephemeral provider showed. */
+    static final String EPHEMERAL_NAME = "Ephemeral data";
     final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
 
     private SpinedArrayProvider() throws IOException, ExecutionException, InterruptedException {
+        this(false);
+    }
+
+    /**
+     * Opens the store. Ephemeral, it lives in memory only: the spines are backed by stores that
+     * keep nothing, the data-store root is not touched, no next-nid file is kept, no change set
+     * is written, and the store ends with its JVM ({@link LoadController}). Otherwise it is the
+     * persistent store under {@code ServiceKeys.DATA_STORE_ROOT}. Everything above the spines,
+     * the UUID map, the type sets, the pattern index and the citation index, is the same either
+     * way, so the two modes answer every question alike.
+     */
+    private SpinedArrayProvider(boolean ephemeral) throws IOException, ExecutionException, InterruptedException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening SpinedArrayProvider on thread: {}", Thread.currentThread().getName());
         NidLayout.activate(NidLayout.SEQUENTIAL);
-        File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
-        boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
-        if (expectEmpty) {
-            assertEmptyDataRoot(configuredRoot);
-            ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
-        }
-        name = configuredRoot.getName();
-        configuredRoot.mkdirs();
-        LOG.info("Datastore root: " + configuredRoot.getAbsolutePath());
+        this.ephemeral = ephemeral;
+        if (ephemeral) {
+            name = EPHEMERAL_NAME;
+            this.nidToByteArrayMapDirectory = null;
+            this.nidToCitingComponentNidMapDirectory = null;
+            this.nextNidKeyFile = null;
+            this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayNoStore());
+            this.nidToCitingComponentsNidMap = new SpinedIntLongArrayMap(new IntLongArrayNoStore());
+            LOG.info("Datastore: ephemeral, held in memory, nothing on disk");
+        } else {
+            File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
+            boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+            if (expectEmpty) {
+                assertEmptyDataRoot(configuredRoot);
+                ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+            }
+            name = configuredRoot.getName();
+            configuredRoot.mkdirs();
+            LOG.info("Datastore root: " + configuredRoot.getAbsolutePath());
 
-        this.nidToByteArrayMapDirectory = new File(configuredRoot, "nidToByteArrayMap");
-        this.nidToByteArrayMapDirectory.mkdirs();
-        this.nidToCitingComponentNidMapDirectory = new File(configuredRoot, "nidToCitingComponentNidMap");
-        this.nidToCitingComponentNidMapDirectory.mkdirs();
-        this.nextNidKeyFile = new File(configuredRoot, "nextNidKeyFile");
+            this.nidToByteArrayMapDirectory = new File(configuredRoot, "nidToByteArrayMap");
+            this.nidToByteArrayMapDirectory.mkdirs();
+            this.nidToCitingComponentNidMapDirectory = new File(configuredRoot, "nidToCitingComponentNidMap");
+            this.nidToCitingComponentNidMapDirectory.mkdirs();
+            this.nextNidKeyFile = new File(configuredRoot, "nextNidKeyFile");
 
-        this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayFileStore(nidToByteArrayMapDirectory));
-        this.nidToCitingComponentsNidMap = new SpinedIntLongArrayMap(new IntLongArrayFileStore(nidToCitingComponentNidMapDirectory));
+            this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayFileStore(nidToByteArrayMapDirectory));
+            this.nidToCitingComponentsNidMap = new SpinedIntLongArrayMap(new IntLongArrayFileStore(nidToCitingComponentNidMapDirectory));
 
-        if (nextNidKeyFile.exists()) {
-            String nextNidString = Files.readString(this.nextNidKeyFile.toPath());
-            nextNid.set(Integer.valueOf(nextNidString));
+            if (nextNidKeyFile.exists()) {
+                String nextNidString = Files.readString(this.nextNidKeyFile.toPath());
+                nextNid.set(Integer.valueOf(nextNidString));
+            }
         }
         LOG.info("Submitting UUID loading task to thread pool...");
         try {
@@ -190,15 +220,20 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             throw e;
         }
 
-        ServiceLoader<ChangeSetWriterService> changeSetServiceLoader = PluggableService.load(ChangeSetWriterService.class);
-        MutableList<ChangeSetWriterService> changeSetWriters = Lists.mutable.empty();
-        changeSetServiceLoader.stream().forEach(changeSetProvider -> {
-            changeSetWriters.add(changeSetProvider.get());
-        });
-        this.changeSetWriterServices = changeSetWriters.toImmutable();
-        LOG.info("\n\nLoaded {} ChangeSetWriterService(s)\n\n", changeSetWriters.size());
-        if (this.changeSetWriterServices.notEmpty()) {
-            LOG.info("ChangeSetWriterService(s): ", changeSetWriters);
+        if (ephemeral) {
+            // A change set is a record on disk of what was edited; an ephemeral store keeps none.
+            this.changeSetWriterServices = Lists.immutable.empty();
+        } else {
+            ServiceLoader<ChangeSetWriterService> changeSetServiceLoader = PluggableService.load(ChangeSetWriterService.class);
+            MutableList<ChangeSetWriterService> changeSetWriters = Lists.mutable.empty();
+            changeSetServiceLoader.stream().forEach(changeSetProvider -> {
+                changeSetWriters.add(changeSetProvider.get());
+            });
+            this.changeSetWriterServices = changeSetWriters.toImmutable();
+            LOG.info("\n\nLoaded {} ChangeSetWriterService(s)\n\n", changeSetWriters.size());
+            if (this.changeSetWriterServices.notEmpty()) {
+                LOG.info("ChangeSetWriterService(s): ", changeSetWriters);
+            }
         }
 
         // Index recreation is now handled by SearchProvider in INDEXING phase
@@ -262,6 +297,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     public void save() {
+        if (ephemeral) {
+            LOG.debug("Ephemeral SpinedArrayProvider: nothing to save");
+            return;
+        }
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Saving SpinedArrayProvider");
         try {
@@ -1027,6 +1066,103 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         private static boolean isEmptyDirectory(File dir) {
             String[] entries = dir.list();
             return entries == null || entries.length == 0;
+        }
+    }
+
+    /**
+     * Loads a knowledge base into a store held in memory only. Nothing is read from or written
+     * to disk: the data-store root is not touched, no change set is written, and the store ends
+     * with its JVM. The data URI option names the protobuf export to load at start; with none,
+     * the store starts empty. This is the role the ephemeral provider filled, on the spined
+     * array's own structures, so the two answer every question alike
+     * (IKE-Network/ike-issues#1264).
+     */
+    public static class LoadController extends Controller {
+        public static final String CONTROLLER_NAME = "Load Ephemeral SpinedArrayStore";
+        private String importDataFileString;
+        private final AtomicBoolean loading = new AtomicBoolean(false);
+
+        @Override
+        public void setDataUriOption(DataUriOption option) {
+            // Not the base class's: the option is the file to load, not a data-store root.
+            dataUriOptionRef.set(option);
+            if (option != null) {
+                // toFile() decodes the URI; URL.getFile() would keep %20 for a space (ike-issues#1156).
+                importDataFileString = option.toFile().getAbsolutePath();
+            }
+        }
+
+        @Override
+        public Optional<String> openConflict(DataUriOption option) {
+            // Nothing on disk, so nothing another process could hold open.
+            return Optional.empty();
+        }
+
+        @Override
+        protected SpinedArrayProvider createProvider() throws Exception {
+            return new SpinedArrayProvider(true);
+        }
+
+        @Override
+        protected void initializeProvider(SpinedArrayProvider provider) {
+            if (importDataFileString != null) {
+                try {
+                    loading.set(true);
+                    File importFile = new File(importDataFileString);
+                    LOG.info("Queueing starter data for deferred import: {}", importFile.getName());
+                    dev.ikm.tinkar.entity.load.DataLoadProvider dataLoadService =
+                            dev.ikm.tinkar.entity.load.DataLoadProvider.get();
+                    dataLoadService.addFile(importFile);
+                } finally {
+                    loading.set(false);
+                }
+            } else {
+                LOG.info("No import file specified: the ephemeral store starts empty");
+            }
+        }
+
+        @Override
+        public List<DataUriOption> providerOptions() {
+            List<DataUriOption> dataUriOptions = new ArrayList<>();
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            if (!rootFolder.exists()) {
+                rootFolder.mkdirs();
+            }
+            File[] files = rootFolder.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (isValidDataLocation(f.getName())) {
+                        dataUriOptions.add(new DataUriOption(f.getName(), f.toURI()));
+                    }
+                }
+            }
+            return dataUriOptions;
+        }
+
+        @Override
+        public boolean isValidDataLocation(String name) {
+            return name.toLowerCase().endsWith("pb.zip") ||
+                    (name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink"));
+        }
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 40; // After the persistent stores, where the ephemeral provider sat.
+        }
+
+        @Override
+        public boolean loading() {
+            return loading.get();
+        }
+
+        @Override
+        public void reload() {
+            throw new UnsupportedOperationException("An ephemeral store cannot be reloaded");
         }
     }
 }
