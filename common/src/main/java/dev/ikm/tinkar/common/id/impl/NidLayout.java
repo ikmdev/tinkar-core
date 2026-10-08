@@ -2,6 +2,8 @@ package dev.ikm.tinkar.common.id.impl;
 
 import dev.ikm.tinkar.common.id.Nid;
 
+import static dev.ikm.tinkar.common.id.Nid.MAX_SEQUENCE_64;
+
 /**
  * The nid layout of the open knowledge base: how a nid holds a pattern sequence and an element
  * sequence, and how a store keys an entity (IKE-Network/ike-issues#1138, #1258).
@@ -186,7 +188,7 @@ public enum NidLayout {
         public long encode(int patternSequence, long elementSequence) {
             if (elementSequence < 1 || elementSequence > Nid.MAX_SEQUENCE_64) {
                 throw new IllegalArgumentException("element sequence " + elementSequence
-                        + " is out of range: a 64-bit nid's halves run from 1 through " + Nid.MAX_SEQUENCE_64);
+                        + " is out of range: a 64-bit nid's halves run from 1 through " + MAX_SEQUENCE_64);
             }
             return Nid.compose64(patternSequence, (int) elementSequence);
         }
