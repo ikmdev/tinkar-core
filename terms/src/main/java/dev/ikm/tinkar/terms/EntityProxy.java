@@ -146,6 +146,17 @@ public class EntityProxy implements EntityFacade, PublicId {
         return description;
     }
 
+    /**
+     * Whether this proxy has resolved its nid already. A lookup that finds it unresolved asks
+     * the store whether it knows the proxy's UUIDs before resolving, since resolving mints a nid
+     * for an unknown concept and fails for an unknown pattern on a pattern-keyed store.
+     *
+     * @return true once {@link #nid()} has resolved
+     */
+    public final boolean isNidResolved() {
+        return cachedNid != 0;
+    }
+
     @Override
     public final long nid() {
         long result = cachedNid;
