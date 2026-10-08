@@ -37,6 +37,35 @@ public class DurationUtil {
      */
     static final int SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
 
+    /**
+     * A duration in words coarse enough not to twitch as an estimate is refined: "a few seconds",
+     * "30 seconds" (to ten seconds), "4 minutes" (to the minute), "1 h 25 min" (to five minutes),
+     * "more than a day". For a remaining-time estimate; the caller adds "about".
+     *
+     * @param d the duration
+     * @return the duration in words
+     */
+    public static String approximate(java.time.Duration d) {
+        long seconds = Math.max(0, d.getSeconds());
+        if (seconds < 10) {
+            return "a few seconds";
+        }
+        if (seconds < 60) {
+            return (seconds / 10) * 10 + " seconds";
+        }
+        if (seconds < 3600) {
+            long minutes = Math.max(1, Math.round(seconds / 60.0));
+            return minutes == 1 ? "1 minute" : minutes + " minutes";
+        }
+        if (seconds < 86400) {
+            long fiveMinutes = Math.round(seconds / 300.0) * 5;
+            long hours = fiveMinutes / 60;
+            long minutes = fiveMinutes % 60;
+            return minutes == 0 ? hours + " h" : hours + " h " + minutes + " min";
+        }
+        return "more than a day";
+    }
+
     public static String format(java.time.Duration d) {
         final StringBuilder builder = new StringBuilder();
         final long          seconds = d.getSeconds();

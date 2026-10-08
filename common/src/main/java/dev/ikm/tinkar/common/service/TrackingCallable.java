@@ -19,6 +19,8 @@ import dev.ikm.tinkar.common.util.time.DurationUtil;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 
 import java.time.Duration;
+import java.util.Optional;
+import java.util.function.LongSupplier;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +40,25 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     String message;
     V value;
     boolean isCancelled = false;
+
+    // ---- Time: elapsed, and a remaining-time estimate any surface can show ----
+    /** How many progress samples the rate is taken over; a ring, the oldest overwritten. */
+    private static final int SAMPLE_CAPACITY = 64;
+    /** The rate is measured over the samples of the last ten seconds, so it follows a change of pace. */
+    private static final long WINDOW_NANOS = 10_000_000_000L;
+    /** No estimate before this much elapsed, or this fraction done: too little to go on. */
+    private static final long MIN_ELAPSED_NANOS = 3_000_000_000L;
+    private static final double MIN_FRACTION = 0.02;
+    /** The estimate when nothing can be said, kept for callers of the older method. */
+    private static final Duration UNKNOWN = Duration.ofDays(365);
+    private final long[] sampleNanos = new long[SAMPLE_CAPACITY];
+    private final double[] sampleWork = new double[SAMPLE_CAPACITY];
+    private int sampleCount;
+    private int sampleNext;
+    private long firstSampleNanos;
+    private volatile boolean remainingTimeEstimable = true;
+    /** The clock the samples are stamped by; a test sets its own. */
+    LongSupplier nanoClock = System::nanoTime;
     
     /**
      * Optional UI thread executor for blocking message updates.
@@ -82,6 +103,7 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     @Override
     public final V call() throws Exception {
         stopwatch.reset();
+        clearSamples();
         try {
             V result = compute();
             stopwatch.stop();
@@ -118,26 +140,127 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         return message;
     }
 
+    /**
+     * "About 4 minutes remaining." when the task can say ({@link #timeRemaining()}), else empty.
+     */
     public String estimateTimeRemainingString() {
-        return "About " + DurationUtil.format(estimateTimeRemaining()) + " remaining.";
+        return timeRemaining().map(remaining -> "About " + DurationUtil.approximate(remaining) + " remaining.").orElse("");
     }
 
+    /**
+     * The remaining time as the older callers took it: the estimate when there is one, otherwise
+     * a year, which stood for "unknown". New callers use {@link #timeRemaining()}.
+     */
     public Duration estimateTimeRemaining() {
-        if (maxWork.sum() == 0) {
-            return Duration.ofDays(365);
-        }
-        double percentDone = workDone.sum() / maxWork.sum();
-        if (percentDone < 0.00001) {
-            return Duration.ofDays(365);
-        }
-        //(TimeTaken / linesProcessed) * linesLeft = timeLeft
-        double secondsDuration = duration().getSeconds();
-        double secondsRemaining = secondsDuration / workDone.sum() * (maxWork.sum() - workDone.sum());
-        return Duration.ofSeconds((long) secondsRemaining);
+        return timeRemaining().orElse(UNKNOWN);
+    }
+
+    /**
+     * The time this task has run, from {@link #call()} to now, or to its end once it ended.
+     */
+    public Duration elapsed() {
+        return stopwatch.duration();
     }
 
     public Duration duration() {
         return stopwatch.duration();
+    }
+
+    /**
+     * Whether a remaining time may be estimated from this task's progress. On by default; a task
+     * whose progress is not a measure of time, such as one counting unequal steps, turns it off,
+     * and then shows elapsed time alone rather than a confident wrong number.
+     */
+    public void setRemainingTimeEstimable(boolean estimable) {
+        this.remainingTimeEstimable = estimable;
+    }
+
+    public boolean remainingTimeEstimable() {
+        return remainingTimeEstimable;
+    }
+
+    /**
+     * The time remaining, when the task can say: it is determinate, estimation is on, a few
+     * seconds have passed and a few percent are done, and its rate over the last ten seconds of
+     * progress is positive. The rate is taken over that window rather than the task's whole life,
+     * so a task that changes pace, an import whose second pass costs more per byte than its
+     * first, say, is estimated at the pace it is going, not the pace it started at. Empty
+     * otherwise: a surface then shows elapsed time alone.
+     *
+     * @return the remaining time, or empty when there is nothing honest to say
+     */
+    public Optional<Duration> timeRemaining() {
+        if (!remainingTimeEstimable) {
+            return Optional.empty();
+        }
+        double max = maxWork.sum();
+        double done = workDone.sum();
+        if (max <= 0 || done <= 0 || done >= max || done / max < MIN_FRACTION) {
+            return Optional.empty();
+        }
+        long now = nanoClock.getAsLong();
+        long latestNanos;
+        double latestWork;
+        long oldestNanos;
+        double oldestWork;
+        synchronized (sampleNanos) {
+            if (sampleCount < 2 || now - firstSampleNanos < MIN_ELAPSED_NANOS) {
+                return Optional.empty();
+            }
+            int latest = Math.floorMod(sampleNext - 1, SAMPLE_CAPACITY);
+            latestNanos = sampleNanos[latest];
+            latestWork = sampleWork[latest];
+            // The oldest sample within the window; at least one sample back, whatever its age.
+            int oldest = latest;
+            for (int back = 1; back < sampleCount; back++) {
+                int candidate = Math.floorMod(latest - back, SAMPLE_CAPACITY);
+                if (back > 1 && latestNanos - sampleNanos[candidate] > WINDOW_NANOS) {
+                    break;
+                }
+                oldest = candidate;
+            }
+            oldestNanos = sampleNanos[oldest];
+            oldestWork = sampleWork[oldest];
+        }
+        double seconds = (latestNanos - oldestNanos) / 1e9;
+        double workPerSecond = seconds > 0 ? (latestWork - oldestWork) / seconds : 0;
+        if (workPerSecond <= 0) {
+            return Optional.empty();
+        }
+        long remaining = Math.round((max - latestWork) / workPerSecond);
+        return Optional.of(Duration.ofSeconds(Math.max(0, remaining)));
+    }
+
+    /**
+     * The time in words for a progress row: "12 s elapsed", with ", about 4 minutes remaining"
+     * when the task can say.
+     */
+    public String timeText() {
+        String text = DurationUtil.format(elapsed()) + " elapsed";
+        return timeRemaining().map(remaining -> text + ", about " + DurationUtil.approximate(remaining) + " remaining").orElse(text);
+    }
+
+    private void recordSample(double done) {
+        long now = nanoClock.getAsLong();
+        synchronized (sampleNanos) {
+            if (sampleCount == 0) {
+                firstSampleNanos = now;
+            }
+            sampleNanos[sampleNext] = now;
+            sampleWork[sampleNext] = done;
+            sampleNext = (sampleNext + 1) % SAMPLE_CAPACITY;
+            if (sampleCount < SAMPLE_CAPACITY) {
+                sampleCount++;
+            }
+        }
+    }
+
+    private void clearSamples() {
+        synchronized (sampleNanos) {
+            sampleCount = 0;
+            sampleNext = 0;
+            firstSampleNanos = 0;
+        }
     }
 
     public void completedUnitOfWork() {
@@ -241,6 +364,8 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         boolean update = false;
 
         if (this.maxWork.sum() != maxWork) {
+            // A new measure of the work: the samples of the old one say nothing about it.
+            clearSamples();
             this.maxWork.reset();
             this.maxWork.add(maxWork);
             this.workDone.reset();
@@ -256,6 +381,9 @@ public abstract class TrackingCallable<V> implements Callable<V> {
             }
         }
 
+        if (update && maxWork > 0) {
+            recordSample(workDone);
+        }
         if (listener != null && update) {
             listener.updateProgress(workDone, maxWork);
         }
