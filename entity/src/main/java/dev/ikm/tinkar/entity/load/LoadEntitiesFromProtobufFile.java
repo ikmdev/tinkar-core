@@ -64,6 +64,8 @@ import java.util.function.Consumer;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
+import java.util.Optional;
 
 /**
  * The purpose of this class is to successfully load all Protobuf messages from a protobuf file and transform them into entities.
@@ -129,7 +131,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      * Create a loader that auto-detects the import mode based on the provider.
      * <p>     * Uses multi-pass import for providers that encode pattern information in NIDs
      * (e.g., RocksDB), and single-pass import for sequential NID providers
-     * (e.g., SpinedArray, MVStore, Ephemeral).
+     * (the spined array, persistent or ephemeral).
      * 
      * @param importFile the protobuf file to import
      */
@@ -640,38 +642,29 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     }
 
     private long analyzeManifest(List<Map.Entry<PublicId, String>> manifestEntryData) {
-        long expectedImports = -1;
-
-        // Read Manifest from Zip
-        try (FileInputStream fileIn = new FileInputStream(importFile);
-             BufferedInputStream buffIn = new BufferedInputStream(fileIn, InputStreamBufferSize); // Increased buffer size
-             CountingInputStream countingIn = new CountingInputStream(buffIn);
-             ZipInputStream zis = new ZipInputStream(countingIn)) {
-            ZipEntry zipEntry;
-            boolean foundManifest = false;
-            while (!foundManifest && (zipEntry = zis.getNextEntry()) != null) {
-                if (zipEntry.getName().equals(ChangeSetFormat.MANIFEST)) {
-                    Manifest manifest = new Manifest(zis);
-                    formatVersion = ChangeSetFormat.version(manifest.getMainAttributes(), importFile.getName());
-                    expectedImports = Long.parseLong(manifest.getMainAttributes().getValue("Total-Count"));
-                    // Get Dependent Module / Author PublicIds and Descriptions
-                    manifest.getEntries().keySet().forEach((publicIdKey) -> {
-                        PublicId publicId = PublicIds.of(publicIdKey.split(","));
-                        String description = manifest.getEntries().get(publicIdKey).getValue("Description");
-                        manifestEntryData.add(Map.entry(publicId, description));
-                    });
-                    foundManifest = true;
-                }
-                zis.closeEntry();
-                LOG.info(zipEntry.getName() + " zip entry size: " + zipEntry.getSize());
+        // Through the central directory: the manifest is the last entry, after the records and
+        // the identity index, and streaming to it inflates both (IKE-Network/ike-issues#1269).
+        try (ZipFile zip = new ZipFile(importFile)) {
+            zip.stream().forEach(entry -> LOG.info("{} zip entry size: {}", entry.getName(), entry.getSize()));
+            Optional<Manifest> read = ChangeSetFormat.manifest(zip);
+            if (read.isEmpty()) {
+                return -1;
             }
+            Manifest manifest = read.get();
+            formatVersion = ChangeSetFormat.version(manifest.getMainAttributes(), importFile.getName());
+            long expectedImports = Long.parseLong(manifest.getMainAttributes().getValue("Total-Count"));
+            // Get Dependent Module / Author PublicIds and Descriptions
+            manifest.getEntries().keySet().forEach((publicIdKey) -> {
+                PublicId publicId = PublicIds.of(publicIdKey.split(","));
+                String description = manifest.getEntries().get(publicIdKey).getValue("Description");
+                manifestEntryData.add(Map.entry(publicId, description));
+            });
+            return expectedImports;
         } catch (ChangeSetFormat.UnsupportedFormatException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        return expectedImports;
     }
 
     private long makeNid(SemanticChronology semanticChronology) {

@@ -21,8 +21,12 @@ import dev.ikm.tinkar.terms.EntityBinding;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
@@ -70,6 +74,23 @@ public final class ChangeSetFormat {
     public static boolean hasIdentityIndex(File changeSet) throws IOException {
         try (ZipFile zip = new ZipFile(changeSet)) {
             return zip.getEntry(IDENTITY_INDEX) != null;
+        }
+    }
+
+    /**
+     * The manifest of a changeset, read through the zip's central directory. The exporter
+     * writes the manifest last, after the records and the identity index, and a streaming
+     * reader has to inflate every entry before it to reach it: 47 seconds of a DeX import
+     * went to reading a 2.4 KB manifest (IKE-Network/ike-issues#1269). Empty when the zip
+     * carries no manifest.
+     */
+    public static Optional<Manifest> manifest(ZipFile zip) throws IOException {
+        ZipEntry entry = zip.getEntry(MANIFEST);
+        if (entry == null) {
+            return Optional.empty();
+        }
+        try (InputStream in = zip.getInputStream(entry)) {
+            return Optional.of(new Manifest(in));
         }
     }
 
