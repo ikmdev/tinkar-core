@@ -20,7 +20,7 @@ import java.util.UUID;
 /**
  * Event published on {@link FrameworkTopics#COMMIT_TOPIC} when a transaction commits.
  * <p>
- * Unlike the bare-nid {@code Broadcaster<Integer>} refresh broadcast, this event carries the
+ * Unlike the bare-nid {@code Broadcaster<Long>} refresh broadcast, this event carries the
  * finalized stamp nids and the changed component nids of the whole transaction, so subscribers
  * (e.g. a commit narrator) can react to a commit as a unit.
  */
@@ -31,8 +31,8 @@ public class CommitEvent extends Evt {
     private final UUID transactionUuid;
     private final String transactionName;
     private final long commitTime;
-    private final int[] stampNids;
-    private final int[] componentNids;
+    private final long[] stampNids;
+    private final long[] componentNids;
     private final int stampCount;
 
     /**
@@ -48,7 +48,7 @@ public class CommitEvent extends Evt {
      * @param stampCount      the number of stamps finalized
      */
     public CommitEvent(Object source, EvtType eventType, UUID transactionUuid, String transactionName,
-                       long commitTime, int[] stampNids, int[] componentNids, int stampCount) {
+                       long commitTime, long[] stampNids, long[] componentNids, int stampCount) {
         super(source, eventType);
         this.transactionUuid = transactionUuid;
         this.transactionName = transactionName;
@@ -70,11 +70,11 @@ public class CommitEvent extends Evt {
         return commitTime;
     }
 
-    public int[] stampNids() {
+    public long[] stampNids() {
         return stampNids;
     }
 
-    public int[] componentNids() {
+    public long[] componentNids() {
         return componentNids;
     }
 

@@ -48,10 +48,10 @@
  * StampCalculator calculator = StampCalculatorWithCache.getCalculator(stampCoord);
  *
  * StampPositionRecord fromPos = StampPositionRecord.make(
- *     time1, TinkarTerm.DEVELOPMENT_PATH
+ *     time1, KernelTerm.DEVELOPMENT_PATH
  * );
  * StampPositionRecord toPos = StampPositionRecord.make(
- *     time2, TinkarTerm.DEVELOPMENT_PATH
+ *     time2, KernelTerm.DEVELOPMENT_PATH
  * );
  *
  * ChangeChronology changes = calculator.getChanges(conceptEntity, fromPos, toPos);
@@ -74,7 +74,7 @@
  * <pre>{@code
  * for (VersionChangeRecord versionChange : changes.versionChanges()) {
  *     // Examine version-level change
- *     int stampNid = versionChange.stampNid();
+ *     long stampNid = versionChange.stampNid();
  *     StampEntity stamp = Entity.getStamp(stampNid);
  *
  *     System.out.println("Changed at: " + stamp.time());
@@ -142,7 +142,7 @@
  * // Find all concepts that changed in time range
  * List<ChangeChronology> changes = new ArrayList<>();
  *
- * for (int conceptNid : allConceptNids) {
+ * for (long conceptNid : allConceptNids) {
  *     ConceptEntity concept = Entity.getConceptForNid(conceptNid);
  *     ChangeChronology changeChronology = calc.getChanges(
  *         concept, fromPos, toPos
@@ -162,7 +162,7 @@
  * for (VersionChangeRecord versionChange : changes.versionChanges()) {
  *     for (FieldChangeRecord fieldChange : versionChange.fieldChanges()) {
  *         // Check if this is a description field
- *         if (fieldChange.fieldMeaning() == TinkarTerm.DESCRIPTION_TEXT.nid()) {
+ *         if (fieldChange.fieldMeaning() == MyTerms.DESCRIPTION_TEXT.nid()) {
  *             String oldText = (String) fieldChange.oldValue();
  *             String newText = (String) fieldChange.newValue();
  *             System.out.println("Description changed:");
@@ -234,8 +234,8 @@
  * <pre>{@code
  * // Synchronize changes from source to target
  * void syncChanges(StampPositionRecord lastSync, StampPositionRecord now) {
- *     for (int nid : allEntityNids) {
- *         Entity entity = Entity.getFast(nid);
+ *     for (long nid : allEntityNids) {
+ *         Entity entity = EntityHandle.get(nid).expectEntity();
  *         ChangeChronology changes = calc.getChanges(entity, lastSync, now);
  *
  *         if (!changes.versionChanges().isEmpty()) {
@@ -270,8 +270,8 @@
  *     StampPositionRecord lastCheck = StampPositionRecord.make(lastCheckTime, path);
  *     StampPositionRecord nowPos = StampPositionRecord.make(now, path);
  *
- *     for (int subscribedNid : subscribedEntities) {
- *         Entity entity = Entity.getFast(subscribedNid);
+ *     for (long subscribedNid : subscribedEntities) {
+ *         Entity entity = EntityHandle.get(subscribedNid).expectEntity();
  *         ChangeChronology changes = calc.getChanges(entity, lastCheck, nowPos);
  *
  *         if (!changes.versionChanges().isEmpty()) {

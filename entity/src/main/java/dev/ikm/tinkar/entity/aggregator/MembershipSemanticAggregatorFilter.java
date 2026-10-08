@@ -1,7 +1,10 @@
 package dev.ikm.tinkar.entity.aggregator;
 
+import java.util.function.LongConsumer;
+
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -23,17 +26,17 @@ public class MembershipSemanticAggregatorFilter extends EntityAggregatorFilter {
     }
 
     @Override
-    public EntityCountSummary aggregate(IntConsumer nidConsumer) {
+    public EntityCountSummary aggregate(LongConsumer nidConsumer) {
         initCounts();
 
-        final List<Integer> membershipPatternNidsToPassFilter =
+        final List<Long> membershipPatternNidsToPassFilter =
                 membershipPatternsToPassFilter.stream().map(EntityService.get()::nidForPublicId).toList();
 
         Predicate<EntityVersion> hasZeroSemanticFields = (version) ->
                 version instanceof SemanticEntityVersion semanticVersion && semanticVersion.fieldValues().isEmpty();
 
-        IntConsumer membershipSemanticConsumer = (nid) ->
-            EntityService.get().getEntity(nid).ifPresentOrElse((entity) -> {
+        LongConsumer membershipSemanticConsumer = (nid) ->
+            EntityHandle.get(nid).entity().filter(e -> !e.canceled()).ifPresentOrElse((entity) -> {
                 // Filter out Membership Semantics (i.e., semantics with no fields) that are not in the acceptable list
                 if (entity instanceof SemanticEntity<?> semanticEntity
                         && semanticEntity.versions().stream().anyMatch(hasZeroSemanticFields)

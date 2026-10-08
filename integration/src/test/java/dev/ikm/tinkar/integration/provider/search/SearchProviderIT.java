@@ -15,16 +15,14 @@
  */
 package dev.ikm.tinkar.integration.provider.search;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
-import dev.ikm.tinkar.terms.TinkarTerm;
-import dev.ikm.tinkar.terms.TinkarTermV2;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
@@ -32,10 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -53,19 +49,13 @@ public class SearchProviderIT {
     @Test
     public void getChildrenIT() {
         List<PublicId> expectedUserChildren = Arrays.asList(
-                TinkarTerm.ORDER_FOR_AXIOM_ATTACHMENTS.publicId(),
-                TinkarTerm.ORDER_FOR_CONCEPT_ATTACHMENTS.publicId(),
-                TinkarTerm.ORDER_FOR_DESCRIPTION_ATTACHMENTS.publicId(),
-                TinkarTerm.KOMET_USER.publicId(),
-                TinkarTerm.KOMET_USER_LIST.publicId(),
-                TinkarTerm.MODULE_FOR_USER.publicId(),
-                TinkarTerm.PATH_FOR_USER.publicId(),
-                TinkarTerm.STARTER_DATA_AUTHORING.publicId(),
-                TinkarTermV2.TINKAR_STARTER_DATA_AUTHOR_OPENPARENTHESIS_USER_CLOSEPARENTHESIS_.publicId(),
-                TinkarTermV2.GRETEL_OPENPARENTHESIS_USER_CLOSEPARENTHESIS_.publicId()
+                KernelTerm.KOMET_USER.publicId(),
+                IkeTerms.IKE_COMMUNITY.publicId(),
+                IkeTerms.BASELINE_STARTER_DATA_AUTHOR.publicId(),
+                IkeTerms.GRETEL.publicId()
         );
 
-        List<PublicId> actualUserChildren = Searcher.childrenOf(TinkarTerm.USER.publicId());
+        List<PublicId> actualUserChildren = Searcher.childrenOf(KernelTerm.USER.publicId());
 
         expectedUserChildren.sort(Comparator.naturalOrder());
         actualUserChildren.sort(Comparator.naturalOrder());
@@ -80,14 +70,11 @@ public class SearchProviderIT {
     @Test
     public void getDescendantsIT() {
         List<PublicId> expectedUserDescendants = Arrays.asList(
-                TinkarTerm.ROLE_TYPE.publicId(),
-                TinkarTerm.ROLE_RESTRICTION.publicId(),
-                TinkarTerm.INTERVAL_ROLE.publicId(),
-                TinkarTerm.INTERVAL_ROLE_TYPE.publicId(),
-                TinkarTermV2.FEATURE_ROLE_TYPE.publicId()
+                IkeTerms.ROLE_RESTRICTION.publicId(),
+                KernelTerm.INTERVAL_ROLE.publicId()
         );
 
-        List<PublicId> actualUserDescendants = Searcher.descendantsOf(TinkarTerm.ROLE.publicId());
+        List<PublicId> actualUserDescendants = Searcher.descendantsOf(KernelTerm.ROLE.publicId());
 
         expectedUserDescendants.sort(Comparator.naturalOrder());
         actualUserDescendants.sort(Comparator.naturalOrder());
@@ -108,9 +95,9 @@ public class SearchProviderIT {
         );
 
         List<PublicId> conceptsWithFQNs = List.of(
-                TinkarTerm.ROOT_VERTEX.publicId(),
-                TinkarTerm.MEANING.publicId(),
-                TinkarTerm.PURPOSE.publicId()
+                KernelTerm.ROOT_VERTEX.publicId(),
+                IkeTerms.MEANING.publicId(),
+                IkeTerms.PURPOSE.publicId()
         );
 
         List<String> actualFQNs = Searcher.descriptionsOf(conceptsWithFQNs);
@@ -126,41 +113,6 @@ public class SearchProviderIT {
         File dataStore = new File(System.getProperty("user.home") + "/Solor/snomedLidrLoinc-data-5-6-2024-withCollabData-dev");
         TestHelper.stopDatabase();
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, dataStore);
-    }
-
-    @Test
-    @Disabled
-    public void getResultConformancesFromLidrRecordIT() {
-        setupSnomedLoincLidrData();
-
-        PublicId lidrRecordId = PublicIds.of(UUID.fromString("ac475ee0-8f34-49e7-b0ba-28f5b4cb2a44"));
-        List<PublicId> expectedResultConformances = Arrays.asList(PublicIds.of(UUID.fromString("46366a93-9895-3703-ad7f-cb2596e7cb5d")));
-        List<PublicId> actualResultConformances = Searcher.getResultConformancesFromLidrRecord(lidrRecordId);
-
-        Collections.sort(expectedResultConformances);
-        Collections.sort(actualResultConformances);
-        assertEquals(expectedResultConformances, actualResultConformances, "LIDR Record Result Conformances do not match");
-    }
-
-    @Test
-    @Disabled
-    public void getAllowedResultsFromResultConformanceIT() {
-        setupSnomedLoincLidrData();
-
-        PublicId resultConformanceId = PublicIds.of(UUID.fromString("46366a93-9895-3703-ad7f-cb2596e7cb5d"));
-        List<PublicId> expectedAllowedResults = Arrays.asList(
-                PublicIds.of(UUID.fromString("97b0fbff-cd01-3018-9f72-03ffc7c9027c")),
-                PublicIds.of(UUID.fromString("f477b09d-0760-396a-97b0-5abc4fbde352")),
-                PublicIds.of(UUID.fromString("2bf6b6b1-74f7-3ebc-a48b-5a7f12980559")),
-                PublicIds.of(UUID.fromString("cff1d554-6d56-33f3-bf5d-9d5a6e231128")),
-                PublicIds.of(UUID.fromString("152f35e3-f0a3-3a5e-9de2-d79ae288f7ba")),
-                PublicIds.of(UUID.fromString("39925f20-bd93-343f-a4c0-588762316250"))
-        );
-        List<PublicId> actualAllowedResults = Searcher.getAllowedResultsFromResultConformance(resultConformanceId);
-
-        Collections.sort(expectedAllowedResults);
-        Collections.sort(actualAllowedResults);
-        assertEquals(expectedAllowedResults, actualAllowedResults, "Result Conformance allowed results do not match");
     }
 
 }

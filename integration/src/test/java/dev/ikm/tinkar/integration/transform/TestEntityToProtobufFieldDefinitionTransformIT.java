@@ -62,10 +62,10 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
         Concept dataTypeConcept = conceptMap.get(DATATYPE_CONCEPT_NAME);
         Concept purposeConcept = conceptMap.get(PURPOSE_CONCEPT_NAME);
 
-        PublicId patternPublicId = PublicIds.newRandom();
-        int patternNid = Entity.nid(patternPublicId);
-        UUID patternUuid = patternPublicId.asUuidArray()[0];
-        int stampNid = createAndStoreStamp();
+        UUID patternUuid = UUID.randomUUID();
+        PublicId patternPublicId = PublicIds.of(patternUuid);
+        long patternNid = Entity.nid(patternPublicId);
+        long stampNid = createAndStoreStamp();
 
         FieldDefinitionRecord fieldDef = FieldDefinitionRecordBuilder.builder()
                 .dataTypeNid(Entity.nid(dataTypeConcept.publicId()))
@@ -103,16 +103,16 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
         assertTrue(msg.hasPatternChronology());
         var fieldDefs = msg.getPatternChronology().getPatternVersions(0).getFieldDefinitionsList();
         assertEquals(1, fieldDefs.size());
-        assertFalse(fieldDefs.get(0).getMeaningPublicId().getUuidsList().isEmpty());
-        assertFalse(fieldDefs.get(0).getDataTypePublicId().getUuidsList().isEmpty());
-        assertFalse(fieldDefs.get(0).getPurposePublicId().getUuidsList().isEmpty());
+        assertFalse(fieldDefs.get(0).getMeaningPublicId().getUuidBitsList().isEmpty());
+        assertFalse(fieldDefs.get(0).getDataTypePublicId().getUuidBitsList().isEmpty());
+        assertFalse(fieldDefs.get(0).getPurposePublicId().getUuidBitsList().isEmpty());
     }
 
     @Test
     @DisplayName("Transform a Field Definition Transform With Missing DataType - requires entity service")
     public void testEntityFieldDefinitionTransformWithMissingDataType() {
         assertThrows(Throwable.class, () -> {
-            int stampNid = createAndStoreStamp();
+            long stampNid = createAndStoreStamp();
             FieldDefinitionRecordBuilder.builder()
                     .dataTypeNid(0)
                     .purposeNid(Entity.nid(conceptMap.get(PURPOSE_CONCEPT_NAME).publicId()))
@@ -128,7 +128,7 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
     @DisplayName("Transform a Field Definition Transform With Missing Meaning - requires entity service")
     public void testEntityFieldDefinitionTransformWithMissingMeaning() {
         assertThrows(Throwable.class, () -> {
-            int stampNid = createAndStoreStamp();
+            long stampNid = createAndStoreStamp();
             FieldDefinitionRecordBuilder.builder()
                     .dataTypeNid(Entity.nid(conceptMap.get(DATATYPE_CONCEPT_NAME).publicId()))
                     .purposeNid(Entity.nid(conceptMap.get(PURPOSE_CONCEPT_NAME).publicId()))
@@ -144,7 +144,7 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
     @DisplayName("Transform a Field Definition Transform With Missing Purpose - requires entity service")
     public void testEntityFieldDefinitionTransformWithMissingPurpose() {
         assertThrows(Throwable.class, () -> {
-            int stampNid = createAndStoreStamp();
+            long stampNid = createAndStoreStamp();
             FieldDefinitionRecordBuilder.builder()
                     .dataTypeNid(Entity.nid(conceptMap.get(DATATYPE_CONCEPT_NAME).publicId()))
                     .purposeNid(0)

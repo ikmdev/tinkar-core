@@ -15,7 +15,9 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import java.util.function.LongConsumer;
+
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
@@ -28,7 +30,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.IntConsumer;
 
 public class TemporalEntityAggregator extends EntityAggregator {
     private static final Logger LOG = LoggerFactory.getLogger(TemporalEntityAggregator.class);
@@ -36,7 +37,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
     private final long fromEpochMillis;
     private final long toEpochMillis;
 
-    /** Orphan nids seen by the last {@link #aggregate(IntConsumer)} run — sequences
+    /** Orphan nids seen by the last {@link #aggregate(LongConsumer)} run — sequences
      * allocated by the store but with no committed entity bytes (typically canceled
      * between allocation and commit). Counted for the log line; never counted in the
      * summary and never emitted, so a manifest written from the summary always matches
@@ -49,14 +50,14 @@ public class TemporalEntityAggregator extends EntityAggregator {
     }
 
     @Override
-    public EntityCountSummary aggregate(IntConsumer nidConsumer) {
+    public EntityCountSummary aggregate(LongConsumer nidConsumer) {
         initCounts();
         // Concurrent collections throughout: the forEach*Nid scans run in parallel, and a plain
         // HashSet or ArrayList filled from several threads can drop entries — here, stamps the
         // export would then silently leave out.
         // Filter Stamp Nids based on the supplied time span
-        Set<Integer> filteredStampNids = ConcurrentHashMap.newKeySet();
-        PrimitiveData.get().forEachStampNid((stampNid) -> {
+        Set<Long> filteredStampNids = ConcurrentHashMap.newKeySet();
+        EntityStore.current().forEachStampNid((stampNid) -> {
             if (isCancelled()) {
                 return;
             }
@@ -68,7 +69,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
         });
         throwIfCancelled();
 
-        Set<Integer> stampsToExport = ConcurrentHashMap.newKeySet();
+        Set<Long> stampsToExport = ConcurrentHashMap.newKeySet();
 
         // Every concept, semantic and pattern is read to see whether any of its stamps falls in
         // the range — there is no index from a stamp to the components that use it. Read past the
@@ -79,22 +80,26 @@ public class TemporalEntityAggregator extends EntityAggregator {
         // no committed bytes) is excluded from the count, the emission, and the stamp collection
         // alike (IKE-Network/ike-issues#933).
         lastOrphanCount.set(0);
-        PrimitiveData.get().forEachConceptNid(nid -> aggregateIfInRange(nid, filteredStampNids, stampsToExport,
+        EntityStore.current().forEachConceptNid(nid -> aggregateIfInRange(nid, filteredStampNids, stampsToExport,
                 conceptsAggregatedCount, nidConsumer));
         throwIfCancelled();
 
-        PrimitiveData.get().forEachSemanticNid(nid -> aggregateIfInRange(nid, filteredStampNids, stampsToExport,
+        EntityStore.current().forEachSemanticNid(nid -> aggregateIfInRange(nid, filteredStampNids, stampsToExport,
                 semanticsAggregatedCount, nidConsumer));
         throwIfCancelled();
 
-        PrimitiveData.get().forEachPatternNid(nid -> aggregateIfInRange(nid, filteredStampNids, stampsToExport,
+        EntityStore.current().forEachPatternNid(nid -> aggregateIfInRange(nid, filteredStampNids, stampsToExport,
                 patternsAggregatedCount, nidConsumer));
         throwIfCancelled();
 
+        // A stamp in the window is exported whether or not a version uses it: a set may
+        // declare one that no version does, such as the non-existent stamp.
+        stampsToExport.addAll(filteredStampNids);
+
         // Export the aggregated stamps — resolution-checked like every other bucket, so the count
         // only claims stamps that can be delivered.
-        List<Integer> deliverableStampNids = new ArrayList<>();
-        for (int stampNid : stampsToExport) {
+        List<Long> deliverableStampNids = new ArrayList<>();
+        for (long stampNid : stampsToExport) {
             if (readUncached(stampNid) != null) {
                 deliverableStampNids.add(stampNid);
             } else {
@@ -112,8 +117,8 @@ public class TemporalEntityAggregator extends EntityAggregator {
     }
 
     /** Emits {@code nid} — its whole chronology — if any of its stamps falls in the range. */
-    private void aggregateIfInRange(int nid, Set<Integer> filteredStampNids, Set<Integer> stampsToExport,
-                                    AtomicLong aggregatedCount, IntConsumer nidConsumer) {
+    private void aggregateIfInRange(long nid, Set<Long> filteredStampNids, Set<Long> stampsToExport,
+                                    AtomicLong aggregatedCount, LongConsumer nidConsumer) {
         if (isCancelled()) {
             return;
         }
@@ -122,7 +127,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
             lastOrphanCount.incrementAndGet();
             return;
         }
-        Set<Integer> stampNids = entity.stampNids().mapToSet(i -> i);
+        Set<Long> stampNids = entity.stampNids().mapToSet(i -> i);
         if (!Collections.disjoint(filteredStampNids, stampNids)) {
             aggregatedCount.incrementAndGet();
             nidConsumer.accept(nid);

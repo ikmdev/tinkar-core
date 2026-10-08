@@ -35,6 +35,18 @@ public interface SearchService {
     void index(Object object);
 
     /**
+     * Tells the search service whether a load phase is in progress. Outside a
+     * load phase, {@link #index} makes each new document visible to searches
+     * at once. During a load phase it only writes the document, and ending the
+     * load phase makes everything written during it visible in one refresh.
+     *
+     * @param loadPhase {@code true} when a load phase begins, {@code false}
+     *                  when it ends
+     */
+    default void setLoadPhase(boolean loadPhase) {
+    }
+
+    /**
      * Commits any pending changes to the search index.
      *
      * @throws IOException if an error occurs during commit

@@ -15,10 +15,15 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
+import java.util.function.LongConsumer;
+import java.util.function.LongPredicate;
+
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
@@ -28,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntConsumer;
@@ -65,19 +71,20 @@ import java.util.function.IntPredicate;
  */
 public class AllowlistEntityAggregator extends EntityAggregator {
 
-    private final Set<PublicId> allowedModules;
-    private final Set<PublicId> allowedPaths;
-    private final Set<PublicId> includedPatterns;
-    private final Set<PublicId> excludedPatterns;
-    private final IntPredicate purposeNidPredicate;
+    // Lists, not sets: a public id is never a hash key. Membership is decided on nids (aggregate).
+    private final List<PublicId> allowedModules;
+    private final List<PublicId> allowedPaths;
+    private final List<PublicId> includedPatterns;
+    private final List<PublicId> excludedPatterns;
+    private final LongPredicate purposeNidPredicate;
 
     /**
      * An allowlist by module only — any path, any pattern, no purpose refinement.
      *
      * @param allowedModules the module concepts whose content may cross the boundary
      */
-    public AllowlistEntityAggregator(Set<PublicId> allowedModules) {
-        this(allowedModules, Set.of(), Set.of(), Set.of(), null);
+    public AllowlistEntityAggregator(Collection<PublicId> allowedModules) {
+        this(allowedModules, List.of(), List.of(), List.of(), null);
     }
 
     /**
@@ -93,32 +100,32 @@ public class AllowlistEntityAggregator extends EntityAggregator {
      *                            their pattern's purpose nid; {@code null} disables purpose filtering
      *                            (purpose is a permitted, complementary key — off by default)
      */
-    public AllowlistEntityAggregator(Set<PublicId> allowedModules, Set<PublicId> allowedPaths,
-                                     Set<PublicId> includedPatterns, Set<PublicId> excludedPatterns,
-                                     IntPredicate purposeNidPredicate) {
-        this.allowedModules = Set.copyOf(Objects.requireNonNull(allowedModules, "allowedModules"));
-        this.allowedPaths = allowedPaths == null ? Set.of() : Set.copyOf(allowedPaths);
-        this.includedPatterns = includedPatterns == null ? Set.of() : Set.copyOf(includedPatterns);
-        this.excludedPatterns = excludedPatterns == null ? Set.of() : Set.copyOf(excludedPatterns);
+    public AllowlistEntityAggregator(Collection<PublicId> allowedModules, Collection<PublicId> allowedPaths,
+                                     Collection<PublicId> includedPatterns, Collection<PublicId> excludedPatterns,
+                                     LongPredicate purposeNidPredicate) {
+        this.allowedModules = List.copyOf(Objects.requireNonNull(allowedModules, "allowedModules"));
+        this.allowedPaths = allowedPaths == null ? List.of() : List.copyOf(allowedPaths);
+        this.includedPatterns = includedPatterns == null ? List.of() : List.copyOf(includedPatterns);
+        this.excludedPatterns = excludedPatterns == null ? List.of() : List.copyOf(excludedPatterns);
         this.purposeNidPredicate = purposeNidPredicate;
     }
 
     @Override
-    public EntityCountSummary aggregate(IntConsumer nidConsumer) {
+    public EntityCountSummary aggregate(LongConsumer nidConsumer) {
         initCounts();
 
-        Set<Integer> allowedModuleNids = new HashSet<>();
+        Set<Long> allowedModuleNids = new HashSet<>();
         allowedModules.forEach(publicId -> allowedModuleNids.add(PrimitiveData.nid(publicId)));
-        Set<Integer> allowedPathNids = new HashSet<>();
+        Set<Long> allowedPathNids = new HashSet<>();
         allowedPaths.forEach(publicId -> allowedPathNids.add(PrimitiveData.nid(publicId)));
-        Set<Integer> includedPatternNids = new HashSet<>();
+        Set<Long> includedPatternNids = new HashSet<>();
         includedPatterns.forEach(publicId -> includedPatternNids.add(PrimitiveData.nid(publicId)));
-        Set<Integer> excludedPatternNids = new HashSet<>();
+        Set<Long> excludedPatternNids = new HashSet<>();
         excludedPatterns.forEach(publicId -> excludedPatternNids.add(PrimitiveData.nid(publicId)));
 
         // The stamps whose module (and path, when constrained) is allowlisted.
-        Set<Integer> allowedStampNids = new HashSet<>();
-        PrimitiveData.get().forEachStampNid(stampNid ->
+        Set<Long> allowedStampNids = new HashSet<>();
+        EntityStore.current().forEachStampNid(stampNid ->
                 EntityService.get().getStamp(stampNid).ifPresent(stampEntity -> {
                     boolean moduleOk = allowedModuleNids.contains(stampEntity.moduleNid());
                     boolean pathOk = allowedPathNids.isEmpty() || allowedPathNids.contains(stampEntity.pathNid());
@@ -127,12 +134,12 @@ public class AllowlistEntityAggregator extends EntityAggregator {
                     }
                 }));
 
-        List<Integer> referencedStampNids = new ArrayList<>();
+        List<Long> referencedStampNids = new ArrayList<>();
 
         // Concepts included when any of their stamps is allowlisted.
-        PrimitiveData.get().forEachConceptNid(conceptNid ->
-                EntityService.get().getEntity(conceptNid).ifPresent(conceptEntity -> {
-                    Set<Integer> stampNids = conceptEntity.stampNids().mapToSet(i -> i);
+        EntityStore.current().forEachConceptNid(conceptNid ->
+                EntityHandle.get(conceptNid).entity().filter(e -> !e.canceled()).ifPresent(conceptEntity -> {
+                    Set<Long> stampNids = conceptEntity.stampNids().mapToSet(i -> i);
                     if (!Collections.disjoint(allowedStampNids, stampNids)) {
                         conceptsAggregatedCount.incrementAndGet();
                         nidConsumer.accept(conceptNid);
@@ -142,9 +149,9 @@ public class AllowlistEntityAggregator extends EntityAggregator {
 
         // Patterns BEFORE semantics, so a consumer can resolve a semantic's pattern (and purpose) first;
         // a pattern entity is itself subject to the pattern include/exclude by its own nid.
-        PrimitiveData.get().forEachPatternNid(patternNid ->
-                EntityService.get().getEntity(patternNid).ifPresent(patternEntity -> {
-                    Set<Integer> stampNids = patternEntity.stampNids().mapToSet(i -> i);
+        EntityStore.current().forEachPatternNid(patternNid ->
+                EntityHandle.get(patternNid).entity().filter(e -> !e.canceled()).ifPresent(patternEntity -> {
+                    Set<Long> stampNids = patternEntity.stampNids().mapToSet(i -> i);
                     if (!Collections.disjoint(allowedStampNids, stampNids)
                             && patternAllowed(patternNid, includedPatternNids, excludedPatternNids)) {
                         patternsAggregatedCount.incrementAndGet();
@@ -155,12 +162,12 @@ public class AllowlistEntityAggregator extends EntityAggregator {
 
         // Semantics included when any stamp is allowlisted, the semantic's pattern is allowed, and the
         // optional purpose refinement passes.
-        PrimitiveData.get().forEachSemanticNid(semanticNid ->
-                EntityService.get().getEntity(semanticNid).ifPresent(semanticEntity -> {
+        EntityStore.current().forEachSemanticNid(semanticNid ->
+                EntityHandle.get(semanticNid).entity().filter(e -> !e.canceled()).ifPresent(semanticEntity -> {
                     if (!(semanticEntity instanceof SemanticEntity<?> semantic)) {
                         return;
                     }
-                    Set<Integer> stampNids = semanticEntity.stampNids().mapToSet(i -> i);
+                    Set<Long> stampNids = semanticEntity.stampNids().mapToSet(i -> i);
                     if (!Collections.disjoint(allowedStampNids, stampNids)
                             && patternAllowed(semantic.patternNid(), includedPatternNids, excludedPatternNids)
                             && purposeAllows(semanticEntity)) {
@@ -170,7 +177,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
                     }
                 }));
 
-        Set<Integer> deduplicatedStampNids = new HashSet<>(referencedStampNids);
+        Set<Long> deduplicatedStampNids = new HashSet<>(referencedStampNids);
         stampsAggregatedCount.set(deduplicatedStampNids.size());
         deduplicatedStampNids.forEach(nidConsumer::accept);
 
@@ -181,7 +188,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
      * Whether {@code patternNid} passes the pattern include/exclude: never when excluded; otherwise when
      * the include-set is empty (any pattern) or contains it.
      */
-    private static boolean patternAllowed(int patternNid, Set<Integer> included, Set<Integer> excluded) {
+    private static boolean patternAllowed(long patternNid, Set<Long> included, Set<Long> excluded) {
         if (excluded.contains(patternNid)) {
             return false;
         }
@@ -193,14 +200,14 @@ public class AllowlistEntityAggregator extends EntityAggregator {
      * purpose predicate is set — all semantics pass. Purpose is a <em>complementary</em> refinement, so
      * it is <b>fail-open</b>: a semantic is excluded only when its pattern-purpose is positively
      * resolved and the predicate rejects it; a semantic whose pattern-purpose cannot be resolved (for
-     * example a description on a {@code TinkarTerm} pattern absent from a replay-seeded store) is
+     * example a description on a kernel pattern absent from a replay-seeded store) is
      * <em>kept</em>. Purpose never drops content it cannot classify.
      */
     private boolean purposeAllows(Entity<?> entity) {
         if (purposeNidPredicate == null || !(entity instanceof SemanticEntity<?> semantic)) {
             return true;
         }
-        Entity<?> pattern = EntityService.get().getEntityFast(semantic.patternNid());
+        Entity<?> pattern = EntityHandle.get(semantic.patternNid()).orNull();
         if (pattern instanceof PatternEntity<?> patternEntity && !patternEntity.versions().isEmpty()) {
             PatternEntityVersion latest = patternEntity.versions().getLast();
             return purposeNidPredicate.test(latest.semanticPurposeNid());

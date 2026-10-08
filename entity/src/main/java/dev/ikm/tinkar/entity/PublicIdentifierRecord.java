@@ -35,8 +35,19 @@ public record PublicIdentifierRecord(long mostSignificantBits,
         Validator.notZero(mostSignificantBits);
         Validator.notZero(leastSignificantBits);
     }
+    /**
+     * The record header for a public id: every UUID, the one listed first in the most and least
+     * significant bits and the rest in the additional longs. The split is how the record is laid
+     * out, nothing more: the UUID in the leading bits is no more the component's than the others.
+     * Code that writes a record header from a public id uses this rather than splitting the UUIDs
+     * itself.
+     *
+     * @param publicId the public id
+     * @return the header holding every one of its UUIDs
+     */
     public static PublicIdentifierRecord make(PublicId publicId) {
         UUID[] uuids = publicId.asUuidArray();
+        UUID head = uuids[0]; // first-uuid: the record layout's head/rest split; the rest follow
 
         if (uuids.length > 1) {
             MutableLongList additionalUuidLongs = LongLists.mutable.empty();
@@ -44,8 +55,8 @@ public record PublicIdentifierRecord(long mostSignificantBits,
                 additionalUuidLongs.add(uuids[i].getMostSignificantBits());
                 additionalUuidLongs.add(uuids[i].getLeastSignificantBits());
             }
-            return new PublicIdentifierRecord(uuids[0].getMostSignificantBits(), uuids[0].getLeastSignificantBits(), additionalUuidLongs.toImmutable());
+            return new PublicIdentifierRecord(head.getMostSignificantBits(), head.getLeastSignificantBits(), additionalUuidLongs.toImmutable());
         }
-        return new PublicIdentifierRecord(uuids[0].getMostSignificantBits(), uuids[0].getLeastSignificantBits(), null);
+        return new PublicIdentifierRecord(head.getMostSignificantBits(), head.getLeastSignificantBits(), null);
     }
 }

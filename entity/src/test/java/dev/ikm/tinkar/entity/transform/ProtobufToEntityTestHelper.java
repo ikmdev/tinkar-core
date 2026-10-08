@@ -78,23 +78,30 @@ public class ProtobufToEntityTestHelper {
     public static final String PURPOSE_CONCEPT_NAME          = "purposeConcept";
 
     // In-memory NID registry - maps PublicId UUIDs to NIDs
-    private static final ConcurrentHashMap<UUID, Integer> nidRegistry = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<UUID, Long> nidRegistry = new ConcurrentHashMap<>();
 
-    public static void registerNid(PublicId publicId, int nid) {
+    public static void registerNid(PublicId publicId, long nid) {
         for (UUID uuid : publicId.asUuidArray()) {
             nidRegistry.put(uuid, nid);
         }
     }
 
-    public static int getNid(PublicId publicId) {
-        Integer nid = nidRegistry.get(publicId.asUuidArray()[0]);
+    public static long getNid(PublicId publicId) {
+        // Registered under every UUID, so any of the public id's UUIDs finds it.
+        Long nid = null;
+        for (UUID uuid : publicId.asUuidArray()) {
+            nid = nidRegistry.get(uuid);
+            if (nid != null) {
+                break;
+            }
+        }
         if (nid == null) {
             throw new IllegalStateException("No NID registered for PublicId: " + publicId);
         }
         return nid;
     }
 
-    public static int getNid(Concept concept) {
+    public static long getNid(Concept concept) {
         return getNid(concept.publicId());
     }
 
@@ -112,7 +119,7 @@ public class ProtobufToEntityTestHelper {
 
     public static dev.ikm.tinkar.schema.PublicId createPBPublicId(PublicId publicId) {
         return dev.ikm.tinkar.schema.PublicId.newBuilder()
-                .addUuids(publicId.asUuidList().get(0).toString()).build();
+                .addAllUuids(publicId.asUuidList().collect(UUID::toString)).build();
     }
 
     /**
@@ -210,7 +217,7 @@ public class ProtobufToEntityTestHelper {
         concepts.iterator().forEachRemaining(conceptList::add);
 
         for (int i = 0; i < conceptList.size(); i++) {
-            int nid = (i + 1) * 10;
+            long nid = (i + 1) * 10;
             JsonNode conceptJson = conceptList.get(i);
             Concept concept = createSimpleConcept(
                     conceptJson.get(JSON_CONCEPT_NAME_PROP).asText(),

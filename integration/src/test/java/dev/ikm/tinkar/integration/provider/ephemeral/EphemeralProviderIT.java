@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.ephemeral;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
@@ -58,22 +59,22 @@ class EphemeralProviderIT {
     @Order(2)
     public void count() {
         EntityProcessor processor = new EntityCounter();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("EPH Sequential count: \n" + processor.report() + "\n\n");
         processor = new EntityCounter();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("EPH Parallel count: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("EPH Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("EPH Parallel realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("EPH Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("EPH Parallel realization: \n" + processor.report() + "\n\n");
     }
 
@@ -81,22 +82,22 @@ class EphemeralProviderIT {
     @Order(3)
     public void countExport() {
         EntityProcessor processor = new EntityCounter();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("POST EPH Sequential count: \n" + processor.report() + "\n\n");
         processor = new EntityCounter();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("POST EPH Parallel count: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("POST EPH Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("POST EPH Parallel realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("POST EPH Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("POST EPH Parallel realization: \n" + processor.report() + "\n\n");
     }
 

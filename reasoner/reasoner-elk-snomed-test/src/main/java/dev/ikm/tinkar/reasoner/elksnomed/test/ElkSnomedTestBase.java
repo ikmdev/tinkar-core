@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -41,7 +42,6 @@ import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedDataBuilder;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class ElkSnomedTestBase extends SnomedTestBase {
 
@@ -91,7 +91,7 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		ViewCalculator viewCalculator = getViewCalculator();
 		ElkSnomedData data = new ElkSnomedData();
 		ElkSnomedDataBuilder builder = new ElkSnomedDataBuilder(viewCalculator,
-				TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, data);
+				KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, data);
 		builder.build();
 		return data;
 	}
@@ -100,10 +100,10 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		ArrayList<String> lines = new ArrayList<>();
 		for (Concept con : reasoner.getSnomedOntology().getConcepts()) {
 			int con_id = (int) con.getId();
-			String con_str = PrimitiveData.publicId(con_id).asUuidArray()[0] + "\t" + PrimitiveData.text(con_id);
+			String con_str = PrimitiveData.publicId(con_id).idString() + "\t" + PrimitiveData.text(con_id);
 			for (Concept sup : reasoner.getSuperConcepts(con)) {
 				int sup_id = (int) sup.getId();
-				String sup_str = PrimitiveData.publicId(sup_id).asUuidArray()[0] + "\t" + PrimitiveData.text(sup_id);
+				String sup_str = PrimitiveData.publicId(sup_id).idString() + "\t" + PrimitiveData.text(sup_id);
 				lines.add(con_str + "\t" + sup_str);
 			}
 		}
@@ -136,17 +136,17 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 
 	public ReasonerService initReasonerService() {
 		ReasonerService rs = getElkSnomedReasonerService();
-		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-				TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+		rs.init(getViewCalculator(), KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+				KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
 		return rs;
 	}
 
 	public ArrayList<String> getSupercs(ReasonerService rs) {
 		ArrayList<String> lines = new ArrayList<>();
-		for (int con_id : rs.getReasonerConceptSet().toArray()) {
-			String con_str = PrimitiveData.publicId(con_id).asUuidArray()[0] + "\t" + PrimitiveData.text(con_id);
-			for (int sup_id : rs.getParents(con_id).toArray()) {
-				String sup_str = PrimitiveData.publicId(sup_id).asUuidArray()[0] + "\t" + PrimitiveData.text(sup_id);
+		for (long con_id : rs.getReasonerConceptSet().toArray()) {
+			String con_str = PrimitiveData.publicId(con_id).idString() + "\t" + PrimitiveData.text(con_id);
+			for (long sup_id : rs.getParents(con_id).toArray()) {
+				String sup_str = PrimitiveData.publicId(sup_id).idString() + "\t" + PrimitiveData.text(sup_id);
 				lines.add(con_str + "\t" + sup_str);
 			}
 		}

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.FieldDefinitionRecord;
@@ -27,7 +28,6 @@ import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.builder.ComponentLedger.VersionEntry;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.MutableList;
 
@@ -56,7 +56,7 @@ import java.util.Set;
  * RICH_SURFACE.pattern("Journal manifest pattern (RichSurfaceTerms)")
  *     .at(W1)
  *         .meaning(JOURNAL_MANIFEST).purpose(ELEMENT_ORDER)
- *         .field(JOURNAL_ELEMENTS, ELEMENT_ORDER, TinkarTerm.COMPONENT_ID_LIST_FIELD)
+ *         .field(JOURNAL_ELEMENTS, ELEMENT_ORDER, KernelTerm.COMPONENT_ID_LIST_FIELD)
  *         .synonym("Journal manifest");
  * }</pre>
  */
@@ -84,6 +84,21 @@ public final class PatternBuilder {
      */
     public PublicId publicId() {
         return ledger.componentId;
+    }
+
+    /**
+     * Binds this pattern in a binding class the set declared, under a constant name: the
+     * generated class {@code bindingClass.name()} gets a constant of that name for it. A
+     * pattern may be bound in each class it belongs to, with one name in each.
+     *
+     * @param bindingClass a binding class declared by this pattern's set
+     * @param constant     the constant's name, a Java identifier
+     * @return this builder
+     * @throws IllegalStateException if the pattern is already bound in the class under another name
+     */
+    public PatternBuilder binding(BindingClass bindingClass, String constant) {
+        ledger.bind(bindingClass, constant);
+        return this;
     }
 
     ComponentLedger ledger() {
@@ -177,7 +192,7 @@ public final class PatternBuilder {
             throw new IllegalStateException(
                     "A pattern declaration requires meaning and purpose in its birth scope: " + ledger.birthFqn);
         }
-        int patternNid = ledger.componentNid();
+        long patternNid = ledger.componentNid();
         writePattern(patternNid);
         ledger.writeDescriptions(patternNid);
         ledger.writeGenericSemantics(patternNid);
@@ -192,7 +207,7 @@ public final class PatternBuilder {
                     "A pattern version restates as a whole: meaning and purpose are both required in a scope"
                             + " that declares any of meaning, purpose, or field — " + ledger.birthFqn);
         }
-        Set<Integer> meaningNids = new HashSet<>();
+        Set<Long> meaningNids = new HashSet<>();
         for (FieldDeclaration field : pendingFields) {
             if (!meaningNids.add(field.meaning().nid())) {
                 throw new IllegalStateException(
@@ -253,7 +268,7 @@ public final class PatternBuilder {
          * @param fieldMeaning  what this field means
          * @param fieldPurpose  what this field is for
          * @param fieldDataType the field's datatype concept, for example
-         *                      {@code TinkarTerm.COMPONENT_ID_LIST_FIELD} or {@code TinkarTerm.STRING}
+         *                      {@code KernelTerm.COMPONENT_ID_LIST_FIELD} or {@code KernelTerm.STRING}
          * @return this scope, for chaining
          */
         public ActiveScope field(ConceptFacade fieldMeaning, ConceptFacade fieldPurpose, ConceptFacade fieldDataType) {
@@ -269,7 +284,7 @@ public final class PatternBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope synonym(String text) {
-            ledger.addDescription(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, "synonym", text, stamp);
+            ledger.addDescription(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, "synonym", text, stamp);
             return this;
         }
 
@@ -281,7 +296,7 @@ public final class PatternBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope definition(String text) {
-            ledger.addDescription(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, "definition", text, stamp);
+            ledger.addDescription(KernelTerm.DEFINITION_DESCRIPTION_TYPE, "definition", text, stamp);
             return this;
         }
 
@@ -297,7 +312,7 @@ public final class PatternBuilder {
          */
         public ActiveScope reviseSynonym(String currentText, String newText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    ledger.resolveLive(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
                     stamp, newText);
             return this;
         }
@@ -426,7 +441,7 @@ public final class PatternBuilder {
          */
         public RetireScope retireSynonym(String currentText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    ledger.resolveLive(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
                     stamp, currentText);
             return this;
         }
@@ -442,7 +457,7 @@ public final class PatternBuilder {
          */
         public RetireScope retireDefinition(String currentText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition"),
+                    ledger.resolveLive(KernelTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition"),
                     stamp, currentText);
             return this;
         }
@@ -493,11 +508,11 @@ public final class PatternBuilder {
 
     // ------------------------------------------------------------------ replay
 
-    private void writePattern(int patternNid) {
+    private void writePattern(long patternNid) {
         RecordListBuilder<PatternVersionRecord> versions = RecordListBuilder.make();
         PatternRecord bootstrap = PatternRecord.makeNew(ledger.componentId, versions);
         for (VersionEntry<PatternContent> version : patternVersions) {
-            int stampNid = ledger.writeStamp(version.stamp());
+            long stampNid = ledger.writeStamp(version.stamp());
             MutableList<FieldDefinitionRecord> fieldDefinitions = Lists.mutable.empty();
             List<FieldDeclaration> fields = version.value().fields();
             for (int index = 0; index < fields.size(); index++) {

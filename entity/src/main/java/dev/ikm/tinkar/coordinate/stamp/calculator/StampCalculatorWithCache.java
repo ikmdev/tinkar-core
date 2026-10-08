@@ -51,14 +51,15 @@ package dev.ikm.tinkar.coordinate.stamp.calculator;
  *
  */
 
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.functional.TriConsumer;
-import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.coordinate.PathService;
 import dev.ikm.tinkar.coordinate.stamp.StampBranchRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
@@ -69,26 +70,25 @@ import dev.ikm.tinkar.coordinate.stamp.StampPosition;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.api.set.ImmutableSet;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
+import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -114,27 +114,32 @@ public class StampCalculatorWithCache implements StampCalculator {
      */
     private static final Logger LOG = LoggerFactory.getLogger(StampCalculatorWithCache.class);
 
-    private static final ConcurrentReferenceHashMap<StampCoordinateRecord, StampCalculatorWithCache> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final Cache<StampCoordinateRecord, StampCalculatorWithCache> SINGLETONS = Caffeine.newBuilder().weakValues().build();
     /**
      * The coordinate.
      */
     private final StampCoordinateRecord filter;
     private final StateSet allowedStates;
-    private final ConcurrentHashMap<Integer, ImmutableSet<StampBranchRecord>> branchMap = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Integer, Boolean> stampOnRoute = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Integer, Boolean> stampIsAllowedState = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, ImmutableSet<StampBranchRecord>> branchMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, Boolean> stampOnRoute = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, Boolean> stampIsAllowedState = new ConcurrentHashMap<>();
     /**
      * Mapping from pathNid to each segment for that pathNid. There is one entry
      * for each path reachable antecedent to the destination position of the
      * computer.
      */
-    private final ConcurrentHashMap<Integer, Segment> pathNidSegmentMap = new ConcurrentHashMap<>();
-    private final Cache<Integer, Latest<PatternEntityVersion>> patternVersionCache = Caffeine.newBuilder().maximumSize(512).build();
-    private final Cache<Long, OptionalInt> indexForMeaningCache = Caffeine.newBuilder().maximumSize(1024).build();
-    private final Cache<Long, OptionalInt> indexForPurposeCache = Caffeine.newBuilder().maximumSize(1024).build();
-    private final Cache<Integer, Latest<EntityVersion>> latestCache = Caffeine.newBuilder().maximumSize(10_240).build();
+    private final ConcurrentHashMap<Long, Segment> pathNidSegmentMap = new ConcurrentHashMap<>();
+    private final Cache<Long, Latest<PatternEntityVersion>> patternVersionCache = Caffeine.newBuilder().maximumSize(512).build();
+    /**
+     * The key of the pattern field index caches: a pattern and the meaning or purpose of one of its
+     * fields. Two nids, which a {@code long} held when nids were {@code int}.
+     */
+    private record PatternFieldKey(long patternNid, long fieldNid) {
+    }
+
+    private final Cache<PatternFieldKey, OptionalInt> indexForMeaningCache = Caffeine.newBuilder().maximumSize(1024).build();
+    private final Cache<PatternFieldKey, OptionalInt> indexForPurposeCache = Caffeine.newBuilder().maximumSize(1024).build();
+    private final Cache<Long, Latest<EntityVersion>> latestCache = Caffeine.newBuilder().maximumSize(10_240).build();
     private final CacheInvalidationSubscriber cacheInvalidationSubscriber = new CacheInvalidationSubscriber();
     private final CacheInvalidationIfPatternSubscriber cacheInvalidationIfPatternSubscriber = new CacheInvalidationIfPatternSubscriber();
     /**
@@ -180,12 +185,12 @@ public class StampCalculatorWithCache implements StampCalculator {
      *                               first, progressively more antecedent; duplicate
      *                               entries are ignored
      */
-    StampCalculatorWithCache(StampCoordinateRecord filter, int[] orderedSegmentPathNids) {
+    StampCalculatorWithCache(StampCoordinateRecord filter, long[] orderedSegmentPathNids) {
         this.filter = filter;
         this.allowedStates = filter.allowedStates();
         int segmentSequence = 0;
         final ConcurrentSkipListSet<Integer> precedingSegments = new ConcurrentSkipListSet<>();
-        for (int pathNid : orderedSegmentPathNids) {
+        for (long pathNid : orderedSegmentPathNids) {
             if (pathNidSegmentMap.containsKey(pathNid)) {
                 continue;
             }
@@ -203,7 +208,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @return the stampCoordinateRecord
      */
     public static StampCalculatorWithCache getCalculator(StampCoordinateRecord filter) {
-        return SINGLETONS.computeIfAbsent(filter,
+        return SINGLETONS.get(filter,
                 filterKey -> new StampCalculatorWithCache(filter));
     }
 
@@ -213,7 +218,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     private static int pathDistanceFromOrigin(int cumulativeDistance, StampPositionRecord positionImmutable) {
-        if (positionImmutable.getPathForPositionNid() != TinkarTerm.PRIMORDIAL_PATH.nid()) {
+        if (positionImmutable.getPathForPositionNid() != KernelTerm.PRIMORDIAL_PATH.nid()) {
             int computedDistance = Integer.MAX_VALUE;
             for (StampPositionRecord origin : positionImmutable.getPathOrigins()) {
                 computedDistance = Math.min(computedDistance, pathDistanceFromOrigin(cumulativeDistance + 1, origin));
@@ -223,7 +228,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         return cumulativeDistance;
     }
 
-    public static RelativePosition getRelativePosition(int stampNid1, int stampNid2) {
+    public static RelativePosition getRelativePosition(long stampNid1, long stampNid2) {
         if (stampNid1 == stampNid2) {
             return RelativePosition.EQUAL;
         }
@@ -249,12 +254,12 @@ public class StampCalculatorWithCache implements StampCalculator {
         return traverseOrigins(stampNid2, getStampPath(stamp1.pathNid()));
     }
 
-    private static RelativePosition traverseOrigins(int pathNid, StampPath stampPath) {
+    private static RelativePosition traverseOrigins(long pathNid, StampPath stampPath) {
         // The stamp path object contains the origins...
         throw new UnsupportedOperationException();
     }
 
-    public static StampPath getStampPath(int stampPathNid) {
+    public static StampPath getStampPath(long stampPathNid) {
         //        if (exists(stampPathNid)) {
 //            return this.pathMap.get(stampPathNid);
 //        }
@@ -265,21 +270,21 @@ public class StampCalculatorWithCache implements StampCalculator {
             return stampPath.get();
         }
 
-        throw new IllegalStateException("No path for: " + stampPathNid + " " +
-                EntityHandle.get(stampPathNid).entity());
+        throw new IllegalStateException("No path for: " + DiagnosticText.component(stampPathNid));
     }
 
-    private static Optional<StampPathImmutable> constructFromSemantics(int stampPathNid) {
-        int[] nids = EntityService.get().semanticNidsForComponentOfPattern(stampPathNid, TinkarTerm.PATHS_PATTERN.nid());
+    private static Optional<StampPathImmutable> constructFromSemantics(long stampPathNid) {
+        long[] nids = EntityStore.current().semanticNidsForComponentOfPattern(stampPathNid, KernelTerm.PATHS_PATTERN.nid());
         if (nids.length == 1) {
-            int pathId = nids[0];
+            long pathId = nids[0];
             assert pathId == stampPathNid :
                     "pathId: " + pathId + " stampPathSequence: " + stampPathNid;
             final StampPathImmutable stampPath = StampPathImmutable.make(stampPathNid);
             //this.pathMap.put(stampPathNid, stampPath);
             return Optional.of(stampPath);
         } else {
-            throw new UnsupportedOperationException("Wrong nid count: " + Arrays.toString(nids));
+            throw new UnsupportedOperationException("Expected one path semantic for " + DiagnosticText.component(stampPathNid)
+                    + ", found " + nids.length);
         }
     }
 
@@ -294,40 +299,40 @@ public class StampCalculatorWithCache implements StampCalculator {
 //        return stampPath.isPresent();
     }
 
-    public static int[] getModuleWithOrigins(StampPositionRecord stampPositionRecord, int moduleNid) {
+    public static long[] getModuleWithOrigins(StampPositionRecord stampPositionRecord, long moduleNid) {
         StampCoordinateRecord stampCoordinate = StampCoordinateRecord.make(StateSet.ACTIVE, stampPositionRecord);
         StampCalculator stampCalculator = stampCoordinate.stampCalculator();
-        List<Integer> modulesInPriorityOrder = new ArrayList<>();
+        List<Long> modulesInPriorityOrder = new ArrayList<>();
         // Aggregate Origin/Extended Modules
-        LinkedList<Integer> stack = new LinkedList<>();
+        LinkedList<Long> stack = new LinkedList<>();
         stack.add(moduleNid);
         while (!stack.isEmpty()) {
-            int currModuleNid = stack.pop();
+            long currModuleNid = stack.pop();
             if (modulesInPriorityOrder.contains(currModuleNid)) {
                 LOG.warn("Found Module_Origin cycle containing module: {}", EntityHandle.get(currModuleNid).expectEntity().entityToString());
                 continue;
             }
             modulesInPriorityOrder.add(currModuleNid);
             EntityService.get().forEachSemanticForComponentOfPattern(currModuleNid,
-                    TinkarTerm.MODULE_ORIGINS_PATTERN.nid(), (moduleOriginSemantic) -> {
+                    KernelTerm.MODULE_ORIGINS_PATTERN.nid(), (moduleOriginSemantic) -> {
                         stampCalculator.latest(moduleOriginSemantic).ifPresent(latestModuleOriginSemanticVersion -> {
-                            IntIdSet moduleOrigins = (IntIdSet) latestModuleOriginSemanticVersion.fieldValues().get(0);
+                            LongIdSet moduleOrigins = (LongIdSet) latestModuleOriginSemanticVersion.fieldValues().get(0);
                             stack.addAll(moduleOrigins.mapToList(i -> i).reversed());
                         });
                     });
         }
-        return modulesInPriorityOrder.stream().mapToInt(i -> i).toArray();
+        return modulesInPriorityOrder.stream().mapToLong(i -> i).toArray();
     }
 
     @Override
-    public Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid) {
-        int[] semanticNids = PrimitiveData.get().semanticNidsOfPattern(patternNid);
-        ImmutableIntList nidsAsList = IntLists.immutable.of(semanticNids);
+    public Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(long patternNid) {
+        long[] semanticNids = EntityStore.current().semanticNidsOfPattern(patternNid);
+        ImmutableLongList nidsAsList = LongLists.immutable.of(semanticNids);
         return nidsAsList.primitiveStream().mapToObj(nid -> latestForVersionIteration(nid));
     }
 
     @Override
-    public <V extends EntityVersion> Latest<V> latest(int nid) {
+    public <V extends EntityVersion> Latest<V> latest(long nid) {
         EntityHandle entityHandle = EntityHandle.get(nid);
         if (entityHandle.isPresent()) {
             return (Latest<V>) latestCache.get(nid, latestNid ->
@@ -337,7 +342,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     @Override
-    public <V extends EntityVersion> Latest<V> latestNoCache(int nid) {
+    public <V extends EntityVersion> Latest<V> latestNoCache(long nid) {
         EntityHandle entityHandle = EntityHandle.get(nid);
         if (entityHandle.isPresent()) {
             return (Latest<V>) this.latest(entityHandle.expectEntity());
@@ -357,7 +362,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @param <V> the type of EntityVersion
      * @return the latest non-defaults version at this calculator's position
      */
-    private <V extends EntityVersion> Latest<V> latestForVersionIteration(int nid) {
+    private <V extends EntityVersion> Latest<V> latestForVersionIteration(long nid) {
         EntityHandle entityHandle = EntityHandle.get(nid);
         if (entityHandle.isPresent()) {
             return (Latest<V>) this.latest((Entity<EntityVersion>) entityHandle.expectEntity(), true);
@@ -406,13 +411,14 @@ public class StampCalculatorWithCache implements StampCalculator {
         final ImmutableList<V> versions = chronicle.versions();
 
         if (versions.isEmpty()) {
-            throw new IllegalStateException("No versions for: " + chronicle.entityToString());
+            throw new IllegalStateException("No versions for: " + EntityText.diagnostic(chronicle));
         }
 
         final MutableList<EntityVersion> latestVersionList = Lists.mutable.ofInitialCapacity(Math.min(versions.size(), 4));
 
         for (V newVersionToTest : versions) {
             StampEntity stamp = newVersionToTest.stamp();
+            // A canceled stamp has the time Long.MIN_VALUE and is on no route.
             if (stamp != null && stamp.time() > Long.MIN_VALUE
                     && !(excludeDefaultsAndTemplates
                             && stamp.moduleNid() == DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE.nid())
@@ -450,7 +456,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @param stampNid2 the stamp sequence 2
      * @return the relative position
      */
-    public RelativePosition relativePosition(int stampNid, int stampNid2) {
+    public RelativePosition relativePosition(long stampNid, long stampNid2) {
         if (!(onRoute(stampNid) && onRoute(stampNid2))) {
             return RelativePosition.UNREACHABLE;
         }
@@ -459,21 +465,21 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     @Override
-    public void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
+    public void forEachSemanticVersionOfPattern(long patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
         Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
-        latestPatternVersion.ifPresent(patternEntityVersion -> PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
+        latestPatternVersion.ifPresent(patternEntityVersion -> EntityStore.current().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
             Latest<SemanticEntityVersion> latestSemanticVersion = this.latestIfSemanticOfPattern(semanticNid, patternNid);
             latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, patternEntityVersion));
         }));
     }
 
     @Override
-    public void forEachSemanticVersionOfPatternParallel(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
+    public void forEachSemanticVersionOfPatternParallel(long patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
         // latest() when providing a nid does use the cache. It's ok to get the pattern from the cache, not the individual entities
         Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
         latestPatternVersion.ifPresent(patternEntityVersion -> {
-            int[] semanticNidsOfPattern = PrimitiveData.get().semanticNidsOfPattern(patternNid);
-            PrimitiveData.get().forEachParallel(IntLists.immutable.of(semanticNidsOfPattern), (byte[] bytes, int nid) -> {
+            long[] semanticNidsOfPattern = EntityStore.current().semanticNidsOfPattern(patternNid);
+            EntityStore.current().forEachParallel(LongLists.immutable.of(semanticNidsOfPattern), (byte[] bytes, long nid) -> {
                 if (bytes != null) {
                     Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
                     // latest() when providing an entity does not use the cache.
@@ -485,12 +491,12 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     @Override
-    public void forEachSemanticVersionInSetOfPatternParallel(ImmutableIntSet semanticNidSet, int patternNid,
+    public void forEachSemanticVersionInSetOfPatternParallel(ImmutableLongSet semanticNidSet, long patternNid,
                                                              BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
         // latest() when providing a nid does use the cache. It's ok to get the pattern from the cache, not the individual entities
         Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
         latestPatternVersion.ifPresent(patternEntityVersion -> {
-            PrimitiveData.get().forEachParallel(semanticNidSet.toSortedList().toImmutable(), (byte[] bytes, int nid) -> {
+            EntityStore.current().forEachParallel(semanticNidSet.toSortedList().toImmutable(), (byte[] bytes, long nid) -> {
                 if (bytes != null) {
                     Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
                     // latest() when providing an entity does not use the cache.
@@ -503,23 +509,23 @@ public class StampCalculatorWithCache implements StampCalculator {
 
 
     @Override
-    public void forEachSemanticVersionForComponent(int componentNid,
+    public void forEachSemanticVersionForComponent(long componentNid,
                                                    BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
         Latest<EntityVersion> latestEntityVersion = this.latest(componentNid);
-        latestEntityVersion.ifPresent(entityVersion -> PrimitiveData.get().forEachSemanticNidForComponent(componentNid, semanticNid -> {
+        latestEntityVersion.ifPresent(entityVersion -> EntityStore.current().forEachSemanticNidForComponent(componentNid, semanticNid -> {
             Latest<SemanticEntityVersion> latestSemanticVersion = this.latestForVersionIteration(semanticNid);
             latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion));
         }));
     }
 
     @Override
-    public void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid,
+    public void forEachSemanticVersionForComponentOfPattern(long componentNid, long patternNid,
                                                             TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure) {
         Latest<EntityVersion> latestComponentVersion = this.latest(componentNid);
         latestComponentVersion.ifPresent(entityVersion -> {
             Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
             latestPatternVersion.ifPresent(patternEntityVersion ->
-                    PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, semanticNid -> {
+                    EntityStore.current().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, semanticNid -> {
                         Latest<SemanticEntityVersion> latestSemanticVersion = this.latestForVersionIteration(semanticNid);
                         latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion, patternEntityVersion));
                     }));
@@ -527,7 +533,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     @Override
-    public void forEachSemanticVersionWithFieldsForComponent(int componentNid,
+    public void forEachSemanticVersionWithFieldsForComponent(long componentNid,
                                                              TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion> procedure) {
         forEachSemanticVersionForComponent(componentNid,
                 (semanticEntityVersion, entityVersion) -> {
@@ -539,13 +545,13 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     @Override
-    public Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid) {
+    public Latest<PatternEntityVersion> latestPatternEntityVersion(long patternNid) {
         return patternVersionCache.get(patternNid, nid -> latest(patternNid));
     }
 
     @Override
-    public OptionalInt getIndexForMeaning(int patternNid, int meaningNid) {
-        long patternMeaningKey = IntsInLong.ints2Long(patternNid, meaningNid);
+    public OptionalInt getIndexForMeaning(long patternNid, long meaningNid) {
+        PatternFieldKey patternMeaningKey = new PatternFieldKey(patternNid, meaningNid);
         indexForMeaningCache.invalidateAll();
         return indexForMeaningCache.get(patternMeaningKey, key -> {
             Latest<PatternEntityVersion> latestPatternVersion = latestPatternEntityVersion(patternNid);
@@ -564,8 +570,8 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     @Override
-    public OptionalInt getIndexForPurpose(int patternNid, int purposeNid) {
-        long patternMeaningKey = IntsInLong.ints2Long(patternNid, purposeNid);
+    public OptionalInt getIndexForPurpose(long patternNid, long purposeNid) {
+        PatternFieldKey patternMeaningKey = new PatternFieldKey(patternNid, purposeNid);
         return indexForPurposeCache.get(patternMeaningKey, key -> {
             Latest<PatternEntityVersion> latestPatternVersion = latestPatternEntityVersion(patternNid);
             if (latestPatternVersion.isPresent()) {
@@ -584,7 +590,7 @@ public class StampCalculatorWithCache implements StampCalculator {
 
     @Override
     public <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion,
-                                                    int criterionNid, FieldCriterion fieldCriterion) {
+                                                    long criterionNid, FieldCriterion fieldCriterion) {
         if (latestSemanticVersion.isPresent()) {
             SemanticEntityVersion semanticVersion = latestSemanticVersion.get();
             Latest<PatternEntityVersion> latestPattern = latest(semanticVersion.patternNid());
@@ -613,7 +619,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     @Override
-    public <T> Latest<Field<T>> getFieldForSemantic(int componentNid, int criterionNid, FieldCriterion
+    public <T> Latest<Field<T>> getFieldForSemantic(long componentNid, long criterionNid, FieldCriterion
             fieldCriterion) {
 
         Latest<? extends EntityVersion> latestVersion = latest(componentNid);
@@ -629,7 +635,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @param stampNid the stamp sequence
      * @return true, if successful
      */
-    public boolean onRoute(int stampNid) {
+    public boolean onRoute(long stampNid) {
         if (stampOnRoute.containsKey(stampNid)) {
             return stampOnRoute.get(stampNid);
         }
@@ -644,8 +650,8 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @param stampNid2 a stamp nid
      * @return the relative position
      */
-    public RelativePosition fastRelativePosition(int stampNid1,
-                                                 int stampNid2) {
+    public RelativePosition fastRelativePosition(long stampNid1,
+                                                 long stampNid2) {
         StampEntity stamp1 = Entity.getStamp(stampNid1);
         StampEntity stamp2 = Entity.getStamp(stampNid2);
 
@@ -737,11 +743,11 @@ public class StampCalculatorWithCache implements StampCalculator {
 
     public RelativePosition getRelativePosition(StampEntity stamp1, StampEntity stamp2) {
         final long ss1Time = stamp1.time();
-        final int ss1ModuleNid = stamp1.moduleNid();
-        final int ss1PathNid = stamp1.pathNid();
+        final long ss1ModuleNid = stamp1.moduleNid();
+        final long ss1PathNid = stamp1.pathNid();
         final long ss2Time = stamp2.time();
-        final int ss2ModuleNid = stamp2.moduleNid();
-        final int ss2PathNid = stamp2.pathNid();
+        final long ss2ModuleNid = stamp2.moduleNid();
+        final long ss2PathNid = stamp2.pathNid();
 
         if (ss1PathNid == ss2PathNid) {
             final Segment seg = this.pathNidSegmentMap.get(ss1PathNid);
@@ -828,16 +834,16 @@ public class StampCalculatorWithCache implements StampCalculator {
                             case EQUAL:
                                 // TODO handle different modules... ?
                                 throw new IllegalStateException("Version can only be in one module at a time. \n"
-                                        + leafNode.version() + "\n" + versionWithDistance.version);
+                                        + EntityText.diagnostic(leafNode.version()) + "\n" + EntityText.diagnostic(versionWithDistance.version));
                             case BEFORE:
                                 throw new IllegalStateException("Sort order error. \n"
-                                        + leafNode.version() + "\n" + versionWithDistance.version);
+                                        + EntityText.diagnostic(leafNode.version()) + "\n" + EntityText.diagnostic(versionWithDistance.version));
                             case UNREACHABLE:
                                 // if not after by any leaf (unreachable from any leaf), then node will be left in set, and possibly added to next graph.
                                 break;
                             default:
                                 throw new IllegalStateException("Sort order error. Unhandled relative position:\n"
-                                        + leafNode.version() + "\n" + versionWithDistance.version +
+                                        + EntityText.diagnostic(leafNode.version()) + "\n" + EntityText.diagnostic(versionWithDistance.version) + "\n" +
                                         getRelativePosition(leafNode.version(), versionWithDistance.version));
                         }
                     }
@@ -865,7 +871,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                 StampPositionRecord.make(v2.stamp().time(), v2.stamp().pathNid()));
     }
 
-    public RelativePosition getRelativePosition(int stampNid, StampPosition position) {
+    public RelativePosition getRelativePosition(long stampNid, StampPosition position) {
         StampEntity stampEntity = Entity.getStamp(stampNid);
         if (stampEntity.pathNid() == position.getPathForPositionNid()) {
             if (stampEntity.time() < position.time()) {
@@ -889,13 +895,13 @@ public class StampCalculatorWithCache implements StampCalculator {
         return traverseOrigins(stampNid, getStampPath(position.getPathForPositionNid()));
     }
 
-    private RelativePosition traverseForks(int stampNid, StampPosition position) {
+    private RelativePosition traverseForks(long stampNid, StampPosition position) {
         StampEntity stampEntity = Entity.getStamp(stampNid);
-        int stampPathNid = stampEntity.pathNid();
+        long stampPathNid = stampEntity.pathNid();
         if (stampPathNid == position.getPathForPositionNid()) {
             throw new IllegalStateException("You must check for relative position on the same path before calling traverseForks: " +
                     //Get.stampService().describeStampSequence(stamp) +
-                    " compared to: " + position);
+                    " compared to a position on path: " + DiagnosticText.component(position.getPathForPositionNid()));
         }
 
         for (StampBranchRecord branch : getBranches(position.getPathForPositionNid())) {
@@ -907,8 +913,8 @@ public class StampCalculatorWithCache implements StampCalculator {
         return RelativePosition.UNREACHABLE;
     }
 
-    private RelativePosition traverseForks(int stampPathNid, StampBranchRecord stampBranchRecord) {
-        int pathOfBranchNid = stampBranchRecord.getPathOfBranchNid();
+    private RelativePosition traverseForks(long stampPathNid, StampBranchRecord stampBranchRecord) {
+        long pathOfBranchNid = stampBranchRecord.getPathOfBranchNid();
         if (pathOfBranchNid == stampPathNid) {
             return RelativePosition.AFTER;
         }
@@ -921,7 +927,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         return RelativePosition.UNREACHABLE;
     }
 
-    public ImmutableSet<StampBranchRecord> getBranches(int pathConceptNid) {
+    public ImmutableSet<StampBranchRecord> getBranches(long pathConceptNid) {
         return branchMap.computeIfAbsent(pathConceptNid, (pathNid) -> PathService.get().getPathBranches(pathConceptNid));
     }
 
@@ -1017,8 +1023,8 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @return true if any of the latest stampNids (may be multiple in the
      * case of a contradiction) are active.
      */
-    public boolean isLatestActive(int[] stampNids) {
-        for (int stampNid : getLatestStampNidsAsSet(stampNids)) {
+    public boolean isLatestActive(long[] stampNids) {
+        for (long stampNid : getLatestStampNidsAsSet(stampNids)) {
             StampEntity stamp = Entity.getStamp(stampNid);
             if (State.fromConceptNid(stamp.stateNid()) == State.ACTIVE) {
                 return true;
@@ -1037,10 +1043,10 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @return the latest stamp sequences as an array. Empty array if none of the
      * latest stamps match the allowed states of the stamp coordinate.
      */
-    public int[] getLatestStampNidsAsSet(int[] stampNids) {
+    public long[] getLatestStampNidsAsSet(long[] stampNids) {
 
-        MutableIntSet stampsForPosition = IntSets.mutable.empty();
-        for (int stampToCompare : stampNids) {
+        MutableLongSet stampsForPosition = LongSets.mutable.empty();
+        for (long stampToCompare : stampNids) {
             handleStamp(stampsForPosition, stampToCompare, true);
         }
 
@@ -1053,7 +1059,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @param stampsForPosition the stamps for position
      * @param stampNid          the stamp sequence
      */
-    private void handleStamp(MutableIntSet stampsForPosition, int stampNid, boolean allowUncommitted) {
+    private void handleStamp(MutableLongSet stampsForPosition, long stampNid, boolean allowUncommitted) {
 
         if (!allowUncommitted) {
             throw new UnsupportedOperationException();
@@ -1076,7 +1082,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         // create a list of values so we don't have any
         // concurrent modification issues with removing/adding
         // items to the stampsForPosition.
-        final ImmutableIntSet stampsToCompare = IntSets.immutable.ofAll(stampsForPosition);
+        final ImmutableLongSet stampsToCompare = LongSets.immutable.ofAll(stampsForPosition);
 
         stampsToCompare.forEach(prevStamp -> {
             switch (fastRelativePosition(stampNid, prevStamp)) {
@@ -1122,8 +1128,8 @@ public class StampCalculatorWithCache implements StampCalculator {
 
     }
 
-    private int[] getResults(MutableIntSet stampsForPosition) {
-        MutableIntSet resultList = IntSets.mutable.of();
+    private long[] getResults(MutableLongSet stampsForPosition) {
+        MutableLongSet resultList = LongSets.mutable.of();
 
         stampsForPosition.forEach(stampNid -> {
             if (isAllowedState(stampNid)) {
@@ -1133,7 +1139,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         return resultList.toArray();
     }
 
-    private boolean isAllowedState(int stampNid) {
+    private boolean isAllowedState(long stampNid) {
         if (stampIsAllowedState.containsKey(stampNid)) {
             return stampIsAllowedState.get(stampNid);
         }
@@ -1149,9 +1155,9 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @param stampNids the stamp sequence stream
      * @return the latest stamp sequences as a sorted set in an array
      */
-    public int[] getLatestCommittedStampNidsAsSet(int[] stampNids) {
-        MutableIntSet stampsForPosition = IntSets.mutable.empty();
-        for (int stampToCompare : stampNids) {
+    public long[] getLatestCommittedStampNidsAsSet(long[] stampNids) {
+        MutableLongSet stampsForPosition = LongSets.mutable.empty();
+        for (long stampToCompare : stampNids) {
             handleStamp(stampsForPosition, stampToCompare, false);
         }
         return getResults(stampsForPosition);
@@ -1168,7 +1174,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @param <V>        the type of EntityVersion
      * @return the latest non-defaults version, or empty
      */
-    private <V extends EntityVersion> Latest<V> latestIfSemanticOfPattern(int nid, int patternNid) {
+    private <V extends EntityVersion> Latest<V> latestIfSemanticOfPattern(long nid, long patternNid) {
 
         EntityHandle handle = EntityHandle.get(nid);
         if (handle.isPresent() && handle.isSemantic()) {
@@ -1184,7 +1190,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         // TODO: this has implicit assumption that no one will hold on to a calculator... Should we be defensive?
         @Override
         public void reset() {
-            SINGLETONS.clear();
+            SINGLETONS.invalidateAll();
         }
     }
 
@@ -1217,7 +1223,7 @@ public class StampCalculatorWithCache implements StampCalculator {
          * The pathConceptNid of this segment. Each ancestor path to the
          * position of the computer gets it's own segment.
          */
-        int pathConceptNid;
+        long pathConceptNid;
 
         /**
          * The end time of the position of the relative position computer. stamps
@@ -1238,7 +1244,7 @@ public class StampCalculatorWithCache implements StampCalculator {
          * @param endTime           the end time
          * @param precedingSegments the preceding segments
          */
-        private Segment(int segmentSequence, int pathConceptNid, long endTime, ConcurrentSkipListSet<Integer> precedingSegments) {
+        private Segment(int segmentSequence, long pathConceptNid, long endTime, ConcurrentSkipListSet<Integer> precedingSegments) {
             this.segmentSequence = segmentSequence;
             this.pathConceptNid = pathConceptNid;
             this.endTime = endTime;
@@ -1264,7 +1270,7 @@ public class StampCalculatorWithCache implements StampCalculator {
          * @param time             the time
          * @return true, if successful
          */
-        private boolean containsPosition(int pathConceptNid, int moduleConceptNid, long time) {
+        private boolean containsPosition(long pathConceptNid, long moduleConceptNid, long time) {
             if (StampCalculatorWithCache.this.filter.moduleNids().isEmpty() ||
                     StampCalculatorWithCache.this.filter.moduleNids().contains(moduleConceptNid)) {
                 if (StampCalculatorWithCache.this.filter.excludedModuleNids().isEmpty() ||

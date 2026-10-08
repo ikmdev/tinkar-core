@@ -15,6 +15,14 @@
  */
 package dev.ikm.tinkar.provider.entity;
 
+import dev.ikm.tinkar.common.id.Nid;
+import java.util.stream.LongStream;
+
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
+
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.alert.AlertObject;
@@ -23,11 +31,18 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.service.ServiceKeys;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.factory.primitive.LongLists;
 import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
 import dev.ikm.tinkar.common.service.ProviderController;
 import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.common.service.SearchService;
+import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.service.ServiceExclusionGroup;
 import dev.ikm.tinkar.common.service.ServiceLifecyclePhase;
 import dev.ikm.tinkar.common.service.TinkExecutor;
@@ -38,41 +53,43 @@ import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.EntityText;
+import dev.ikm.tinkar.entity.internal.EntityLookup;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Sets;
-import org.eclipse.collections.api.factory.primitive.IntSets;
+import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.api.set.MutableSet;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
-import static dev.ikm.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
+import static dev.ikm.tinkar.terms.KernelTerm.DESCRIPTION_PATTERN;
 
 //@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
-public class EntityProvider implements EntityService, PublicIdService, DefaultDescriptionForNidService, EntityDataRepair {
+public class EntityProvider implements EntityService, EntityLookup, PublicIdService, DefaultDescriptionForNidService, EntityDataRepair {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityProvider.class);
-    private static final Cache<Integer, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
-    private static final Cache<Integer, Entity> ENTITY_CACHE = Caffeine.newBuilder().maximumSize(10240).build();
-    private static final Cache<Integer, StampEntity> STAMP_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
+    private static final Cache<Long, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
+    private static final Cache<Long, Entity> ENTITY_CACHE = Caffeine.newBuilder().maximumSize(10240).build();
+    private static final Cache<Long, StampEntity> STAMP_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
 
 
     //Multi<Entity<? extends EntityVersion>> chronologyBroadcaster = BroadcastProcessor.create().toHotStream();
     //  <T extends Entity<? extends EntityVersion>>
-    final Broadcaster<Integer> processor;
+    final Broadcaster<Long> processor;
 
     private boolean loadPhase = false;
 
@@ -92,19 +109,19 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         return loadPhaseSearchPolicy;
     }
 
-    public void addSubscriberWithWeakReference(Subscriber<Integer> subscriber) {
+    public void addSubscriberWithWeakReference(Subscriber<Long> subscriber) {
         this.processor.addSubscriberWithWeakReference(subscriber);
     }
 
     @Override
-    public String textFast(int nid) {
+    public String textFast(long nid) {
 
         // TODO use a default language coordinate instead of this hardcode routine.
         return STRING_CACHE.get(nid, integer -> {
-            int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(nid, DESCRIPTION_PATTERN.nid());
+            long[] semanticNids = EntityStore.current().semanticNidsForComponentOfPattern(nid, DESCRIPTION_PATTERN.nid());
             String anyString = null;
             String fqnString = null;
-            for (int semanticNid : semanticNids) {
+            for (long semanticNid : semanticNids) {
                 EntityHandle descriptionSemanticHandle = EntityHandle.get(semanticNid);
                 if (descriptionSemanticHandle.isSemantic() && descriptionSemanticHandle.expectEntity() instanceof SemanticEntity<?> descriptionSemantic) {
                     EntityHandle patternHandle = EntityHandle.get(descriptionSemantic.patternNid());
@@ -112,15 +129,15 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         // TODO: use version computer to get version
                         PatternEntityVersion patternEntityVersion = pattern.versions().get(0);
                         SemanticEntityVersion version = (SemanticEntityVersion) descriptionSemantic.versions().get(0);
-                        int indexForMeaning = patternEntityVersion.indexForMeaning(TinkarTerm.DESCRIPTION_TYPE);
-                        int indexForText = patternEntityVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION);
+                        int indexForMeaning = patternEntityVersion.indexForMeaning(KernelTerm.DESCRIPTION_TYPE);
+                        int indexForText = patternEntityVersion.indexForMeaning(KernelTerm.TEXT_FOR_DESCRIPTION);
                         if (indexForMeaning == -1 || indexForText == -1) {
-                            throw new IllegalStateException("Expecting a pattern entity with description and text fields. Found: " + patternEntityVersion);
+                            throw new IllegalStateException("Expecting a pattern entity with description and text fields. Found: " + EntityText.diagnostic(patternEntityVersion));
                         }
-                        if (version.fieldValues().get(indexForMeaning).equals(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE)) {
+                        if (version.fieldValues().get(indexForMeaning).equals(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE)) {
                             return (String) version.fieldValues().get(indexForText);
                         }
-                        if (version.fieldValues().get(indexForMeaning).equals(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
+                        if (version.fieldValues().get(indexForMeaning).equals(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
                             fqnString = (String) version.fieldValues().get(indexForText);
                         }
                         anyString = (String) version.fieldValues().get(indexForText);
@@ -133,9 +150,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         } else {
                             Entity<?> entity = patternHandle.expectEntity();
                             anyString = " <" + entity.nid() + ">" + entity.asUuidList().toString();
-                            // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
-                            AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found entity with id:  " + anyString)));
-                            AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found: " + entity)));
+                            AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found: " + EntityText.diagnostic(entity))));
                         }
                     }
                 } else {
@@ -150,14 +165,12 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         LOG.error("ERROR getting string for nid: " + anyString);
                         LOG.error("ERROR Nid - 2: <" + (nid - 2) + "> " + getChronology(nid - 2));
                         LOG.error("ERROR Nid - 1: <" + (nid - 1) + "> " + getChronology(nid - 1));
-                        LOG.error("ERROR Nid: <" + nid + "> " + getChronology(nid - 1));
+                        LOG.error("ERROR Nid: <" + nid + "> " + getChronology(nid));
                         LOG.error("ERROR Nid + 1: <" + (nid + 1) + "> " + getChronology(nid + 1));
                         LOG.error("ERROR Nid + 2: <" + (nid + 2) + "> " + getChronology(nid + 2));
 
-                        // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
-                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic entity from list: " +
-                                Arrays.toString(semanticNids) + "\n Found entity with id:  " + anyString)));
-                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic. Found: " + entity)));
+                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic of "
+                                + DiagnosticText.component(nid) + ". Found: " + EntityText.diagnostic(entity))));
                     }
                 }
             }
@@ -170,7 +183,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public <T extends Chronology<V>, V extends Version> Optional<T> getChronology(int nid) {
+    public <T extends Chronology<V>, V extends Version> Optional<T> getChronology(long nid) {
         Entity entity = getEntityFast(nid);
         if (entity == null || entity.canceled()) {
             return Optional.empty();
@@ -182,7 +195,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
      * Example call when resolving via RocksDB:
      *
      * <pre>{@code
-     * int nid = ScopedValue
+     * long nid = ScopedValue
      *         .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternFacade.publicId())
      *         .call(() -> PrimitiveData.nid(semanticUUID));
      * }</pre>
@@ -191,7 +204,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
      * @return the nid corresponding to the provided UUIDs
      */
     @Override
-    public int nidForUuids(UUID... uuids) {
+    public long nidForUuids(UUID... uuids) {
         return PrimitiveData.get().nidForUuids(uuids);
     }
 
@@ -199,7 +212,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
      * Example call when resolving via RocksDB:
      *
      * <pre>{@code
-     * int nid = ScopedValue
+     * long nid = ScopedValue
      *         .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternFacade.publicId())
      *         .call(() -> PrimitiveData.nid(semanticUUID));
      * }</pre>
@@ -208,24 +221,28 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
      * @return the nid corresponding to the provided UUIDs
      */
     @Override
-    public int nidForPublicId(PublicId publicId) {
+    public long nidForPublicId(PublicId publicId) {
         return PrimitiveData.get().nidForUuids(publicId.asUuidArray());
     }
 
     /**
+     * The lookup {@link EntityHandle} reaches through {@link EntityLookup}.
      *
-     * @param nid
-     * @return
-     * @param <T>
-     * @param <V>
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     * @deprecated Use {@link EntityHandle#get(int)} instead.
+     * @param nid the entity's nid
+     * @return the entity, or {@code null} if the store holds none for the nid
      */
-    @Deprecated(since = "Current", forRemoval = true)
-    public <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid) {
+    @Override
+    public Entity<?> entityOrNull(long nid) {
+        return getEntityFast(nid);
+    }
+
+    /**
+     * Reads an entity through the cache, cast unchecked to the type the caller in this class
+     * expects. Private: outside the provider, entities are looked up through {@link EntityHandle}.
+     */
+    private <T extends Entity<V>, V extends EntityVersion> T getEntityFast(long nid) {
         return (T) ENTITY_CACHE.get(nid, entityNid -> {
-            byte[] bytes = PrimitiveData.get().getBytes(nid);
+            byte[] bytes = EntityStore.current().getBytes(nid);
             if (bytes == null) {
                 return null;
             }
@@ -234,14 +251,14 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public int nidForUuids(ImmutableList<UUID> uuidList) {
+    public long nidForUuids(ImmutableList<UUID> uuidList) {
         return PrimitiveData.get().nidForUuids(uuidList);
     }
 
     @Override
-    public StampEntity getStampFast(int nid) {
+    public StampEntity getStampFast(long nid) {
         return STAMP_CACHE.get(nid, stampNid -> {
-                    byte[] bytes = PrimitiveData.get().getBytes(nid);
+                    byte[] bytes = EntityStore.current().getBytes(nid);
                     if (bytes == null) {
                         return null;
                     }
@@ -270,20 +287,22 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     private void putEntity(Entity entity, DataActivity activity, boolean dispatch, boolean addToCache) {
         invalidateCaches(entity);
+        // Only a semantic has a pattern and a referenced component; every other entity passes
+        // the not-applicable sentinel, Integer.MAX_VALUE (Nid.NOT_APPLICABLE), for both.
         byte[] mergedEntityBytes = switch (entity) {
             case ConceptEntity conceptEntity -> {
                 STRING_CACHE.put(conceptEntity.nid(), conceptEntity.asUuidList().toString());
-                yield PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
                         entity.getBytes(), entity, activity);
             }
             case PatternEntity patternEntity -> {
                 STRING_CACHE.put(patternEntity.nid(), patternEntity.asUuidList().toString());
-                yield PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
                         entity.getBytes(), entity, activity);
             }
             case SemanticEntity semanticEntity -> {
                 STRING_CACHE.put(semanticEntity.nid(), semanticEntity.asUuidList().toString());
-                yield PrimitiveData.get().merge(entity.nid(),
+                yield EntityStore.current().merge(entity.nid(),
                         semanticEntity.patternNid(),
                         semanticEntity.referencedComponentNid(),
                         entity.getBytes(), entity, activity);
@@ -292,10 +311,10 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                 if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
                     PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
                 }
-                yield PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
                         entity.getBytes(), entity, activity);
             }
-            default -> throw new IllegalStateException("Unexpected value: " + entity);
+            default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
         };
 
         if (addToCache) {
@@ -307,11 +326,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                 processor.dispatch(semanticEntity.referencedComponentNid());
             }
         }
-    }
-
-    @Override
-    public void putStamp(StampEntity stampEntity) {
-        putEntity(stampEntity);
     }
 
     @Override
@@ -342,15 +356,15 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         parent = null;
                         STRING_CACHE.invalidate(stampEntity.nid());
                     }
-                    default -> throw new IllegalStateException("Unexpected value: " + parent);
+                    default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(parent));
                 }
             }
         }
     }
 
     @Override
-    public void invalidateCaches(int... nids) {
-        for (int nid : nids) {
+    public void invalidateCaches(long... nids) {
+        for (long nid : nids) {
             STRING_CACHE.invalidate(nid);
             ENTITY_CACHE.invalidate(nid);
             STAMP_CACHE.invalidate(nid);
@@ -363,33 +377,59 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
-        PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, (int nid) -> procedure.accept(getEntityFast(nid)));
+    public void forEachSemanticOfPattern(long patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
+        if (EntityService.keysNoSemantics(patternNid)) {
+            return;
+        }
+        EntityStore.current().forEachSemanticNidOfPattern(patternNid, (long nid) -> acceptSemantic(nid, procedure));
     }
 
     @Override
-    public int[] semanticNidsOfPattern(int patternNid) {
-        return PrimitiveData.get().semanticNidsOfPattern(patternNid);
+    public Stream<SemanticEntity<SemanticEntityVersion>> semanticsOfPattern(long patternNid) {
+        if (EntityService.keysNoSemantics(patternNid)) {
+            return Stream.empty();
+        }
+        return semantics(EntityStore.current().semanticNidsOfPattern(patternNid));
     }
 
     @Override
-    public void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
-        PrimitiveData.get().forEachSemanticNidForComponent(componentNid, (int nid) -> procedure.accept(getEntityFast(nid)));
+    public Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponent(long componentNid) {
+        return semantics(EntityStore.current().semanticNidsForComponent(componentNid));
     }
 
     @Override
-    public int[] semanticNidsForComponent(int componentNid) {
-        return PrimitiveData.get().semanticNidsForComponent(componentNid);
+    public Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponentOfPattern(long componentNid, long patternNid) {
+        return semantics(EntityStore.current().semanticNidsForComponentOfPattern(componentNid, patternNid));
+    }
+
+    /**
+     * The semantics with these nids, read as the stream reaches them; a nid with no entity, or
+     * whose entity is not a semantic, is passed over.
+     */
+    @SuppressWarnings("unchecked")
+    private Stream<SemanticEntity<SemanticEntityVersion>> semantics(long[] nids) {
+        return LongStream.of(nids)
+                .mapToObj(nid -> (Entity<?>) getEntityFast(nid))
+                .filter(entity -> entity instanceof SemanticEntity)
+                .map(entity -> (SemanticEntity<SemanticEntityVersion>) entity);
+    }
+
+    /** Gives the consumer the semantic with this nid, unless no entity has it or it is not a semantic. */
+    @SuppressWarnings("unchecked")
+    private void acceptSemantic(long nid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
+        if ((Entity<?>) getEntityFast(nid) instanceof SemanticEntity semantic) {
+            procedure.accept((SemanticEntity<SemanticEntityVersion>) semantic);
+        }
     }
 
     @Override
-    public void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
-        PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, (int nid) -> procedure.accept(getEntityFast(nid)));
+    public void forEachSemanticForComponent(long componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
+        EntityStore.current().forEachSemanticNidForComponent(componentNid, (long nid) -> acceptSemantic(nid, procedure));
     }
 
     @Override
-    public int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid) {
-        return PrimitiveData.get().semanticNidsForComponentOfPattern(componentNid, patternNid);
+    public void forEachSemanticForComponentOfPattern(long componentNid, long patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
+        EntityStore.current().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, (long nid) -> acceptSemantic(nid, procedure));
     }
 
     @Override
@@ -401,7 +441,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public PublicId publicId(int nid) {
+    public PublicId publicId(long nid) {
         Entity<?> entity = getEntityFast(nid);
         if (entity != null) {
             return entity.publicId();
@@ -438,12 +478,12 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public void dispatch(Integer item) {
+    public void dispatch(Long item) {
         this.processor.dispatch(item);
     }
 
     @Override
-    public void removeSubscriber(Subscriber<Integer> subscriber) {
+    public void removeSubscriber(Subscriber<Long> subscriber) {
         this.processor.removeSubscriber(subscriber);
     }
 
@@ -475,19 +515,19 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             }
         } else {
             throw new IllegalStateException("Cannot merge entities of different types: \n" +
-                    entityToErase + "\n\n" + entityToMergeInto);
+                    EntityText.diagnostic(entityToErase) + "\n\n" + EntityText.diagnostic(entityToMergeInto));
         }
     }
 
     private static Future<Entity> mergeEntities(Entity<?> entityToMergeInto, Entity<?> entityToMergeFrom) {
         // TODO Need to handle different IDs. ?
-        ImmutableIntSet entityOneStampNidSet = IntSets.immutable.ofAll(entityToMergeInto.versions().stream().mapToInt(version -> version.stampNid()));
-        ImmutableIntSet entityTwoStampNidSet = IntSets.immutable.ofAll(entityToMergeFrom.versions().stream().mapToInt(version -> version.stampNid()));
-        ImmutableIntSet stampDifferenceNids = entityOneStampNidSet.difference(entityTwoStampNidSet);
-        ImmutableIntSet stampUnionNids = entityOneStampNidSet.intersect(entityTwoStampNidSet);
-        ImmutableIntSet allStampNids = stampDifferenceNids.newWithAll(stampUnionNids);
+        ImmutableLongSet entityOneStampNidSet = LongSets.immutable.ofAll(entityToMergeInto.versions().stream().mapToLong(version -> version.stampNid()));
+        ImmutableLongSet entityTwoStampNidSet = LongSets.immutable.ofAll(entityToMergeFrom.versions().stream().mapToLong(version -> version.stampNid()));
+        ImmutableLongSet stampDifferenceNids = entityOneStampNidSet.difference(entityTwoStampNidSet);
+        ImmutableLongSet stampUnionNids = entityOneStampNidSet.intersect(entityTwoStampNidSet);
+        ImmutableLongSet allStampNids = stampDifferenceNids.newWithAll(stampUnionNids);
 
-        for (int unionStamp : stampUnionNids.toArray()) {
+        for (long unionStamp : stampUnionNids.toArray()) {
             if (!entityToMergeInto.getVersion(unionStamp).equals(entityToMergeFrom.getVersion(unionStamp))) {
                 return EntityMergeServiceFinder.adjudicatedMerge(entityToMergeInto, entityToMergeFrom);
             }
@@ -498,9 +538,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         }
 
         // Check to see if any of the stampDifferenceNids versions have the same time, module, and path
-        for (int differenceStampNid : stampDifferenceNids.toArray()) {
+        for (long differenceStampNid : stampDifferenceNids.toArray()) {
             StampEntity differenceStamp = EntityService.get().getStampFast(differenceStampNid);
-            for (int anyStampNid : allStampNids.toArray()) {
+            for (long anyStampNid : allStampNids.toArray()) {
                 if (differenceStampNid != anyStampNid) {
                     StampEntity anyStamp = EntityService.get().getStampFast(anyStampNid);
                     if (differenceStamp.time() == anyStamp.time() &&
@@ -520,7 +560,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                 -> mergeAllPatternVersions(patternOneRecord, patternTwoRecord);
             case SemanticRecord semanticOneRecord when entityToMergeFrom instanceof SemanticRecord semanticTwoRecord
                     -> mergeAllSemanticVersions(semanticOneRecord, semanticTwoRecord);
-            default -> throw new IllegalStateException("Can't merge:\n" + entityToMergeInto + "\nand:\n" + entityToMergeFrom);
+            default -> throw new IllegalStateException("Can't merge:\n" + EntityText.diagnostic(entityToMergeInto) + "\nand:\n" + EntityText.diagnostic(entityToMergeFrom));
         };
     }
 
@@ -582,13 +622,19 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         loadPhase = true;
         loadPhaseSearchPolicy.reset();
         PrimitiveData.get().setLoadPhase(true);
+        runningSearchService().ifPresent(search -> search.setLoadPhase(true));
     }
 
     @Override
     public void endLoadPhase() {
         loadPhase = false;
         PrimitiveData.get().setLoadPhase(false);
-        processor.dispatch(Integer.MIN_VALUE);
+        runningSearchService().ifPresent(search -> search.setLoadPhase(false));
+        processor.dispatch((long) Nid.NONE); // everything changed: the none sentinel, widened
+    }
+
+    private static Optional<SearchService> runningSearchService() {
+        return ServiceLifecycleManager.get().getRunningService(SearchService.class);
     }
 
     /**
@@ -598,9 +644,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
      *
      * @param stampNids the collection of stamp NIDs to check for uncommitted stamps
      */
-    public void listAndCancelUncommittedStamps(int[] stampNids) {
+    public void listAndCancelUncommittedStamps(long[] stampNids) {
         LOG.debug("Searching for canceled stamps in set of size {}", stampNids.length);
-        for (int stampNid : stampNids) {
+        for (long stampNid : stampNids) {
             try {
                 StampEntity stamp = getStampFast(stampNid);
                 if (stamp == null) {
@@ -613,8 +659,8 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                     if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
                         // Uncommitted stamp found outside a transaction on restart. Set to canceled.
                         cancelUncommittedStamp(stampNid, (StampRecord) stamp);
-                    }
-                    if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
+                        PrimitiveData.get().addCanceledStampNid(stampNid);
+                    } else if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
                         PrimitiveData.get().addCanceledStampNid(stampNid);
                     }
                 }
@@ -624,7 +670,19 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         }
     }
 
-    private void cancelUncommittedStamp(int stampNid, StampRecord stamp) {
+    /**
+     * Cancels every stamp in the store left uncommitted outside a transaction: the
+     * {@link ServiceKeys#CANCEL_UNCOMMITTED_STAMPS_AT_STARTUP} option, run as the entity service
+     * starts, after the data store has opened and before anything has read from it.
+     */
+    void cancelUncommittedStamps() {
+        MutableLongList stampNids = LongLists.mutable.empty().asSynchronized();
+        EntityStore.current().forEachStampNid(stampNids::add);
+        LOG.info("Canceling uncommitted stamps at startup, among {} stamps", stampNids.size());
+        listAndCancelUncommittedStamps(stampNids.toSortedArray());
+    }
+
+    private void cancelUncommittedStamp(long stampNid, StampRecord stamp) {
         LOG.warn("Canceling uncommitted stamp: {}", stamp.publicId().asUuidList());
         StampVersionRecord lastVersion = stamp.lastVersion();
         StampVersionRecord canceledVersion = lastVersion.with()
@@ -652,15 +710,17 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
         @Override
         protected void startProvider(EntityProvider provider) {
-            // EntityProvider starts immediately upon construction
-            // No explicit start method needed
+            // EntityProvider starts upon construction. Uncommitted stamps survive a restart
+            // unless the deployment asks for them to be canceled as it starts.
+            if (ServiceProperties.get(ServiceKeys.CANCEL_UNCOMMITTED_STAMPS_AT_STARTUP, Boolean.FALSE)) {
+                provider.cancelUncommittedStamps();
+            }
         }
 
         @Override
         protected void stopProvider(EntityProvider provider) {
             LOG.info("Stopping EntityProvider");
-            // Note: Uncommitted stamp checking is handled by data providers during their shutdown
-            // Data providers call provider.listAndCancelUncommittedStamps() before EntityService shuts down
+            // Uncommitted stamps are kept: they survive a restart, and change sets share them.
         }
 
         @Override

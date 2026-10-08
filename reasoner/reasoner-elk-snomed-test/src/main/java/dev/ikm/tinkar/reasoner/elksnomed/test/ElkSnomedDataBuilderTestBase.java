@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.SnomedConcepts;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
@@ -34,7 +36,6 @@ import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 
@@ -46,7 +47,7 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 	public void statedPattern() throws Exception {
 		ViewCalculator viewCalculator = PrimitiveDataTestUtil.getViewCalculator();
 		LogicCoordinateRecord logicCoordinateRecord = viewCalculator.logicCalculator().logicCoordinateRecord();
-		assertEquals(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+		assertEquals(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 				logicCoordinateRecord.statedAxiomsPatternNid());
 	}
 
@@ -56,7 +57,7 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 		AtomicInteger cnt = new AtomicInteger();
 		AtomicInteger active_cnt = new AtomicInteger();
 		AtomicInteger inactive_cnt = new AtomicInteger();
-		viewCalculator.forEachSemanticVersionOfPatternParallel(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+		viewCalculator.forEachSemanticVersionOfPatternParallel(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 				(semanticEntityVersion, _) -> {
 					if (semanticEntityVersion.active()) {
 						active_cnt.incrementAndGet();
@@ -106,9 +107,9 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 		AtomicInteger cnt = new AtomicInteger();
 		AtomicInteger active_cnt = new AtomicInteger();
 		AtomicInteger inactive_cnt = new AtomicInteger();
-		primordial_vc.forEachSemanticVersionOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid(),
+		primordial_vc.forEachSemanticVersionOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid(),
 				(semanticEntityVersion, _) -> {
-					int conceptNid = semanticEntityVersion.referencedComponentNid();
+					long conceptNid = semanticEntityVersion.referencedComponentNid();
 					if (primordial_vc.latestIsActive(conceptNid)) {
 						active_cnt.incrementAndGet();
 					} else {
@@ -128,20 +129,20 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 	public void primordialSctidCount() throws Exception {
 		ViewCalculator primordial_vc = PrimitiveDataTestUtil.getViewCalculatorPrimordial();
 		AtomicInteger cnt = new AtomicInteger();
-		primordial_vc.forEachSemanticVersionOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid(),
+		primordial_vc.forEachSemanticVersionOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid(),
 				(semanticEntityVersion, _) -> {
-					int conceptNid = semanticEntityVersion.referencedComponentNid();
+					long conceptNid = semanticEntityVersion.referencedComponentNid();
 					ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator();
 					Latest<PatternEntityVersion> latestIdPattern = vc
-							.latestPatternEntityVersion(TinkarTerm.IDENTIFIER_PATTERN);
+							.latestPatternEntityVersion(KernelTerm.IDENTIFIER_PATTERN);
 					EntityService.get().forEachSemanticForComponentOfPattern(conceptNid,
-							TinkarTerm.IDENTIFIER_PATTERN.nid(), (semanticEntity) -> {
+							KernelTerm.IDENTIFIER_PATTERN.nid(), (semanticEntity) -> {
 								if (vc.latest(semanticEntity).isPresent()) {
 									SemanticEntityVersion latestSemanticVersion = vc.latest(semanticEntity).get();
 									EntityProxy identifierSource = latestIdPattern.get()
-											.getFieldWithMeaning(TinkarTerm.IDENTIFIER_SOURCE, latestSemanticVersion);
+											.getFieldWithMeaning(KernelTerm.IDENTIFIER_SOURCE, latestSemanticVersion);
 									boolean has_sctid = false;
-									if (PublicId.equals(identifierSource, TinkarTerm.SCTID)) {
+									if (PublicId.equals(identifierSource, KernelTerm.SCTID)) {
 										// Just in case it has more than one sctid
 										if (!has_sctid)
 											cnt.incrementAndGet();
@@ -149,13 +150,13 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 										String idSourceName = vc
 												.getPreferredDescriptionTextWithFallbackOrNid(identifierSource);
 										String idValue = latestIdPattern.get().getFieldWithMeaning(
-												TinkarTerm.IDENTIFIER_VALUE, latestSemanticVersion);
+												KernelTerm.IDENTIFIER_VALUE, latestSemanticVersion);
 										LOG.info("Primordial: " + conceptNid + " " + PrimitiveData.text(conceptNid));
 										LOG.info("ID: " + idSourceName + " " + idValue);
 									}
 								} else {
 									throw new RuntimeException(
-											"No latest for " + conceptNid + " " + PrimitiveData.text(conceptNid));
+											"No latest for " + DiagnosticText.component(conceptNid));
 								}
 							});
 				});

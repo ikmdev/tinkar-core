@@ -64,7 +64,7 @@ NavigationCoordinate inferred = Coordinates.Navigation.inferred();
 
 // Equivalent to:
 NavigationCoordinateRecord inferred = NavigationCoordinateRecord.make(
-    IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION.nid()),
+    IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
     StateSet.ACTIVE,
     IntIds.list.empty(),
     true  // Sort enabled
@@ -88,7 +88,7 @@ NavigationCoordinate stated = Coordinates.Navigation.stated();
 
 // Equivalent to:
 NavigationCoordinateRecord stated = NavigationCoordinateRecord.make(
-    IntIds.set.of(TinkarTerm.STATED_NAVIGATION.nid()),
+    IntIds.set.of(KernelTerm.STATED_NAVIGATION_PATTERN.nid()),
     StateSet.ACTIVE,
     IntIds.list.empty(),
     true
@@ -109,8 +109,8 @@ NavigationCoordinateRecord stated = NavigationCoordinateRecord.make(
 // Combine inferred is-a with part-of relationships
 NavigationCoordinateRecord combined = NavigationCoordinateRecord.make(
     IntIds.set.of(
-        TinkarTerm.INFERRED_NAVIGATION.nid(),
-        TinkarTerm.PART_OF_NAVIGATION.nid()
+        KernelTerm.INFERRED_NAVIGATION.nid(),
+        MyTerms.PART_OF_NAVIGATION.nid()
     ),
     StateSet.ACTIVE,
     IntIds.list.empty(),
@@ -149,7 +149,7 @@ NavigationCoordinateRecord sorted = NavigationCoordinateRecord.makeInferred();
 
 // Unsorted (faster)
 NavigationCoordinateRecord unsorted = NavigationCoordinateRecord.make(
-    IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION.nid()),
+    IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
     StateSet.ACTIVE,
     IntIds.list.empty(),
     false  // No sorting
@@ -162,11 +162,11 @@ NavigationCoordinateRecord unsorted = NavigationCoordinateRecord.make(
 ----
 // Sort by custom patterns, then alphabetically
 NavigationCoordinateRecord customSort = NavigationCoordinateRecord.make(
-    IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION.nid()),
+    IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
     StateSet.ACTIVE,
     IntIds.list.of(
-        TinkarTerm.SEVERITY_SORT_PATTERN.nid(),  // Sort by severity first
-        TinkarTerm.ALPHABETICAL_SORT_PATTERN.nid() // Then alphabetically
+        MyTerms.SEVERITY_SORT_PATTERN.nid(),  // Sort by severity first
+        MyTerms.ALPHABETICAL_SORT_PATTERN.nid() // Then alphabetically
     ),
     true
 );
@@ -388,7 +388,7 @@ IntIdSet children = calc.childrenOf(diseaseNid);
 NavigationCalculator unsortedCalc = NavigationCalculatorWithCache.getCalculator(
     stamp,
     NavigationCoordinateRecord.make(
-        IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION.nid()),
+        IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
         StateSet.ACTIVE,
         IntIds.list.empty(),
         false  // No sorting
@@ -408,7 +408,7 @@ IntIdSet unsortedChildren = unsortedCalc.childrenOf(diseaseNid);
 // GOOD: Inferred for semantic queries
 NavigationCoordinate nav = Coordinates.Navigation.inferred();
 
-if (calc.isDescendentOf(conceptNid, TinkarTerm.DISEASE.nid())) {
+if (calc.isDescendentOf(conceptNid, MyTerms.DISEASE.nid())) {
     System.out.println("Is a disease");
 }
 ----
@@ -429,7 +429,7 @@ if (isAuthoringContext) {
 ----
 // GOOD: Disable sorting when order doesn't matter
 NavigationCoordinateRecord unsorted = NavigationCoordinateRecord.make(
-    IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION.nid()),
+    IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
     StateSet.ACTIVE,
     IntIds.list.empty(),
     false  // Faster when order doesn't matter

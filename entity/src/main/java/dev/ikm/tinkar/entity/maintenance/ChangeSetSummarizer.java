@@ -15,6 +15,9 @@
  */
 package dev.ikm.tinkar.entity.maintenance;
 
+import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
+import dev.ikm.tinkar.entity.changeset.SchemaIds;
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -29,7 +32,6 @@ import dev.ikm.tinkar.schema.SemanticVersion;
 import dev.ikm.tinkar.schema.StampChronology;
 import dev.ikm.tinkar.schema.StampVersion;
 import dev.ikm.tinkar.schema.TinkarMsg;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -81,7 +83,6 @@ import java.util.zip.ZipInputStream;
 public final class ChangeSetSummarizer {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChangeSetSummarizer.class);
-    private static final String MANIFEST_RELPATH = "META-INF/MANIFEST.MF";
     private static final DateTimeFormatter STAMP_TIME = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     public record ManifestInfo(
@@ -595,28 +596,28 @@ public final class ChangeSetSummarizer {
 
         ManifestInfo manifest = readManifest(changeSetZip);
 
-        // Maps keyed by primordial UUID — equals/hashCode are stable for UUID, and
-        // every entity in the change set declares a primordial UUID.
-        Map<UUID, ConceptAccum> concepts = new LinkedHashMap<>();
-        Map<UUID, SemanticAccum> semantics = new LinkedHashMap<>();
-        Map<UUID, PatternAccum> patterns = new LinkedHashMap<>();
-        Map<UUID, StampAccum> stamps = new LinkedHashMap<>();
+        // There is no store, so no nids: each index finds an accumulator by any of its
+        // component's UUIDs, merging accumulators whose public ids turn out to overlap.
+        AccumIndex<ConceptAccum> concepts = new AccumIndex<>();
+        AccumIndex<SemanticAccum> semantics = new AccumIndex<>();
+        AccumIndex<PatternAccum> patterns = new AccumIndex<>();
+        AccumIndex<StampAccum> stamps = new AccumIndex<>();
 
         readEntities(changeSetZip, concepts, semantics, patterns, stamps);
 
-        Map<UUID, Integer> stampCitations = computeStampCitations(concepts, semantics, patterns, stamps);
+        countStampCitations(concepts, semantics, patterns, stamps);
 
         // Resolve labels lazily through PrimitiveData when available.
         LabelResolver resolver = new LabelResolver();
 
-        ImmutableList<StampInfo> stampInfos = buildStampInfos(stamps, stampCitations, resolver);
+        ImmutableList<StampInfo> stampInfos = buildStampInfos(stamps, resolver);
         ImmutableList<ConceptInfo> conceptInfos = buildConceptInfos(concepts, resolver);
         ImmutableList<PatternInfo> patternInfos = buildPatternInfos(patterns, resolver);
         ImmutableList<SemanticGroup> semanticGroups = buildSemanticGroups(semantics, resolver);
         ImmutableList<ConceptSynthesis> conceptSyntheses =
                 buildConceptSyntheses(concepts, semantics, resolver);
         ImmutableList<Diagnostic> diagnostics =
-                buildDiagnostics(manifest, concepts, semantics, patterns, stamps, stampCitations);
+                buildDiagnostics(manifest, concepts, semantics, patterns, stamps);
 
         int observedConcepts = concepts.size();
         int observedSemantics = semantics.size();
@@ -648,7 +649,7 @@ public final class ChangeSetSummarizer {
              ZipInputStream zis = new ZipInputStream(bis)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                if (entry.getName().equals(MANIFEST_RELPATH)) {
+                if (entry.getName().equals(ChangeSetFormat.MANIFEST)) {
                     Manifest mf = new Manifest(zis);
                     Attributes main = mf.getMainAttributes();
                     MutableList<NamedPublicId> entries = Lists.mutable.empty();
@@ -698,16 +699,17 @@ public final class ChangeSetSummarizer {
     // -- Entity scan ---------------------------------------------------------
 
     private void readEntities(File zip,
-                              Map<UUID, ConceptAccum> concepts,
-                              Map<UUID, SemanticAccum> semantics,
-                              Map<UUID, PatternAccum> patterns,
-                              Map<UUID, StampAccum> stamps) throws IOException {
+                              AccumIndex<ConceptAccum> concepts,
+                              AccumIndex<SemanticAccum> semantics,
+                              AccumIndex<PatternAccum> patterns,
+                              AccumIndex<StampAccum> stamps) throws IOException {
         try (FileInputStream fis = new FileInputStream(zip);
              BufferedInputStream bis = new BufferedInputStream(fis);
              ZipInputStream zis = new ZipInputStream(bis)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                if (entry.getName().equals(MANIFEST_RELPATH)) {
+                // The manifest, the identity index, and any later metadata are not records.
+                if (ChangeSetFormat.isMetadata(entry.getName())) {
                     zis.closeEntry();
                     continue;
                 }
@@ -722,10 +724,10 @@ public final class ChangeSetSummarizer {
     }
 
     private void classifyMessage(TinkarMsg msg,
-                                 Map<UUID, ConceptAccum> concepts,
-                                 Map<UUID, SemanticAccum> semantics,
-                                 Map<UUID, PatternAccum> patterns,
-                                 Map<UUID, StampAccum> stamps) {
+                                 AccumIndex<ConceptAccum> concepts,
+                                 AccumIndex<SemanticAccum> semantics,
+                                 AccumIndex<PatternAccum> patterns,
+                                 AccumIndex<StampAccum> stamps) {
         switch (msg.getValueCase()) {
             case CONCEPT_CHRONOLOGY -> classifyConcept(msg.getConceptChronology(), concepts);
             case SEMANTIC_CHRONOLOGY -> classifySemantic(msg.getSemanticChronology(), semantics);
@@ -735,10 +737,10 @@ public final class ChangeSetSummarizer {
         }
     }
 
-    private void classifyConcept(ConceptChronology pb, Map<UUID, ConceptAccum> concepts) {
+    private void classifyConcept(ConceptChronology pb, AccumIndex<ConceptAccum> concepts) {
         PublicId pid = toPublicId(pb.getPublicId());
         if (pid == null) return;
-        ConceptAccum acc = concepts.computeIfAbsent(pid.asUuidArray()[0], _ -> new ConceptAccum(pid));
+        ConceptAccum acc = concepts.accumulatorFor(pid, ConceptAccum::new);
         acc.versions += pb.getConceptVersionsCount();
         for (var v : pb.getConceptVersionsList()) {
             PublicId stampId = toPublicId(v.getStampChronologyPublicId());
@@ -746,13 +748,13 @@ public final class ChangeSetSummarizer {
         }
     }
 
-    private void classifySemantic(SemanticChronology pb, Map<UUID, SemanticAccum> semantics) {
+    private void classifySemantic(SemanticChronology pb, AccumIndex<SemanticAccum> semantics) {
         PublicId pid = toPublicId(pb.getPublicId());
         PublicId patternId = toPublicId(pb.getPatternForSemanticPublicId());
         PublicId refId = toPublicId(pb.getReferencedComponentPublicId());
         if (pid == null || patternId == null) return;
-        SemanticAccum acc = semantics.computeIfAbsent(pid.asUuidArray()[0],
-                _ -> new SemanticAccum(pid, patternId, refId));
+        SemanticAccum acc = semantics.accumulatorFor(pid,
+                semanticId -> new SemanticAccum(semanticId, patternId, refId));
         acc.versions += pb.getSemanticVersionsCount();
         SemanticVersion latest = null;
         for (SemanticVersion v : pb.getSemanticVersionsList()) {
@@ -766,10 +768,10 @@ public final class ChangeSetSummarizer {
         acc.latestVersion = latest;
     }
 
-    private void classifyPattern(PatternChronology pb, Map<UUID, PatternAccum> patterns) {
+    private void classifyPattern(PatternChronology pb, AccumIndex<PatternAccum> patterns) {
         PublicId pid = toPublicId(pb.getPublicId());
         if (pid == null) return;
-        PatternAccum acc = patterns.computeIfAbsent(pid.asUuidArray()[0], _ -> new PatternAccum(pid));
+        PatternAccum acc = patterns.accumulatorFor(pid, PatternAccum::new);
         acc.versions += pb.getPatternVersionsCount();
         for (PatternVersion v : pb.getPatternVersionsList()) {
             PublicId stampId = toPublicId(v.getStampChronologyPublicId());
@@ -782,10 +784,10 @@ public final class ChangeSetSummarizer {
         }
     }
 
-    private void classifyStamp(StampChronology pb, Map<UUID, StampAccum> stamps) {
+    private void classifyStamp(StampChronology pb, AccumIndex<StampAccum> stamps) {
         PublicId pid = toPublicId(pb.getPublicId());
         if (pid == null) return;
-        StampAccum acc = stamps.computeIfAbsent(pid.asUuidArray()[0], _ -> new StampAccum(pid));
+        StampAccum acc = stamps.accumulatorFor(pid, StampAccum::new);
         // Each StampChronology message becomes one inner list. The schema has
         // first/second slots; either may be absent. Empty messages (zero versions)
         // are preserved so the journal count matches the on-wire message count.
@@ -797,8 +799,7 @@ public final class ChangeSetSummarizer {
 
     // -- Output construction -------------------------------------------------
 
-    private ImmutableList<StampInfo> buildStampInfos(Map<UUID, StampAccum> stamps,
-                                                     Map<UUID, Integer> citationCounts,
+    private ImmutableList<StampInfo> buildStampInfos(AccumIndex<StampAccum> stamps,
                                                      LabelResolver resolver) {
         MutableList<StampInfo> out = Lists.mutable.empty();
         for (StampAccum acc : stamps.values()) {
@@ -822,8 +823,7 @@ public final class ChangeSetSummarizer {
                 }
                 messageNumber++;
             }
-            int citations = citationCounts.getOrDefault(acc.publicId.asUuidArray()[0], 0);
-            out.add(new StampInfo(acc.publicId, acc.messages.size(), citations, entries.toImmutable()));
+            out.add(new StampInfo(acc.publicId, acc.messages.size(), acc.citations, entries.toImmutable()));
         }
         // Sort stamps by their latest entry's time so the section reads in
         // chronicle order. Stamps without entries sort last.
@@ -834,26 +834,24 @@ public final class ChangeSetSummarizer {
         return out.toImmutable();
     }
 
-    private static Map<UUID, Integer> computeStampCitations(Map<UUID, ConceptAccum> concepts,
-                                                             Map<UUID, SemanticAccum> semantics,
-                                                             Map<UUID, PatternAccum> patterns,
-                                                             Map<UUID, StampAccum> stamps) {
-        Map<UUID, Integer> counts = new LinkedHashMap<>();
-        for (UUID stampKey : stamps.keySet()) counts.put(stampKey, 0);
-        for (ConceptAccum c : concepts.values()) tally(c.citedStamps, stamps, counts);
-        for (SemanticAccum s : semantics.values()) tally(s.citedStamps, stamps, counts);
-        for (PatternAccum p : patterns.values()) tally(p.citedStamps, stamps, counts);
-        return counts;
+    /** Counts, on each stamp in the change set, the versions in the change set that cite it. */
+    private static void countStampCitations(AccumIndex<ConceptAccum> concepts,
+                                            AccumIndex<SemanticAccum> semantics,
+                                            AccumIndex<PatternAccum> patterns,
+                                            AccumIndex<StampAccum> stamps) {
+        for (ConceptAccum c : concepts.values()) tally(c.citedStamps, stamps);
+        for (SemanticAccum s : semantics.values()) tally(s.citedStamps, stamps);
+        for (PatternAccum p : patterns.values()) tally(p.citedStamps, stamps);
     }
 
-    private static void tally(List<PublicId> citedIds, Map<UUID, StampAccum> stamps, Map<UUID, Integer> counts) {
+    private static void tally(List<PublicId> citedIds, AccumIndex<StampAccum> stamps) {
         for (PublicId pid : citedIds) {
-            UUID key = pid.asUuidArray()[0];
-            if (stamps.containsKey(key)) counts.merge(key, 1, Integer::sum);
+            StampAccum stamp = stamps.get(pid);
+            if (stamp != null) stamp.citations++;
         }
     }
 
-    private ImmutableList<ConceptInfo> buildConceptInfos(Map<UUID, ConceptAccum> concepts, LabelResolver resolver) {
+    private ImmutableList<ConceptInfo> buildConceptInfos(AccumIndex<ConceptAccum> concepts, LabelResolver resolver) {
         MutableList<ConceptInfo> out = Lists.mutable.empty();
         for (ConceptAccum acc : concepts.values()) {
             String label = resolver.resolve(acc.publicId);
@@ -864,7 +862,7 @@ public final class ChangeSetSummarizer {
         return out.toImmutable();
     }
 
-    private ImmutableList<PatternInfo> buildPatternInfos(Map<UUID, PatternAccum> patterns, LabelResolver resolver) {
+    private ImmutableList<PatternInfo> buildPatternInfos(AccumIndex<PatternAccum> patterns, LabelResolver resolver) {
         MutableList<PatternInfo> out = Lists.mutable.empty();
         for (PatternAccum acc : patterns.values()) {
             String label = resolver.resolve(acc.publicId);
@@ -877,25 +875,35 @@ public final class ChangeSetSummarizer {
         return out.toImmutable();
     }
 
-    private ImmutableList<SemanticGroup> buildSemanticGroups(Map<UUID, SemanticAccum> semantics, LabelResolver resolver) {
-        Map<UUID, MutableList<SemanticInfo>> byPattern = new LinkedHashMap<>();
-        Map<UUID, PublicId> patternIds = new LinkedHashMap<>();
+    private ImmutableList<SemanticGroup> buildSemanticGroups(AccumIndex<SemanticAccum> semantics, LabelResolver resolver) {
+        // Grouped by pattern: a semantic joins the group whose pattern shares any of its
+        // pattern's UUIDs.
+        Map<UUID, MutableList<SemanticInfo>> byPatternUuid = new LinkedHashMap<>();
+        Map<MutableList<SemanticInfo>, PublicId> patternIds = new java.util.IdentityHashMap<>();
+        List<MutableList<SemanticInfo>> groupsInOrder = new ArrayList<>();
         for (SemanticAccum acc : semantics.values()) {
-            UUID patternKey = acc.patternId.asUuidArray()[0];
-            patternIds.putIfAbsent(patternKey, acc.patternId);
+            MutableList<SemanticInfo> group = null;
+            for (UUID uuid : acc.patternId.asUuidArray()) {
+                group = byPatternUuid.get(uuid);
+                if (group != null) break;
+            }
+            if (group == null) {
+                group = Lists.mutable.empty();
+                groupsInOrder.add(group);
+                patternIds.put(group, acc.patternId);
+            }
+            for (UUID uuid : acc.patternId.asUuidArray()) byPatternUuid.putIfAbsent(uuid, group);
             String refLabel = resolver.resolve(acc.referencedComponentId);
             String rendered = renderFields(acc.patternId, acc.latestVersion, resolver);
             ImmutableList<PublicId> stampIds = Lists.immutable.withAll(acc.citedStamps);
-            byPattern.computeIfAbsent(patternKey, _ -> Lists.mutable.empty())
-                    .add(new SemanticInfo(
-                            acc.publicId, acc.patternId, acc.referencedComponentId,
-                            refLabel, acc.versions, stampIds, rendered));
+            group.add(new SemanticInfo(
+                    acc.publicId, acc.patternId, acc.referencedComponentId,
+                    refLabel, acc.versions, stampIds, rendered));
         }
         MutableList<SemanticGroup> groups = Lists.mutable.empty();
-        for (var e : byPattern.entrySet()) {
-            PublicId patternId = patternIds.get(e.getKey());
+        for (MutableList<SemanticInfo> sem : groupsInOrder) {
+            PublicId patternId = patternIds.get(sem);
             String patternLabel = resolver.resolve(patternId);
-            MutableList<SemanticInfo> sem = e.getValue();
             sem.sortThis(Comparator.comparing(SemanticInfo::referencedComponentLabel));
             groups.add(new SemanticGroup(patternId, patternLabel, sem.toImmutable()));
         }
@@ -904,47 +912,40 @@ public final class ChangeSetSummarizer {
     }
 
     private ImmutableList<ConceptSynthesis> buildConceptSyntheses(
-            Map<UUID, ConceptAccum> concepts,
-            Map<UUID, SemanticAccum> semantics,
+            AccumIndex<ConceptAccum> concepts,
+            AccumIndex<SemanticAccum> semantics,
             LabelResolver resolver) {
-        // Index semantics by primordial UUID of their referenced component.
+        // Index semantics under every UUID of their referenced component.
         Map<UUID, MutableList<SemanticAccum>> byRef = new LinkedHashMap<>();
         for (SemanticAccum sem : semantics.values()) {
             if (sem.referencedComponentId == null) continue;
-            UUID refKey = sem.referencedComponentId.asUuidArray()[0];
-            byRef.computeIfAbsent(refKey, _ -> Lists.mutable.empty()).add(sem);
+            for (UUID refUuid : sem.referencedComponentId.asUuidArray()) {
+                byRef.computeIfAbsent(refUuid, _ -> Lists.mutable.empty()).add(sem);
+            }
         }
         MutableList<ConceptSynthesis> out = Lists.mutable.empty();
         for (ConceptAccum c : concepts.values()) {
-            UUID conceptKey = c.publicId.asUuidArray()[0];
-            List<SemanticAccum> related = byRef.getOrDefault(conceptKey, Lists.mutable.empty());
+            // The semantics referencing the concept by any of its UUIDs, each once.
+            java.util.Set<SemanticAccum> related = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+            for (UUID conceptUuid : c.publicId.asUuidArray()) {
+                related.addAll(byRef.getOrDefault(conceptUuid, Lists.mutable.empty()));
+            }
 
             int desc = 0, fqn = 0, stated = 0, inferred = 0, navS = 0, navI = 0, ident = 0, other = 0;
-            UUID descPattern = TinkarTerm.DESCRIPTION_PATTERN.asUuidArray()[0];
-            UUID statedPattern = TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.asUuidArray()[0];
-            UUID inferredPattern = TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.asUuidArray()[0];
-            UUID statedNav = TinkarTerm.STATED_NAVIGATION_PATTERN.asUuidArray()[0];
-            UUID inferredNav = TinkarTerm.INFERRED_NAVIGATION_PATTERN.asUuidArray()[0];
-            UUID solorNav = TinkarTerm.NAVIGATION_PATTERN.asUuidArray()[0];
-            UUID statedDigraph = TinkarTerm.EL_PLUS_PLUS_STATED_DIGRAPH.asUuidArray()[0];
-            UUID inferredDigraph = TinkarTerm.EL_PLUS_PLUS_INFERRED_DIGRAPH.asUuidArray()[0];
-            UUID identifierPattern = TinkarTerm.IDENTIFIER_PATTERN.asUuidArray()[0];
-            UUID fqnTypeUuid = TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.asUuidArray()[0];
 
             for (SemanticAccum s : related) {
-                UUID patternKey = s.patternId.asUuidArray()[0];
-                if (patternKey.equals(descPattern)) {
-                    if (latestDescriptionTypeIs(s.latestVersion, fqnTypeUuid)) fqn++;
+                if (PublicId.equals(s.patternId, KernelTerm.DESCRIPTION_PATTERN)) {
+                    if (latestDescriptionTypeIs(s.latestVersion, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) fqn++;
                     else desc++;
-                } else if (patternKey.equals(statedPattern) || patternKey.equals(statedDigraph)) {
+                } else if (PublicId.equals(s.patternId, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN)) {
                     stated++;
-                } else if (patternKey.equals(inferredPattern) || patternKey.equals(inferredDigraph)) {
+                } else if (PublicId.equals(s.patternId, KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN)) {
                     inferred++;
-                } else if (patternKey.equals(statedNav)) {
+                } else if (PublicId.equals(s.patternId, KernelTerm.STATED_NAVIGATION_PATTERN)) {
                     navS++;
-                } else if (patternKey.equals(inferredNav) || patternKey.equals(solorNav)) {
+                } else if (PublicId.equals(s.patternId, KernelTerm.INFERRED_NAVIGATION_PATTERN)) {
                     navI++;
-                } else if (patternKey.equals(identifierPattern)) {
+                } else if (PublicId.equals(s.patternId, KernelTerm.IDENTIFIER_PATTERN)) {
                     ident++;
                 } else {
                     other++;
@@ -967,25 +968,20 @@ public final class ChangeSetSummarizer {
         return out.toImmutable();
     }
 
-    private static boolean latestDescriptionTypeIs(SemanticVersion v, UUID typeUuid) {
+    private static boolean latestDescriptionTypeIs(SemanticVersion v, PublicId type) {
         if (v == null || v.getFieldsCount() < 4) return false;
         Field typeField = v.getFields(3);
         if (typeField.getValueCase() != Field.ValueCase.PUBLIC_ID) return false;
-        for (String u : typeField.getPublicId().getUuidsList()) {
-            try {
-                if (UUID.fromString(u).equals(typeUuid)) return true;
-            } catch (IllegalArgumentException ignored) { /* ignore malformed */ }
-        }
-        return false;
+        PublicId typeId = toPublicId(typeField.getPublicId());
+        return typeId != null && PublicId.equals(type, typeId);
     }
 
     private ImmutableList<Diagnostic> buildDiagnostics(
             ManifestInfo manifest,
-            Map<UUID, ConceptAccum> concepts,
-            Map<UUID, SemanticAccum> semantics,
-            Map<UUID, PatternAccum> patterns,
-            Map<UUID, StampAccum> stamps,
-            Map<UUID, Integer> stampCitations) {
+            AccumIndex<ConceptAccum> concepts,
+            AccumIndex<SemanticAccum> semantics,
+            AccumIndex<PatternAccum> patterns,
+            AccumIndex<StampAccum> stamps) {
         MutableList<Diagnostic> out = Lists.mutable.empty();
 
         if (manifest != null) {
@@ -1014,8 +1010,7 @@ public final class ChangeSetSummarizer {
 
         // Stamps cited by no entity in this change set.
         for (StampAccum acc : stamps.values()) {
-            int n = stampCitations.getOrDefault(acc.publicId.asUuidArray()[0], 0);
-            if (n == 0) {
+            if (acc.citations == 0) {
                 out.add(new Diagnostic(Diagnostic.Severity.INFO, "stamp",
                         "Stamp " + acc.publicId.idString() + " is in the change set but cited by no version"));
             }
@@ -1024,10 +1019,9 @@ public final class ChangeSetSummarizer {
         // Orphan semantics: referenced component not in change set and not in data store (when available).
         for (SemanticAccum s : semantics.values()) {
             if (s.referencedComponentId == null) continue;
-            UUID refKey = s.referencedComponentId.asUuidArray()[0];
-            boolean inChangeSet = concepts.containsKey(refKey)
-                    || semantics.containsKey(refKey)
-                    || patterns.containsKey(refKey);
+            boolean inChangeSet = concepts.get(s.referencedComponentId) != null
+                    || semantics.get(s.referencedComponentId) != null
+                    || patterns.get(s.referencedComponentId) != null;
             if (inChangeSet) continue;
             if (!isInDataStore(s.referencedComponentId)) {
                 out.add(new Diagnostic(Diagnostic.Severity.WARN, "orphan-reference",
@@ -1044,30 +1038,27 @@ public final class ChangeSetSummarizer {
 
     private String renderFields(PublicId patternId, SemanticVersion v, LabelResolver resolver) {
         if (v == null || v.getFieldsCount() == 0) return "(no fields)";
-        UUID patternKey = patternId.asUuidArray()[0];
-
-        if (patternKey.equals(TinkarTerm.DESCRIPTION_PATTERN.asUuidArray()[0])) {
+        if (PublicId.equals(patternId, KernelTerm.DESCRIPTION_PATTERN)) {
             // language, text, case, descType
             String text = fieldString(v, 1);
             String descType = resolver.resolve(fieldPublicId(v, 3));
             String lang = resolver.resolve(fieldPublicId(v, 0));
             return "[" + descType + "/" + lang + "] " + truncate(text, 120);
         }
-        if (patternKey.equals(TinkarTerm.IDENTIFIER_PATTERN.asUuidArray()[0])) {
+        if (PublicId.equals(patternId, KernelTerm.IDENTIFIER_PATTERN)) {
             String source = resolver.resolve(fieldPublicId(v, 0));
             String id = fieldString(v, 1);
             return source + " = " + id;
         }
-        if (patternKey.equals(TinkarTerm.STATED_NAVIGATION_PATTERN.asUuidArray()[0])
-                || patternKey.equals(TinkarTerm.INFERRED_NAVIGATION_PATTERN.asUuidArray()[0])
-                || patternKey.equals(TinkarTerm.NAVIGATION_PATTERN.asUuidArray()[0])) {
+        if (PublicId.equals(patternId, KernelTerm.STATED_NAVIGATION_PATTERN)
+                || PublicId.equals(patternId, KernelTerm.INFERRED_NAVIGATION_PATTERN)) {
             // Field 0 = destinations (children), Field 1 = origins (parents)
             String children = renderPublicIdSet(v, 0, resolver);
             String parents = renderPublicIdSet(v, 1, resolver);
             return "parents=[" + parents + "] children=[" + children + "]";
         }
-        if (patternKey.equals(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.asUuidArray()[0])
-                || patternKey.equals(TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.asUuidArray()[0])) {
+        if (PublicId.equals(patternId, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN)
+                || PublicId.equals(patternId, KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN)) {
             return summarizeAxiomTree(v, 0);
         }
         return renderGenericFields(v, resolver);
@@ -1156,13 +1147,12 @@ public final class ChangeSetSummarizer {
     // -- Public-id helpers ---------------------------------------------------
 
     private static PublicId toPublicId(dev.ikm.tinkar.schema.PublicId pb) {
-        if (pb == null || pb.getUuidsCount() == 0) return null;
-        List<UUID> uuids = new ArrayList<>(pb.getUuidsCount());
-        for (String u : pb.getUuidsList()) {
-            try { uuids.add(UUID.fromString(u)); }
-            catch (IllegalArgumentException e) { return null; }
+        if (!SchemaIds.hasUuids(pb)) return null;
+        try {
+            return SchemaIds.toPublicId(pb);
+        } catch (IllegalArgumentException e) {
+            return null; // malformed
         }
-        return PublicIds.of(uuids);
     }
 
     /** True when a {@link PrimitiveData} service is running and contains the given public id. */
@@ -1177,61 +1167,158 @@ public final class ChangeSetSummarizer {
 
     // -- Accumulators --------------------------------------------------------
 
-    private static final class ConceptAccum {
-        final PublicId publicId;
-        int versions;
-        final List<PublicId> citedStamps = new ArrayList<>();
-        ConceptAccum(PublicId publicId) { this.publicId = publicId; }
+    /**
+     * What the summary gathers about one component of the change set. A component may arrive
+     * in several messages, under public ids that share some UUIDs but not all; an accumulator
+     * found again under another of its UUIDs absorbs what it was given, and its public id
+     * gathers every UUID it was seen under.
+     */
+    private abstract static class Accum<A extends Accum<A>> {
+        PublicId publicId;
+        Accum(PublicId publicId) { this.publicId = publicId; }
+
+        /** Takes in what another accumulator, found to be the same component, gathered. */
+        abstract void absorb(A other);
     }
 
-    private static final class SemanticAccum {
-        final PublicId publicId;
+    /**
+     * Accumulators found by any UUID of their component. With no store there are no nids to
+     * key by, and a public id is never a key ({@link PublicId}), so every UUID is indexed: a
+     * public id sharing any UUID with an accumulator's finds it, and one sharing UUIDs with
+     * two merges them.
+     */
+    private static final class AccumIndex<A extends Accum<A>> {
+        private final Map<UUID, A> byUuid = new java.util.HashMap<>();
+        /** The distinct accumulators, in the order their components were first seen. */
+        private final List<A> distinct = new ArrayList<>();
+
+        /** The accumulator for a public id, created when no accumulator shares any of its UUIDs. */
+        A accumulatorFor(PublicId pid, java.util.function.Function<PublicId, A> factory) {
+            A found = null;
+            for (UUID uuid : pid.asUuidArray()) {
+                A acc = byUuid.get(uuid);
+                if (acc == null || acc == found) continue;
+                if (found == null) {
+                    found = acc;
+                } else {
+                    found.absorb(acc);
+                    found.publicId = union(found.publicId, acc.publicId);
+                    distinct.removeIf(d -> d == acc);
+                }
+            }
+            if (found == null) {
+                found = factory.apply(pid);
+                distinct.add(found);
+            } else {
+                found.publicId = union(found.publicId, pid);
+            }
+            for (UUID uuid : found.publicId.asUuidArray()) byUuid.put(uuid, found);
+            return found;
+        }
+
+        /** The accumulator sharing any UUID with the public id, or null. */
+        A get(PublicId pid) {
+            for (UUID uuid : pid.asUuidArray()) {
+                A acc = byUuid.get(uuid);
+                if (acc != null) return acc;
+            }
+            return null;
+        }
+
+        List<A> values() { return distinct; }
+
+        int size() { return distinct.size(); }
+
+        /** Every UUID of the first public id, then the second's that the first lacks. */
+        private static PublicId union(PublicId first, PublicId second) {
+            java.util.LinkedHashSet<UUID> uuids = new java.util.LinkedHashSet<>(first.asUuidList().castToList());
+            uuids.addAll(second.asUuidList().castToList());
+            return uuids.size() == first.uuidCount() ? first : PublicIds.of(new ArrayList<>(uuids));
+        }
+    }
+
+    private static final class ConceptAccum extends Accum<ConceptAccum> {
+        int versions;
+        final List<PublicId> citedStamps = new ArrayList<>();
+        ConceptAccum(PublicId publicId) { super(publicId); }
+
+        @Override
+        void absorb(ConceptAccum other) {
+            versions += other.versions;
+            citedStamps.addAll(other.citedStamps);
+        }
+    }
+
+    private static final class SemanticAccum extends Accum<SemanticAccum> {
         final PublicId patternId;
         final PublicId referencedComponentId;
         int versions;
         final List<PublicId> citedStamps = new ArrayList<>();
         SemanticVersion latestVersion;
         SemanticAccum(PublicId publicId, PublicId patternId, PublicId referencedComponentId) {
-            this.publicId = publicId;
+            super(publicId);
             this.patternId = patternId;
             this.referencedComponentId = referencedComponentId;
         }
+
+        @Override
+        void absorb(SemanticAccum other) {
+            versions += other.versions;
+            citedStamps.addAll(other.citedStamps);
+            if (latestVersion == null) latestVersion = other.latestVersion;
+        }
     }
 
-    private static final class PatternAccum {
-        final PublicId publicId;
+    private static final class PatternAccum extends Accum<PatternAccum> {
         int versions;
         final List<PublicId> citedStamps = new ArrayList<>();
         PublicId purpose;
         PublicId meaning;
         int fieldDefCount;
         List<FieldDefinition> latestFieldDefs = List.of();
-        PatternAccum(PublicId publicId) { this.publicId = publicId; }
+        PatternAccum(PublicId publicId) { super(publicId); }
+
+        @Override
+        void absorb(PatternAccum other) {
+            versions += other.versions;
+            citedStamps.addAll(other.citedStamps);
+            if (purpose == null) purpose = other.purpose;
+            if (meaning == null) meaning = other.meaning;
+            fieldDefCount = Math.max(fieldDefCount, other.fieldDefCount);
+            if (latestFieldDefs.isEmpty()) latestFieldDefs = other.latestFieldDefs;
+        }
     }
 
-    private static final class StampAccum {
-        final PublicId publicId;
+    private static final class StampAccum extends Accum<StampAccum> {
         /** One inner list per {@code StampChronology} message; each holds 1–2 versions. */
         final List<List<StampVersion>> messages = new ArrayList<>();
-        StampAccum(PublicId publicId) { this.publicId = publicId; }
+        /** The versions in the change set that cite this stamp. */
+        int citations;
+        StampAccum(PublicId publicId) { super(publicId); }
+
+        @Override
+        void absorb(StampAccum other) {
+            messages.addAll(other.messages);
+            citations += other.citations;
+        }
     }
 
     /**
      * Resolves public ids to display labels via {@link PrimitiveData#text(int)}
-     * when a service is available; falls back to the primordial UUID string when
+     * when a service is available; falls back to the public id's UUIDs when
      * the data store is absent or does not contain the public id.
      */
     private final class LabelResolver {
         String resolve(PublicId pid) {
             if (pid == null) return "—";
             Optional<String> text = lookupText(pid);
-            return text.orElse(pid.asUuidArray()[0].toString());
+            return text.orElse(pid.idString());
         }
 
         private Optional<String> lookupText(PublicId pid) {
             try {
                 if (!PrimitiveData.get().hasPublicId(pid)) return Optional.empty();
-                int nid = PrimitiveData.nid(pid);
+                long nid = PrimitiveData.nid(pid);
                 return PrimitiveData.textOptional(nid);
             } catch (RuntimeException e) {
                 return Optional.empty();

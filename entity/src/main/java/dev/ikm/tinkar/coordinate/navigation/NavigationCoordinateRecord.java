@@ -16,54 +16,54 @@
 package dev.ikm.tinkar.coordinate.navigation;
 
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.binary.Decoder;
 import dev.ikm.tinkar.common.binary.DecoderInput;
 import dev.ikm.tinkar.common.binary.Encodable;
 import dev.ikm.tinkar.common.binary.Encoder;
 import dev.ikm.tinkar.common.binary.EncoderOutput;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinate;
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import io.soabase.recordbuilder.core.RecordBuilder;
 
 import java.util.Objects;
 
 @RecordBuilder
-public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
+public record NavigationCoordinateRecord(LongIdSet navigationPatternNids,
                                          StateSet vertexStates,
                                          boolean sortVertices,
-                                         IntIdList verticesSortPatternNidList)
+                                         LongIdList verticesSortPatternNidList)
         implements NavigationCoordinate, ImmutableCoordinate, NavigationCoordinateRecordBuilder.With {
 
-    public static NavigationCoordinateRecord make(IntIdSet navigationPatternNids) {
-        return new NavigationCoordinateRecord(navigationPatternNids, StateSet.ACTIVE, true, IntIds.list.empty());
+    public static NavigationCoordinateRecord make(LongIdSet navigationPatternNids) {
+        return new NavigationCoordinateRecord(navigationPatternNids, StateSet.ACTIVE, true, LongIds.list.empty());
     }
 
-    public static NavigationCoordinateRecord make(IntIdSet navigationPatternNids,
+    public static NavigationCoordinateRecord make(LongIdSet navigationPatternNids,
                                                   StateSet vertexStates,
                                                   boolean sortVertices,
-                                                  IntIdList verticesSortPatternNidList) {
+                                                  LongIdList verticesSortPatternNidList) {
         return new NavigationCoordinateRecord(navigationPatternNids, vertexStates,
                 sortVertices, verticesSortPatternNidList);
     }
 
     public static NavigationCoordinateRecord makeInferred() {
         return new NavigationCoordinateRecord(
-                IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid()),
-                StateSet.ACTIVE_AND_INACTIVE, true, IntIds.list.empty());
+                LongIds.set.of(KernelTerm.INFERRED_NAVIGATION_PATTERN.nid()),
+                StateSet.ACTIVE_AND_INACTIVE, true, LongIds.list.empty());
     }
 
     public static NavigationCoordinateRecord makeStated() {
         return new NavigationCoordinateRecord(
-                IntIds.set.of(TinkarTerm.STATED_NAVIGATION_PATTERN.nid()),
-                StateSet.ACTIVE_AND_INACTIVE, true, IntIds.list.empty());
+                LongIds.set.of(KernelTerm.STATED_NAVIGATION_PATTERN.nid()),
+                StateSet.ACTIVE_AND_INACTIVE, true, LongIds.list.empty());
     }
 
     public static NavigationCoordinateRecord make(PremiseType premiseType) {
@@ -75,28 +75,28 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
 
     public static NavigationCoordinateRecord makeInferred(LogicCoordinate logicCoordinate) {
         return new NavigationCoordinateRecord(
-                IntIds.set.of(logicCoordinate.inferredAxiomsPatternNid()),
-                StateSet.ACTIVE_AND_INACTIVE, true, IntIds.list.empty());
+                LongIds.set.of(logicCoordinate.inferredAxiomsPatternNid()),
+                StateSet.ACTIVE_AND_INACTIVE, true, LongIds.list.empty());
     }
 
     public static NavigationCoordinateRecord makeStated(LogicCoordinate logicCoordinate) {
         return new NavigationCoordinateRecord(
-                IntIds.set.of(logicCoordinate.statedAxiomsPatternNid()),
-                StateSet.ACTIVE_AND_INACTIVE, true, IntIds.list.empty());
+                LongIds.set.of(logicCoordinate.statedAxiomsPatternNid()),
+                StateSet.ACTIVE_AND_INACTIVE, true, LongIds.list.empty());
     }
 
     @Decoder
     public static NavigationCoordinateRecord decode(DecoderInput in) {
         switch (Encodable.checkVersion(in)) {
             default:
-                return new NavigationCoordinateRecord(IntIds.set.of(in.readNidArray()),
+                return new NavigationCoordinateRecord(LongIds.set.of(in.readNidArray()),
                         StateSet.decode(in),
-                        in.readBoolean(), IntIds.list.of(in.readNidArray()));
+                        in.readBoolean(), LongIds.list.of(in.readNidArray()));
         }
     }
 
     @Override
-    public IntIdList verticesSortPatternNidList() {
+    public LongIdList verticesSortPatternNidList() {
         return this.verticesSortPatternNidList;
     }
 
@@ -141,15 +141,15 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
     @Override
     public String toString() {
         /*
-        IntIdSet navigationPatternNids,
+        LongIdSet navigationPatternNids,
                                          StateSet vertexStates,
                                          boolean sortVertices,
-                                         IntIdList verticesSortPatternNidList
+                                         LongIdList verticesSortPatternNidList
          */
         StringBuilder sb = new StringBuilder("NavigationCoordinateRecord{");
 
         sb.append("navigationConcepts=[");
-        for (int nid : navigationPatternNids.toArray()) {
+        for (long nid : navigationPatternNids.toArray()) {
             sb.append(PrimitiveData.text(nid));
             sb.append(", ");
         }
@@ -158,7 +158,7 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
         sb.append("vertexStates=").append(vertexStates);
         sb.append(", sortVertices=").append(sortVertices);
         sb.append(", verticesSortPatternList=[");
-        for (int nid : verticesSortPatternNidList.toArray()) {
+        for (long nid : verticesSortPatternNidList.toArray()) {
             sb.append(PrimitiveData.text(nid));
             sb.append(", ");
         }

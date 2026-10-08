@@ -15,7 +15,10 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.common.id.IntIdList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+
+import dev.ikm.tinkar.common.service.internal.EntityStore;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DataActivity;
@@ -35,7 +38,7 @@ import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 
 import java.io.File;
 import java.util.Arrays;
@@ -46,11 +49,12 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 import static dev.ikm.tinkar.entity.Entity.LOG;
 
-public interface EntityService extends ChronologyService, Broadcaster<Integer> {
+public interface EntityService extends ChronologyService, Broadcaster<Long> {
     static EntityService get() {
         return ServiceLifecycleManager.get()
                 .getRunningService(EntityService.class)
@@ -108,222 +112,25 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         return getChronology(nidForPublicId(component.publicId()));
     }
 
-    <T extends Chronology<V>, V extends Version> Optional<T> getChronology(int nid);
+    <T extends Chronology<V>, V extends Version> Optional<T> getChronology(long nid);
 
-    default int nidForUuids(UUID... uuids) {
+    default long nidForUuids(UUID... uuids) {
         return nidForPublicId(PublicIds.of(uuids));
     }
 
-    int nidForPublicId(PublicId publicId);
-
-    /**
-     *
-     * @param component
-     * @return
-     * @param <T>
-     * @param <V>
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     */
-        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(Component component) {
-            return getEntity(nidForPublicId(component.publicId()));
-        }
-
-        /**
-         * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
-         * <p>         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
-         * which provides better type safety, null handling, and composability.
-         * <p>         * <b>Migration:</b>
-         * <pre>{@code
-         * // Old (deprecated):
-         * Optional<Entity> entity = EntityService.get().getEntity(publicId);
-         *
-         * // New (recommended):
-         * EntityHandle handle = EntityHandle.get(publicId);
-         * Optional<Entity<?>> entity = handle.entity();
-         * }</pre>
-         *
-         * @see EntityHandle#get(PublicId)
-         * TODO: We should search for all methods that do this silent type casting, and replace them with
-         * a fluent API that better manages type determination.
-         */
-        @Deprecated(since = "Current", forRemoval = true)
-        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(PublicId publicId) {
-            return getEntity(nidForPublicId(publicId));
-        }
-
-        /**
-         * @deprecated Use {@link EntityHandle#get(int)} instead.
-         * <p>         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
-         * which provides better type safety, null handling, and composability.
-         * <p>         * <b>Migration:</b>
-         * <pre>{@code
-         * // Old (deprecated):
-         * Optional<Entity> entity = EntityService.get().getEntity(nid);
-         *
-         * // New (recommended):
-         * EntityHandle handle = EntityHandle.get(nid);
-         * Optional<Entity<?>> entity = handle.entity();
-         *
-         * // Or with type safety:
-         * ConceptEntity concept = EntityHandle.getConceptOrThrow(nid);
-         * }</pre>
-         *
-         * @see EntityHandle#get(int)
-         * @see EntityHandle#getConceptOrThrow(int)
-         * @see EntityHandle#getSemanticOrThrow(int)
-         * @see EntityHandle#getPatternOrThrow(int)
-         * @see EntityHandle#getStampOrThrow(int)
-         * TODO: We should search for all methods that do this silent type casting, and replace them with
-         * a fluent API that better manages type determination.
-         */
-        @Deprecated(since = "Current", forRemoval = true)
-        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(int nid) {
-            T entity = getEntityFast(nid);
-            if (entity == null || entity.canceled()) {
-                return Optional.empty();
-            }
-            return Optional.of(entity);
-        }
-    default Optional<Entity<?>> packagePrivateGetEntity(int nid) {
-        Entity<?> entity = getEntityFast(nid);
-        if (entity == null || entity.canceled()) {
-            return Optional.empty();
-        }
-        return Optional.of(entity);
-    }
-    /**
-     *
-     * @param nid
-     * @return
-     * @param <T>
-     * @param <V>
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     * @deprecated Use {@link EntityHandle#get(int)} instead.
-     */
-    @Deprecated(since = "Current", forRemoval = true)
-        <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid);
-
-    /**
-     *
-     * @param uuidList
-     * @return
-     * @param <T>
-     * @param <V>
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
-     */
-    @Deprecated(since = "Current", forRemoval = true)
-        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(ImmutableList<UUID> uuidList) {
-            return getEntity(nidForUuids(uuidList));
-        }
+    long nidForPublicId(PublicId publicId);
 
 
-        default int nidForUuids(ImmutableList<UUID> uuidList) {
+        default long nidForUuids(ImmutableList<UUID> uuidList) {
             return nidForPublicId(PublicIds.of(uuidList.toArray(new UUID[uuidList.size()])));
-        }
-
-        /**
-         * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
-         * <p>         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
-         * which provides better type safety, null handling, and composability.
-         * <p>         * <b>Migration:</b>
-         * <pre>{@code
-         * // Old (deprecated):
-         * Optional<Entity> entity = EntityService.get().getEntity(uuids);
-         *
-         * // New (recommended):
-         * EntityHandle handle = EntityHandle.get(PublicIds.of(uuids));
-         * Optional<Entity<?>> entity = handle.entity();
-         * }</pre>
-         *
-         * @see EntityHandle#get(PublicId)
-         * TODO: We should search for all methods that do this silent type casting, and replace them with
-         * a fluent API that better manages type determination.
-         * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
-         */
-        @Deprecated(since = "Current", forRemoval = true)
-        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(UUID... uuids) {
-            return getEntity(nidForUuids(uuids));
-        }
-
-        /**
-         * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
-         * <p>         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
-         * which provides better type safety, null handling, and composability.
-         * <p>         * <b>Migration:</b>
-         * <pre>{@code
-         * // Old (deprecated):
-         * Optional<Entity> entity = EntityService.get().getEntity(entityFacade);
-         *
-         * // New (recommended):
-         * EntityHandle handle = EntityHandle.get(entityFacade);
-         * Optional<Entity<?>> entity = handle.entity();
-         * }</pre>
-         *
-         * @see EntityHandle#get(EntityFacade)
-         * TODO: We should search for all methods that do this silent type casting, and replace them with
-         * a fluent API that better manages type determination.
-         * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
-         */
-        @Deprecated(since = "Current", forRemoval = true)
-        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(EntityFacade entityFacade) {
-            return getEntity(entityFacade.nid());
-        }
-
-    /**
-     *
-     * @param uuidList
-     * @return
-     * @param <T>
-     * @param <V>
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
-     */
-    @Deprecated(since = "Current", forRemoval = true)
-        default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(ImmutableList<UUID> uuidList) {
-            return getEntityFast(nidForUuids(uuidList));
-        }
-
-    /**
-     *
-     * @param uuids
-     * @return
-     * @param <T>
-     * @param <V>
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
-     */
-    @Deprecated(since = "Current", forRemoval = true)
-        default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(UUID... uuids) {
-            return getEntityFast(nidForUuids(uuids));
-        }
-
-    /**
-     *
-     * @param entityFacade
-     * @return
-     * @param <T>
-     * @param <V>
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
-     */
-    @Deprecated(since = "Current", forRemoval = true)
-        default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(EntityFacade entityFacade) {
-            return getEntityFast(entityFacade.nid());
         }
 
         default Optional<StampEntity<StampEntityVersion>> getStamp(Component component) {
         return getStamp(nidForPublicId(component.publicId()));
     }
 
-    default Optional<StampEntity<StampEntityVersion>> getStamp(int nid) {
-        StampEntity entity = getEntityFast(nid);
+    default Optional<StampEntity<StampEntityVersion>> getStamp(long nid) {
+        StampEntity entity = (StampEntity) EntityHandle.get(nid).orNull();
         if (entity == null || entity.canceled()) {
             return Optional.empty();
         }
@@ -339,14 +146,14 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      *                 The consumer is invoked for each valid {@code StampEntity} found.
      */
     default void forEachStampEntity(Consumer<StampEntity<StampEntityVersion>> consumer) {
-        PrimitiveData.get().forEachStampNid(nid -> {
+        EntityStore.current().forEachStampNid(nid -> {
             EntityHandle.get(nid).ifPresent(entity -> {
                 switch (entity) {
                     case StampEntity stampEntity -> consumer.accept(stampEntity);
                     case ConceptEntity conceptEntity -> LOG.error("Unexpected concept entity in stamp iteration: {}", conceptEntity);
                     case PatternEntity patternEntity -> LOG.error("Unexpected pattern entity in stamp iteration: {}", patternEntity);
                     case SemanticEntity semanticEntity -> LOG.error("Unexpected semantic entity in stamp iteration: {}", semanticEntity);
-                    default -> throw new IllegalStateException("Unexpected value: " + entity);
+                    default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
                 }
             });
         });
@@ -362,21 +169,21 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      *                 receive each resolved concept entity during the iteration.
      */
     default void forEachConceptEntity(Consumer<ConceptEntity<ConceptEntityVersion>> consumer) {
-        PrimitiveData.get().forEachConceptNid(nid -> {
+        EntityStore.current().forEachConceptNid(nid -> {
             EntityHandle.get(nid).ifPresent(entity -> {
                 switch (entity) {
                     case ConceptEntity conceptEntity -> consumer.accept(conceptEntity);
                     case StampEntity stampEntity -> LOG.error("Unexpected stamp entity in concept iteration: {}", stampEntity);
                     case PatternEntity patternEntity -> LOG.error("Unexpected pattern entity in concept iteration: {}", patternEntity);
                     case SemanticEntity semanticEntity -> LOG.error("Unexpected semantic entity in concept iteration: {}", semanticEntity);
-                    default -> throw new IllegalStateException("Unexpected value: " + entity);
+                    default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
                 }
             });
         });
     }
 
-    default void forEachEntity(ImmutableIntList entityNids, Consumer<Entity<?>> consumer) {
-        PrimitiveData.get().forEach(entityNids, (bytes, _) -> {
+    default void forEachEntity(ImmutableLongList entityNids, Consumer<Entity<?>> consumer) {
+        EntityStore.current().forEach(entityNids, (bytes, _) -> {
             Entity<EntityVersion> entity = EntityRecordFactory.make(bytes);
             consumer.accept(entity);
         });
@@ -391,14 +198,14 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      *                 with its associated {@link PatternEntityVersion}
      */
     default void forEachPatternEntity(Consumer<PatternEntity<PatternEntityVersion>> consumer) {
-        PrimitiveData.get().forEachPatternNid(nid -> {
+        EntityStore.current().forEachPatternNid(nid -> {
             EntityHandle.get(nid).ifPresent(entity -> {
                 switch (entity) {
                     case PatternEntity patternEntity -> consumer.accept(patternEntity);
                     case StampEntity stampEntity -> LOG.error("Unexpected stamp entity in pattern iteration: {}", stampEntity);
                     case ConceptEntity conceptEntity -> LOG.error("Unexpected concept entity in pattern iteration: {}", conceptEntity);
                     case SemanticEntity semanticEntity -> LOG.error("Unexpected semantic entity in pattern iteration: {}", semanticEntity);
-                    default -> throw new IllegalStateException("Unexpected value: " + entity);
+                    default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
                 }
             });
         });
@@ -416,7 +223,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         return getStampFast(nidForUuids(uuidList));
     }
 
-    <T extends StampEntity<? extends StampEntityVersion>> T getStampFast(int nid);
+    <T extends StampEntity<? extends StampEntityVersion>> T getStampFast(long nid);
 
     default StampEntity<StampEntityVersion> getStampFast(UUID... uuids) {
         return getStampFast(nidForUuids(uuids));
@@ -469,14 +276,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         putEntityQuietly(entity, DataActivity.SYNCHRONIZABLE_EDIT);
     }
 
-    /**
-     * @param stampEntity
-     * @deprecated Use putEntity instead
-     */
-    @Deprecated
-    void putStamp(StampEntity stampEntity);
-
-    default int nidForComponent(Component component) {
+    default long nidForComponent(Component component) {
         if (component instanceof ComponentWithNid) {
             return ((ComponentWithNid) component).nid();
         }
@@ -485,11 +285,11 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
     void invalidateCaches(Entity entity);
 
-    void invalidateCaches(int... nids);
+    void invalidateCaches(long... nids);
 
     <T extends Chronology<V>, V extends Version> T unmarshalChronology(byte[] bytes);
 
-    default void addSortedUuids(List<UUID> uuidList, IntIdList idList) throws NoSuchElementException {
+    default void addSortedUuids(List<UUID> uuidList, LongIdList idList) throws NoSuchElementException {
         addSortedUuids(uuidList, idList.toArray());
     }
 
@@ -502,9 +302,9 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param nids
      * @throws NoSuchElementException
      */
-    default void addSortedUuids(List<UUID> uuidList, int... nids) throws NoSuchElementException {
-        for (int nid : nids) {
-            UUID[] uuids = getEntityFast(nid).publicId().asUuidArray();
+    default void addSortedUuids(List<UUID> uuidList, long... nids) throws NoSuchElementException {
+        for (long nid : nids) {
+            UUID[] uuids = EntityHandle.get(nid).expectEntity().publicId().asUuidArray();
             Arrays.sort(uuids);
             for (UUID nidUuid : uuids) {
                 uuidList.add(nidUuid);
@@ -512,17 +312,144 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         }
     }
 
-    void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
+    void forEachSemanticOfPattern(long patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
-    int[] semanticNidsOfPattern(int patternNid);
+    /**
+     * The semantics of a pattern. Each is read as the stream reaches it, so a stream that stops
+     * early ({@code findAny}, {@code anyMatch}, {@code limit}) reads only what it needed.
+     *
+     * @param patternNid the pattern
+     * @return the pattern's semantics, in no particular order
+     */
+    Stream<SemanticEntity<SemanticEntityVersion>> semanticsOfPattern(long patternNid);
 
-    void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
+    /**
+     * The semantics that reference a component, read as the stream reaches them.
+     *
+     * @param componentNid the referenced component
+     * @return the semantics referencing it, in no particular order
+     */
+    Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponent(long componentNid);
 
-    int[] semanticNidsForComponent(int componentNid);
+    /**
+     * The semantics of a pattern that reference a component, read as the stream reaches them:
+     * a component's descriptions, its stated axioms, its membership in a pattern.
+     *
+     * @param componentNid the referenced component
+     * @param patternNid   the pattern
+     * @return the pattern's semantics referencing the component, in no particular order
+     */
+    Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponentOfPattern(long componentNid, long patternNid);
 
-    void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
+    /**
+     * Every semantic in the store, of every pattern.
+     *
+     * @param consumer receives each semantic
+     */
+    default void forEachSemanticEntity(Consumer<SemanticEntity<SemanticEntityVersion>> consumer) {
+        forEachPatternEntity(pattern -> forEachSemanticOfPattern(pattern.nid(), consumer));
+    }
 
-    int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid);
+    /**
+     * Every entity in the store: concepts, patterns, semantics and stamps.
+     *
+     * @param consumer receives each entity
+     */
+    default void forEachEntity(Consumer<Entity<?>> consumer) {
+        EntityStore.current().forEach((bytes, _) -> consumer.accept(EntityRecordFactory.make(bytes)));
+    }
+
+    /**
+     * Every entity in the store, given to the consumer from several threads at once, in no
+     * particular order: for work over the whole store, such as rebuilding an index.
+     *
+     * @param consumer receives each entity; must be safe to call concurrently
+     */
+    default void forEachEntityParallel(Consumer<Entity<?>> consumer) {
+        EntityStore.current().forEachParallel((bytes, _) -> {
+            if (bytes != null && bytes.length > 0) {
+                consumer.accept(EntityRecordFactory.make(bytes));
+            }
+        });
+    }
+
+    /**
+     * How many entities the store holds, of every kind, counted without reading them.
+     *
+     * @return the number of entities in the store
+     */
+    default long countEntities() {
+        java.util.concurrent.atomic.LongAdder count = new java.util.concurrent.atomic.LongAdder();
+        EntityStore.current().forEachParallel((bytes, _) -> {
+            if (bytes != null && bytes.length > 0) {
+                count.increment();
+            }
+        });
+        return count.sum();
+    }
+
+    /**
+     * How many concepts the store lists, counted without reading them. A pattern-keyed store
+     * lists every nid it has assigned to a concept, including any assigned and never written.
+     *
+     * @return the number of concepts the store lists
+     */
+    default long countConcepts() {
+        java.util.concurrent.atomic.LongAdder count = new java.util.concurrent.atomic.LongAdder();
+        EntityStore.current().forEachConceptNid(_ -> count.increment());
+        return count.sum();
+    }
+
+    /**
+     * How many semantics the store lists, counted without reading them. A pattern-keyed store
+     * lists every nid it has assigned to a semantic, including any assigned and never written.
+     *
+     * @return the number of semantics the store lists
+     */
+    default long countSemantics() {
+        java.util.concurrent.atomic.LongAdder count = new java.util.concurrent.atomic.LongAdder();
+        EntityStore.current().forEachSemanticNid(_ -> count.increment());
+        return count.sum();
+    }
+
+    /**
+     * How many semantics of a pattern the store holds, counted without reading them: the length
+     * of the pattern's index. A view that shows the first few semantics of a pattern and the
+     * number of the rest uses this, with {@link #semanticsOfPattern(int)} limited, so it reads
+     * only what it shows; counting with {@link #forEachSemanticOfPattern} reads every semantic.
+     *
+     * @param patternNid the pattern
+     * @return the number of semantics its index lists
+     */
+    default int countSemanticsOfPattern(long patternNid) {
+        if (keysNoSemantics(patternNid)) {
+            return 0;
+        }
+        return EntityStore.current().semanticNidsOfPattern(patternNid).length;
+    }
+
+    /**
+     * Whether a pattern is one whose elements are not semantics: the concept, stamp and pattern
+     * binding patterns. A pattern-keyed store keys every concept, stamp and pattern under one of
+     * them, so their index lists concepts, stamps and patterns; none of them has a semantic.
+     *
+     * @param patternNid the pattern
+     * @return {@code true} for the concept, stamp and pattern binding patterns
+     */
+    static boolean keysNoSemantics(long patternNid) {
+        // By nid: most stores keep no map from a nid back to its public id.
+        for (PublicId binding : List.of(EntityBinding.Concept.pattern().publicId(),
+                EntityBinding.Stamp.pattern().publicId(), EntityBinding.Pattern.pattern().publicId())) {
+            if (PrimitiveData.get().hasPublicId(binding) && PrimitiveData.get().nidForPublicId(binding) == patternNid) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void forEachSemanticForComponent(long componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
+
+    void forEachSemanticForComponentOfPattern(long componentNid, long patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
     void notifyRefreshRequired(Transaction transaction);
 
@@ -559,7 +486,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param entityPublicId the public ID of the entity
      * @return the NID associated with the given entity within the specified pattern context
      */
-    default int nidFor(int patternNid, PublicId entityPublicId) {
+    default long nidFor(long patternNid, PublicId entityPublicId) {
         PublicId patternPublicId = EntityHandle.get(patternNid).expectEntity().publicId();
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
@@ -579,7 +506,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param semanticPublicId the public ID of the semantic entity
      * @return the NID associated with the given semantic within the specified pattern context
      */
-    default int nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
+    default long nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
                 .call(() -> nidForPublicId(semanticPublicId));
@@ -598,7 +525,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param patternPublicId the public ID of the pattern entity
      * @return the NID associated with the given pattern
      */
-    default int nidForPattern(PublicId patternPublicId) {
+    default long nidForPattern(PublicId patternPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Pattern.pattern())
                 .call(() -> nidForPublicId(patternPublicId));
@@ -617,7 +544,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param stampPublicId the public ID of the STAMP entity
      * @return the NID associated with the given STAMP
      */
-    default int nidForStamp(PublicId stampPublicId) {
+    default long nidForStamp(PublicId stampPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
                 .call(() -> nidForPublicId(stampPublicId));
@@ -636,7 +563,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param conceptPublicId the public ID of the concept entity
      * @return the NID associated with the given concept
      */
-    default int nidForConcept(PublicId conceptPublicId) {
+    default long nidForConcept(PublicId conceptPublicId) {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
                 .call(() -> nidForPublicId(conceptPublicId));
@@ -651,9 +578,9 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      *
      * @param stampNids array of stamp NIDs to check for uncommitted stamps
      */
-    void listAndCancelUncommittedStamps(int[] stampNids);
+    void listAndCancelUncommittedStamps(long[] stampNids);
 
-    default String recursiveEntityToString(int nid) {
+    default String recursiveEntityToString(long nid) {
         return EntityStringUtil.recursiveEntityToString(nid);
     }
 

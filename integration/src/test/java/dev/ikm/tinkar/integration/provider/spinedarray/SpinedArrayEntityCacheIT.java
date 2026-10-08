@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -23,7 +25,9 @@ import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptRecordBuilder;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.PublicIdentifierRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.transaction.Transaction;
@@ -32,9 +36,7 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.impl.factory.Lists;
-import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -81,9 +83,9 @@ class SpinedArrayEntityCacheIT {
         /* Start: Seed database with one STAMP */
         Transaction transaction = new Transaction();
         StampEntity currentStampEntity = transaction.getStamp(State.ACTIVE,
-                TinkarTerm.USER,
-                TinkarTerm.DEVELOPMENT_MODULE,
-                TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER,
+                IkeTerms.DEVELOPMENT_MODULE,
+                KernelTerm.DEVELOPMENT_PATH);
         transaction.commit();
         /* End: Seed database with one STAMP */
 
@@ -92,12 +94,12 @@ class SpinedArrayEntityCacheIT {
         EntityService.get().putEntity(newConceptVersion);
 
         int expectedUuidCount = 1;
-        int actualUuidCount = EntityService.get().getEntityFast(conceptProxy).publicId().asUuidArray().length;
+        int actualUuidCount = EntityHandle.get(conceptProxy).expectConcept().publicId().asUuidArray().length;
         assertEquals(expectedUuidCount, actualUuidCount,
                 String.format("UUID count is not correct. Expect: %s, Actual: %s", expectedUuidCount, actualUuidCount));
 
         int expectedVersionCount = 1;
-        int actualVersionCount = EntityService.get().getEntityFast(conceptProxy).versions().size();
+        int actualVersionCount = EntityHandle.get(conceptProxy).expectConcept().versions().size();
         assertEquals(expectedVersionCount, actualVersionCount,
                 String.format("Version count is not correct. Expect: %s, Actual: %s", expectedVersionCount, actualVersionCount));
     }
@@ -111,13 +113,13 @@ class SpinedArrayEntityCacheIT {
         Transaction transaction = new Transaction();
         StampEntity preInceptionStampEntity = transaction.getStamp(State.ACTIVE,
                 PrimitiveData.PRE_INCEPTION_TIME,
-                TinkarTerm.USER.publicId(),
-                TinkarTerm.DEVELOPMENT_MODULE.publicId(),
-                TinkarTerm.DEVELOPMENT_PATH.publicId());
+                KernelTerm.USER.publicId(),
+                IkeTerms.DEVELOPMENT_MODULE.publicId(),
+                KernelTerm.DEVELOPMENT_PATH.publicId());
         StampEntity currentStampEntity = transaction.getStamp(State.ACTIVE,
-                TinkarTerm.USER,
-                TinkarTerm.DEVELOPMENT_MODULE,
-                TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER,
+                IkeTerms.DEVELOPMENT_MODULE,
+                KernelTerm.DEVELOPMENT_PATH);
         //Write Concept Version to database
         ConceptEntity seedConceptVersion = writeConceptHelper(conceptProxy, preInceptionStampEntity);
         transaction.addComponent(seedConceptVersion);
@@ -130,12 +132,12 @@ class SpinedArrayEntityCacheIT {
         EntityService.get().putEntity(conceptRecordWithMultipleUuids);
 
         int expectedUuidCount = 1;
-        int actualUuidCount = EntityService.get().getEntityFast(conceptProxy).publicId().asUuidArray().length;
+        int actualUuidCount = EntityHandle.get(conceptProxy).expectConcept().publicId().asUuidArray().length;
         assertEquals(expectedUuidCount, actualUuidCount,
                 String.format("UUID count is not correct. Expect: %s, Actual: %s", expectedUuidCount, actualUuidCount));
 
         int expectedVersionCount = 2;
-        int actualVersionCount = EntityService.get().getEntityFast(conceptProxy).versions().size();
+        int actualVersionCount = EntityHandle.get(conceptProxy).expectConcept().versions().size();
         assertEquals(expectedVersionCount, actualVersionCount,
                 String.format("Version count is not correct. Expect: %s, Actual: %s", expectedVersionCount, actualVersionCount));
     }
@@ -146,21 +148,18 @@ class SpinedArrayEntityCacheIT {
         PublicId conceptId = concept.publicId();
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
 
-        //Pull out primordial UUID from PublicId
-        UUID primordialUUID = conceptId.asUuidArray()[0];
-        //Process additional UUID longs from PublicId
-
-        long[] additionalLongs = additionalLongsHelper(conceptId);
+        //The record header holds every UUID of the PublicId
+        PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(conceptId);
 
         //Assign nids for PublicIds
-        int stampNid = EntityService.get().nidForPublicId(stampId);
+        long stampNid = EntityService.get().nidForPublicId(stampId);
 
         //Create Concept Chronology
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
                 .nid(concept.nid())
-                .leastSignificantBits(primordialUUID.getLeastSignificantBits())
-                .mostSignificantBits(primordialUUID.getMostSignificantBits())
-                .additionalUuidLongs(LongLists.immutable.of(additionalLongs))
+                .leastSignificantBits(conceptIdRecord.leastSignificantBits())
+                .mostSignificantBits(conceptIdRecord.mostSignificantBits())
+                .additionalUuidLongs(conceptIdRecord.additionalUuidLongs())
                 .versions(versions)
                 .build();
 
@@ -172,17 +171,6 @@ class SpinedArrayEntityCacheIT {
 
         //Rebuild the ConceptRecord with the now populated version data
         return ConceptRecordBuilder.builder(conceptRecord).versions(versions.toImmutable()).build();
-    }
-
-    private static long[] additionalLongsHelper(PublicId publicId) {
-        long[] additionalLongs = new long[(publicId.uuidCount() * 2) - 2];
-        int index = 0;
-        for (int i = 1; i < publicId.uuidCount(); i++) {
-            UUID uuid = publicId.asUuidArray()[i];
-            additionalLongs[index++] = uuid.getMostSignificantBits();
-            additionalLongs[index++] = uuid.getLeastSignificantBits();
-        }
-        return additionalLongs.length == 0 ? null : additionalLongs;
     }
 
 }

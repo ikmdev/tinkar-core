@@ -25,6 +25,13 @@ public enum ServiceKeys {
      */
     DATA_STORE_EXPECT_EMPTY,
     /**
+     * When true, the entity service cancels, as it starts, every stamp left uncommitted outside
+     * a transaction. Off by default: an uncommitted stamp is work in progress, and it survives a
+     * restart and travels in change sets. A deployment that wants every session to begin with
+     * no uncommitted work turns this on.
+     */
+    CANCEL_UNCOMMITTED_STAMPS_AT_STARTUP,
+    /**
      * Unique to each invocation of the JVM. Will persist across cache resets.
      */
     JVM_UUID,

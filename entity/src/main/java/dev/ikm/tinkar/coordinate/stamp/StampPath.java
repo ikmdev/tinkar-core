@@ -19,6 +19,7 @@ package dev.ikm.tinkar.coordinate.stamp;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import org.eclipse.collections.api.set.ImmutableSet;
 
@@ -34,7 +35,7 @@ import java.util.Arrays;
 public interface StampPath
         extends Comparable<StampPath> {
     default PublicId pathCoordinateId() {
-        return Entity.provider().getEntityFast(pathConceptNid());
+        return EntityHandle.get(pathConceptNid()).expectConcept().publicId();
     }
 
     /**
@@ -42,16 +43,16 @@ public interface StampPath
      *
      * @return the nid of the Concept that defines this STAMP path.
      */
-    int pathConceptNid();
+    long pathConceptNid();
 
     default ConceptFacade pathConcept() {
-        return Entity.getFast(pathConceptNid());
+        return EntityHandle.get(pathConceptNid()).expectConcept();
     }
 
     @Override
     default int compareTo(StampPath that) {
         if (this.pathConceptNid() != that.pathConceptNid()) {
-            return Integer.compare(this.pathConceptNid(), that.pathConceptNid());
+            return Long.compare(this.pathConceptNid(), that.pathConceptNid());
         }
         if (this.getPathOrigins().size() != that.getPathOrigins().size()) {
             return Integer.compare(this.getPathOrigins().size(), that.getPathOrigins().size());

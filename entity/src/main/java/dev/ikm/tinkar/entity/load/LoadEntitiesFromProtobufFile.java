@@ -15,6 +15,10 @@
  */
 package dev.ikm.tinkar.entity.load;
 
+import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
+import dev.ikm.tinkar.entity.changeset.IdentityIndex;
+import dev.ikm.tinkar.entity.changeset.SchemaIds;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.thread.StructuredScopes;
 import dev.ikm.tinkar.common.util.thread.SubtaskFailedException;
 import dev.ikm.tinkar.common.alert.AlertStreams;
@@ -32,6 +36,7 @@ import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer;
 import dev.ikm.tinkar.schema.PatternChronology;
 import dev.ikm.tinkar.schema.SemanticChronology;
@@ -45,6 +50,9 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -60,6 +68,28 @@ import java.util.zip.ZipInputStream;
 
 /**
  * The purpose of this class is to successfully load all Protobuf messages from a protobuf file and transform them into entities.
+ *
+ * <h2>Watch list</h2>
+ * A watch list traces chosen components through an import, for debugging identity and
+ * allocation problems. Name the components' UUIDs, any of each public id's UUIDs, either with
+ * the system property {@value #WATCH_PROPERTY} or with {@link #watch(UUID...)}:
+ * <pre>{@code
+ * -Dtinkar.import.watch=<uuid>[,<uuid>...]
+ * }</pre>
+ * UUIDs are separated by commas or whitespace. For every watched UUID the import logs, at
+ * {@code INFO}:
+ * <ul>
+ *     <li>the record and its nid when pass 1 reads records for their identities (format
+ *     version 1, multi-pass);</li>
+ *     <li>each watched entity as it is stored;</li>
+ *     <li>after the import, the UUID's nid, entity key, pattern and element sequences, stored
+ *     bytes and text.</li>
+ * </ul>
+ * The watch list is bound to {@link #SCOPED_WATCH_LIST} for the whole import, so a store can
+ * trace its own work on watched components: the RocksDB store logs each watched entity-key
+ * allocation. Work an import hands to a parallel stream, rather than to a structured task
+ * scope, runs outside that binding; the identity index (format version 2) registers its nids
+ * that way, so the store traces only the allocations made on the importing thread.
  */
 public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSummary> {
 
@@ -68,7 +98,6 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
     private final TinkarSchemaToEntityTransformer entityTransformer =
             TinkarSchemaToEntityTransformer.getInstance();
-    private static final String MANIFEST_RELPATH = "META-INF/MANIFEST.MF";
 
     /** How often a reader waiting for a permit checks whether its scope has been cancelled. */
     private static final long PERMIT_POLL_MS = 100L;
@@ -81,9 +110,23 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     
     private final AtomicLong identifierCount = new AtomicLong();
     private final boolean useMultiPassImport;
-    private final Set<UUID> watchList = new CopyOnWriteArraySet<>();
+    /** The format version the changeset's manifest names; known once {@link #compute()} has read it. */
+    private volatile int formatVersion;
+    /** Whether the import took every component's identity from the changeset's identity index. */
+    private volatile boolean usedIdentityIndex;
+    private final Set<UUID> watchList = new CopyOnWriteArraySet<>(watchListFromProperty());
+
+    /**
+     * The system property naming UUIDs to watch during every import, separated by commas or
+     * whitespace; see the class documentation.
+     */
+    public static final String WATCH_PROPERTY = "tinkar.import.watch";
 
     public static final ScopedValue<TinkarMsg> SCOPED_TINKAR_MSG = ScopedValue.newInstance();
+    /**
+     * The watched UUIDs, bound for the whole of an import; stores and other code an import calls
+     * read it to trace their work on watched components.
+     */
     public static final ScopedValue<Set<UUID>> SCOPED_WATCH_LIST = ScopedValue.newInstance();
 
     /**
@@ -109,6 +152,80 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         this.useMultiPassImport = useMultiPassImport;
         LOG.info("Loading entities from: " + importFile.getAbsolutePath() + " using " +
                 (useMultiPassImport ? "multi-pass" : "1-pass") + " import mode");
+        if (!watchList.isEmpty()) {
+            LOG.info("Watching {} from -D{}", watchList, WATCH_PROPERTY);
+        }
+    }
+
+    /**
+     * Adds UUIDs to this import's watch list, alongside any the {@value #WATCH_PROPERTY}
+     * property names; see the class documentation.
+     *
+     * @param uuids any UUIDs of the components to trace
+     * @return this loader
+     */
+    public LoadEntitiesFromProtobufFile watch(UUID... uuids) {
+        watchList.addAll(Arrays.asList(uuids));
+        return this;
+    }
+
+    private static Set<UUID> watchListFromProperty() {
+        String property = System.getProperty(WATCH_PROPERTY, "").strip();
+        if (property.isEmpty()) {
+            return Set.of();
+        }
+        Set<UUID> uuids = new LinkedHashSet<>();
+        for (String token : property.split("[,\\s]+")) {
+            try {
+                uuids.add(UUID.fromString(token));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("-D" + WATCH_PROPERTY + " names " + token
+                        + ", which is not a UUID", e);
+            }
+        }
+        return uuids;
+    }
+
+    private boolean isWatched(PublicId publicId) {
+        for (UUID uuid : publicId.asUuidArray()) {
+            if (watchList.contains(uuid)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void traceIfWatched(Entity<? extends EntityVersion> entity) {
+        if (!watchList.isEmpty() && isWatched(entity.publicId())) {
+            LOG.info("Stored watched entity nid {} (0x{}): {}", entity.nid(), Long.toHexString(entity.nid()), entity);
+        }
+    }
+
+    /** Logs where each watched UUID landed, once the import has stored everything. */
+    private void reportWatchList() {
+        if (watchList.isEmpty()) {
+            return;
+        }
+        LOG.info("Checking watchList: {} ", watchList);
+        for (UUID uuid : watchList) {
+            Optional<dev.ikm.tinkar.common.id.EntityKey> entityKey = PrimitiveData.getEntityKey(uuid);
+            if (entityKey.isEmpty()) {
+                LOG.info("Watched {} is not in the store", uuid);
+                continue;
+            }
+            StringBuilder sb = new StringBuilder();
+            long nid = PrimitiveData.get().nidForUuids(uuid);
+            int patternSequence = PrimitiveData.patternSequenceForNid(nid);
+            long elementSequence = PrimitiveData.elementSequenceForNid(nid);
+            byte[] entityBytes = EntityStore.current().getBytes(nid);
+            sb.append("\n\nnid for ").append(uuid).append(" is: ").append(nid);
+            sb.append("\npatternSequence for ").append(uuid).append(" is: ").append(patternSequence);
+            sb.append("\nelementSequence for ").append(uuid).append(" is: ").append(elementSequence);
+            sb.append("\nentityBytes for ").append(uuid).append(" is: ").append(Arrays.toString(entityBytes));
+            sb.append("\nentityKey for ").append(uuid).append(" is: ").append(entityKey);
+            sb.append("\nText with nid: ").append(PrimitiveData.textWithNid(nid));
+            LOG.info(sb.toString());
+        }
     }
 
     /**
@@ -124,14 +241,24 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             updateMessage("Analyzing Import File...");
 
             // Analyze Manifest and update tracking callable
-            Map<PublicId, String> manifestEntryData =new HashMap();
+            List<Map.Entry<PublicId, String>> manifestEntryData = new ArrayList<>(); // a public id is never a hash key
             long expectedImports = analyzeManifest(manifestEntryData);
-            LOG.info(expectedImports + " Entities to process...");
+            LOG.info(expectedImports + " Entities to process, format version " + formatVersion + "...");
 
-            if (useMultiPassImport) {
-                return computeMultiPass(expectedImports, manifestEntryData);
+            // With an identity index every nid is assigned from it and the records are read
+            // once, in either mode; without one (format version 1), the mode decides.
+            boolean indexed = ChangeSetFormat.hasIdentityIndex(importFile);
+            if (formatVersion >= 2 && !indexed) {
+                throw new IllegalStateException(importFile.getName() + " names " + ChangeSetFormat.VERSION_ATTRIBUTE
+                        + ": " + formatVersion + " but carries no identity index (" + ChangeSetFormat.IDENTITY_INDEX + ")");
+            }
+            Set<UUID> watched = Collections.unmodifiableSet(watchList);
+            if (useMultiPassImport || indexed) {
+                return ScopedValue.where(SCOPED_WATCH_LIST, watched)
+                        .call(() -> computeMultiPass(expectedImports, manifestEntryData, indexed));
             } else {
-                return computeOnePass(expectedImports, manifestEntryData);
+                return ScopedValue.where(SCOPED_WATCH_LIST, watched)
+                        .call(() -> computeOnePass(expectedImports, manifestEntryData));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -139,27 +266,31 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     }
 
     /**
-     * Multi-pass import: Imports entities in dependency order to handle forward references.
-     * Pass 1: Import non-semantics (Concepts, Patterns, Stamps) - these have no referenced components
-     * Pass 2+: Import semantics whose referenced components now exist in the database
-     * Repeats until all semantics are successfully imported or no progress is made.
+     * Import with every nid assigned before any record is transformed, so forward references
+     * resolve. Pass 1 assigns the nids: from the changeset's identity index when it has one,
+     * else by reading every record for its identity. Pass 2 transforms and stores the records.
      */
-    private EntityCountSummary computeMultiPass(long expectedImports, Map<PublicId, String> manifestEntryData) throws Exception {
+    private EntityCountSummary computeMultiPass(long expectedImports, List<Map.Entry<PublicId, String>> manifestEntryData,
+                                                boolean indexed) throws Exception {
         updateMessage("Starting multi-pass import...");
         updateProgress(0, expectedImports * 2);
 
         // Pass 1: generate identifiers for all entities
         EntityService.get().beginLoadPhase();
-        CopyOnWriteArrayList<UUID> patternUuids = new CopyOnWriteArrayList<>();
+        CopyOnWriteArrayList<PublicId> patternIds = new CopyOnWriteArrayList<>();
 
-        try (FileInputStream fileIn = new FileInputStream(importFile);
+        if (indexed) {
+            updateMessage("Registering identifiers from the identity index...");
+            identifierCount.set(IdentityIndex.registerNids(importFile, registered -> updateProgress(registered, expectedImports * 2)));
+            usedIdentityIndex = true;
+        } else try (FileInputStream fileIn = new FileInputStream(importFile);
              BufferedInputStream buffIn = new BufferedInputStream(fileIn, InputStreamBufferSize);
              CountingInputStream countingIn = new CountingInputStream(buffIn);
              ZipInputStream zis = new ZipInputStream(countingIn)) {
             ZipEntry zipEntry;
             int messageIndex = 0;
             while ((zipEntry = zis.getNextEntry()) != null) {
-                if (!zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                if (!ChangeSetFormat.isMetadata(zipEntry.getName())) {
                     Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 8);
 
                     try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
@@ -171,14 +302,13 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                             }
                             scope.fork(() -> {
                                 try {
-                                    ScopedValue.where(SCOPED_TINKAR_MSG, pbTinkarMsg)
-                                            .where(SCOPED_WATCH_LIST, watchList).call(() -> {
+                                    ScopedValue.where(SCOPED_TINKAR_MSG, pbTinkarMsg).call(() -> {
                                                 if (pbTinkarMsg != null) {
                                                     // Batch progress updates to prevent hanging the UI thread
                                                     if (identifierCount.incrementAndGet() % 1000 == 0) {
                                                         updateProgress(countingIn.getBytesRead(), this.importFile.length() * 2);
                                                     }
-                                                    int nid = switch (pbTinkarMsg.getValueCase()) {
+                                                    long nid = switch (pbTinkarMsg.getValueCase()) {
                                                         case CONCEPT_CHRONOLOGY ->
                                                                 makeNid(EntityBinding.Concept.pattern(), pbTinkarMsg.getConceptChronology().getPublicId());
                                                         case SEMANTIC_CHRONOLOGY ->
@@ -192,9 +322,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                                                     };
                                                     if (pbTinkarMsg.getValueCase().getNumber() == TinkarMsg.ValueCase.PATTERN_CHRONOLOGY.getNumber()) {
                                                         PatternChronology patternChronology = pbTinkarMsg.getPatternChronology();
-                                                        String uuidStr = patternChronology.getPublicId().getUuidsList().get(0);
-                                                        UUID uuid = UUID.fromString(uuidStr);
-                                                        patternUuids.add(uuid);
+                                                        patternIds.add(getEntityPublicId(patternChronology.getPublicId()));
                                                     }
                                                 }
                                                 return null;
@@ -225,12 +353,13 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             Consumer<Entity<? extends EntityVersion>> entityConsumer = entity -> {
                 EntityService.get().putEntityNoCache(entity, DataActivity.LOADING_CHANGE_SET);
                 updateCounts(entity);
+                traceIfWatched(entity);
             };
 
             ZipEntry zipEntry;
             final AtomicInteger errorCount = new AtomicInteger();
             while ((zipEntry = zis.getNextEntry()) != null) {
-                if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                if (ChangeSetFormat.isMetadata(zipEntry.getName())) {
                     continue;
                 }
                 try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
@@ -279,13 +408,15 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             }
             StringBuilder stringBuilder = new StringBuilder();
 
-            patternUuids.forEach(patternUuid -> {
-                int nid = PrimitiveData.get().nidForUuids(patternUuid);
-                PatternEntity patternEntity = EntityService.get().getEntityFast(nid);
+            patternIds.forEach(patternId -> {
+                long nid = PrimitiveData.get().nidForUuids(patternId.asUuidArray());
+                PatternEntity patternEntity = EntityHandle.get(nid).asPattern().orElse(null);
                 StampCoordinate stampCoordinate = Coordinates.Stamp.DevelopmentLatest();
                 String entityText = PrimitiveData.textWithNid(nid);
-                PrimitiveData.getEntityKey(patternUuid).ifPresent(entityKey ->
-                        stringBuilder.append("\n\nPattern: ").append(entityText).append(" EntityKey: ").append(entityKey));
+                // Any of the pattern's UUIDs finds its key.
+                PrimitiveData.getEntityKey(patternId.leastUuid()).ifPresent(entityKey ->
+                        stringBuilder.append("\n\nPattern: ").append(entityText).append(" ").append(patternId.idString())
+                                .append(" EntityKey: ").append(entityKey));
 
                 stringBuilder.append("\n nid=").append(nid).append(" (0x").append(String.format("%08X", nid)).append(")").append(" pattern sequence=").append(NidLayout.active().decodePatternSequence(nid)).append(" element sequence=").append(NidLayout.active().decodeElementSequence(nid));
                 stringBuilder.append("\nPatternEntity: ").append(patternEntity);
@@ -298,22 +429,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
             verifyManifest(manifestEntryData);
 
-            LOG.info("Checking watchList: {} ", watchList);
-            for (UUID uuid : watchList) {
-                StringBuilder sb = new StringBuilder();
-                Optional<dev.ikm.tinkar.common.id.EntityKey> entityKey = PrimitiveData.getEntityKey(uuid);
-                int nid = PrimitiveData.get().nidForUuids(uuid);
-                int patternSequence = PrimitiveData.patternSequenceForNid(nid);
-                long elementSequence = PrimitiveData.elementSequenceForNid(nid);
-                byte[] entityBytes = PrimitiveData.get().getBytes(nid);
-                sb.append("\n\nnid for ").append(uuid).append(" is: ").append(nid);
-                sb.append("\npatternSequence for ").append(uuid).append(" is: ").append(patternSequence);
-                sb.append("\nelementSequence for ").append(uuid).append(" is: ").append(elementSequence);
-                sb.append("\nentityBytes for ").append(uuid).append(" is: ").append(Arrays.toString(entityBytes));
-                sb.append("\nentityKey for ").append(uuid).append(" is: ").append(entityKey);
-                sb.append("\nText with nid: ").append(PrimitiveData.textWithNid(nid));
-                LOG.info(sb.toString());
-            }
+            reportWatchList();
         } catch (IOException e) {
             updateTitle("Import Protobuf Data from " + importFile.getName() + " with error(s)");
             throw new RuntimeException(e);
@@ -333,12 +449,12 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         return summarize();
     }
 
-    private static void verifyManifest(Map<PublicId, String> manifestEntryData) {
-        manifestEntryData.keySet().forEach((publicId) -> {
-            if (!PrimitiveData.get().hasPublicId(publicId)) {
+    private static void verifyManifest(List<Map.Entry<PublicId, String>> manifestEntryData) {
+        manifestEntryData.forEach(entry -> {
+            if (!PrimitiveData.get().hasPublicId(entry.getKey())) {
                 LOG.warn("Dependent Module or Author is not Present -" +
-                        " PublicId: " + publicId.idString() +
-                        " Description: " + manifestEntryData.get(publicId));
+                        " PublicId: " + entry.getKey().idString() +
+                        " Description: " + entry.getValue());
             }
         });
     }
@@ -347,7 +463,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      * One-pass import: Load entities directly without pre-registering NIDs.
      * This may fail if the changeset contains forward references.
      */
-    private EntityCountSummary computeOnePass(long expectedImports, Map<PublicId, String> manifestEntryData) {
+    private EntityCountSummary computeOnePass(long expectedImports, List<Map.Entry<PublicId, String>> manifestEntryData) {
         updateMessage("Importing Protobuf Data (1-pass mode)...");
         LOG.debug("Expected imports: " + expectedImports);
 
@@ -357,11 +473,12 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             Consumer<Entity<? extends EntityVersion>> entityConsumer = entity -> {
                 EntityService.get().putEntityNoCache(entity, DataActivity.LOADING_CHANGE_SET);
                 updateCounts(entity);
+                traceIfWatched(entity);
             };
 
             ZipEntry zipEntry;
             while ((zipEntry = zis.getNextEntry()) != null) {
-                if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                if (ChangeSetFormat.isMetadata(zipEntry.getName())) {
                     continue;
                 }
 
@@ -401,6 +518,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             updateProgress(1, 1);
         }
         verifyManifest(manifestEntryData);
+        reportWatchList();
 
         if (importCount.get() != expectedImports) {
             IllegalStateException e = new IllegalStateException("Import Failed: Expected " + expectedImports + " Entities, but imported " + importCount.get());
@@ -414,7 +532,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      * Generate NID for a protobuf message to register the entity in the datastore.
      * This allows Pass 2 to resolve references.
      */
-    private int makeNidForMessage(TinkarMsg pbTinkarMsg) {
+    private long makeNidForMessage(TinkarMsg pbTinkarMsg) {
         return switch (pbTinkarMsg.getValueCase()) {
             case CONCEPT_CHRONOLOGY -> 
                 Entity.nidForConcept(getEntityPublicId(pbTinkarMsg.getConceptChronology().getPublicId()));
@@ -437,9 +555,20 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      * Extract PublicId from protobuf PublicId message.
      */
     private static PublicId getEntityPublicId(dev.ikm.tinkar.schema.PublicId pbPublicId) {
-        return PublicIds.of(pbPublicId.getUuidsList().stream()
-                .map(UUID::fromString)
-                .toList());
+        return SchemaIds.toPublicId(pbPublicId);
+    }
+
+    /** The format version the changeset's manifest names (1 when it names none); known once {@link #compute()} has run. */
+    public int formatVersion() {
+        return formatVersion;
+    }
+
+    /**
+     * Whether the import took every component's identity from the changeset's identity index,
+     * reading the records once, rather than reading them for their identities first.
+     */
+    public boolean usedIdentityIndex() {
+        return usedIdentityIndex;
     }
 
     protected void initCounts() {
@@ -457,7 +586,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             case SemanticEntity ignored -> importSemanticCount.incrementAndGet();
             case PatternEntity ignored -> importPatternCount.incrementAndGet();
             case StampEntity ignored -> importStampCount.incrementAndGet();
-            default -> throw new IllegalStateException("Unexpected value: " + entity);
+            default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
         }
     }
 
@@ -479,9 +608,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         dev.ikm.tinkar.entity.LoadPhaseSearchPolicy policy =
                 dev.ikm.tinkar.entity.EntityService.get().loadPhaseSearchPolicy();
         if (!policy.recreateRequired()) {
-            // The change-set fit under the live-index threshold; the index
-            // was kept current by per-merge calls during loadPhase. No
-            // post-load search work needed.
+            // The change-set fit under the live-index threshold; per-merge
+            // calls during loadPhase wrote its documents, and endLoadPhase
+            // made them visible to searches. No post-load search work needed.
             LOG.info("Change-set indexed live during load phase ({} entities, threshold {}) — no recreate needed",
                     policy.liveIndexedCount(),
                     dev.ikm.tinkar.entity.LoadPhaseSearchPolicy.threshold());
@@ -526,7 +655,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         return true;
     }
 
-    private long analyzeManifest(Map<PublicId, String> manifestEntryData) {
+    private long analyzeManifest(List<Map.Entry<PublicId, String>> manifestEntryData) {
         long expectedImports = -1;
 
         // Read Manifest from Zip
@@ -537,20 +666,23 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             ZipEntry zipEntry;
             boolean foundManifest = false;
             while (!foundManifest && (zipEntry = zis.getNextEntry()) != null) {
-                if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                if (zipEntry.getName().equals(ChangeSetFormat.MANIFEST)) {
                     Manifest manifest = new Manifest(zis);
+                    formatVersion = ChangeSetFormat.version(manifest.getMainAttributes(), importFile.getName());
                     expectedImports = Long.parseLong(manifest.getMainAttributes().getValue("Total-Count"));
                     // Get Dependent Module / Author PublicIds and Descriptions
                     manifest.getEntries().keySet().forEach((publicIdKey) -> {
                         PublicId publicId = PublicIds.of(publicIdKey.split(","));
                         String description = manifest.getEntries().get(publicIdKey).getValue("Description");
-                        manifestEntryData.put(publicId, description);
+                        manifestEntryData.add(Map.entry(publicId, description));
                     });
                     foundManifest = true;
                 }
                 zis.closeEntry();
                 LOG.info(zipEntry.getName() + " zip entry size: " + zipEntry.getSize());
             }
+        } catch (ChangeSetFormat.UnsupportedFormatException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -558,31 +690,25 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         return expectedImports;
     }
 
-    private int makeNid(SemanticChronology semanticChronology) {
+    private long makeNid(SemanticChronology semanticChronology) {
         return makeNid(EntityProxy.Pattern.make(getEntityPublicId(semanticChronology.getPatternForSemanticPublicId())),
                 semanticChronology.getPublicId());
     }
 
 
-    private int makeNid(EntityProxy.Pattern pattern, dev.ikm.tinkar.schema.PublicId pbPublicId) {
+    private long makeNid(EntityProxy.Pattern pattern, dev.ikm.tinkar.schema.PublicId pbPublicId) {
         PublicId publicId = getEntityPublicId(pbPublicId);
-        int nid = makeNid(pattern, getEntityPublicId(pbPublicId));
+        long nid = makeNid(pattern, getEntityPublicId(pbPublicId));
         for (UUID uuid : publicId.asUuidArray()) {
             if (watchList.contains(uuid)) {
                 LOG.info("Found watch: {} for: \n\n{}", uuid, SCOPED_TINKAR_MSG.get());
                 LOG.info("nid for {} is: {}", uuid, nid);
-                LOG.info("nid for {} in hex is: {}", uuid, Integer.toHexString(nid));
+                LOG.info("nid for {} in hex is: {}", uuid, Long.toHexString(nid));
             }
         }
         return nid;
     }
-    private int makeNid(EntityProxy.Pattern pattern, PublicId entityId) {
-        // Create the UUID -> Nid map here...
-        if (SCOPED_WATCH_LIST.isBound()) {
-
-        } else {
-            LOG.info("Watch list not bound");
-        }
+    private long makeNid(EntityProxy.Pattern pattern, PublicId entityId) {
         dev.ikm.tinkar.common.id.EntityKey entityKey = PrimitiveData.getEntityKey(pattern.publicId(), entityId);
         return entityKey.nid();
     }

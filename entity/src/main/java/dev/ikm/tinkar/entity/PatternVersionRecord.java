@@ -15,9 +15,10 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
-import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.component.FeatureDefinition;
 import dev.ikm.tinkar.component.PatternVersion;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.factory.Lists;
@@ -27,8 +28,8 @@ import org.eclipse.collections.api.list.MutableList;
 import java.util.Objects;
 
 @RecordBuilder
-public record PatternVersionRecord(PatternRecord chronology, int stampNid,
-                                   int semanticPurposeNid, int semanticMeaningNid,
+public record PatternVersionRecord(PatternRecord chronology, long stampNid,
+                                   long semanticPurposeNid, long semanticMeaningNid,
                                    ImmutableList<FieldDefinitionRecord> fieldDefinitions)
         implements PatternEntityVersion, ImmutableVersion, PatternVersionRecordBuilder.With {
 
@@ -41,12 +42,12 @@ public record PatternVersionRecord(PatternRecord chronology, int stampNid,
     }
 
     public static PatternVersionRecord make(PatternRecord chronology, PatternVersion patternVersion) {
-        int stampNid = Entity.nid(patternVersion.stamp());
-        int semanticPurposeNid = Entity.nid(patternVersion.semanticPurpose());
-        int semanticMeaningNid = Entity.nid(patternVersion.semanticMeaning());
+        long stampNid = Entity.nid(patternVersion.stamp());
+        long semanticPurposeNid = Entity.nid(patternVersion.semanticPurpose());
+        long semanticMeaningNid = Entity.nid(patternVersion.semanticMeaning());
         MutableList<FieldDefinitionRecord> fieldDefinitions = Lists.mutable.ofInitialCapacity(patternVersion.fieldDefinitions().size());
         for (int index = 0; index < patternVersion.fieldDefinitions().size(); index++) {
-            FieldDefinition field = patternVersion.fieldDefinitions().get(index);
+            FeatureDefinition field = patternVersion.fieldDefinitions().get(index);
             fieldDefinitions.add(new FieldDefinitionRecord(Entity.nid(field.dataType()), Entity.nid(field.purpose()), Entity.nid(field.meaning()),
                     stampNid,
                     chronology.nid(), index));
@@ -71,7 +72,7 @@ public record PatternVersionRecord(PatternRecord chronology, int stampNid,
 
     @Override
     public int hashCode() {
-        return Integer.hashCode(stampNid);
+        return Nid.hash(stampNid);
     }
 
     @Override

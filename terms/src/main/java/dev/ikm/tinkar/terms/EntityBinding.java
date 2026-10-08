@@ -182,14 +182,8 @@ public interface EntityBinding {
 
     interface Stamp {
         static EntityProxy.Pattern pattern() {
-            // NOTE: We have two STAMP patterns in the database.
-            // STAMP pattern: [9fd67fee-abf9-551d-9d0e-76a4b1e8b4ee]
-            // STAMP field pattern: [15687f5d-6028-4491-b005-7bb6f9f6ebad]
-
-            // STAMP field pattern: [15687f5d-6028-4491-b005-7bb6f9f6ebad]
             return EntityProxy.Pattern.make("STAMP field pattern",
                     UUID.fromString("e16abc7a-2a7b-42af-b168-d77aec8116ea"));
-            //UUID.fromString("15687f5d-6028-4491-b005-7bb6f9f6ebad"));
         }
 
         static int publicIdFieldDefinitionIndex() {
@@ -204,60 +198,50 @@ public interface EntityBinding {
             return Component.versionItemDefinitionIndex();
         }
 
+        /**
+         * The stamp version pattern: field 0 is the stamp itself, then status, time,
+         * author, module and path. A stamp's own {@code fieldValues()} carry the last five
+         * only, in the same order.
+         */
         interface Version {
             static EntityProxy.Pattern pattern() {
-                // STAMP version field pattern: [fcf637ce-63fe-4f52-a4f3-401f46f71a60]
                 return EntityProxy.Pattern.make("STAMP version field pattern",
                         UUID.fromString("73c798cf-bc77-49a2-84f7-4c0f4bc4c012"));
-                //UUID.fromString("fcf637ce-63fe-4f52-a4f3-401f46f71a60"));
             }
 
             /**
-             * Yes, redundant that the stamp version has a stampNid field that is its own nid,
-             * but it is inherited from the version superclass.
-             * WARNING: Not in the pattern.
+             * The stamp itself: redundant on a stamp version, whose stamp is its own nid,
+             * but inherited from the version superclass.
              * @return field index
              */
             static int stampFieldDefinitionIndex() {
                 return Component.Version.stampFieldDefinitionIndex();
             }
 
-            /**
-             * WARNING: off by one because of missing stampField in the pattern.
-             * @return field index
-             */
+            /** @return field index */
             static int statusFieldDefinitionIndex() {
-                return 0; //TODO VALIDATE STARTER SET: change back to 1 when starter set if fixed
+                return 1;
             }
-            /**
-             * WARNING: off by one because of missing stampField in the pattern.
-             * @return field index
-             */
+
+            /** @return field index */
             static int timeFieldDefinitionIndex() {
-                return 1; //TODO VALIDATE STARTER SET: change back to 2 when starter set if fixed
+                return 2;
             }
-            /**
-             * WARNING: off by one because of missing stampField in the pattern.
-             * @return field index
-             */
+
+            /** @return field index */
             static int authorFieldDefinitionIndex() {
-                return 2; //TODO VALIDATE STARTER SET: change back to 3 when starter set if fixed
+                return 3;
             }
-            /**
-             * WARNING: off by one because of missing stampField in the pattern.
-             * @return field index
-             */
+
+            /** @return field index */
             static int moduleFieldDefinitionIndex() {
-                return 3; //TODO VALIDATE STARTER SET: change back to 4 when starter set if fixed
+                return 4;
             }
-            /**
-             * WARNING: off by one because of missing stampField in the pattern.
-             * @return field index
-             */
+
+            /** @return field index */
             static int pathFieldDefinitionIndex() {
-                return 4; //TODO VALIDATE STARTER SET: change back to 5 when starter set if fixed
+                return 5;
             }
         }
     }
-
 }

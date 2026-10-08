@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,7 +43,6 @@ import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 
@@ -61,7 +62,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 //		rs.writeInferredResults();
 //	}
 
-	private HashMap<Integer, Long> nid_sctid_map;
+	private HashMap<Long, Long> nid_sctid_map;
 
 	private Set<Long> toSctids(Set<Long> nids) {
 		return nids.stream().map(x -> nid_sctid_map.get(x.intValue())).collect(Collectors.toSet());
@@ -83,7 +84,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		SnomedDescriptions descr = SnomedDescriptions.init(descriptions_file);
 		nid_sctid_map = new HashMap<>();
 		for (long sctid : isas.getOrderedConcepts().toArray()) {
-			int nid = ElkSnomedData.getNid(sctid);
+			long nid = ElkSnomedData.getNid(sctid);
 			nid_sctid_map.put(nid, sctid);
 			if (ontology.getConcept(nid) == null)
 				LOG.info("No concept for: " + sctid + " " + descr.getFsn(sctid));
@@ -91,7 +92,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		for (Concept con : ontology.getConcepts()) {
 			long nid = con.getId();
 			Set<Long> sups = toSctids(reasoner.getSuperConcepts(nid).boxed());
-			Long sctid = nid_sctid_map.get((int) nid);
+			Long sctid = nid_sctid_map.get(Nid.narrowChecked(nid));
 			if (sctid == null) {
 				non_snomed_cnt++;
 				continue;
@@ -101,7 +102,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
 				assertEquals(1, sups.size());
-				assertEquals(TinkarTerm.PHENOMENON.nid(), reasoner.getSuperConcepts(nid).toArray()[0]);
+				assertEquals(KernelTerm.PHENOMENON.nid(), reasoner.getSuperConcepts(nid).toArray()[0]);
 				continue;
 			} else {
 				assertNotNull(parents);
@@ -117,7 +118,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		for (int i = 0; i < limit; i++) {
 			long sctid = selectedIds.get(i);
 					UUID uuid = UuidUtil.fromSNOMED("" + sctid);
-					int nid = PrimitiveData.nid(uuid);
+					long nid = PrimitiveData.nid(uuid);
 					LOG.error("Miss: " + sctid + " " + PrimitiveData.text(nid));
 					Set<Long> sups = toSctids(reasoner.getSuperConcepts(nid).boxed());
 					Set<Long> parents = isas.getParents(sctid).toSet().boxed();

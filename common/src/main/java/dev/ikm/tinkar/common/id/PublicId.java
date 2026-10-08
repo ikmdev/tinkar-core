@@ -28,7 +28,57 @@ import java.util.function.LongConsumer;
 
 import static dev.ikm.tinkar.common.id.IdCollection.TO_STRING_LIMIT;
 
+/**
+ * The public identity of a component: one or more UUIDs, any of which identifies it. A component
+ * may gain UUIDs (two components found equivalent after the fact), rarely; no UUID among them is
+ * primordial or canonical.
+ * <p>
+ * <b>Equality</b> ({@link #equals(PublicId, PublicId)}, and {@code equals} on the implementations)
+ * is dynamic: two public ids are equal when they share any UUID, in whatever order each lists
+ * them. It is deliberately not transitive ({@code {a,b}} equals {@code {b,c}}, which equals
+ * {@code {c}}, yet {@code {a,b}} does not equal {@code {c}}), and {@code hashCode} is, by design,
+ * not consistent with it. Hence:
+ * <ul>
+ *   <li><b>Never key a hash collection by a public id</b> ({@code HashMap}, {@code HashSet},
+ *       {@code ConcurrentHashMap}, a {@code Collectors.toSet()} or {@code distinct()} over public
+ *       ids, a cache): equal public ids may hash apart, and identical ones listed in another order
+ *       do.</li>
+ *   <li>A <b>sorted</b> collection ({@code TreeSet}, {@code TreeMap}) orders by
+ *       {@link #compareTo}, which compares the sorted UUIDs whole: it holds public ids with
+ *       exactly the same UUIDs once, in any order, and ids that share only some as distinct. Use
+ *       one when "the same UUIDs" is the question.</li>
+ *   <li>When "the same component" is the question, within a store the nid is the key; outside
+ *       one, match single UUIDs (as the store's UUID-to-nid map does), or compare with
+ *       {@link #equals(PublicId, PublicId)}.</li>
+ *   <li>A shared UUID proves identity, the first or any other; a differing first UUID proves
+ *       nothing, and the rest must be compared ({@link #equals(PublicId, PublicId)}) to prove or
+ *       refute it. So do not key by one UUID ({@code asUuidArray()[0]}), or conclude two components
+ *       differ because their first UUIDs do. Where a single UUID must be derived from (a type 5
+ *       UUID minted from a component's), take the least, so the result depends on the component's
+ *       UUIDs and not on the order a list of them was built in.</li>
+ * </ul>
+ * Sorting a public id's UUIDs makes repeated comparisons faster; it does not make any UUID first.
+ */
 public interface PublicId extends Comparable<PublicId> {
+
+    /**
+     * The least of this public id's UUIDs, by {@link UUID#compareTo} (which compares signed): the
+     * one UUID to derive from, when a single UUID must be derived from (a type 5 UUID minted from
+     * a component's). It depends on the public id's UUIDs, not on the order they are listed in.
+     * It identifies nothing by itself: a differing least UUID does not make two public ids differ.
+     *
+     * @return the least UUID
+     */
+    default UUID leastUuid() {
+        UUID[] uuids = asUuidArray();
+        UUID least = uuids[0];
+        for (int i = 1; i < uuids.length; i++) {
+            if (uuids[i].compareTo(least) < 0) {
+                least = uuids[i];
+            }
+        }
+        return least;
+    }
 
     static boolean equals(PublicId one, PublicId two) {
         if (one == two) {

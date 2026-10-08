@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.entity.graph;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.util.ArrayUtil;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
@@ -91,16 +91,16 @@ public class VertexVisitData {
     }
 
     public void vertexStartProcess(EntityVertex vertex, DiGraphAbstract<EntityVertex> diGraph) {
-        if (vertex.meaningNid == TinkarTerm.NECESSARY_SET.nid()) {
+        if (vertex.meaningNid == KernelTerm.NECESSARY_SET.nid()) {
             this.necessarySets.set(vertex.vertexIndex);
         }
-        if (vertex.meaningNid == TinkarTerm.SUFFICIENT_SET.nid()) {
+        if (vertex.meaningNid == KernelTerm.SUFFICIENT_SET.nid()) {
             this.sufficientSets.set(vertex.vertexIndex);
         }
-        if (vertex.meaningNid == TinkarTerm.PROPERTY_SET.nid()) {
+        if (vertex.meaningNid == KernelTerm.PROPERTY_SET.nid()) {
             this.propertySets.set(vertex.vertexIndex);
         }
-        if (vertex.meaningNid == TinkarTerm.INCLUSION_SET.nid()) {
+        if (vertex.meaningNid == KernelTerm.INCLUSION_SET.nid()) {
             this.inclusionSets.set(vertex.vertexIndex);
         }
 

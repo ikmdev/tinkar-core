@@ -15,21 +15,25 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.KnowledgeSetSource;
 import dev.ikm.tinkar.entity.builder.generator.SectionEmitter;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
-import dev.ikm.tinkar.entity.builder.generator.TinkarTermReferenceResolver;
+import dev.ikm.tinkar.entity.builder.generator.BindingReferenceResolver;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -49,12 +53,15 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -92,13 +99,15 @@ class GeneratorEndToEndIT {
     @DisplayName("Generate, compile, load, compose, and replay the full starter set — identity-exact, no drift")
     void generateCompileReplayVerify() throws Exception {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
-        TinkarTermReferenceResolver resolver = TinkarTermReferenceResolver.build();
+        BindingReferenceResolver resolver = BindingReferenceResolver.build();
         LanguageCalculator languageCalculator = Calculators.Language.UsEnglishFullyQualifiedName(calculator.stampCoordinate());
-        TaxonomySectioner sectioner = TaxonomySectioner.fromStatedNavigation(calculator);
+        // The unreasoned set is a freshly authored ledger with no navigation semantics, so
+        // sections come from its stated axioms, as KonceptExtractor's do.
+        TaxonomySectioner sectioner = TaxonomySectioner.fromStatedAxioms(calculator);
 
         int conceptsBefore = countConcepts();
         int patternsBefore = countPatterns();
-        int modelConceptVersionsBefore = EntityHandle.get(TinkarTerm.MODEL_CONCEPT.nid()).expectConcept()
+        int modelConceptVersionsBefore = EntityHandle.get(IkeTerms.MODEL_CONCEPT.nid()).expectConcept()
                 .versions().size();
         int userModuleVersionsBefore = EntityHandle.get(findByName("User module")).expectConcept()
                 .versions().size();
@@ -107,26 +116,48 @@ class GeneratorEndToEndIT {
         // the WRONG value into the RIGHT-shaped slot — no count-based assertion would
         // ever catch that. These snapshot actual FQN text and axiom parents so the
         // "after" checks below compare content, not just cardinality.
-        int userModuleNid = findByName("User module");
+        long userModuleNid = findByName("User module");
         String userModuleFqnBefore = languageCalculator.getFullyQualifiedNameText(
                 dev.ikm.tinkar.terms.EntityProxy.Concept.make(userModuleNid)).orElseThrow();
-        String modelConceptFqnBefore = languageCalculator.getFullyQualifiedNameText(TinkarTerm.MODEL_CONCEPT)
+        String modelConceptFqnBefore = languageCalculator.getFullyQualifiedNameText(IkeTerms.MODEL_CONCEPT)
                 .orElseThrow();
-        Set<Integer> userModuleParentsBefore = latestIsAParents(userModuleNid, calculator);
-        int descriptionPatternVersionsBefore = EntityHandle.get(TinkarTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
+        Set<Long> userModuleParentsBefore = latestIsAParents(userModuleNid, calculator);
+        int descriptionPatternVersionsBefore = EntityHandle.get(KernelTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
                 .versions().size();
+        // Every stated definition, not a sample: each stated-axiom semantic's latest
+        // expression in canonical form (concept references as nids, so the comparison is
+        // independent of how the generated source names them), with the stamps it carried
+        // before the round trip, so the version the replay adds can be told apart.
+        Map<Long, String> statedExpressionsBefore = new HashMap<>();
+        Map<Long, Long> statedReferencedComponents = new HashMap<>();
+        Map<Long, Set<Long>> statedStampsBefore = new HashMap<>();
+        Set<Long> beyondSimpleIsA = new HashSet<>();
+        calculator.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                (semanticVersion, patternVersion) -> {
+                    long semanticNid = semanticVersion.nid();
+                    statedExpressionsBefore.put(semanticNid,
+                            canonicalExpression((DiTreeEntity) semanticVersion.fieldValues().get(0)));
+                    statedReferencedComponents.put(semanticNid, semanticVersion.referencedComponentNid());
+                    if (!dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler.decompile(
+                            (DiTreeEntity) semanticVersion.fieldValues().get(0)).simpleIsA()) {
+                        beyondSimpleIsA.add(semanticNid);
+                    }
+                    Set<Long> stamps = new HashSet<>();
+                    semanticVersion.entity().stampNids().forEach(stamps::add);
+                    statedStampsBefore.put(semanticNid, stamps);
+                });
 
         // Sections are not disjoint by design (TaxonomySectioner's own contract) — a
         // dual-parented concept is a member of every section whose root reaches it.
-        // TaxonomySectioner only walks concepts reachable via stated navigation, too —
-        // the ~60 unanchored meta-schema concepts the #873 scan found, and all 28
-        // patterns (an entirely separate taxonomy), need a residual catch-all so the
+        // TaxonomySectioner only walks concepts reachable from the root, too —
+        // unanchored concepts, and all 64 patterns (an entirely separate taxonomy),
+        // need a residual catch-all so the
         // round trip actually covers the full store, not just the navigable subset.
         // sectionsCoveringFullStore does both (first-section-wins dedup + residual
         // catch-all, batched to stay under the JVM's 64KB bytecode-per-method limit) —
         // shared with LedgerGeneratorMain's real ingest run so the two can't drift.
         List<Section> exclusiveSections = sectioner.sectionsCoveringFullStore(
-                TinkarTerm.ROOT_VERTEX.nid(), 60, 4, 50);
+                KernelTerm.ROOT_VERTEX.nid(), 60, 4, 50);
         int distinctMembers = exclusiveSections.stream().mapToInt(section -> section.members().size()).sum();
         LOG.info("{} sections covering {} distinct components after cross-section dedup + residual catch-all",
                 exclusiveSections.size(), distinctMembers);
@@ -146,11 +177,14 @@ class GeneratorEndToEndIT {
             sectionClassNames.add(className);
             SectionEmitter.EmittedSection emitted = SectionEmitter.emitSection(packageName, className, section,
                     calculator, languageCalculator, resolver,
-                    "Stamp.active(PrimitiveData.INCEPTION_EPOCH, TinkarTerm.USER,"
-                            + " TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.PRIMORDIAL_PATH)");
+                    "Stamp.active(PrimitiveData.INCEPTION_EPOCH, KernelTerm.USER,"
+                            + " KernelTerm.PRIMORDIAL_MODULE, KernelTerm.PRIMORDIAL_PATH)");
             emissionNotes.addAll(emitted.manifestNotes());
             writeSourceFile(sourceDir, packageName, className, emitted.source());
         }
+        // Every stated definition decompiles — the 43 beyond the simple isA shape included —
+        // and every component carries the fully qualified name a declaration requires, so
+        // nothing is reported for hand authoring and nothing is skipped.
         assertEquals(List.of(), emissionNotes, "expected zero manifest notes for this starter set");
         String aggregatorClassName = "GeneratedStarterKnowledgeSource";
         String aggregatorSource = SectionEmitter.emitAggregator(packageName, aggregatorClassName,
@@ -174,7 +208,7 @@ class GeneratorEndToEndIT {
         assertEquals(conceptsBefore, conceptsAfter, "identity-exact ingest mints no new concepts");
         assertEquals(patternsBefore, patternsAfter, "identity-exact ingest mints no new patterns");
 
-        int modelConceptVersionsAfter = EntityHandle.get(TinkarTerm.MODEL_CONCEPT.nid()).expectConcept()
+        int modelConceptVersionsAfter = EntityHandle.get(IkeTerms.MODEL_CONCEPT.nid()).expectConcept()
                 .versions().size();
         assertEquals(modelConceptVersionsBefore + 1, modelConceptVersionsAfter,
                 "the round trip adds exactly one new (inception) version — a true merge, not a replace");
@@ -183,12 +217,13 @@ class GeneratorEndToEndIT {
         assertEquals(userModuleVersionsBefore + 1, userModuleVersionsAfter,
                 "a leaf concept from a split section also merges cleanly");
 
-        int descriptionPatternVersionsAfter = EntityHandle.get(TinkarTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
+        int descriptionPatternVersionsAfter = EntityHandle.get(KernelTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
                 .versions().size();
         assertEquals(descriptionPatternVersionsBefore + 1, descriptionPatternVersionsAfter,
                 "a pattern from the residual catch-all also merges cleanly, meaning and purpose intact");
 
-        assertEquals(407, distinctMembers, "the residual catch-all closes the gap to full-store coverage");
+        assertEquals(1295 + 64, distinctMembers,
+                "the residual catch-all closes the gap to full-store coverage: 1295 concepts and 64 patterns");
 
         // Content checks: the calculator-resolved latest-active state after the round
         // trip must carry the SAME FQN text and the SAME isA parents as before — not
@@ -198,25 +233,77 @@ class GeneratorEndToEndIT {
                 dev.ikm.tinkar.terms.EntityProxy.Concept.make(userModuleNid)).orElseThrow();
         assertEquals(userModuleFqnBefore, userModuleFqnAfter,
                 "the round trip must not change the calculator-resolved FQN text");
-        String modelConceptFqnAfter = languageCalculator.getFullyQualifiedNameText(TinkarTerm.MODEL_CONCEPT)
+        String modelConceptFqnAfter = languageCalculator.getFullyQualifiedNameText(IkeTerms.MODEL_CONCEPT)
                 .orElseThrow();
         assertEquals(modelConceptFqnBefore, modelConceptFqnAfter,
                 "the round trip must not change the calculator-resolved FQN text");
-        Set<Integer> userModuleParentsAfter = latestIsAParents(userModuleNid, calculator);
+        Set<Long> userModuleParentsAfter = latestIsAParents(userModuleNid, calculator);
         assertEquals(userModuleParentsBefore, userModuleParentsAfter,
                 "the round trip must not change the calculator-resolved latest isA parents");
+
+        // Every stated definition round-trips: the one version the replay adds to each
+        // declared component's stated-axiom semantic rebuilds the very expression it was
+        // decompiled from — roles, property sets, and every other shape, not just isA.
+        int restated = 0;
+        int nonSimpleRestated = 0;
+        List<String> roundTripFailures = new ArrayList<>();
+        for (Map.Entry<Long, String> before : statedExpressionsBefore.entrySet()) {
+            long semanticNid = before.getKey();
+            Set<Long> stampsBefore = statedStampsBefore.get(semanticNid);
+            List<SemanticEntityVersion> added = new ArrayList<>();
+            SemanticEntity<? extends SemanticEntityVersion> semantic = EntityHandle.get(semanticNid).expectSemantic();
+            for (SemanticEntityVersion version : semantic.versions()) {
+                if (!stampsBefore.contains(version.stampNid())) {
+                    added.add(version);
+                }
+            }
+            String component = dev.ikm.tinkar.common.service.PrimitiveData.text(statedReferencedComponents.get(semanticNid));
+            if (added.size() != 1) {
+                roundTripFailures.add(component + ": gained " + added.size() + " versions, expected one");
+                continue;
+            }
+            String after = canonicalExpression((DiTreeEntity) added.getFirst().fieldValues().get(0));
+            if (!before.getValue().equals(after)) {
+                roundTripFailures.add(component + ": " + before.getValue() + " became " + after);
+                continue;
+            }
+            restated++;
+            if (beyondSimpleIsA.contains(semanticNid)) {
+                nonSimpleRestated++;
+            }
+        }
+        assertEquals(List.of(), roundTripFailures, "every stated definition must round-trip exactly");
+        LOG.info("{} stated definitions round-tripped exactly, {} of them beyond the simple isA shape",
+                restated, nonSimpleRestated);
+        assertEquals(1295, restated, "every one of the set's 1295 stated definitions round-trips");
+        assertEquals(43, nonSimpleRestated,
+                "the 43 definitions beyond the simple isA shape — existential roles, a property set, an empty And"
+                        + " — round-trip with the rest");
 
         LOG.info("Round trip verified: {} concepts, {} patterns unchanged; sampled concepts and one pattern"
                 + " each gained exactly one inception version; FQN text and isA parents unchanged for"
                 + " sampled concepts", conceptsAfter, patternsAfter);
     }
 
+    /**
+     * A stated-axiom tree in canonical form: its decompiled builder source with every
+     * concept reference written as its nid — equal for two trees exactly when they hold
+     * the same sets, atoms, properties, and child order, whatever their vertex UUIDs.
+     */
+    private static String canonicalExpression(DiTreeEntity tree) {
+        dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler.Result result =
+                dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler.decompile(tree);
+        return result.decompiled()
+                ? result.builderLambda(concept -> Long.toString(concept.nid()))
+                : "not decompiled: " + result.diagnosticDump();
+    }
+
     /** The latest-active stated-axiom semantic's isA parent nids for one component, if simple isA. */
-    private static Set<Integer> latestIsAParents(int componentNid, StampCalculator calculator) {
-        Set<Integer> parents = new HashSet<>();
+    private static Set<Long> latestIsAParents(long componentNid, StampCalculator calculator) {
+        Set<Long> parents = new HashSet<>();
         calculator.forEachSemanticVersionForComponentOfPattern(
                 dev.ikm.tinkar.terms.EntityProxy.Concept.make(componentNid),
-                TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                 (semanticVersion, entityVersion, patternVersion) -> {
                     dev.ikm.tinkar.entity.graph.DiTreeEntity tree =
                             (dev.ikm.tinkar.entity.graph.DiTreeEntity) semanticVersion.fieldValues().get(0);
@@ -241,8 +328,8 @@ class GeneratorEndToEndIT {
         return count[0];
     }
 
-    private static int findByName(String name) {
-        int[] found = {-1};
+    private static long findByName(String name) {
+        long[] found = {-1};
         EntityService.get().forEachConceptEntity(concept -> {
             if (found[0] == -1 && name.equals(dev.ikm.tinkar.common.service.PrimitiveData.text(concept.nid()))) {
                 found[0] = concept.nid();

@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.language.calculator;
 
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -31,32 +31,32 @@ public interface LanguageCalculatorDelegate extends LanguageCalculator {
     }
 
     @Override
-    default ImmutableList<SemanticEntity> getDescriptionsForComponent(int componentNid) {
+    default ImmutableList<SemanticEntity> getDescriptionsForComponent(long componentNid) {
         return languageCalculator().getDescriptionsForComponent(componentNid);
     }
 
     @Override
-    default ImmutableList<SemanticEntityVersion> getDescriptionsForComponentOfType(int componentNid, int descriptionTypeNid) {
+    default ImmutableList<SemanticEntityVersion> getDescriptionsForComponentOfType(long componentNid, long descriptionTypeNid) {
         return languageCalculator().getDescriptionsForComponentOfType(componentNid, descriptionTypeNid);
     }
 
     @Override
-    default Optional<String> getRegularDescriptionText(int entityNid) {
+    default Optional<String> getRegularDescriptionText(long entityNid) {
         return languageCalculator().getRegularDescriptionText(entityNid);
     }
 
     @Override
-    default Optional<String> getSemanticText(int nid) {
+    default Optional<String> getSemanticText(long nid) {
         return languageCalculator().getSemanticText(nid);
     }
 
     @Override
-    default Optional<String> getDescriptionTextForComponentOfType(int entityNid, int descriptionTypeNid) {
+    default Optional<String> getDescriptionTextForComponentOfType(long entityNid, long descriptionTypeNid) {
         return languageCalculator().getDescriptionTextForComponentOfType(entityNid, descriptionTypeNid);
     }
 
     @Override
-    default Optional<String> getDescriptionText(int componentNid) {
+    default Optional<String> getDescriptionText(long componentNid) {
         return languageCalculator().getDescriptionText(componentNid);
     }
 
@@ -76,7 +76,7 @@ public interface LanguageCalculatorDelegate extends LanguageCalculator {
     }
 
     @Override
-    default Latest<SemanticEntityVersion> getSpecifiedDescription(ImmutableList<SemanticEntity> descriptionList, IntIdList descriptionTypePriority) {
+    default Latest<SemanticEntityVersion> getSpecifiedDescription(ImmutableList<SemanticEntity> descriptionList, LongIdList descriptionTypePriority) {
         return languageCalculator().getSpecifiedDescription(descriptionList, descriptionTypePriority);
     }
 

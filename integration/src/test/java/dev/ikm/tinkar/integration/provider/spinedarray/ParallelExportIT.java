@@ -1,5 +1,10 @@
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import java.util.function.LongConsumer;
+
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+
+import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.entity.aggregator.DefaultEntityAggregator;
@@ -10,8 +15,8 @@ import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.schema.TinkarMsg;
-import org.eclipse.collections.api.factory.primitive.IntLists;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.factory.primitive.LongLists;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -61,8 +66,8 @@ class ParallelExportIT {
         private final DefaultEntityAggregator delegate = new DefaultEntityAggregator();
 
         @Override
-        public EntityCountSummary aggregate(IntConsumer nidConsumer) {
-            MutableIntList nids = IntLists.mutable.empty();
+        public EntityCountSummary aggregate(LongConsumer nidConsumer) {
+            MutableLongList nids = LongLists.mutable.empty();
             EntityCountSummary summary = delegate.aggregate(nids::add);
             Arrays.stream(nids.toArray()).parallel().forEach(nidConsumer);
             return summary;
@@ -84,6 +89,9 @@ class ParallelExportIT {
                 if (entry.getName().equals("META-INF/MANIFEST.MF")) {
                     manifest = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
                     continue;
+                }
+                if (ChangeSetFormat.isMetadata(entry.getName())) {
+                    continue; // the identity index, or other metadata: not records
                 }
                 // Throws InvalidProtocolBufferException on an interleaved stream.
                 while (TinkarMsg.parseDelimitedFrom(zis) != null) {

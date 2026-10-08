@@ -37,7 +37,7 @@ public class AppCoordinates {
     public static ViewCoordinateRecord production() {
         return ViewCoordinateRecord.make(
             Coordinates.Stamp.DevelopmentLatestActiveOnly()
-                .withPath(TinkarTerm.MASTER_PATH),
+                .withPath(KernelTerm.MASTER_PATH),
             Coordinates.Language.UsEnglishRegularName(),
             Coordinates.Logic.ElPlusPlus(),
             Coordinates.Navigation.inferred(),
@@ -53,10 +53,10 @@ public class AppCoordinates {
             Coordinates.Navigation.stated(),
             EditCoordinateRecord.make(
                 authorNid,
-                TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),
-                TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),
-                TinkarTerm.DEVELOPMENT_PATH.nid(),
-                TinkarTerm.DEVELOPMENT_PATH.nid()
+                KernelTerm.SOLOR_OVERLAY_MODULE.nid(),
+                KernelTerm.SOLOR_OVERLAY_MODULE.nid(),
+                KernelTerm.DEVELOPMENT_PATH.nid(),
+                KernelTerm.DEVELOPMENT_PATH.nid()
             )
         );
     }
@@ -93,7 +93,7 @@ public static ViewCoordinateRecord clinicalReview() {
             StateSet.ACTIVE_AND_INACTIVE,  // See inactive for review
             StampPositionRecord.make(
                 Long.MAX_VALUE,
-                TinkarTerm.DEVELOPMENT_PATH.nid()
+                KernelTerm.DEVELOPMENT_PATH.nid()
             )
         ),
         // ... rest of configuration
@@ -275,21 +275,21 @@ List<LanguageCoordinate> languages = List.of(
 ----
 // Clinical display: Regular name first
 LanguageCoordinate clinical = LanguageCoordinateRecord.make(
-    TinkarTerm.ENGLISH_LANGUAGE.nid(),
-    List.of(TinkarTerm.US_DIALECT_ASSEMBLAGE.nid()),
+    KernelTerm.ENGLISH_LANGUAGE.nid(),
+    List.of(KernelTerm.US_DIALECT_PATTERN.nid()),
     List.of(
-        TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-        TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
+        KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+        KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
     )
 );
 
 // Technical/debugging: FSN first
 LanguageCoordinate technical = LanguageCoordinateRecord.make(
-    TinkarTerm.ENGLISH_LANGUAGE.nid(),
-    List.of(TinkarTerm.US_DIALECT_ASSEMBLAGE.nid()),
+    KernelTerm.ENGLISH_LANGUAGE.nid(),
+    List.of(KernelTerm.US_DIALECT_PATTERN.nid()),
     List.of(
-        TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-        TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
+        KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+        KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
     )
 );
 ----
@@ -323,7 +323,7 @@ LogicCoordinate authoring = LogicCoordinateRecord.make(
     statedPatternNid,
     inferredPatternNid,
     classifierNid,
-    TinkarTerm.STATED_PREMISE_TYPE.nid()  // What author created
+    KernelTerm.STATED_PREMISE_TYPE.nid()  // What author created
 );
 
 // Querying/browsing: Inferred axioms
@@ -331,7 +331,7 @@ LogicCoordinate querying = LogicCoordinateRecord.make(
     statedPatternNid,
     inferredPatternNid,
     classifierNid,
-    TinkarTerm.INFERRED_PREMISE_TYPE.nid()  // What classifier computed
+    KernelTerm.INFERRED_PREMISE_TYPE.nid()  // What classifier computed
 );
 ----
 
@@ -365,8 +365,8 @@ NavigationCoordinate authoring = Coordinates.Navigation.stated();
 // Comparison: Both
 NavigationCoordinate both = NavigationCoordinateRecord.make(
     IntIds.set.of(
-        TinkarTerm.INFERRED_NAVIGATION.nid(),
-        TinkarTerm.STATED_NAVIGATION.nid()
+        KernelTerm.INFERRED_NAVIGATION.nid(),
+        KernelTerm.STATED_NAVIGATION_PATTERN.nid()
     ),
     StateSet.ACTIVE_ONLY,
     true,
@@ -434,8 +434,8 @@ public EditCoordinateRecord getEditCoordinateForUser(User user) {
         user.getConceptNid(),     // Proper attribution
         user.getDefaultModule(),
         user.getDefaultModule(),
-        TinkarTerm.DEVELOPMENT_PATH.nid(),
-        TinkarTerm.DEVELOPMENT_PATH.nid()
+        KernelTerm.DEVELOPMENT_PATH.nid(),
+        KernelTerm.DEVELOPMENT_PATH.nid()
     );
 }
 
@@ -454,10 +454,10 @@ public static final EditCoordinateRecord SHARED_EDIT =
 // Core development
 EditCoordinateRecord coreEdit = EditCoordinateRecord.make(
     authorNid,
-    TinkarTerm.CORE_MODULE.nid(),  // New content goes to core
-    TinkarTerm.CORE_MODULE.nid(),
-    TinkarTerm.DEVELOPMENT_PATH.nid(),
-    TinkarTerm.DEVELOPMENT_PATH.nid()
+    MyTerms.CORE_MODULE.nid(),  // New content goes to core
+    MyTerms.CORE_MODULE.nid(),
+    KernelTerm.DEVELOPMENT_PATH.nid(),
+    KernelTerm.DEVELOPMENT_PATH.nid()
 );
 
 // Extension development
@@ -465,8 +465,8 @@ EditCoordinateRecord extEdit = EditCoordinateRecord.make(
     authorNid,
     extensionModuleNid,  // New content goes to extension
     coreModuleNid,       // Can modularize to core
-    TinkarTerm.DEVELOPMENT_PATH.nid(),
-    TinkarTerm.MASTER_PATH.nid()
+    KernelTerm.DEVELOPMENT_PATH.nid(),
+    KernelTerm.MASTER_PATH.nid()
 );
 ----
 
@@ -481,8 +481,8 @@ EditCoordinateRecord devEdit = EditCoordinateRecord.make(
     authorNid,
     moduleNid,
     moduleNid,
-    TinkarTerm.DEVELOPMENT_PATH.nid(),  // Create on dev
-    TinkarTerm.DEVELOPMENT_PATH.nid()   // No promotion
+    KernelTerm.DEVELOPMENT_PATH.nid(),  // Create on dev
+    KernelTerm.DEVELOPMENT_PATH.nid()   // No promotion
 );
 
 // Release workflow
@@ -490,8 +490,8 @@ EditCoordinateRecord releaseEdit = EditCoordinateRecord.make(
     authorNid,
     moduleNid,
     moduleNid,
-    TinkarTerm.DEVELOPMENT_PATH.nid(),  // Create on dev
-    TinkarTerm.MASTER_PATH.nid()        // Promote to master
+    KernelTerm.DEVELOPMENT_PATH.nid(),  // Create on dev
+    KernelTerm.MASTER_PATH.nid()        // Promote to master
 );
 ----
 
@@ -662,7 +662,7 @@ public class TestCoordinates {
                 StateSet.ACTIVE_AND_INACTIVE,
                 StampPositionRecord.make(
                     Long.MAX_VALUE,
-                    TinkarTerm.DEVELOPMENT_PATH.nid()
+                    KernelTerm.DEVELOPMENT_PATH.nid()
                 )
             ),
             Coordinates.Language.UsEnglishRegularName(),

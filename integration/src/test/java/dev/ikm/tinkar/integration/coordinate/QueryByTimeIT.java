@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecordBuilder;
@@ -24,6 +25,7 @@ import dev.ikm.tinkar.coordinate.stamp.StampPositionRecordBuilder;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -31,7 +33,6 @@ import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -72,9 +73,9 @@ public class QueryByTimeIT {
         LocalDateTime localDateTime = LocalDateTime.parse(time, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         long timestamp = localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-        int patternNid = EntityService.get().nidForPublicId(TinkarTerm.DESCRIPTION_PATTERN);
+        long patternNid = EntityService.get().nidForPublicId(KernelTerm.DESCRIPTION_PATTERN);
 
-        Set<Integer> pathNids = new HashSet<>();
+        Set<Long> pathNids = new HashSet<>();
         EntityService.get().forEachSemanticOfPattern(patternNid,patternEntity1 ->
             patternEntity1.stampNids().forEach(stampNid -> {
                 StampEntity<? extends StampEntityVersion> stamp = EntityService.get().getStampFast(stampNid);
@@ -82,7 +83,7 @@ public class QueryByTimeIT {
             })
         );
         pathNids.forEach(pathNid -> {
-            LOG.info("PATH NID: " + EntityService.get().getEntityFast(pathNid));
+            LOG.info("PATH NID: " + EntityHandle.get(pathNid).orNull());
             Stream<Latest<SemanticEntityVersion>> filteredVersionsStream =
                     findAllPatternsForPathByTime(patternNid, pathNid, timestamp);
             filteredVersionsStream.forEach(latestVersion -> {
@@ -95,12 +96,12 @@ public class QueryByTimeIT {
         });
     }
 
-    Stream<Latest<SemanticEntityVersion>> findAllPatternsForPathByTime(int patternNid, int pathNid, long targetTimestamp) {
+    Stream<Latest<SemanticEntityVersion>> findAllPatternsForPathByTime(long patternNid, long pathNid, long targetTimestamp) {
         StampPositionRecord stampPositionRecord = StampPositionRecordBuilder.builder().time(Long.MAX_VALUE).pathForPositionNid(pathNid).build();
         StampCoordinateRecord stampCoordinateRecord = StampCoordinateRecordBuilder.builder()
                 .allowedStates(StateSet.ACTIVE_AND_INACTIVE)
                 .stampPosition(stampPositionRecord)
-                .moduleNids(IntIds.set.empty())
+                .moduleNids(LongIds.set.empty())
                 .build().withStampPositionTime(Long.MAX_VALUE);
         StampCalculator stampCalculatorWithCache = stampCoordinateRecord.stampCalculator();
         return stampCalculatorWithCache.streamLatestVersionForPattern(patternNid)
@@ -121,7 +122,7 @@ public class QueryByTimeIT {
         LocalDateTime localDateTime = LocalDateTime.parse(time, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         long timestamp = localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-        int patternNid = EntityService.get().nidForPublicId(TinkarTerm.DESCRIPTION_PATTERN);
+        long patternNid = EntityService.get().nidForPublicId(KernelTerm.DESCRIPTION_PATTERN);
         Stream<Latest<SemanticEntityVersion>> filteredVersionsStream =
                 findAllPatternsByTime(patternNid, timestamp);
         filteredVersionsStream.forEach(latestVersion -> {
@@ -133,9 +134,9 @@ public class QueryByTimeIT {
         });
     }
 
-    Stream<Latest<SemanticEntityVersion>> findAllPatternsByTime(int patternNid, long targetTimestamp) {
+    Stream<Latest<SemanticEntityVersion>> findAllPatternsByTime(long patternNid, long targetTimestamp) {
         StampCoordinateRecord stampCoordinateRecord = StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE, Coordinates.Position.LatestOnDevelopment(),
-                IntIds.set.empty());
+                LongIds.set.empty());
         StampCalculator stampCalculatorWithCache = stampCoordinateRecord.stampCalculator();
         return stampCalculatorWithCache.streamLatestVersionForPattern(patternNid)
                 .filter(latestVersion -> {

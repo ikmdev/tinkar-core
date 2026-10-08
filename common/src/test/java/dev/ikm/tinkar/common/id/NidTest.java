@@ -307,4 +307,160 @@ public class NidTest {
                     "validate should throw for: " + nid);
         }
     }
+
+    // ========== Sentinels ==========
+
+    @Test
+    public void sentinelsKeepTheirIntValuesWidened() {
+        assertEquals(0, Nid.UNSET);
+        assertEquals(Integer.MIN_VALUE, Nid.NONE);
+        assertEquals(Integer.MAX_VALUE, Nid.NOT_APPLICABLE);
+        assertEquals(-1, Nid.NOT_FOUND);
+    }
+
+    @Test
+    public void noSentinelIsA64BitNid() {
+        for (long sentinel : new long[]{Nid.UNSET, Nid.NONE, Nid.NONE_64, Nid.NOT_APPLICABLE,
+                Nid.NOT_APPLICABLE_64, Nid.NOT_FOUND}) {
+            assertFalse(Nid.isValid64(sentinel), "sentinel " + sentinel);
+        }
+    }
+
+    @Test
+    public void bothFormsOfASentinelAreTheSameSignal() {
+        assertTrue(Nid.isNotApplicable(Integer.MAX_VALUE));
+        assertTrue(Nid.isNotApplicable(Long.MAX_VALUE));
+        assertTrue(Nid.isNone(Integer.MIN_VALUE));
+        assertTrue(Nid.isNone(Long.MIN_VALUE));
+        assertFalse(Nid.isNotApplicable(Integer.MIN_VALUE));
+        assertFalse(Nid.isNone(Long.MAX_VALUE));
+        assertFalse(Nid.isNotApplicable(Nid.compose64(Nid.MAX_SEQUENCE_64, Nid.MAX_SEQUENCE_64)));
+    }
+
+    @Test
+    public void narrowCheckedMapsThe64BitSentinelsToTheIntsProvidersStore() {
+        assertEquals(Integer.MAX_VALUE, Nid.narrowChecked(Nid.NOT_APPLICABLE_64));
+        assertEquals(Integer.MIN_VALUE, Nid.narrowChecked(Nid.NONE_64));
+        assertEquals(Integer.MAX_VALUE, Nid.narrowChecked(Nid.NOT_APPLICABLE));
+        assertEquals(Integer.MIN_VALUE, Nid.narrowChecked(Nid.NONE));
+    }
+
+    // ========== narrowChecked ==========
+
+    @Test
+    public void narrowCheckedKeepsEveryWidenedInt() {
+        int[] ints = {1, -1, 0, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE + 1, 0x00FF_FFFF, 0xFF00_0001};
+        for (int value : ints) {
+            long widened = value;
+            assertEquals(value, Nid.narrowChecked(widened), "widened " + value);
+        }
+    }
+
+    @Test
+    public void narrowCheckedRefusesA64BitNid() {
+        long nid = Nid.compose64(3, 7);
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> Nid.narrowChecked(nid));
+        assertTrue(exception.getMessage().contains("64-bit nid"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("pattern sequence 3"), exception.getMessage());
+    }
+
+    @Test
+    public void narrowCheckedRefusesValuesJustOutsideTheIntRange() {
+        assertThrows(IllegalStateException.class, () -> Nid.narrowChecked(Integer.MAX_VALUE + 1L));
+        assertThrows(IllegalStateException.class, () -> Nid.narrowChecked(Integer.MIN_VALUE - 1L));
+        assertThrows(IllegalStateException.class, () -> Nid.narrowChecked(Long.MAX_VALUE - 1));
+        assertThrows(IllegalStateException.class, () -> Nid.narrowChecked(Long.MIN_VALUE + 1));
+    }
+
+    // ========== 64-bit nids ==========
+
+    @Test
+    public void compose64PutsThePatternInTheUpperHalf() {
+        assertEquals((1L << 32) | 1, Nid.compose64(1, 1));
+        assertEquals(0x0000_0005_0000_0009L, Nid.compose64(5, 9));
+        assertEquals(0x7FFF_FFFE_7FFF_FFFEL, Nid.compose64(Nid.MAX_SEQUENCE_64, Nid.MAX_SEQUENCE_64));
+    }
+
+    @Test
+    public void halvesInvertCompose64() {
+        int[][] pairs = {{1, 1}, {1, Nid.MAX_SEQUENCE_64}, {Nid.MAX_SEQUENCE_64, 1}, {255, 16_777_215}, {42, 1_000_000}};
+        for (int[] pair : pairs) {
+            long nid = Nid.compose64(pair[0], pair[1]);
+            assertEquals(pair[0], Nid.patternSequence64(nid));
+            assertEquals(pair[1], Nid.elementSequence64(nid));
+            assertTrue(Nid.isValid64(nid));
+            assertEquals(nid, Nid.validate64(nid));
+        }
+    }
+
+    @Test
+    public void compose64RefusesHalvesBelowOne() {
+        assertThrows(IllegalArgumentException.class, () -> Nid.compose64(0, 1));
+        assertThrows(IllegalArgumentException.class, () -> Nid.compose64(1, 0));
+        assertThrows(IllegalArgumentException.class, () -> Nid.compose64(-1, 1));
+        assertThrows(IllegalArgumentException.class, () -> Nid.compose64(1, Integer.MIN_VALUE));
+        // Like 0, Integer.MAX_VALUE is never a sequence, so no 64-bit nid is Long.MAX_VALUE.
+        assertThrows(IllegalArgumentException.class, () -> Nid.compose64(Integer.MAX_VALUE, 1));
+        assertThrows(IllegalArgumentException.class, () -> Nid.compose64(1, Integer.MAX_VALUE));
+        assertFalse(Nid.isValid64((5L << 32) | Integer.MAX_VALUE));
+        assertFalse(Nid.isValid64(((long) Integer.MAX_VALUE << 32) | 5));
+    }
+
+    @Test
+    public void every64BitNidIsPositiveAndOutsideTheIntRange() {
+        long smallest = Nid.compose64(1, 1);
+        assertTrue(smallest > Integer.MAX_VALUE);
+        assertTrue(Nid.compose64(Nid.MAX_SEQUENCE_64, Nid.MAX_SEQUENCE_64) > 0);
+    }
+
+    @Test
+    public void noWidenedIntIsAValid64BitNid() {
+        int[] ints = {1, -1, 12345, -12345, Integer.MAX_VALUE - 1, Integer.MIN_VALUE + 1, 0xFF00_0001};
+        for (int value : ints) {
+            long widened = value;
+            assertFalse(Nid.isValid64(widened), "widened " + value);
+            assertThrows(IllegalArgumentException.class, () -> Nid.validate64(widened));
+        }
+    }
+
+    @Test
+    public void negativeHalvesAreNotValid64BitNids() {
+        // A negative element half is reserved for snapshot handles; a negative pattern half is unassigned.
+        assertFalse(Nid.isValid64((5L << 32) | 0x8000_0001L));
+        assertFalse(Nid.isValid64(0x8000_0001_0000_0001L));
+    }
+
+    @Test
+    public void longOrderIsPatternThenElementOrder() {
+        assertTrue(Nid.compose64(1, Nid.MAX_SEQUENCE_64) < Nid.compose64(2, 1));
+        assertTrue(Nid.compose64(2, 1) < Nid.compose64(2, 2));
+    }
+
+    @Test
+    public void nidOfReadsABoxedLong() {
+        Object boxed = 42L;
+        assertEquals(42L, Nid.nidOf(boxed));
+        Object negative = (long) Integer.MIN_VALUE + 1;
+        assertEquals(Integer.MIN_VALUE + 1, Nid.nidOf(negative));
+    }
+
+    @Test
+    public void nidOfWidensABoxedInteger() {
+        Object boxed = Integer.MIN_VALUE + 1;
+        assertEquals((long) Integer.MIN_VALUE + 1, Nid.nidOf(boxed),
+                "a nid boxed as an Integer widens to the same value, sign included");
+    }
+
+    @Test
+    public void nidOfReadsA64BitNid() {
+        Object boxed = Nid.compose64(3, 7);
+        assertEquals(Nid.compose64(3, 7), Nid.nidOf(boxed));
+    }
+
+    @Test
+    public void nidOfRefusesWhatIsNotANid() {
+        assertThrows(IllegalArgumentException.class, () -> Nid.nidOf(null));
+        assertThrows(IllegalArgumentException.class, () -> Nid.nidOf("42"));
+        assertThrows(IllegalArgumentException.class, () -> Nid.nidOf((short) 42));
+    }
 }

@@ -45,7 +45,7 @@ public final class CommitBroadcaster {
      * @param stampCount      the number of stamps finalized
      */
     public record CommitNotification(UUID transactionUuid, String transactionName, long commitTime,
-                                     int[] stampNids, int[] componentNids, int stampCount) {}
+                                     long[] stampNids, long[] componentNids, int stampCount) {}
 
     private static final CopyOnWriteArrayList<Consumer<CommitNotification>> LISTENERS =
             new CopyOnWriteArrayList<>();

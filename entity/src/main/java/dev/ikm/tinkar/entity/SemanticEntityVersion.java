@@ -83,7 +83,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
      *
      * @return the nid of the referenced component
      */
-    default int referencedComponentNid() {
+    default long referencedComponentNid() {
         return chronology().referencedComponentNid();
     }
 
@@ -94,7 +94,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
      * @return the {@link PatternEntity} for this semantic
      */
     default PatternEntity pattern() {
-        return Entity.provider().getEntityFast(patternNid());
+        return EntityHandle.get(patternNid()).expectPattern();
     }
 
     /**
@@ -102,7 +102,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
      *
      * @return the nid of the pattern for this semantic
      */
-    default int patternNid() {
+    default long patternNid() {
         return chronology().patternNid();
     }
 
@@ -623,7 +623,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as an EntityFacade.
-     * <p>     * Accepts EntityFacade directly, Component (resolved via publicId), or an int nid resolved via
+     * <p>     * Accepts EntityFacade directly, Component (resolved via publicId), or an long nid resolved via
      * EntityService. Any other type results in an error.
      * <p>     * Throws:
      * - NullPointerException if the field value is null
@@ -637,8 +637,8 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
         return switch (v) {
             case null -> throw new NullPointerException("Field value is null");
             case EntityFacade e -> e;
-            case Component c -> EntityService.get().getEntity(c.publicId()).get();
-            case Integer i -> EntityService.get().getEntity(i).get();
+            case Component c -> EntityHandle.get(c.publicId()).expectEntity();
+            case Integer i -> EntityHandle.get(i).expectEntity();
             default -> throw new IllegalArgumentException("Unsupported type for Entity conversion: " +
                     v.getClass().getSimpleName() + ": " + v);
         };
@@ -659,8 +659,8 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
         return switch (v) {
             case null -> throw new NullPointerException("Field value is null");
             case ConceptFacade c -> c;
-            case EntityFacade e when EntityService.get().getEntity(e).get() instanceof ConceptFacade conceptFacade -> conceptFacade;
-            case Integer i when EntityService.get().getEntity(i).get() instanceof ConceptFacade conceptFacade -> conceptFacade;
+            case EntityFacade e when EntityHandle.get(e).expectEntity() instanceof ConceptFacade conceptFacade -> conceptFacade;
+            case Integer i when EntityHandle.get(i).expectEntity() instanceof ConceptFacade conceptFacade -> conceptFacade;
             default -> throw new IllegalArgumentException("Unsupported type for Entity conversion: " +
                     v.getClass().getSimpleName() + ": " + v);
         };
@@ -681,8 +681,8 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
         return switch (v) {
             case null -> throw new NullPointerException("Field value is null");
             case SemanticFacade s -> s;
-            case EntityFacade e when EntityService.get().getEntity(e).get() instanceof SemanticFacade semanticFacade -> semanticFacade;
-            case Integer i when EntityService.get().getEntity(i).get() instanceof SemanticFacade semanticFacade -> semanticFacade;
+            case EntityFacade e when EntityHandle.get(e).expectEntity() instanceof SemanticFacade semanticFacade -> semanticFacade;
+            case Integer i when EntityHandle.get(i).expectEntity() instanceof SemanticFacade semanticFacade -> semanticFacade;
             default -> throw new IllegalArgumentException("Unsupported type for Entity conversion: " +
                     v.getClass().getSimpleName() + ": " + v);
         };
@@ -703,8 +703,8 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
         return switch (v) {
             case null -> throw new NullPointerException("Field value is null");
             case PatternFacade p -> p;
-            case EntityFacade e when EntityService.get().getEntity(e).get() instanceof PatternFacade patternFacade -> patternFacade;
-            case Integer i when EntityService.get().getEntity(i).get() instanceof PatternFacade patternFacade -> patternFacade;
+            case EntityFacade e when EntityHandle.get(e).expectEntity() instanceof PatternFacade patternFacade -> patternFacade;
+            case Integer i when EntityHandle.get(i).expectEntity() instanceof PatternFacade patternFacade -> patternFacade;
             default -> throw new IllegalArgumentException("Unsupported type for Entity conversion: " +
                     v.getClass().getSimpleName() + ": " + v);
         };
@@ -723,8 +723,8 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
         Object v = fieldValues().get(index);
         return switch (v) {
             case null -> throw new NullPointerException("Field value is null");
-            case EntityFacade e when EntityService.get().getEntity(e).get() instanceof StampEntity stampEntity -> stampEntity;
-            case Integer i when EntityService.get().getEntity(i).get() instanceof StampEntity stampEntity -> stampEntity;
+            case EntityFacade e when EntityHandle.get(e).expectEntity() instanceof StampEntity stampEntity -> stampEntity;
+            case Integer i when EntityHandle.get(i).expectEntity() instanceof StampEntity stampEntity -> stampEntity;
             default -> throw new IllegalArgumentException("Unsupported type for Entity conversion: " +
                     v.getClass().getSimpleName() + ": " + v);
         };

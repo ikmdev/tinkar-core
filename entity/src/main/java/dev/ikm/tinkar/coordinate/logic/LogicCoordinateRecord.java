@@ -29,24 +29,24 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 import java.util.Objects;
 
 @RecordBuilder
-public record LogicCoordinateRecord(int classifierNid,
-                                    int descriptionLogicProfileNid,
-                                    int inferredAxiomsPatternNid,
-                                    int statedAxiomsPatternNid,
-                                    int conceptMemberPatternNid,
-                                    int statedNavigationPatternNid,
-                                    int inferredNavigationPatternNid,
-                                    int rootNid)
+public record LogicCoordinateRecord(long classifierNid,
+                                    long descriptionLogicProfileNid,
+                                    long inferredAxiomsPatternNid,
+                                    long statedAxiomsPatternNid,
+                                    long conceptMemberPatternNid,
+                                    long statedNavigationPatternNid,
+                                    long inferredNavigationPatternNid,
+                                    long rootNid)
         implements LogicCoordinate, ImmutableCoordinate, LogicCoordinateRecordBuilder.With {
 
-    public static LogicCoordinateRecord make(int classifierNid,
-                                             int descriptionLogicProfileNid,
-                                             int inferredAxiomsPatternNid,
-                                             int statedAxiomsPatternNid,
-                                             int conceptMemberPatternNid,
-                                             int statedNavigationPatternNid,
-                                             int inferredNavigationPatternNid,
-                                             int rootNid) {
+    public static LogicCoordinateRecord make(long classifierNid,
+                                             long descriptionLogicProfileNid,
+                                             long inferredAxiomsPatternNid,
+                                             long statedAxiomsPatternNid,
+                                             long conceptMemberPatternNid,
+                                             long statedNavigationPatternNid,
+                                             long inferredNavigationPatternNid,
+                                             long rootNid) {
         return new LogicCoordinateRecord(classifierNid, descriptionLogicProfileNid,
                 inferredAxiomsPatternNid, statedAxiomsPatternNid, conceptMemberPatternNid, statedNavigationPatternNid,
                 inferredNavigationPatternNid, rootNid);

@@ -88,33 +88,33 @@ ViewCoordinateRecord customView = ViewCoordinateRecord.make(
         StateSet.ACTIVE_ONLY,
         StampPositionRecord.make(
             releaseTimestamp,
-            TinkarTerm.MASTER_PATH.nid()
+            KernelTerm.MASTER_PATH.nid()
         )
     ),
 
     // Language: Spanish with English fallback
     List.of(
         LanguageCoordinateRecord.make(
-            TinkarTerm.SPANISH_LANGUAGE.nid(),
-            TinkarTerm.SPANISH_DIALECT_ASSEMBLAGE.nid()
+            KernelTerm.SPANISH_LANGUAGE.nid(),
+            MyTerms.SPANISH_DIALECT_ASSEMBLAGE.nid()
         ),
         LanguageCoordinateRecord.make(
-            TinkarTerm.ENGLISH_LANGUAGE.nid(),
-            TinkarTerm.US_DIALECT_ASSEMBLAGE.nid()
+            KernelTerm.ENGLISH_LANGUAGE.nid(),
+            KernelTerm.US_DIALECT_PATTERN.nid()
         )
     ),
 
     // Logic: EL++ with inferred axioms
     LogicCoordinateRecord.make(
-        TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
-        TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid(),
-        TinkarTerm.SNOROCKET_CLASSIFIER.nid(),
-        TinkarTerm.STATED_PREMISE_TYPE.nid()
+        KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+        KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid(),
+        KernelTerm.SNOROCKET_CLASSIFIER.nid(),
+        KernelTerm.STATED_PREMISE_TYPE.nid()
     ),
 
     // Navigation: Stated hierarchy, all states
     NavigationCoordinateRecord.make(
-        IntIds.set.of(TinkarTerm.STATED_NAVIGATION.nid()),
+        IntIds.set.of(KernelTerm.STATED_NAVIGATION_PATTERN.nid()),
         StateSet.ACTIVE_AND_INACTIVE,
         true,
         IntIds.list.empty()
@@ -125,8 +125,8 @@ ViewCoordinateRecord customView = ViewCoordinateRecord.make(
         userNid,
         moduleNid,
         moduleNid,
-        TinkarTerm.DEVELOPMENT_PATH.nid(),
-        TinkarTerm.MASTER_PATH.nid()
+        KernelTerm.DEVELOPMENT_PATH.nid(),
+        KernelTerm.MASTER_PATH.nid()
     )
 );
 ----
@@ -158,8 +158,8 @@ public ViewCoordinateRecord createDevelopmentView(int authorNid, int moduleNid) 
             authorNid,
             moduleNid,
             moduleNid,
-            TinkarTerm.DEVELOPMENT_PATH.nid(),
-            TinkarTerm.DEVELOPMENT_PATH.nid()
+            KernelTerm.DEVELOPMENT_PATH.nid(),
+            KernelTerm.DEVELOPMENT_PATH.nid()
         )
     );
 }
@@ -176,7 +176,7 @@ public ViewCoordinateRecord createProductionView(long releaseTime) {
         // Fixed point in time on master path
         StampCoordinateRecord.make(
             StateSet.ACTIVE_ONLY,
-            StampPositionRecord.make(releaseTime, TinkarTerm.MASTER_PATH.nid())
+            StampPositionRecord.make(releaseTime, KernelTerm.MASTER_PATH.nid())
         ),
 
         // English descriptions
@@ -184,10 +184,10 @@ public ViewCoordinateRecord createProductionView(long releaseTime) {
 
         // Inferred axioms for querying
         LogicCoordinateRecord.make(
-            TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
-            TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid(),
-            TinkarTerm.SNOROCKET_CLASSIFIER.nid(),
-            TinkarTerm.INFERRED_PREMISE_TYPE.nid()
+            KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+            KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid(),
+            KernelTerm.SNOROCKET_CLASSIFIER.nid(),
+            KernelTerm.INFERRED_PREMISE_TYPE.nid()
         ),
 
         // Inferred navigation
@@ -212,7 +212,7 @@ public ViewCoordinateRecord createAdminView() {
             StateSet.ACTIVE_AND_INACTIVE,  // See inactive content
             StampPositionRecord.make(
                 Long.MAX_VALUE,
-                TinkarTerm.DEVELOPMENT_PATH.nid()
+                KernelTerm.DEVELOPMENT_PATH.nid()
             )
         ),
 
@@ -224,7 +224,7 @@ public ViewCoordinateRecord createAdminView() {
 
         // Navigation with inactive vertices
         NavigationCoordinateRecord.make(
-            IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION.nid()),
+            IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
             StateSet.ACTIVE_AND_INACTIVE,  // See inactive in hierarchy
             true,
             IntIds.list.empty()
@@ -232,11 +232,11 @@ public ViewCoordinateRecord createAdminView() {
 
         // Admin user edit coordinate
         EditCoordinateRecord.make(
-            TinkarTerm.USER.nid(),
-            TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),
-            TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),
-            TinkarTerm.DEVELOPMENT_PATH.nid(),
-            TinkarTerm.MASTER_PATH.nid()
+            KernelTerm.USER.nid(),
+            KernelTerm.SOLOR_OVERLAY_MODULE.nid(),
+            KernelTerm.SOLOR_OVERLAY_MODULE.nid(),
+            KernelTerm.DEVELOPMENT_PATH.nid(),
+            KernelTerm.MASTER_PATH.nid()
         )
     );
 }
@@ -446,8 +446,8 @@ public class ViewManager {
                     user.getConceptNid(),
                     user.getDefaultModule(),
                     user.getDefaultModule(),
-                    TinkarTerm.DEVELOPMENT_PATH.nid(),
-                    TinkarTerm.MASTER_PATH.nid()
+                    KernelTerm.DEVELOPMENT_PATH.nid(),
+                    KernelTerm.MASTER_PATH.nid()
                 )
             );
         });

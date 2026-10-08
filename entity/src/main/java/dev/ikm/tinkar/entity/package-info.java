@@ -99,7 +99,7 @@
  *     ImmutableList<Object> fieldValues = semantic.lastVersion().fieldValues();
  *
  *     // Process semantic based on pattern
- *     if (pattern.nid() == TinkarTerm.DESCRIPTION_PATTERN.nid()) {
+ *     if (pattern.nid() == KernelTerm.DESCRIPTION_PATTERN.nid()) {
  *         String descriptionText = (String) fieldValues.get(0);
  *         // ... process description
  *     }
@@ -130,7 +130,7 @@
  * <pre>{@code
  * // Example: Description Pattern defines structure for descriptions
  * PatternEntity descriptionPattern = Entity.getPatternForNid(
- *     TinkarTerm.DESCRIPTION_PATTERN.nid()
+ *     KernelTerm.DESCRIPTION_PATTERN.nid()
  * );
  *
  * PatternEntityVersion patternVersion = descriptionPattern.lastVersion();
@@ -158,14 +158,14 @@
  * <pre>{@code
  * // Access STAMP for a version
  * ConceptVersion version = latest.get();
- * int stampNid = version.stampNid();
+ * long stampNid = version.stampNid();
  * StampEntity stamp = Entity.getStamp(stampNid);
  *
  * State state = stamp.state();        // ACTIVE or INACTIVE
  * long time = stamp.time();            // Timestamp
- * int authorNid = stamp.authorNid();   // Who
- * int moduleNid = stamp.moduleNid();   // What module
- * int pathNid = stamp.pathNid();       // What path
+ * long authorNid = stamp.authorNid();   // Who
+ * long moduleNid = stamp.moduleNid();   // What module
+ * long pathNid = stamp.pathNid();       // What path
  * }</pre>
  *
  * <p><b>Entity Identity: NIDs and PublicIds</b></p>
@@ -196,11 +196,11 @@
  *
  * <pre>{@code
  * // NID-based access (fast, local)
- * ConceptEntity concept = Entity.getFast(nid);
+ * ConceptEntity concept = EntityHandle.get(nid).expectConcept();
  *
  * // PublicId-based access (universal)
  * PublicId publicId = Entity.provider().publicId(nid);
- * Optional<Integer> nidOpt = Entity.provider().nidForPublicId(publicId);
+ * int nidAgain = Entity.provider().nidForPublicId(publicId);
  * }</pre>
  *
  * <p><b>Entity Versioning and Chronology</b></p>
@@ -225,7 +225,7 @@
  * StampCoordinateRecord historicStamp = StampCoordinateRecord.make(
  *     StateSet.ACTIVE,
  *     StampPositionRecord.make(historicTime, path),
- *     IntIds.set.empty()
+ *     LongIds.set.empty()
  * );
  * StampCalculator calc = StampCalculatorWithCache.getCalculator(historicStamp);
  * Latest<ConceptVersion> historicVersion = calc.latest(concept);
@@ -240,19 +240,19 @@
  * // Find all descriptions for a concept
  * Entity.provider().forEachSemanticForComponentOfPattern(
  *     conceptNid,
- *     TinkarTerm.DESCRIPTION_PATTERN.nid(),
+ *     KernelTerm.DESCRIPTION_PATTERN.nid(),
  *     semantic -> {
  *         // Process each description semantic
  *         SemanticEntityVersion version = semantic.lastVersion();
  *         String text = (String) version.fieldValues().get(0);
- *         int typeNid = (Integer) version.fieldValues().get(1);
+ *         long typeNid = (Integer) version.fieldValues().get(1);
  *     }
  * );
  *
  * // Find all axioms for a concept
  * Entity.provider().forEachSemanticForComponentOfPattern(
  *     conceptNid,
- *     TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+ *     KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
  *     semantic -> {
  *         // Process each axiom semantic
  *         DiTreeEntity axiomTree = (DiTreeEntity) semantic.lastVersion().fieldValues().get(0);
@@ -298,16 +298,15 @@
  * // Legacy static methods (being phased out)
  * ConceptEntity concept = Entity.getConceptForNid(conceptNid);
  * PatternEntity pattern = Entity.getPatternForNid(patternNid);
- * Entity entity = Entity.getFast(nid);  // Returns appropriate subtype
  * }</pre>
  *
  * <p><b>Provider-Based Access</b></p>
  * <pre>{@code
- * // Access via EntityService provider
- * EntityService provider = Entity.provider();
- * Entity entity = provider.getEntityFast(nid);
+ * // Look an entity up through its handle
+ * Entity<?> entity = EntityHandle.get(nid).orNull();
  *
- * // Iterate over all entities
+ * // Iterate over all entities via the EntityService provider
+ * EntityService provider = Entity.provider();
  * provider.forEachEntity(entity -> {
  *     // Process each entity
  * });
@@ -333,7 +332,7 @@
  * // Create semantic to annotate concept
  * SemanticRecord description = SemanticRecord.build(
  *     publicId,
- *     TinkarTerm.DESCRIPTION_PATTERN.nid(),
+ *     KernelTerm.DESCRIPTION_PATTERN.nid(),
  *     conceptNid,  // references concept
  *     stampNid,
  *     fieldValues  // [text, type, language, case]
@@ -373,7 +372,7 @@
  *
  * <ul>
  * <li><strong>Use NIDs for internal operations</strong> - Much faster than PublicIds</li>
- * <li><strong>Cache entities when reusing</strong> - Entity.getFast() is optimized but not free</li>
+ * <li><strong>Cache entities when reusing</strong> - EntityHandle.get() is optimized but not free</li>
  * <li><strong>Use STAMP calculators</strong> - Built-in caching for version resolution</li>
  * <li><strong>Batch semantic queries</strong> - forEachSemanticForComponent more efficient
  * than individual lookups</li>

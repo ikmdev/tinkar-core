@@ -33,17 +33,17 @@ public interface FeatureDefinition {
      */
     Concept meaning();
 
-    int meaningNid();
+    long meaningNid();
 
-    int purposeNid();
+    long purposeNid();
 
-    int dataTypeNid();
+    long dataTypeNid();
 
     int indexInPattern();
 
-    int patternNid();
+    long patternNid();
 
-    int patternVersionStampNid();
+    long patternVersionStampNid();
 
     FieldDataType fieldDataType();
 

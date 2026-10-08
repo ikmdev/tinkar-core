@@ -32,7 +32,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
 @RecordBuilder
 public record PatternRecord(
         long mostSignificantBits, long leastSignificantBits,
-        ImmutableLongList additionalUuidLongs, int nid,
+        ImmutableLongList additionalUuidLongs, long nid,
         ImmutableList<PatternVersionRecord> versions)
         implements PatternEntity<PatternVersionRecord>, ImmutableEntity<PatternVersionRecord>, PatternRecordBuilder.With {
 
@@ -46,7 +46,7 @@ public record PatternRecord(
     public static PatternRecord makeNew(PublicId publicId, RecordListBuilder versionListBuilder) {
         PublicIdentifierRecord publicIdRecord = PublicIdentifierRecord.make(publicId);
 
-        int nid = ScopedValue
+        long nid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Pattern.pattern().publicId())
                 .call(() -> PrimitiveData.nid(publicId));
 

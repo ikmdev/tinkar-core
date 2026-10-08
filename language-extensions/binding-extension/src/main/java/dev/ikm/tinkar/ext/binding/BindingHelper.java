@@ -67,7 +67,7 @@ public class BindingHelper {
      * @param nid Native Identifier of Tinkar component
      * @return Text of Tinkar component
      */
-    public String getText(int nid) {
+    public String getText(long nid) {
         return specialCharacterHandler.apply(languageCalculator.getDescriptionText(nid).orElse(""));
     }
 
@@ -76,7 +76,7 @@ public class BindingHelper {
      * @param nid Native Identifier of Tinkar component
      * @return Variable Name (java style)
      */
-    public String createVariableName(int nid) {
+    public String createVariableName(long nid) {
         return getText(nid).replace(" ", "_").toUpperCase().replace("(", "").replace(")", "");
     }
 
@@ -94,7 +94,7 @@ public class BindingHelper {
      * @param nid Native Identifier
      * @return List of Pattern Definitions
      */
-    public List<? extends FieldDefinitionForEntity> getPatternFieldDefinitions(int nid) {
+    public List<? extends FieldDefinitionForEntity> getPatternFieldDefinitions(long nid) {
         PatternEntityVersion latestVersion = stampCalculator.latestPatternEntityVersion(nid).get();
         return latestVersion.fieldDefinitions().stream().toList();
     }

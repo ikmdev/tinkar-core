@@ -15,10 +15,11 @@
  */
 package dev.ikm.tinkar.entity.graph;
 
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.VertexId;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.Pattern;
@@ -26,8 +27,11 @@ import dev.ikm.tinkar.component.Semantic;
 import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.PublicIdentifierRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
@@ -42,23 +46,26 @@ import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
-import org.eclipse.collections.api.map.primitive.IntObjectMap;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.map.primitive.ImmutableLongObjectMap;
+import org.eclipse.collections.api.map.primitive.LongObjectMap;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
-import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
+import org.eclipse.collections.impl.map.mutable.primitive.LongObjectHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongConsumer;
+
+import dev.ikm.tinkar.common.service.EntityRecordFormat2;
+import dev.ikm.tinkar.entity.EntityCodec2;
 
 import static dev.ikm.tinkar.entity.EntityRecordFactory.ENTITY_FORMAT_VERSION;
 
@@ -68,14 +75,14 @@ public class EntityVertex implements Vertex, VertexId {
 	protected long mostSignificantBits;
 	protected long leastSignificantBits;
 	protected int vertexIndex = -1;
-	protected int meaningNid;
-	private ImmutableIntObjectMap<Object> properties;
-	private MutableIntObjectMap<Object> uncommittedProperties;
+	protected long meaningNid;
+	private ImmutableLongObjectMap<Object> properties;
+	private MutableLongObjectMap<Object> uncommittedProperties;
 
 	protected EntityVertex() {
 	}
 
-	protected EntityVertex(UUID uuid, int meaningNid) {
+	protected EntityVertex(UUID uuid, long meaningNid) {
 		this.mostSignificantBits = uuid.getMostSignificantBits();
 		this.leastSignificantBits = uuid.getLeastSignificantBits();
 		this.meaningNid = meaningNid;
@@ -94,7 +101,7 @@ public class EntityVertex implements Vertex, VertexId {
 		fill(another);
 	}
 
-	public void setMeaningNid(int meaningNid) {
+	public void setMeaningNid(long meaningNid) {
 		this.meaningNid = meaningNid;
 	}
 
@@ -116,9 +123,9 @@ public class EntityVertex implements Vertex, VertexId {
 		return entityVertex;
 	}
 
-	public ImmutableIntObjectMap<Object> properties() {
+	public ImmutableLongObjectMap<Object> properties() {
 		if (properties == null) {
-			return IntObjectMaps.immutable.empty();
+			return LongObjectMaps.immutable.empty();
 		}
 		return properties;
 	}
@@ -133,7 +140,7 @@ public class EntityVertex implements Vertex, VertexId {
 		} else {
 			this.meaningNid = Entity.nid(another.meaning());
 		}
-		MutableIntObjectMap<Object> mutableProperties = new IntObjectHashMap<>(another.propertyKeys().size());
+		MutableLongObjectMap<Object> mutableProperties = new LongObjectHashMap<>(another.propertyKeys().size());
 		another.propertyKeys().forEach(concept -> {
 			mutableProperties.put(Entity.nid(concept), abstractObject(another.propertyFast(concept)));
 		});
@@ -165,26 +172,17 @@ public class EntityVertex implements Vertex, VertexId {
 		StampRecord stampRecord;
 
 		if (stamp.publicId().uuidCount() > 0) {
-			int conceptNid = Entity.nid(stampPublicId);
-			if (stampPublicId.uuidCount() > 1) {
-				stampRecord = StampRecordBuilder.builder()
-						.leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
-						.mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(stampPublicId.asUuidArray(),
-                                1, stampPublicId.uuidCount())))
-                        .nid(conceptNid)
-                        .versions(stampVersions)
-                        .build();
-			} else {
-				stampRecord = StampRecordBuilder.builder()
-						.leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(conceptNid)
-                        .versions(stampVersions)
-                        .build();
-			}
+			long conceptNid = Entity.nid(stampPublicId);
+			PublicIdentifierRecord publicIdRecord = PublicIdentifierRecord.make(stampPublicId);
+			stampRecord = StampRecordBuilder.builder()
+					.leastSignificantBits(publicIdRecord.leastSignificantBits())
+					.mostSignificantBits(publicIdRecord.mostSignificantBits())
+					.additionalUuidLongs(publicIdRecord.additionalUuidLongs())
+					.nid(conceptNid)
+					.versions(stampVersions)
+					.build();
 		} else {
-			throw new IllegalStateException("missing primordial UUID");
+			throw new IllegalStateException("STAMP public id has no UUID");
 		}
 		StampVersionRecord stampVersionRecord = StampVersionRecordBuilder.builder()
                 .stateNid(EntityService.get().nidForPublicId(stamp.state().publicId()))
@@ -208,18 +206,18 @@ public class EntityVertex implements Vertex, VertexId {
 		return EntityVertex.make(vertexUuid, conceptFacade.nid());
 	}
 
-	public static EntityVertex make(int meaningNid) {
+	public static EntityVertex make(long meaningNid) {
 		EntityVertex entityVertex = new EntityVertex(UUID.randomUUID(), meaningNid);
 		return entityVertex;
 	}
 
-	public static EntityVertex make(UUID vertexUuid, int meaningNid) {
+	public static EntityVertex make(UUID vertexUuid, long meaningNid) {
 		EntityVertex entityVertex = new EntityVertex(vertexUuid, meaningNid);
 		return entityVertex;
 	}
 
 	public static EntityVertex make(ByteBuf readBuf, byte entityFormatVersion) {
-		if (entityFormatVersion == ENTITY_FORMAT_VERSION) {
+		if (entityFormatVersion == ENTITY_FORMAT_VERSION || entityFormatVersion == EntityCodec2.FORMAT) {
 			EntityVertex entityVertex = new EntityVertex();
 			entityVertex.fill(readBuf, entityFormatVersion);
 			return entityVertex;
@@ -228,23 +226,28 @@ public class EntityVertex implements Vertex, VertexId {
 		}
 	}
 
+	/**
+	 * Reads what {@link #getBytes(byte)} wrote: in format 1 the nids as four bytes and the
+	 * property count as an int; in format 2 the nids as varint pairs and the count as a varint.
+	 */
 	private void fill(ByteBuf readBuf, byte formatVersion) {
+		boolean format2 = formatVersion == EntityCodec2.FORMAT;
 		this.mostSignificantBits = readBuf.readLong();
 		this.leastSignificantBits = readBuf.readLong();
 		this.vertexIndex = readBuf.readInt();
-		this.meaningNid = readBuf.readInt();
-		int propertyCount = readBuf.readInt();
+		this.meaningNid = format2 ? EntityRecordFormat2.readNid(readBuf) : readBuf.readInt();
+		int propertyCount = format2 ? readBuf.readVarInt() : readBuf.readInt();
 		if (propertyCount > 0) {
-			MutableIntObjectMap<Object> mutableProperties = IntObjectMaps.mutable.ofInitialCapacity(propertyCount);
+			MutableLongObjectMap<Object> mutableProperties = LongObjectMaps.mutable.ofInitialCapacity(propertyCount);
 			for (int i = 0; i < propertyCount; i++) {
-				int conceptNid = readBuf.readInt();
+				long conceptNid = format2 ? EntityRecordFormat2.readNid(readBuf) : readBuf.readInt();
 				FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
 				Object value = EntityRecordFactory.readFieldData(readBuf, dataType, formatVersion);
 				mutableProperties.put(conceptNid, value);
 			}
 			this.properties = mutableProperties.toImmutable();
 		} else {
-			this.properties = IntObjectMaps.immutable.empty();
+			this.properties = LongObjectMaps.immutable.empty();
 		}
 
 	}
@@ -253,7 +256,7 @@ public class EntityVertex implements Vertex, VertexId {
 		StringBuilder sb = new StringBuilder();
 		sb.append(prepend);
 		sb.append(" [").append(vertexIndex).append(idSuffix).append("]");
-		Optional<ImmutableIntList> optionalSuccessorNids = diGraph.successorNids(this.vertexIndex);
+		Optional<ImmutableIntList> optionalSuccessorNids = diGraph.successorNids(this.vertexIndex); // vertex indexes, despite the name
 		optionalSuccessorNids.ifPresent(successorNids -> {
 			sb.append("➞[");
 			successorNids.forEach(successorNid -> sb.append(successorNid).append(idSuffix).append(","));
@@ -274,7 +277,7 @@ public class EntityVertex implements Vertex, VertexId {
 
 		sb.append("\n");
 		if (properties != null) {
-			int[] propertyKeys = properties.keySet().toArray();
+			long[] propertyKeys = properties.keySet().toArray();
 			for (int i = 0; i < propertyKeys.length; i++) {
 				if (propertyKeys[i] != meaningNid) {
 					sb.append(prepend);
@@ -313,7 +316,7 @@ public class EntityVertex implements Vertex, VertexId {
 	public void commitProperties() {
 		if (uncommittedProperties != null & !uncommittedProperties.isEmpty()) {
 			if (this.properties != null) {
-				for (int key : this.properties.keySet().toArray()) {
+				for (long key : this.properties.keySet().toArray()) {
 					if (!this.uncommittedProperties.containsKey(key)) {
 						this.uncommittedProperties.put(key, this.properties.get(key));
 					}
@@ -355,7 +358,7 @@ public class EntityVertex implements Vertex, VertexId {
 		return sb.toString();
 	}
 
-	private void appendProperty(int keyNid, Object value, String prefix, StringBuilder sb, boolean addSeparator) {
+	private void appendProperty(long keyNid, Object value, String prefix, StringBuilder sb, boolean addSeparator) {
 		sb.append(prefix).append(PrimitiveData.text(keyNid)).append("=");
 		switch (value) {
 //            case ConceptFacade conceptFacade -> sb.append(PrimitiveData.text(conceptFacade.nid()));
@@ -394,6 +397,15 @@ public class EntityVertex implements Vertex, VertexId {
 		return Optional.ofNullable(propertyFast(propertyConcept));
 	}
 
+	/** A property value that names a component — its nid or a facade — for a diagnostic message. */
+	private static String componentText(Object propertyValue) {
+		return switch (propertyValue) {
+		case Long nid -> DiagnosticText.component(nid);
+		case EntityFacade facade -> DiagnosticText.component(facade.nid());
+		default -> String.valueOf(propertyValue);
+		};
+	}
+
 	@Override
 	public Optional<ConceptFacade> propertyAsConcept(Concept propertyConcept) {
 		Optional<?> optionalPropertyValue = property(propertyConcept);
@@ -401,19 +413,19 @@ public class EntityVertex implements Vertex, VertexId {
 		if (optionalPropertyValue.isEmpty()) {
 			return Optional.empty();
 		}
-		Optional<Entity> optionalEntityValue = switch (optionalPropertyValue.get()) {
-		case Integer nid -> EntityService.get().getEntity(nid);
-		case EntityFacade facade -> EntityService.get().getEntity(facade);
+		Optional<Entity<? extends EntityVersion>> optionalEntityValue = switch (optionalPropertyValue.get()) {
+		case Long nid -> EntityHandle.get(nid).entity().filter(e -> !e.canceled());
+		case EntityFacade facade -> EntityHandle.get(facade).entity().filter(e -> !e.canceled());
 		case null -> throw new IllegalStateException("optionalPropertyValue is null");
             default -> throw new IllegalStateException("optionalPropertyValue is not an identifier or facade: " + optionalPropertyValue.get());
 		};
 		if (optionalEntityValue.isEmpty()) {
-            throw new IllegalStateException("Entity specified by property is not in database:: " + optionalPropertyValue.get());
+            throw new IllegalStateException("Entity specified by property is not in database:: " + componentText(optionalPropertyValue.get()));
 		}
 		if (optionalEntityValue.get() instanceof ConceptFacade conceptFacade) {
 			return Optional.of(conceptFacade);
 		}
-		throw new IllegalStateException("Cannot convert property to concept. Property: " + optionalPropertyValue.get());
+		throw new IllegalStateException("Cannot convert property to concept. Property: " + componentText(optionalPropertyValue.get()));
 	}
 
 	@Override
@@ -440,11 +452,11 @@ public class EntityVertex implements Vertex, VertexId {
 		return properties != null ? (T) properties.get(conceptFacade.nid()) : null;
 	}
 
-	public <T> Optional<T> property(int propertyConceptNid) {
+	public <T> Optional<T> property(long propertyConceptNid) {
 		return Optional.ofNullable(propertyFast(propertyConceptNid));
 	}
 
-	public <T> T propertyFast(int propertyConceptNid) {
+	public <T> T propertyFast(long propertyConceptNid) {
 		return properties != null ? (T) properties.get(propertyConceptNid) : null;
 	}
 
@@ -454,25 +466,40 @@ public class EntityVertex implements Vertex, VertexId {
 	 * @param propertyConceptNid
 	 * @param value
 	 */
-	public void putUncommittedProperty(int propertyConceptNid, Object value) {
+	public void putUncommittedProperty(long propertyConceptNid, Object value) {
 		if (this.uncommittedProperties == null) {
-			this.uncommittedProperties = IntObjectMaps.mutable.empty();
+			this.uncommittedProperties = LongObjectMaps.mutable.empty();
 		}
 		this.uncommittedProperties.put(propertyConceptNid, value);
 	}
 
-	public <T> Optional<T> uncommittedProperty(int propertyConceptNid) {
+	public <T> Optional<T> uncommittedProperty(long propertyConceptNid) {
 		if (this.uncommittedProperties == null) {
 			return Optional.empty();
 		}
 		return (Optional<T>) Optional.ofNullable(this.uncommittedProperties.get(propertyConceptNid));
 	}
 
-	public void setProperties(MutableIntObjectMap<Object> properties) {
+	public void setProperties(MutableLongObjectMap<Object> properties) {
 		this.properties = properties.toImmutable();
 	}
 
+	/** The vertex in entity format 1. */
 	public final byte[] getBytes() {
+		return getBytes(ENTITY_FORMAT_VERSION);
+	}
+
+	/**
+	 * The vertex's bytes in an entity format: the UUID, the vertex index, the meaning's nid, and
+	 * the properties, each a concept's nid and a field value. Format 1 writes a nid as four bytes
+	 * and the count as an int; format 2 writes a nid as its two halves as varints and the count
+	 * as a varint, and its field values through {@link EntityCodec2}.
+	 *
+	 * @param entityFormatVersion the format, 1 or 2
+	 * @return the bytes
+	 */
+	public final byte[] getBytes(byte entityFormatVersion) {
+		boolean format2 = entityFormatVersion == EntityCodec2.FORMAT;
 		int bufSize = DEFAULT_SIZE;
         AtomicReference<ByteBuf> byteBufRef =
                 new AtomicReference<>(ByteBufPool.allocate(bufSize));
@@ -482,14 +509,26 @@ public class EntityVertex implements Vertex, VertexId {
 				byteBuf.writeLong(mostSignificantBits);
 				byteBuf.writeLong(leastSignificantBits);
 				byteBuf.writeInt(vertexIndex);
-				byteBuf.writeInt(meaningNid);
-				if (properties == null) {
-					byteBuf.writeInt(0);
+				if (format2) {
+					EntityRecordFormat2.writeNid(byteBuf, meaningNid);
 				} else {
-					byteBuf.writeInt(properties.size());
+					byteBuf.writeInt(Nid.narrowChecked(meaningNid));
+				}
+				int propertyCount = properties == null ? 0 : properties.size();
+				if (format2) {
+					byteBuf.writeVarInt(propertyCount);
+				} else {
+					byteBuf.writeInt(propertyCount);
+				}
+				if (properties != null) {
 					properties.forEachKeyValue((nid, value) -> {
-						byteBuf.writeInt(nid);
-						EntityRecordFactory.writeField(byteBuf, value);
+						if (format2) {
+							EntityRecordFormat2.writeNid(byteBuf, nid);
+							EntityCodec2.writeField(byteBuf, value);
+						} else {
+							byteBuf.writeInt(Nid.narrowChecked(nid));
+							EntityRecordFactory.writeField(byteBuf, value);
+						}
 					});
 				}
 				return byteBuf.asArray();
@@ -532,11 +571,11 @@ public class EntityVertex implements Vertex, VertexId {
 		consumer.accept(this.leastSignificantBits);
 	}
 
-	public int getMeaningNid() {
+	public long getMeaningNid() {
 		return meaningNid;
 	}
 
-	public MutableIntObjectMap<Object> uncommittedProperties() {
+	public MutableLongObjectMap<Object> uncommittedProperties() {
 		return uncommittedProperties;
 	}
 
@@ -577,7 +616,7 @@ public class EntityVertex implements Vertex, VertexId {
 		return compareProperties(this.properties, that.properties);
 	}
 
-	private static boolean compareProperties(IntObjectMap theseProperties, IntObjectMap thoseProperties) {
+	private static boolean compareProperties(LongObjectMap theseProperties, LongObjectMap thoseProperties) {
 		if (theseProperties == null || theseProperties.isEmpty()) {
 			if (thoseProperties != null && thoseProperties.isEmpty() == false) {
 				return false;
@@ -593,7 +632,7 @@ public class EntityVertex implements Vertex, VertexId {
 			if (!theseProperties.keySet().equals(thoseProperties.keySet())) {
 				return false;
 			}
-			for (int key : theseProperties.keySet().toArray()) {
+			for (long key : theseProperties.keySet().toArray()) {
                 if (!Objects.equals(theseProperties.get(key),
                         thoseProperties.get(key))) {
 					return false;
@@ -607,7 +646,7 @@ public class EntityVertex implements Vertex, VertexId {
      * Only considers meaning and committed property keys and values that are kinds of concept.
 	 * @param conceptNidSet
 	 */
-	public void addConceptsReferencedByVertex(MutableIntSet conceptNidSet) {
+	public void addConceptsReferencedByVertex(MutableLongSet conceptNidSet) {
 		conceptNidSet.add(meaningNid);
 		if (this.properties != null) {
 			this.properties.keySet().forEach(keyNid -> conceptNidSet.add(keyNid));

@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.common.binary;
 
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
@@ -23,8 +23,10 @@ import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import io.activej.bytebuf.ByteBufStrings;
 import org.eclipse.collections.api.factory.primitive.IntLists;
+import org.eclipse.collections.api.factory.primitive.LongLists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.api.list.primitive.IntList;
 
 import java.time.Instant;
@@ -147,7 +149,7 @@ public class EncoderOutput {
         buf.writeVarLong(v);
     }
 
-    public void writeNid(int nid) {
+    public void writeNid(long nid) {
         writePublicId(PrimitiveData.publicId(nid));
     }
 
@@ -158,18 +160,18 @@ public class EncoderOutput {
         uuidList.forEach(this::writeUuid);
     }
 
-    public void writeNidArray(int[] nids) {
-        writeNidList(IntLists.immutable.of(nids));
+    public void writeNidArray(long[] nids) {
+        writeNidList(LongLists.immutable.of(nids));
     }
 
-    public void writeNidList(ImmutableIntList nids) {
+    public void writeNidList(ImmutableLongList nids) {
         growIfNeeded(4);
         buf.writeVarInt(nids.size());
         nids.forEach(this::writeNid);
     }
 
-    public void writeIntIdList(IntIdList intIdList) {
-        writeNidArray(intIdList.toArray());
+    public void writeLongIdList(LongIdList longIdList) {
+        writeNidArray(longIdList.toArray());
     }
 
     public void writeInstant(Instant instant) {

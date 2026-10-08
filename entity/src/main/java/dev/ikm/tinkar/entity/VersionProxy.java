@@ -28,9 +28,9 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
 
 public class VersionProxy extends EntityProxy implements Version {
     private UUID[] stampUuids;
-    private int cachedStampNid = 0;
+    private long cachedStampNid = 0;
 
-    public VersionProxy(int nid, int stampNid) {
+    public VersionProxy(long nid, long stampNid) {
         super(nid);
         this.cachedStampNid = stampNid;
     }
@@ -49,7 +49,7 @@ public class VersionProxy extends EntityProxy implements Version {
         return new VersionProxy(name, publicId, stampPublicId);
     }
 
-    public static VersionProxy make(int nid, int stampNid) {
+    public static VersionProxy make(long nid, long stampNid) {
         return new VersionProxy(nid, stampNid);
     }
 
@@ -62,7 +62,7 @@ public class VersionProxy extends EntityProxy implements Version {
         return Entity.getStamp(stampNid());
     }
 
-    public final int stampNid() {
+    public final long stampNid() {
         if (cachedStampNid == 0) {
             cachedStampNid = ScopedValue
                     .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern().publicId())
@@ -101,7 +101,7 @@ public class VersionProxy extends EntityProxy implements Version {
     }
 
     public static class Concept extends VersionProxy implements ConceptFacade {
-        public Concept(int nid, int stampNid) {
+        public Concept(long nid, long stampNid) {
             super(nid, stampNid);
         }
 
@@ -117,7 +117,7 @@ public class VersionProxy extends EntityProxy implements Version {
             return new VersionProxy.Concept(name, publicId, stampPublicId);
         }
 
-        public static VersionProxy.Concept make(int nid, int stampNid) {
+        public static VersionProxy.Concept make(long nid, long stampNid) {
             return new VersionProxy.Concept(nid, stampNid);
         }
 
@@ -127,7 +127,7 @@ public class VersionProxy extends EntityProxy implements Version {
     }
 
     public static class Pattern extends VersionProxy implements PatternFacade {
-        public Pattern(int nid, int stampNid) {
+        public Pattern(long nid, long stampNid) {
             super(nid, stampNid);
         }
 
@@ -143,7 +143,7 @@ public class VersionProxy extends EntityProxy implements Version {
             return new VersionProxy.Pattern(name, publicId, stampPublicId);
         }
 
-        public static VersionProxy.Pattern make(int nid, int stampNid) {
+        public static VersionProxy.Pattern make(long nid, long stampNid) {
             return new VersionProxy.Pattern(nid, stampNid);
         }
 
@@ -153,7 +153,7 @@ public class VersionProxy extends EntityProxy implements Version {
     }
 
     public static class Semantic extends VersionProxy implements SemanticFacade {
-        public Semantic(int nid, int stampNid) {
+        public Semantic(long nid, long stampNid) {
             super(nid, stampNid);
         }
 
@@ -169,7 +169,7 @@ public class VersionProxy extends EntityProxy implements Version {
             return new VersionProxy.Semantic(name, publicId, stampPublicId);
         }
 
-        public static VersionProxy.Semantic make(int nid, int stampNid) {
+        public static VersionProxy.Semantic make(long nid, long stampNid) {
             return new VersionProxy.Semantic(nid, stampNid);
         }
 

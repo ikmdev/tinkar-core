@@ -15,15 +15,15 @@
  */
 package dev.ikm.tinkar.coordinate.stamp;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
 
 public interface StampCoordinateDelegate extends StampCoordinate {
 
     StampCoordinate getStampFilter();
 
     @Override
-    default int pathNidForFilter() {
+    default long pathNidForFilter() {
         return getStampFilter().pathNidForFilter();
     }
 
@@ -33,12 +33,12 @@ public interface StampCoordinateDelegate extends StampCoordinate {
     }
 
     @Override
-    default IntIdSet moduleNids() {
+    default LongIdSet moduleNids() {
         return getStampFilter().moduleNids();
     }
 
     @Override
-    default IntIdList modulePriorityNidList() {
+    default LongIdList modulePriorityNidList() {
         return getStampFilter().modulePriorityNidList();
     }
 
@@ -58,7 +58,7 @@ public interface StampCoordinateDelegate extends StampCoordinate {
     }
 
     @Override
-    default IntIdSet excludedModuleNids() {
+    default LongIdSet excludedModuleNids() {
         return getStampFilter().excludedModuleNids();
     }
 
@@ -68,17 +68,17 @@ public interface StampCoordinateDelegate extends StampCoordinate {
     }
 
     @Override
-    default StampCoordinate withModuleNids(IntIdSet moduleNids) {
+    default StampCoordinate withModuleNids(LongIdSet moduleNids) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    default StampCoordinate withExcludedModuleNids(IntIdSet excludedModuleNids) {
+    default StampCoordinate withExcludedModuleNids(LongIdSet excludedModuleNids) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    default StampCoordinate withModulePriorityNidList(IntIdList modulePriorityNidList) {
+    default StampCoordinate withModulePriorityNidList(LongIdList modulePriorityNidList) {
         throw new UnsupportedOperationException();
     }
 }

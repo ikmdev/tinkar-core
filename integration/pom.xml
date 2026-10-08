@@ -10,87 +10,105 @@
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <tinkar-composer.version>1.14.4</tinkar-composer.version>
+        <!-- Lucene 10.5.1 turns its Vector API code on only up to Java 26 and warns on 27.
+             The property raises that limit; the full suite passes with it. Drop it when
+             a Lucene release supports Java 27. -->
         <failsafeArgLine>
             --enable-preview
             -Xmx12G
+            --add-modules jdk.incubator.vector
+            --sun-misc-unsafe-memory-access=allow
+            -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
+            -Dorg.apache.lucene.vectorization.upperJavaFeatureVersion=27
         </failsafeArgLine>
         <surefireArgLine>
             --enable-preview
             -Xmx12G
         </surefireArgLine>
+        <!-- How many suites run at once; -Dintegration.forkCount=1 runs them one at a time. -->
+        <integration.forkCount>0.5C</integration.forkCount>
     </properties>
 
 
+    <!-- A test-only module: its only sources are tests, run on the class path with services
+         found through META-INF/services, the workspace's convention for tests (no module
+         descriptor in test space). Every dependency the tests compile against is test scope;
+         providers found only through ServiceLoader are runtime scope. -->
     <dependencies>
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
         <dependency>
             <groupId>dev.ikm.jpms</groupId>
             <artifactId>protobuf-java</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>common</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>component</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>entity</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>test-fixtures</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>composer</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>data-spinedarray-provider</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>data-ephemeral-provider</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>data-mvstore-provider</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>entity-provider</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>executor-provider</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>search-provider</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>changeset-writer-provider</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>terms</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>test-fixtures</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>search-provider</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>changeset-writer-provider</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>reasoner-service</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>tinkar-schema</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.ikm.jpms</groupId>
+            <artifactId>activej-bytebuf</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.collections</groupId>
             <artifactId>eclipse-collections-api</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.collections</groupId>
             <artifactId>eclipse-collections</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <optional>true</optional>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -99,17 +117,7 @@
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-<dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>dev.ikm.tinkar.ext.owl</groupId>
-            <artifactId>owl-extension</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -119,32 +127,57 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>reasoner-elk-owl</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>reasoner-elk-snomed</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>dev.ikm.elk</groupId>
+            <artifactId>elk-snomed</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- The IKE starter set's bindings (IkeTerms): the components tests name beyond the
+             kernel, from the set the tests load. -->
+        <dependency>
+            <groupId>network.ike.foundation</groupId>
+            <artifactId>ike-bindings</artifactId>
+            <version>${ike-starter-set.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Service providers the tests reach only through ServiceLoader. -->
+        <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>reasoner-hybrid</artifactId>
+            <artifactId>data-spinedarray-provider</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>data-ephemeral-provider</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>data-mvstore-provider</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>entity-provider</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>executor-provider</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>test-logging</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <compilerArgs>
-                        <arg>--enable-preview</arg>
-                    </compilerArgs>
-                </configuration>
-            </plugin>
             <!-- forkCount=1, reuseForks=false (fresh JVM per test class)
                  moved to ike-parent:13 (#282) -->
             <plugin>
@@ -163,10 +196,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
-                    <!-- Producer/consumer IT pairs (ForwardReferenceChangeSetGenerateIT
-                         before ...IngestIT, ExportDataIT before ImportDataIT) rely on
-                         alphabetical class order; the default is filesystem-dependent -->
-                    <runOrder>alphabetical</runOrder>
+                    <!-- Suites run in parallel JVMs, still one fresh JVM per suite
+                         (reuseForks=false from ike-parent). No suite depends on another:
+                         each keeps its store and files in a directory named on the suite,
+                         and a suite that needs more than one store lifetime runs the others
+                         as ForkedJvm stages. -->
+                    <forkCount>${integration.forkCount}</forkCount>
                 </configuration>
                 <executions>
                     <execution>
@@ -199,8 +234,7 @@
                                 <goals>
                                     <goal>analyze-only</goal>
                                 </goals>
-                                <configuration combine.self="override">
-                                    <!-- your desired config; no ignoredUsedUndeclaredDependencies -->
+                                <configuration>
                                     <ignoreUnusedRuntime>true</ignoreUnusedRuntime>
                                 </configuration>
                             </execution>
@@ -213,24 +247,24 @@
                                 <configuration>
                                     <artifactItems>
                                         <artifactItem>
-                                            <groupId>dev.ikm.data.tinkar</groupId>
-                                            <artifactId>tinkar-starter-data</artifactId>
-                                            <version>${tinkar-starter-data.version}</version>
+                                            <groupId>network.ike.foundation</groupId>
+                                            <artifactId>ike-starter-set</artifactId>
+                                            <version>${ike-starter-set.version}</version>
                                             <classifier>reasoned-pb</classifier>
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                            <destFileName>tinkar-starter-data-reasoned-pb.zip</destFileName>
+                                            <destFileName>ike-starter-set-reasoned-pb.zip</destFileName>
                                         </artifactItem>
                                         <artifactItem>
-                                            <groupId>dev.ikm.data.tinkar</groupId>
-                                            <artifactId>tinkar-starter-data</artifactId>
-                                            <version>${tinkar-starter-data.version}</version>
+                                            <groupId>network.ike.foundation</groupId>
+                                            <artifactId>ike-starter-set</artifactId>
+                                            <version>${ike-starter-set.version}</version>
                                             <classifier>unreasoned-pb</classifier>
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                            <destFileName>tinkar-starter-data-unreasoned-pb.zip</destFileName>
+                                            <destFileName>ike-starter-set-unreasoned-pb.zip</destFileName>
                                         </artifactItem>
                                         <artifactItem>
                                             <groupId>dev.ikm.data.tinkar</groupId>
@@ -245,7 +279,10 @@
                                     </artifactItems>
                                     <outputDirectory>${project.build.directory}/data</outputDirectory>
                                     <overWriteReleases>false</overWriteReleases>
-                                    <overWriteSnapshots>true</overWriteSnapshots>
+                                    <!-- Copy only when the installed starter set is newer than the copy here, rather than
+                                         overwriting it on every build. -->
+                                    <overWriteSnapshots>false</overWriteSnapshots>
+                                    <overWriteIfNewer>true</overWriteIfNewer>
                                 </configuration>
                             </execution>
                         </executions>

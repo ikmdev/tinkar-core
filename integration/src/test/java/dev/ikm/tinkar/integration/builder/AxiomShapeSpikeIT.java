@@ -15,8 +15,9 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
@@ -25,7 +26,6 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -70,13 +70,12 @@ class AxiomShapeSpikeIT {
     @Test
     @DisplayName("Every stated-axiom DiTree in the full starter set classified by shape")
     void classifyAxiomShapes() {
-        List<Integer> semanticNids = new ArrayList<>();
-        PrimitiveData.get().forEachSemanticNid(semanticNids::add);
+        List<SemanticEntity<SemanticEntityVersion>> semantics = new ArrayList<>();
+        EntityService.get().forEachSemanticEntity(semantics::add);
 
         int total = 0;
-        for (Integer semanticNid : semanticNids) {
-            SemanticEntity<SemanticEntityVersion> semantic = EntityHandle.get(semanticNid).expectSemantic();
-            if (semantic.patternNid() != TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()) {
+        for (SemanticEntity<SemanticEntityVersion> semantic : semantics) {
+            if (semantic.patternNid() != KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()) {
                 continue;
             }
             total++;

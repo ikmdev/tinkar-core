@@ -12,9 +12,18 @@
 <!--        <plugin-boot-layer-module.version>1.0-SNAPSHOT</plugin-boot-layer-module.version>-->
 <!--    </properties>-->
     <dependencies>
+        <!-- Orders the reactor only: every module compiled with the nid build check reaches
+             common, so nid-check is built before any of them. The compiler takes the check from
+             its processor path (the root POM). -->
         <dependency>
-            <groupId>com.github.RoaringBitmap.RoaringBitmap</groupId>
-            <artifactId>roaringbitmap</artifactId>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>nid-check</artifactId>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.roaringbitmap</groupId>
+            <artifactId>RoaringBitmap</artifactId>
         </dependency>
         <dependency>
             <groupId>dev.ikm.jpms</groupId>
@@ -35,18 +44,10 @@
             <artifactId>eclipse-collections-api</artifactId>
         </dependency>
         
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>test-logging</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>25</source>
-                    <target>25</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>

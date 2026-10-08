@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.Stamp;
 import io.soabase.recordbuilder.core.RecordBuilder;
@@ -24,9 +25,9 @@ import io.soabase.recordbuilder.core.RecordBuilder;
  */
 @RecordBuilder
 public record StampVersionRecord(StampRecord chronology,
-                                 int stateNid, long time, int authorNid,
-                                 int moduleNid,
-                                 int pathNid) implements StampEntityVersion, ImmutableVersion, StampVersionRecordBuilder.With {
+                                 long stateNid, long time, long authorNid,
+                                 long moduleNid,
+                                 long pathNid) implements StampEntityVersion, ImmutableVersion, StampVersionRecordBuilder.With {
 
 
     public StampVersionRecord {
@@ -53,7 +54,7 @@ public record StampVersionRecord(StampRecord chronology,
     }
 
     @Override
-    public int stampNid() {
+    public long stampNid() {
         return chronology.nid();
     }
 
@@ -67,7 +68,7 @@ public record StampVersionRecord(StampRecord chronology,
 
     @Override
     public int hashCode() {
-        return Integer.hashCode(nid());
+        return Nid.hash(nid());
     }
 
     @Override

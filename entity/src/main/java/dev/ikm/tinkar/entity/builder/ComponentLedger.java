@@ -15,8 +15,9 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.id.PublicIdSet;
@@ -38,13 +39,12 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -62,20 +62,41 @@ import java.util.function.Consumer;
 final class ComponentLedger {
 
     final PublicId componentId;
-    /** The component's primordial (first) UUID — the T5 namespace for attached-semantic derivation. */
+    /**
+     * The component's least UUID ({@link PublicId#leastUuid()}) — the T5 namespace for
+     * attached-semantic derivation. The least, so a derived identity depends on the component's
+     * UUIDs and not on the order its public id lists them.
+     */
     final UUID componentUuid;
     final String birthFqn;
 
+    /**
+     * The language seed of every derived description identity: {@code T5(component,
+     * kind|seed|ordinal)}. A permanent literal, English language's least UUID, which is the first
+     * UUID {@code KernelTerm.ENGLISH_LANGUAGE} carried when the derivation was defined (a proxy
+     * made from UUIDs keeps them sorted), and never read from a proxy again: a derived identity
+     * must not move with how some binding lists a component's UUIDs.
+     */
+    private static final UUID DESCRIPTION_LANGUAGE_SEED = UUID.fromString("02018e5a-46ba-5297-92f1-6931b9f98a12");
+    /** The component's name in each binding class it is bound in, in binding order. */
+    final Map<BindingClass, String> bindings = new LinkedHashMap<>();
+
     final List<Stamp> componentStamps = new ArrayList<>();
     final List<DescriptionLedger> descriptions = new ArrayList<>();
-    private final Map<UUID, GenericSemanticLedger> genericSemantics = new LinkedHashMap<>();
+    /** The generic declared-identity semantic ledgers, in the order they were opened. */
+    private final List<GenericSemanticLedger> genericSemantics = new ArrayList<>();
+    /**
+     * Every UUID of every generic semantic's declared identity, to its ledger: a declaration
+     * naming any of a semantic's UUIDs finds that semantic.
+     */
+    private final Map<UUID, GenericSemanticLedger> genericSemanticsByUuid = new HashMap<>();
     private final List<VersionEntry<Consumer<LogicalExpressionBuilder>>> axiomVersions = new ArrayList<>();
     private final Set<UUID> writtenStamps = new HashSet<>();
     private final SessionRegistry registry;
 
     private PublicId declaredAxiomIdentity;
     private ActiveStamp birthStamp;
-    private boolean descriptionsDeclaredExplicitly = false;
+    private boolean fqnDeclaredExplicitly = false;
     private boolean fqnSeeded = false;
     private long lastStampTime = Long.MIN_VALUE;
     private boolean born = false;
@@ -90,10 +111,28 @@ final class ComponentLedger {
 
     ComponentLedger(PublicId componentId, String birthFqn, SessionRegistry registry, boolean identityDeclared) {
         this.componentId = componentId;
-        this.componentUuid = componentId.asUuidArray()[0];
+        this.componentUuid = componentId.leastUuid();
         this.birthFqn = birthFqn;
         this.registry = registry;
         this.identityDeclared = identityDeclared;
+    }
+
+    /**
+     * Binds the component in a binding class under a constant name.
+     *
+     * @throws IllegalArgumentException if the name is not a Java identifier
+     * @throws IllegalStateException    if the component is bound in the class under another name
+     */
+    void bind(BindingClass bindingClass, String constant) {
+        if (!BindingClass.isJavaIdentifier(constant)) {
+            throw new IllegalArgumentException("A binding must be a Java identifier: \"" + constant
+                    + "\" for " + birthFqn);
+        }
+        String prior = bindings.putIfAbsent(bindingClass, constant);
+        if (prior != null && !prior.equals(constant)) {
+            throw new IllegalStateException(birthFqn + " is bound in " + bindingClass.name() + " as " + prior
+                    + "; a component has one name in a binding class, not also " + constant);
+        }
     }
 
     boolean born() {
@@ -141,25 +180,27 @@ final class ComponentLedger {
 
     /**
      * Seeds the derived-identity fully-qualified-name description — and its US-dialect
-     * acceptability — at the birth stamp, unless the ledger declared any description
-     * explicitly as a generic declared-identity semantic. The auto-seed is an authoring
-     * convenience default; ingested content carries its descriptions' established
-     * identities — the FQN included — and seeding a derived twin would break
-     * identity-exact round trip. Idempotent; runs on demand (write, or the first
+     * acceptability — at the birth stamp, unless the ledger declared its fully qualified
+     * name explicitly as a generic declared-identity semantic. The auto-seed is an
+     * authoring convenience default; ingested content carries its FQN description's
+     * established identity, and seeding a derived twin would break identity-exact round
+     * trip. Another description declared that way — a keyword spelling, a synonym with
+     * an established identity — leaves the seed in place: a component without a fully
+     * qualified name cannot be declared at all. Idempotent; runs on demand (write, or the first
      * FQN-referencing verb). A component opened by a retirement scope seeds nothing
      * either: its descriptions are the base's (IKE-Network/ike-issues#1130).
      */
     private void seedFqnIfImplicit() {
-        if (fqnSeeded || descriptionsDeclaredExplicitly || bornRetired) {
+        if (fqnSeeded || fqnDeclaredExplicitly || bornRetired) {
             return;
         }
         fqnSeeded = true;
         DescriptionLedger fqn = new DescriptionLedger(
                 UuidT5Generator.get(componentUuid,
-                        "fully-qualified-name|" + TinkarTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()[0]),
-                TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, TinkarTerm.ENGLISH_LANGUAGE);
+                        "fully-qualified-name|" + DESCRIPTION_LANGUAGE_SEED),
+                KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, KernelTerm.ENGLISH_LANGUAGE);
         fqn.versions.add(new VersionEntry<>(birthStamp, birthFqn));
-        fqn.dialects.add(new VersionEntry<>(birthStamp, TinkarTerm.PREFERRED));
+        fqn.dialects.add(new VersionEntry<>(birthStamp, KernelTerm.PREFERRED));
         descriptions.add(0, fqn);
     }
 
@@ -195,10 +236,10 @@ final class ComponentLedger {
     void addDescription(EntityProxy.Concept type, String kindKey, String text, Stamp stamp) {
         long ordinal = descriptions.stream().filter(d -> d.type.equals(type)).count();
         UUID descriptionUuid = UuidT5Generator.get(componentUuid,
-                kindKey + "|" + TinkarTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()[0] + "|" + ordinal);
-        DescriptionLedger description = new DescriptionLedger(descriptionUuid, type, TinkarTerm.ENGLISH_LANGUAGE);
+                kindKey + "|" + DESCRIPTION_LANGUAGE_SEED + "|" + ordinal);
+        DescriptionLedger description = new DescriptionLedger(descriptionUuid, type, KernelTerm.ENGLISH_LANGUAGE);
         description.versions.add(new VersionEntry<>(stamp, text));
-        description.dialects.add(new VersionEntry<>(stamp, TinkarTerm.PREFERRED));
+        description.dialects.add(new VersionEntry<>(stamp, KernelTerm.PREFERRED));
         descriptions.add(description);
     }
 
@@ -231,10 +272,10 @@ final class ComponentLedger {
                     "The descriptions of " + birthFqn + " are the base's — a component opened by a"
                             + " retirement scope carries no ledger fully qualified name to revise");
         }
-        if (descriptionsDeclaredExplicitly) {
+        if (fqnDeclaredExplicitly) {
             throw new IllegalStateException(
-                    "The descriptions of " + birthFqn + " are declared explicitly with their"
-                            + " established identities — revise the FQN by restating that generic"
+                    "The fully qualified name of " + birthFqn + " is declared explicitly with its"
+                            + " established identity — revise it by restating that generic"
                             + " semantic, not with reviseFullyQualifiedName");
         }
         seedFqnIfImplicit();
@@ -270,31 +311,19 @@ final class ComponentLedger {
      */
     void requireNewStamp(Iterable<Stamp> stampsInUse, Stamp stamp, String what) {
         for (Stamp used : stampsInUse) {
-            if (stampIdentityOverlaps(used, stamp)) {
+            if (PublicId.equals(used.publicId(), stamp.publicId())) {
                 throw new IllegalArgumentException(
                         what + " of " + birthFqn + " already has a version at stamp "
-                                + firstUuidOf(stamp.publicId()) + " — the store keys versions by"
+                                + stamp.publicId().idString() + " — the store keys versions by"
                                 + " stamp, so a second payload would silently replace the first");
             }
         }
     }
 
-    /** Whether two stamps share any identity UUID — the store's merge-identity notion. */
-    private static boolean stampIdentityOverlaps(Stamp first, Stamp second) {
-        for (UUID firstUuid : first.publicId().asUuidArray()) {
-            for (UUID secondUuid : second.publicId().asUuidArray()) {
-                if (firstUuid.equals(secondUuid)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     /** The current text of the first live definition description, if any. */
     java.util.Optional<String> currentDefinition() {
         return descriptions.stream()
-                .filter(d -> d.type.equals(TinkarTerm.DEFINITION_DESCRIPTION_TYPE))
+                .filter(d -> d.type.equals(KernelTerm.DEFINITION_DESCRIPTION_TYPE))
                 .filter(d -> !d.retired())
                 .findFirst()
                 .map(DescriptionLedger::currentText);
@@ -324,14 +353,13 @@ final class ComponentLedger {
         requireDeclaredIdentity(declaredIdentity);
         // A reference to the component's own identity is a self-reference, whichever of
         // its UUIDs named it — normalize so the suppression gate and agreement see it.
-        if (referencedComponent != null && identityOverlaps(referencedComponent, componentId)) {
+        if (referencedComponent != null && PublicId.equals(referencedComponent, componentId)) {
             referencedComponent = null;
         }
         // All validation precedes any mutation: a rejected declaration must leave the
         // session exactly as it was, or a caught rejection corrupts a later write().
-        boolean explicitDescription =
-                referencedComponent == null && isExplicitDescriptionDeclaration(pattern, fieldValues);
-        if (explicitDescription && fqnSeeded) {
+        boolean explicitFqn = referencedComponent == null && isExplicitFqnDeclaration(pattern, fieldValues);
+        if (explicitFqn && fqnSeeded) {
             throw new IllegalStateException(
                     "The derived-identity fully qualified name of " + birthFqn + " was already"
                             + " seeded — declare established descriptions before any FQN-referencing"
@@ -342,8 +370,8 @@ final class ComponentLedger {
         requireNewStamp(semantic.versions.stream().map(VersionEntry::stamp).toList(), stamp,
                 "semantic " + semantic.semanticId);
         semantic.versions.add(new VersionEntry<>(stamp, values));
-        if (explicitDescription) {
-            descriptionsDeclaredExplicitly = true;
+        if (explicitFqn) {
+            fqnDeclaredExplicitly = true;
         }
     }
 
@@ -361,7 +389,7 @@ final class ComponentLedger {
     void retireGenericVersion(EntityProxy.Pattern pattern, PublicId declaredIdentity,
                               InactiveStamp stamp, Object[] fieldValues) {
         requireDeclaredIdentity(declaredIdentity);
-        GenericSemanticLedger semantic = genericSemantics.get(firstUuidOf(declaredIdentity));
+        GenericSemanticLedger semantic = genericSemantic(declaredIdentity);
         List<Object> values;
         if (semantic == null) {
             if (!bornRetired) {
@@ -388,13 +416,16 @@ final class ComponentLedger {
 
     private GenericSemanticLedger openGenericSemantic(EntityProxy.Pattern pattern, PublicId declaredIdentity,
                                                       PublicId referencedComponent) {
-        GenericSemanticLedger opened = genericSemantics.get(firstUuidOf(declaredIdentity));
+        GenericSemanticLedger opened = genericSemantic(declaredIdentity);
         if (opened == null) {
             registry.registerIdentity(declaredIdentity,
-                    "semantic " + firstUuidOf(declaredIdentity) + " on \"" + birthFqn + "\"");
+                    "semantic " + declaredIdentity.idString() + " on \"" + birthFqn + "\"");
             GenericSemanticLedger created =
                     new GenericSemanticLedger(declaredIdentity, pattern, referencedComponent);
-            genericSemantics.put(firstUuidOf(declaredIdentity), created);
+            genericSemantics.add(created);
+            for (UUID uuid : declaredIdentity.asUuidArray()) {
+                genericSemanticsByUuid.put(uuid, created);
+            }
             return created;
         }
         requireSemanticIdentityAgreement(opened, declaredIdentity);
@@ -402,8 +433,7 @@ final class ComponentLedger {
         boolean sameReference = opened.referencedComponent == null
                 ? referencedComponent == null
                 : referencedComponent != null
-                        && Arrays.equals(opened.referencedComponent.asUuidArray(),
-                                referencedComponent.asUuidArray());
+                        && PublicId.equals(opened.referencedComponent, referencedComponent);
         if (!sameReference) {
             throw new IllegalArgumentException(
                     "Semantic " + declaredIdentity + " on " + birthFqn
@@ -412,8 +442,19 @@ final class ComponentLedger {
         return opened;
     }
 
+    /** The generic semantic ledger a declared identity names by any of its UUIDs, or null. */
+    private GenericSemanticLedger genericSemantic(PublicId declaredIdentity) {
+        for (UUID uuid : declaredIdentity.asUuidArray()) {
+            GenericSemanticLedger semantic = genericSemanticsByUuid.get(uuid);
+            if (semantic != null) {
+                return semantic;
+            }
+        }
+        return null;
+    }
+
     private void requireSemanticIdentityAgreement(GenericSemanticLedger semantic, PublicId declaredIdentity) {
-        if (!Arrays.equals(semantic.semanticId.asUuidArray(), declaredIdentity.asUuidArray())) {
+        if (!sameUuids(semantic.semanticId, declaredIdentity)) {
             throw new IllegalArgumentException(
                     "Semantic " + declaredIdentity + " on " + birthFqn + " is already opened with"
                             + " identity " + semantic.semanticId + " — declared identities must agree exactly");
@@ -421,7 +462,7 @@ final class ComponentLedger {
     }
 
     private void requirePatternAgreement(GenericSemanticLedger semantic, EntityProxy.Pattern pattern) {
-        if (pattern == null || !firstUuidOf(semantic.pattern.publicId()).equals(firstUuidOf(pattern.publicId()))) {
+        if (pattern == null || !PublicId.equals(semantic.pattern.publicId(), pattern.publicId())) {
             throw new IllegalArgumentException(
                     "Semantic " + semantic.semanticId + " on " + birthFqn + " belongs to pattern "
                             + semantic.pattern.description() + " — patterns must agree on resume");
@@ -475,7 +516,7 @@ final class ComponentLedger {
                     "Field " + index + " on " + birthFqn + " is a double — the store narrows double"
                             + " to float silently; pass a Float");
         }
-        if (value instanceof IntIdList || value instanceof IntIdSet) {
+        if (value instanceof LongIdList || value instanceof LongIdSet) {
             throw new IllegalArgumentException(
                     "Field " + index + " on " + birthFqn + " is nid-based and not replay-stable —"
                             + " pass a PublicIdList or PublicIdSet");
@@ -523,31 +564,33 @@ final class ComponentLedger {
     }
 
     /**
-     * Whether a generic declaration is an explicit description of this component — any
-     * well-formed description-pattern semantic, whatever its type field. Explicitly
-     * declared descriptions mean the content arrives established (ingest), so the
-     * derived FQN auto-seed must not add a twin.
+     * Whether a generic declaration is an explicit fully-qualified-name description of
+     * this component: a well-formed description-pattern semantic whose type field — an
+     * entity handle or a bare {@link PublicId} — is the FQN type. An explicit FQN means
+     * the content arrives established (ingest), so the derived auto-seed must not add a
+     * twin; any other description type leaves the seed in place.
      */
-    private static boolean isExplicitDescriptionDeclaration(EntityProxy.Pattern pattern, Object[] fieldValues) {
-        return firstUuidOf(pattern.publicId())
-                .equals(firstUuidOf(TinkarTerm.DESCRIPTION_PATTERN.publicId()))
-                && fieldValues.length == 4;
-    }
-
-    /** Whether two identities share any UUID — the store's merge-by-any-UUID identity notion. */
-    private static boolean identityOverlaps(PublicId first, PublicId second) {
-        for (UUID firstUuid : first.asUuidArray()) {
-            for (UUID secondUuid : second.asUuidArray()) {
-                if (firstUuid.equals(secondUuid)) {
-                    return true;
-                }
-            }
+    private static boolean isExplicitFqnDeclaration(EntityProxy.Pattern pattern, Object[] fieldValues) {
+        if (!PublicId.equals(pattern.publicId(), KernelTerm.DESCRIPTION_PATTERN.publicId())
+                || fieldValues.length != 4) {
+            return false;
         }
-        return false;
+        PublicId type = switch (fieldValues[3]) {
+            case EntityFacade facade -> facade.publicId();
+            case PublicId publicId -> publicId;
+            case null, default -> null;
+        };
+        return type != null
+                && PublicId.equals(type, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId());
     }
 
-    private static UUID firstUuidOf(PublicId publicId) {
-        return publicId.asUuidArray()[0];
+    /**
+     * Whether two declared identities carry exactly the same UUIDs, in whatever order each lists
+     * them — the agreement a restated declaration owes the first one ({@link PublicId#compareTo}
+     * compares the sorted UUIDs whole).
+     */
+    private static boolean sameUuids(PublicId first, PublicId second) {
+        return first.compareTo(second) == 0;
     }
 
     // ------------------------------------------------------------------ axioms
@@ -582,7 +625,7 @@ final class ComponentLedger {
             registry.registerIdentity(declaredIdentity,
                     "stated-axiom semantic of \"" + birthFqn + "\"");
             declaredAxiomIdentity = declaredIdentity;
-        } else if (!Arrays.equals(declaredAxiomIdentity.asUuidArray(), declaredIdentity.asUuidArray())) {
+        } else if (!sameUuids(declaredAxiomIdentity, declaredIdentity)) {
             throw new IllegalArgumentException(
                     "The stated-axiom semantic of " + birthFqn + " is declared with identity "
                             + declaredAxiomIdentity + " — cannot restate it with " + declaredIdentity);
@@ -614,7 +657,7 @@ final class ComponentLedger {
 
     // ------------------------------------------------------------------ replay
 
-    int componentNid() {
+    long componentNid() {
         return nidFor(componentId);
     }
 
@@ -625,11 +668,10 @@ final class ComponentLedger {
      * identity ({@link Stamp#declaredIdentity()}); a declared identity may carry
      * multiple UUIDs, all registered to the one nid.
      */
-    int writeStamp(Stamp stamp) {
+    long writeStamp(Stamp stamp) {
         registry.requireStampAgreement(stamp);
         PublicId stampId = stamp.publicId();
-        UUID primordial = stampId.asUuidArray()[0];
-        int stampNid = EntityService.get().nidForStamp(stampId);
+        long stampNid = EntityService.get().nidForStamp(stampId);
         boolean alreadyWritten = false;
         for (UUID uuid : stampId.asUuidArray()) {
             if (writtenStamps.contains(uuid)) {
@@ -641,39 +683,48 @@ final class ComponentLedger {
             for (UUID uuid : stampId.asUuidArray()) {
                 writtenStamps.add(uuid);
             }
-            RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
-            StampRecord stampEntity = new StampRecord(primordial.getMostSignificantBits(),
-                    primordial.getLeastSignificantBits(), stampId.additionalUuidLongs(), stampNid,
-                    versionRecords);
-            versionRecords.add(new StampVersionRecord(stampEntity, stamp.state().nid(), stamp.time(),
-                    nidFor(stamp.author().publicId()), nidFor(stamp.module().publicId()),
-                    nidFor(stamp.path().publicId())));
-            versionRecords.build();
-            EntityService.get().putEntity(stampEntity);
+            putStampEntity(stamp, stampNid);
         }
         return stampNid;
     }
 
+    /**
+     * Writes the stamp entity for a declared stamp under its nid. Writing the same stamp
+     * again merges to the same entity.
+     */
+    static void putStampEntity(Stamp stamp, long stampNid) {
+        PublicIdentifierRecord stampIdRecord = PublicIdentifierRecord.make(stamp.publicId());
+        RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
+        StampRecord stampEntity = new StampRecord(stampIdRecord.mostSignificantBits(),
+                stampIdRecord.leastSignificantBits(), stampIdRecord.additionalUuidLongs(), stampNid,
+                versionRecords);
+        versionRecords.add(new StampVersionRecord(stampEntity, stamp.state().nid(), stamp.time(),
+                nidFor(stamp.author().publicId()), nidFor(stamp.module().publicId()),
+                nidFor(stamp.path().publicId())));
+        versionRecords.build();
+        EntityService.get().putEntity(stampEntity);
+    }
+
     /** Writes every description ledger and its dialect-acceptability semantic. */
-    void writeDescriptions(int componentNid) {
+    void writeDescriptions(long componentNid) {
         seedFqnIfImplicit();
         for (DescriptionLedger description : descriptions) {
             writeDescription(description, componentNid);
         }
     }
 
-    private void writeDescription(DescriptionLedger description, int componentNid) {
-        int descriptionNid = nidFor(description.uuid);
+    private void writeDescription(DescriptionLedger description, long componentNid) {
+        long descriptionNid = nidFor(description.uuid);
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(PublicIds.of(description.uuid),
-                TinkarTerm.DESCRIPTION_PATTERN, componentNid, versions);
+                KernelTerm.DESCRIPTION_PATTERN, componentNid, versions);
         for (VersionEntry<String> version : description.versions) {
             versions.add(SemanticVersionRecordBuilder.builder()
                     .chronology(bootstrap)
                     .stampNid(writeStamp(version.stamp()))
                     .fieldValues(Lists.immutable.of(
                             description.language, version.value(),
-                            TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE, description.type))
+                            KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE, description.type))
                     .build());
         }
         EntityService.get().putEntity(
@@ -682,11 +733,11 @@ final class ComponentLedger {
         writeDialect(description, descriptionNid);
     }
 
-    private void writeDialect(DescriptionLedger description, int descriptionNid) {
+    private void writeDialect(DescriptionLedger description, long descriptionNid) {
         UUID dialectUuid = UuidT5Generator.get(description.uuid, "us-dialect");
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(PublicIds.of(dialectUuid),
-                TinkarTerm.US_DIALECT_PATTERN, descriptionNid, versions);
+                KernelTerm.US_DIALECT_PATTERN, descriptionNid, versions);
         for (VersionEntry<EntityProxy.Concept> dialect : description.dialects) {
             versions.add(SemanticVersionRecordBuilder.builder()
                     .chronology(bootstrap)
@@ -707,19 +758,19 @@ final class ComponentLedger {
      * ledger reproduces the same graph bytes, which the store merge then no-ops instead
      * of silently replacing the version payload.
      */
-    void writeAxioms(int componentNid) {
+    void writeAxioms(long componentNid) {
         if (axiomVersions.isEmpty()) {
             return;
         }
         PublicId axiomId = declaredAxiomIdentity != null
                 ? declaredAxiomIdentity
                 : PublicIds.of(UuidT5Generator.get(componentUuid, "el-plus-plus-stated-axioms"));
-        UUID axiomUuid = firstUuidOf(axiomId);
+        UUID axiomUuid = axiomId.leastUuid();
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(axiomId,
-                TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, componentNid, versions);
+                KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, componentNid, versions);
         for (VersionEntry<Consumer<LogicalExpressionBuilder>> axiom : axiomVersions) {
-            UUID stampUuid = firstUuidOf(axiom.stamp().publicId());
+            UUID stampUuid = axiom.stamp().publicId().leastUuid();
             int[] vertexOrdinal = {0};
             LogicalExpressionBuilder logicalExpressionBuilder = new LogicalExpressionBuilder(
                     UuidT5Generator.get(axiomUuid, "definition-root|" + stampUuid),
@@ -744,9 +795,9 @@ final class ComponentLedger {
      * their nid-based graph entities here too, for the same reason
      * (IKE-Network/ike-issues#885).
      */
-    void writeGenericSemantics(int componentNid) {
-        for (GenericSemanticLedger semantic : genericSemantics.values()) {
-            int referencedNid = semantic.referencedComponent == null
+    void writeGenericSemantics(long componentNid) {
+        for (GenericSemanticLedger semantic : genericSemantics) {
+            long referencedNid = semantic.referencedComponent == null
                     ? componentNid
                     : nidFor(semantic.referencedComponent);
             RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
@@ -784,11 +835,11 @@ final class ComponentLedger {
         };
     }
 
-    static int nidFor(UUID uuid) {
+    static long nidFor(UUID uuid) {
         return PrimitiveData.nid(PublicIds.of(uuid));
     }
 
-    static int nidFor(PublicId publicId) {
+    static long nidFor(PublicId publicId) {
         return PrimitiveData.nid(publicId);
     }
 
@@ -799,10 +850,10 @@ final class ComponentLedger {
      * persistent providers even when the pattern chronology is not present yet.
      */
     private static SemanticRecord newSemantic(PublicId semanticId, EntityProxy.Pattern pattern,
-                                              int referencedComponentNid,
+                                              long referencedComponentNid,
                                               RecordListBuilder<SemanticVersionRecord> versions) {
         PublicIdentifierRecord identifier = PublicIdentifierRecord.make(semanticId);
-        int nid = ScopedValue.where(PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID, pattern.publicId())
+        long nid = ScopedValue.where(PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID, pattern.publicId())
                 .call(() -> PrimitiveData.nid(semanticId));
         return SemanticRecordBuilder.builder()
                 .mostSignificantBits(identifier.mostSignificantBits())

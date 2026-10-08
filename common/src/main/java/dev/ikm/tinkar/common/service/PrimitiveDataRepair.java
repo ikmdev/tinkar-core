@@ -28,14 +28,14 @@ public interface PrimitiveDataRepair {
      * identifier, <b>bypassing the change set journaling process</b>.
      * @param nid native identifier for the component to erase.
      */
-    void erase(int nid);
+    void erase(long nid);
 
     /**
      * Bypasses the normal merge process of merging versions.
      * @param nid identifier to associate these bytes to with.
      * @param bytesToOverwrite the bytes to overwrite any existing bytes with.
      */
-    void put(int nid, byte[] bytesToOverwrite);
+    void put(long nid, byte[] bytesToOverwrite);
 
     /**
      * Copy versions associated with the component identified by nidToErase
@@ -45,6 +45,6 @@ public interface PrimitiveDataRepair {
      * @param nidToMergeInto native identifier for the component to accept versions
      *                       from the component being erased.
      */
-    void mergeThenErase(int nidToErase, int nidToMergeInto);
+    void mergeThenErase(long nidToErase, long nidToMergeInto);
 
 }

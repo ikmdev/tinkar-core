@@ -28,12 +28,13 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * }
  * </pre>
  *
- * @see StarterDataEphemeralProvider to load tinkar-starter-data
+ * @see StarterDataEphemeralProvider to load the IKE starter set
  * @see NewSpinedArrayKeyValueProvider for persistent storage
  */
 public class NewEphemeralKeyValueProvider extends KeyValueProviderExtension {
 
     @Override
+    @SuppressWarnings("deprecation") // honors the deprecated controllerName until callers move to controllerClass
     protected Config resolveConfig(ExtensionContext context) {
         // First check if test class has annotation override
         Config cfg = super.resolveConfig(context);

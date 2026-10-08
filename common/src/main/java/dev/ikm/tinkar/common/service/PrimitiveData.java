@@ -18,11 +18,11 @@ package dev.ikm.tinkar.common.service;
 import dev.ikm.tinkar.common.alert.AlertObject;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.EntityKey;
-import dev.ikm.tinkar.common.id.IntIdCollection;
+import dev.ikm.tinkar.common.id.LongIdCollection;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
-import org.eclipse.collections.api.list.primitive.IntList;
-import org.eclipse.collections.api.set.primitive.IntSet;
+import org.eclipse.collections.api.list.primitive.LongList;
+import org.eclipse.collections.api.set.primitive.LongSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -241,11 +241,11 @@ public class PrimitiveData {
         );
     }
 
-    public static String textFast(int nid) {
+    public static String textFast(long nid) {
         return PrimitiveData.descriptionForNidService().textFast(nid);
     }
 
-    public static String text(int nid) {
+    public static String text(long nid) {
         Optional<String> textOptional = textOptional(nid);
         if (textOptional.isPresent()) {
             return textOptional.get();
@@ -253,7 +253,7 @@ public class PrimitiveData {
         return "<" + nid + ">";
     }
 
-    public static Optional<String> textOptional(int nid) {
+    public static Optional<String> textOptional(long nid) {
         if (defaultDescriptionForNidServiceSingleton == null) {
             return Optional.empty();
         }
@@ -265,42 +265,42 @@ public class PrimitiveData {
         }
     }
 
-    public static String textWithNid(int nid) {
+    public static String textWithNid(long nid) {
         StringBuilder sb = new StringBuilder();
         textOptional(nid).ifPresent(s -> sb.append(s).append(" "));
         sb.append("<").append(nid).append(">");
         return sb.toString();
     }
 
-    public static List<Optional<String>> optionalTextList(int... nids) {
+    public static List<Optional<String>> optionalTextList(long... nids) {
         return descriptionForNidService().optionalTextList(nids);
     }
 
-    public static List<Optional<String>> optionalTextList(IntIdCollection nids) {
+    public static List<Optional<String>> optionalTextList(LongIdCollection nids) {
         return descriptionForNidService().optionalTextList(nids);
     }
 
-    public static List<Optional<String>> optionalTextList(IntList nids) {
+    public static List<Optional<String>> optionalTextList(LongList nids) {
         return descriptionForNidService().optionalTextList(nids);
     }
 
-    public static List<Optional<String>> optionalTextList(IntSet nids) {
+    public static List<Optional<String>> optionalTextList(LongSet nids) {
         return descriptionForNidService().optionalTextList(nids);
     }
 
-    public static List<String> textList(int... nids) {
+    public static List<String> textList(long... nids) {
         return descriptionForNidService().textList(nids);
     }
 
-    public static List<Optional<String>> textList(IntIdCollection nids) {
+    public static List<Optional<String>> textList(LongIdCollection nids) {
         return descriptionForNidService().textList(nids);
     }
 
-    public static List<Optional<String>> textList(IntList nids) {
+    public static List<Optional<String>> textList(LongList nids) {
         return descriptionForNidService().textList(nids);
     }
 
-    public static List<Optional<String>> textList(IntSet nids) {
+    public static List<Optional<String>> textList(LongSet nids) {
         return descriptionForNidService().textList(nids);
     }
 
@@ -344,11 +344,11 @@ public class PrimitiveData {
         return service;
     }
 
-    public static PublicId publicId(int nid) {
+    public static PublicId publicId(long nid) {
         return publicIdService().publicId(nid);
     }
 
-    public static int nid(PublicId publicId) {
+    public static long nid(PublicId publicId) {
         return get().nidForPublicId(publicId);
     }
 
@@ -371,11 +371,11 @@ public class PrimitiveData {
         return get().getEntityKey(uuid);
     }
 
-    public static long elementSequenceForNid(int nid) {
+    public static long elementSequenceForNid(long nid) {
         return NidLayout.active().decodeElementSequence(nid);
     }
 
-    public static int patternSequenceForNid(int nid) {
+    public static int patternSequenceForNid(long nid) {
         return NidLayout.active().decodePatternSequence(nid);
     }
 
@@ -383,7 +383,7 @@ public class PrimitiveData {
      * Example call when resolving via RocksDB:
      *
      * <pre>{@code
-     * int nid = ScopedValue
+     * long nid = ScopedValue
      *         .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternFacade.publicId())
      *         .call(() -> PrimitiveData.nid(semanticUUID));
      * }</pre>
@@ -391,7 +391,7 @@ public class PrimitiveData {
      * @param uuids one or more UUIDs that identify the component
      * @return the nid corresponding to the provided UUIDs
      */
-    public static int nid(UUID... uuids) {
+    public static long nid(UUID... uuids) {
         return get().nidForUuids(uuids);
     }
 

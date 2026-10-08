@@ -17,6 +17,7 @@ package dev.ikm.tinkar.coordinate.edit;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.terms.ConceptFacade;
 
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public interface EditCoordinate {
      *
      * @return the author nid
      */
-    int getAuthorNidForChanges();
+    long getAuthorNidForChanges();
 
     /**
      * The default module is the module for new content when developing. Modifications to existing
@@ -59,31 +60,31 @@ public interface EditCoordinate {
      *
      * @return
      */
-    int getDefaultModuleNid();
+    long getDefaultModuleNid();
 
     /**
      * The destination module is the module that existing content is moved to when Modularizing
      *
      * @return the nid of the destination module concept
      */
-    int getDestinationModuleNid();
+    long getDestinationModuleNid();
 
     /**
      * The path that new content is created on
      *
      * @return the nid of the promotion concept
      */
-    int getDefaultPathNid();
+    long getDefaultPathNid();
 
     /**
      * The promotion path is the path that existing content is moved to when Promoting
      *
      * @return the nid of the promotion concept
      */
-    int getPromotionPathNid();
+    long getPromotionPathNid();
 
     default ConceptFacade getAuthorForChanges() {
-        return Entity.getFast(getAuthorNidForChanges());
+        return EntityHandle.get(getAuthorNidForChanges()).expectConcept();
     }
 
     /**
@@ -93,7 +94,7 @@ public interface EditCoordinate {
      * @return
      */
     default ConceptFacade getDefaultModule() {
-        return Entity.getFast(getDefaultModuleNid());
+        return EntityHandle.get(getDefaultModuleNid()).expectConcept();
     }
 
     /**
@@ -102,7 +103,7 @@ public interface EditCoordinate {
      * @return the destination module concept
      */
     default ConceptFacade getDestinationModule() {
-        return Entity.getFast(getDestinationModuleNid());
+        return EntityHandle.get(getDestinationModuleNid()).expectConcept();
     }
 
     EditCoordinateRecord toEditCoordinateRecord();
@@ -113,7 +114,7 @@ public interface EditCoordinate {
      * @return the promotion concept
      */
     default ConceptFacade getDefaultPath() {
-        return Entity.getFast(getDefaultPathNid());
+        return EntityHandle.get(getDefaultPathNid()).expectConcept();
     }
 
     /**
@@ -122,7 +123,7 @@ public interface EditCoordinate {
      * @return the promotion concept
      */
     default ConceptFacade getPromotionPath() {
-        return Entity.getFast(getPromotionPathNid());
+        return EntityHandle.get(getPromotionPathNid()).expectConcept();
     }
 
     default String toUserString() {

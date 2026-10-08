@@ -15,13 +15,13 @@
  */
 package dev.ikm.tinkar.entity.graph;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -58,7 +58,7 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
      * @param that The tree that is considered secondary with respect to preserving vertex ids.
      * @return a copy of that which is updated with correlated vertex ids based on isomorphic analysis.
      */
-    public DiTreeEntity makeCorrelatedTree(DiTreeEntity that, int referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
+    public DiTreeEntity makeCorrelatedTree(DiTreeEntity that, long referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
 
         // A special case for correlation when this and that are equal and vertexes are indexed the same.
         if (this.vertexMap.size() == that.vertexMap.size()) {
@@ -122,7 +122,7 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
             return false;
         }
         IsomorphicResultsLeafHash isomorphicResult = new IsomorphicResultsLeafHash(this, another,
-                TinkarTerm.UNINITIALIZED_COMPONENT.nid());
+                KernelTerm.UNINITIALIZED_COMPONENT.nid());
         try {
             isomorphicResult.call();
             return isomorphicResult.equivalent();
@@ -139,14 +139,15 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
     }
 
     public static DiTreeEntity make(ByteBuf readBuf, byte entityFormatVersion) {
-        if (entityFormatVersion != ENTITY_FORMAT_VERSION) {
+        boolean format2 = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec2.FORMAT;
+        if (entityFormatVersion != ENTITY_FORMAT_VERSION && !format2) {
             throw new IllegalStateException("Unsupported entity format version: " + entityFormatVersion);
         }
 
         ImmutableList<EntityVertex> vertexMap = readVertexEntities(readBuf, entityFormatVersion);
-        ImmutableIntObjectMap<ImmutableIntList> successorMap = readIntIntListMap(readBuf);
+        ImmutableIntObjectMap<ImmutableIntList> successorMap = readIntIntListMap(readBuf, entityFormatVersion);
 
-        int predecessorMapSize = readBuf.readInt();
+        int predecessorMapSize = format2 ? readBuf.readVarInt() : readBuf.readInt();
         MutableIntIntMap predecessorMap = IntIntMaps.mutable.ofInitialCapacity(predecessorMapSize);
         for (int i = 0; i < predecessorMapSize; i++) {
             predecessorMap.put(readBuf.readInt(), readBuf.readInt());

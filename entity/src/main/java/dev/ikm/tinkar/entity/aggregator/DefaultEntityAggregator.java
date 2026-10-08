@@ -15,15 +15,20 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
+import java.util.function.LongConsumer;
+
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.StampEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import java.util.function.IntConsumer;
 
 public class DefaultEntityAggregator extends EntityAggregator {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultEntityAggregator.class);
@@ -35,28 +40,28 @@ public class DefaultEntityAggregator extends EntityAggregator {
     }
 
     @Override
-    public EntityCountSummary aggregate(IntConsumer nidConsumer) {
+    public EntityCountSummary aggregate(LongConsumer nidConsumer) {
         initCounts();
         // Aggregate all Stamps
-        PrimitiveData.get().forEachStampNid(stampNid -> {
+        EntityStore.current().forEachStampNid(stampNid -> {
             nidConsumer.accept(stampNid);
             stampsAggregatedCount.incrementAndGet();
         });
 
         // Aggregate all Concepts
-        PrimitiveData.get().forEachConceptNid(conceptNid -> {
+        EntityStore.current().forEachConceptNid(conceptNid -> {
             nidConsumer.accept(conceptNid);
             conceptsAggregatedCount.incrementAndGet();
         });
 
         // Aggregate all Semantics
-        PrimitiveData.get().forEachSemanticNid(semanticNid -> {
+        EntityStore.current().forEachSemanticNid(semanticNid -> {
             nidConsumer.accept(semanticNid);
             semanticsAggregatedCount.incrementAndGet();
         });
 
         // Aggregate all Patterns
-        PrimitiveData.get().forEachPatternNid(patternNid -> {
+        EntityStore.current().forEachPatternNid(patternNid -> {
             nidConsumer.accept(patternNid);
             patternsAggregatedCount.incrementAndGet();
         });
@@ -67,22 +72,25 @@ public class DefaultEntityAggregator extends EntityAggregator {
     /**
      * {@inheritDoc}
      *
-     * <p>Native override: each per-bucket count is incremented only when the entity
-     * resolves, so counts reflect entities actually delivered to {@code entityConsumer}
-     * rather than nids visited.
+     * <p>Native override: an entity is counted only when it resolves, so counts reflect
+     * entities actually delivered to {@code entityConsumer} rather than nids visited; and
+     * it is counted by what it is, not by which enumeration delivered it, so the counts
+     * describe what was delivered even where a provider enumerates an entity under the
+     * wrong kind (a Rocks KB files a stamp made under another stamp pattern among the
+     * semantics).
      */
     @Override
     public EntityCountSummary aggregateEntities(Consumer<Entity<?>> entityConsumer) {
         initCounts();
         AtomicLong orphanCount = new AtomicLong();
 
-        PrimitiveData.get().forEachStampNid(nid -> dispatch(nid, entityConsumer, orphanCount, stampsAggregatedCount));
+        EntityStore.current().forEachStampNid(nid -> dispatch(nid, entityConsumer, orphanCount));
         throwIfCancelled();
-        PrimitiveData.get().forEachConceptNid(nid -> dispatch(nid, entityConsumer, orphanCount, conceptsAggregatedCount));
+        EntityStore.current().forEachConceptNid(nid -> dispatch(nid, entityConsumer, orphanCount));
         throwIfCancelled();
-        PrimitiveData.get().forEachSemanticNid(nid -> dispatch(nid, entityConsumer, orphanCount, semanticsAggregatedCount));
+        EntityStore.current().forEachSemanticNid(nid -> dispatch(nid, entityConsumer, orphanCount));
         throwIfCancelled();
-        PrimitiveData.get().forEachPatternNid(nid -> dispatch(nid, entityConsumer, orphanCount, patternsAggregatedCount));
+        EntityStore.current().forEachPatternNid(nid -> dispatch(nid, entityConsumer, orphanCount));
         throwIfCancelled();
 
         long orphans = orphanCount.get();
@@ -92,10 +100,9 @@ public class DefaultEntityAggregator extends EntityAggregator {
         return summarize();
     }
 
-    private void dispatch(int nid,
+    private void dispatch(long nid,
                           Consumer<Entity<?>> entityConsumer,
-                          AtomicLong orphanCount,
-                          AtomicLong bucketCount) {
+                          AtomicLong orphanCount) {
         if (isCancelled()) {
             return;
         }
@@ -107,6 +114,16 @@ public class DefaultEntityAggregator extends EntityAggregator {
             return;
         }
         entityConsumer.accept(entity);
-        bucketCount.incrementAndGet();
+        if (entity instanceof StampEntity<?>) {
+            stampsAggregatedCount.incrementAndGet();
+        } else if (entity instanceof ConceptEntity<?>) {
+            conceptsAggregatedCount.incrementAndGet();
+        } else if (entity instanceof SemanticEntity<?>) {
+            semanticsAggregatedCount.incrementAndGet();
+        } else if (entity instanceof PatternEntity<?>) {
+            patternsAggregatedCount.incrementAndGet();
+        } else {
+            LOG.warn("Aggregated an entity of no known kind, nid={}: {}", nid, entity.getClass().getName());
+        }
     }
 }

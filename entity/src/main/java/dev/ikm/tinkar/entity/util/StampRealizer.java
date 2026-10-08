@@ -1,7 +1,7 @@
 package dev.ikm.tinkar.entity.util;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
 import org.eclipse.collections.api.list.primitive.ImmutableLongList;
@@ -11,12 +11,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public class StampRealizer extends EntityProcessor<StampEntity<StampEntityVersion>, StampEntityVersion> {
-    ConcurrentHashMap<Integer, StampEntity> stamps = new ConcurrentHashMap<>();
+    ConcurrentHashMap<Long, StampEntity> stamps = new ConcurrentHashMap<>();
     ConcurrentSkipListSet<Long> times = new ConcurrentSkipListSet<>();
-    ConcurrentSkipListSet<Integer> authors = new ConcurrentSkipListSet<>();
-    ConcurrentSkipListSet<Integer> modules = new ConcurrentSkipListSet<>();
-    ConcurrentSkipListSet<Integer> paths = new ConcurrentSkipListSet<>();
-    ConcurrentSkipListSet<Integer> stampNids = new ConcurrentSkipListSet<>();
+    ConcurrentSkipListSet<Long> authors = new ConcurrentSkipListSet<>();
+    ConcurrentSkipListSet<Long> modules = new ConcurrentSkipListSet<>();
+    ConcurrentSkipListSet<Long> paths = new ConcurrentSkipListSet<>();
+    ConcurrentSkipListSet<Long> stampNids = new ConcurrentSkipListSet<>();
 
     /**
      * Single method to implement - handles both byte-based and entity-based processing.
@@ -31,8 +31,8 @@ public class StampRealizer extends EntityProcessor<StampEntity<StampEntityVersio
         stampNids.add(stampEntity.nid());
     }
 
-    public IntIdSet stampNids() {
-        return IntIds.set.of(stampNids.stream().mapToInt(wrappedPath -> (int) wrappedPath).toArray());
+    public LongIdSet stampNids() {
+        return LongIds.set.of(stampNids.stream().mapToLong(stampNid -> stampNid).toArray());
     }
 
     public ImmutableLongList timesInUse() {

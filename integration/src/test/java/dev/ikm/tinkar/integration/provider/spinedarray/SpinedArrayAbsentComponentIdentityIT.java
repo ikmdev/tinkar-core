@@ -47,9 +47,9 @@ class SpinedArrayAbsentComponentIdentityIT {
     @Test
     void aReferencedButAbsentComponentResolvesToTheIdItWasMintedFrom() {
         PublicId absent = PublicIds.of(UUID.randomUUID());
-        int nid = PrimitiveData.nid(absent);
+        long nid = PrimitiveData.nid(absent);
 
-        assertNull(PrimitiveData.get().getBytes(nid), "the component should have no entity");
+        assertNull(dev.ikm.tinkar.common.service.internal.EntityStore.current().getBytes(nid), "the component should have no entity");
         assertEquals(absent, PrimitiveData.publicId(nid));
         // Asked again, as every conversion of the referring semantic does.
         assertEquals(absent, PrimitiveData.publicId(nid));
@@ -61,7 +61,7 @@ class SpinedArrayAbsentComponentIdentityIT {
         // used to come back with no identity at all. The save now writes it down; loading it is
         // SpinedArrayAbsentIdentityReloadIT, since this test harness cannot reopen a store mid-class.
         PublicId absent = PublicIds.of(UUID.randomUUID());
-        int nid = PrimitiveData.nid(absent);
+        long nid = PrimitiveData.nid(absent);
         // Through the data controller: PrimitiveData.save() does not reach the store.
         dev.ikm.tinkar.common.service.ServiceLifecycleManager.get()
                 .getServicesForGroup(dev.ikm.tinkar.common.service.ServiceExclusionGroup.DATA_PROVIDER)
@@ -86,7 +86,7 @@ class SpinedArrayAbsentComponentIdentityIT {
     @Test
     void everyUuidTheNidWasMintedFromIsReported() {
         PublicId absent = PublicIds.of(UUID.randomUUID(), UUID.randomUUID());
-        int nid = PrimitiveData.nid(absent);
+        long nid = PrimitiveData.nid(absent);
 
         assertEquals(java.util.Set.copyOf(absent.asUuidList().castToList()),
                 java.util.Set.copyOf(PrimitiveData.publicId(nid).asUuidList().castToList()));

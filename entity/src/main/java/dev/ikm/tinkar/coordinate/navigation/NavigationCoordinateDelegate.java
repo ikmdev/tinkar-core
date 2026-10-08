@@ -15,15 +15,15 @@
  */
 package dev.ikm.tinkar.coordinate.navigation;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 
 public interface NavigationCoordinateDelegate extends NavigationCoordinate {
     NavigationCoordinate navigationCoordinate();
 
     @Override
-    default IntIdSet navigationPatternNids() {
+    default LongIdSet navigationPatternNids() {
         return navigationCoordinate().navigationPatternNids();
     }
 
@@ -38,7 +38,7 @@ public interface NavigationCoordinateDelegate extends NavigationCoordinate {
     }
 
     @Override
-    default IntIdList verticesSortPatternNidList() {
+    default LongIdList verticesSortPatternNidList() {
         return navigationCoordinate().verticesSortPatternNidList();
     }
 

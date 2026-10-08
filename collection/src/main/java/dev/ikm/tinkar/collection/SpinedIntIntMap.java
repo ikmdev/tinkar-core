@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.collection;
 
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.common.service.SequentialNids;
 import dev.ikm.tinkar.common.util.ArrayUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -196,7 +196,7 @@ public class SpinedIntIntMap {
         int currentSpineCount = getSpineCount();
         int key = 0;
         if (this.keyType == KeyType.NID_KEY) {
-            key = PrimitiveDataService.FIRST_NID;
+            key = SequentialNids.FIRST_NID;
         }
         for (int spineIndex = 0; spineIndex < currentSpineCount; spineIndex++) {
             AtomicIntegerArray spine = this.spines.computeIfAbsent(spineIndex, this::newSpine);

@@ -17,7 +17,7 @@ package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
-import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.component.FeatureDefinition;
 import dev.ikm.tinkar.component.PatternVersion;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
@@ -33,8 +33,8 @@ import io.soabase.recordbuilder.core.RecordBuilder;
  * @param versionStampNid
  */
 @RecordBuilder
-public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
-                              int patternNid, int indexInPattern)
+public record FieldRecord<DT>(DT value, long nid, long versionStampNid,
+                              long patternNid, int indexInPattern)
         implements Field<DT>, FieldRecordBuilder.With {
 
 
@@ -46,8 +46,8 @@ public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
     }
 
     @Override
-    public FieldDefinition fieldDefinition(StampCalculator stampCalculator) {
-        PatternEntity<PatternEntityVersion> patternEntity = Entity.getFast(patternNid());
+    public FeatureDefinition fieldDefinition(StampCalculator stampCalculator) {
+        PatternEntity<PatternEntityVersion> patternEntity = EntityHandle.get(patternNid()).expectPattern();
         Latest<PatternEntityVersion> patternVersion = stampCalculator.latest(patternEntity);
         return patternVersion.get().fieldDefinitions().get(indexInPattern());
     }
@@ -62,7 +62,7 @@ public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
         return "FieldRecord{value: " + value +
                 ", for entity: " + PrimitiveData.textWithNid(nid) +
                 " of version: " + Entity.getStamp(versionStampNid).lastVersion().describe() +
-                " in pattern: " + Entity.getFast(patternNid()) +
+                " in pattern: " + EntityHandle.get(patternNid()).orNull() +
                 " with index: " + indexInPattern() +
                 '}';
     }

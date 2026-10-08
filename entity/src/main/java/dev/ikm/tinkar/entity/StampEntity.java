@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.component.Component;
@@ -23,7 +24,6 @@ import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.StampFacade;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 
@@ -44,38 +44,38 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
     }
 
     default ConceptFacade author() {
-        return Entity.provider().getEntityFast(authorNid());
+        return EntityHandle.get(authorNid()).expectConcept();
     }
 
     default ConceptFacade module() {
-        return Entity.provider().getEntityFast(moduleNid());
+        return EntityHandle.get(moduleNid()).expectConcept();
     }
 
     default ConceptFacade path() {
-        return Entity.provider().getEntityFast(pathNid());
+        return EntityHandle.get(pathNid()).expectConcept();
     }
 
     StampEntity stamp();
 
-    default int pathNid() {
+    default long pathNid() {
         if (lastVersion() != null) {
             return lastVersion().pathNid();
         }
-        return TinkarTerm.CANCELED_STATE.nid();
+        return KernelTerm.CANCELED_STATE.nid();
     }
 
-    default int moduleNid() {
+    default long moduleNid() {
         if (lastVersion() != null) {
             return lastVersion().moduleNid();
         }
-        return TinkarTerm.CANCELED_STATE.nid();
+        return KernelTerm.CANCELED_STATE.nid();
     }
 
-    default int authorNid() {
+    default long authorNid() {
         if (lastVersion() != null) {
             return lastVersion().authorNid();
         }
-        return TinkarTerm.CANCELED_STATE.nid();
+        return KernelTerm.CANCELED_STATE.nid();
     }
 
     default StampEntityVersion lastVersion() {
@@ -83,6 +83,8 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
             return versions().get(0);
         }
         StampEntityVersion latest = null;
+        // Stamp times carry the sentinels: Long.MIN_VALUE is canceled and Long.MAX_VALUE is
+        // uncommitted, which commit replaces with the commit time.
         for (StampEntityVersion version : versions()) {
             if (version.time() == Long.MIN_VALUE) {
                 // if canceled (Long.MIN_VALUE), latest is canceled.
@@ -117,11 +119,11 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
         return Entity.super.canceled();
     }
 
-    default int stateNid() {
+    default long stateNid() {
         if (lastVersion() != null) {
             return lastVersion().stateNid();
         }
-        return TinkarTerm.CANCELED_STATE.nid();
+        return KernelTerm.CANCELED_STATE.nid();
     }
 
     default String describe() {

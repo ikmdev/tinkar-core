@@ -23,11 +23,11 @@ import dev.ikm.tinkar.component.Component;
  */
 public interface EntityFacade extends Component, ComponentWithNid {
 
-    static EntityFacade make(int nid) {
+    static EntityFacade make(long nid) {
         return EntityProxy.make(nid);
     }
 
-    static int toNid(EntityFacade entityFacade) {
+    static long toNid(EntityFacade entityFacade) {
         return entityFacade.nid();
     }
 

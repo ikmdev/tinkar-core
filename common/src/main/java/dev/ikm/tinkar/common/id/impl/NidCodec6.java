@@ -134,7 +134,7 @@ public final class NidCodec6 {
     /**
      * 64-bit key: [patternSequence:16][elementSequence:48]
      */
-    public static long longKeyForNid(int nid) {
+    public static long rocksKeyForNid(int nid) {
         int pattern = (nid >>> ELEMENT_BITS) & PATTERN_MASK;
         long element = (nid & ELEMENT_MASK); // direct, no +1
         return (((long) pattern) << 48) | (element & 0xFFFF_FFFF_FFFFL);
@@ -158,9 +158,9 @@ public final class NidCodec6 {
         }
     }
 
-    public static int nidForLongKey(long longKey) {
-        int pattern = KeyUtil.longKeyToPatternSequence(longKey);
-        long element = KeyUtil.longKeyToElementSequence(longKey);
+    public static int nidForRocksKey(long rocksKey) {
+        int pattern = KeyUtil.rocksKeyToPatternSequence(rocksKey);
+        long element = KeyUtil.rocksKeyToElementSequence(rocksKey);
         return encode(pattern, element);
     }
 }

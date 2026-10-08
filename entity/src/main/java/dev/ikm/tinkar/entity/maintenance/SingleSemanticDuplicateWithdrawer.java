@@ -15,6 +15,10 @@
  */
 package dev.ikm.tinkar.entity.maintenance;
 
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.thread.StructuredScopes;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -33,12 +37,12 @@ import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.api.tuple.primitive.IntObjectPair;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
-import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
+import org.eclipse.collections.api.tuple.primitive.LongObjectPair;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
+import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
 import org.eclipse.collections.impl.tuple.primitive.PrimitiveTuples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +68,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * <p>Patterns whose UUID is not registered in the active data store are
  * skipped with an INFO log. Nids that the pattern index points at but for
- * which {@code getEntityFast} returns no bytes are counted as
+ * which the entity lookup returns nothing are counted as
  * {@link PatternResult#nullSemanticNids()} — these signal an indexing
  * inconsistency separate from duplicate detection.
  *
@@ -94,7 +98,7 @@ public final class SingleSemanticDuplicateWithdrawer {
     private static final ProgressListener NO_OP_LISTENER = new ProgressListener() {};
 
     public record PatternResult(
-            int patternNid,
+            long patternNid,
             int componentsScanned,
             int componentsWithDuplicates,
             int duplicatesWithdrawn,
@@ -103,7 +107,7 @@ public final class SingleSemanticDuplicateWithdrawer {
             int wrongPatternSkipped,
             int nullSemanticNids) {
 
-        public static PatternResult empty(int patternNid) {
+        public static PatternResult empty(long patternNid) {
             return new PatternResult(patternNid, 0, 0, 0, 0, 0, 0, 0);
         }
     }
@@ -130,7 +134,7 @@ public final class SingleSemanticDuplicateWithdrawer {
          * @param dryRun         whether the run was dry-run only
          * @param authorNid      author nid that would be / was used for withdrawal stamps
          */
-        public String toMarkdown(ZonedDateTime runCompletedAt, boolean dryRun, int authorNid) {
+        public String toMarkdown(ZonedDateTime runCompletedAt, boolean dryRun, long authorNid) {
             long totalScanned = perPattern.collectInt(PatternResult::componentsScanned).sum();
             long totalAlready = perPattern.collectInt(PatternResult::alreadyWithdrawn).sum();
             long totalNoCan = perPattern.collectInt(PatternResult::noCanonicalMatch).sum();
@@ -182,7 +186,7 @@ public final class SingleSemanticDuplicateWithdrawer {
     }
 
     private final Transaction transaction;
-    private final int currentAuthorNid;
+    private final long currentAuthorNid;
     private final boolean dryRun;
 
     /**
@@ -190,7 +194,7 @@ public final class SingleSemanticDuplicateWithdrawer {
      * @param currentAuthorNid author nid for the withdrawal stamps
      * @param dryRun           when true, scan and report only — no writes
      */
-    public SingleSemanticDuplicateWithdrawer(Transaction transaction, int currentAuthorNid, boolean dryRun) {
+    public SingleSemanticDuplicateWithdrawer(Transaction transaction, long currentAuthorNid, boolean dryRun) {
         if (!dryRun && transaction == null) {
             throw new IllegalArgumentException("transaction is required when dryRun is false");
         }
@@ -204,13 +208,13 @@ public final class SingleSemanticDuplicateWithdrawer {
     }
 
     public Report scan(Iterable<? extends EntityProxy.Pattern> patterns, ProgressListener listener) {
-        record PatternEnum(EntityProxy.Pattern pattern, PatternEntity<?> entity, MutableIntList allNids) {}
+        record PatternEnum(EntityProxy.Pattern pattern, PatternEntity<?> entity, MutableLongList allNids) {}
 
         // Phase 1: sequential enumeration so we know the total before parallel work starts.
         List<PatternEnum> enumerated = new ArrayList<>();
         long totalNids = 0;
         for (EntityProxy.Pattern pattern : patterns) {
-            int patternNid;
+            long patternNid;
             try {
                 patternNid = pattern.nid();
             } catch (IllegalStateException missing) {
@@ -219,8 +223,8 @@ public final class SingleSemanticDuplicateWithdrawer {
                 continue;
             }
             PatternEntity<?> patternEntity = EntityHandle.getPatternOrThrow(patternNid);
-            MutableIntList allNids = IntLists.mutable.empty();
-            PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, allNids::add);
+            MutableLongList allNids = LongLists.mutable.empty();
+            EntityStore.current().forEachSemanticNidOfPattern(patternNid, allNids::add);
             enumerated.add(new PatternEnum(pattern, patternEntity, allNids));
             totalNids += allNids.size();
         }
@@ -249,13 +253,13 @@ public final class SingleSemanticDuplicateWithdrawer {
         return new Report(results.toImmutable());
     }
 
-    private PatternResult scanCollected(PatternEntity<?> patternEntity, MutableIntList allNids,
+    private PatternResult scanCollected(PatternEntity<?> patternEntity, MutableLongList allNids,
                                         AtomicLong processedNids, ProgressListener listener) {
         AtomicInteger nullCount = new AtomicInteger();
-        MutableIntObjectMap<MutableIntList> componentToSemantics =
+        MutableLongObjectMap<MutableLongList> componentToSemantics =
                 parallelGroupByComponent(allNids, nullCount, processedNids, listener);
 
-        List<IntObjectPair<MutableIntList>> duplicateGroups = new ArrayList<>();
+        List<LongObjectPair<MutableLongList>> duplicateGroups = new ArrayList<>();
         for (var iter = componentToSemantics.keyValuesView().iterator(); iter.hasNext(); ) {
             var entry = iter.next();
             if (entry.getTwo().size() > 1) {
@@ -276,7 +280,7 @@ public final class SingleSemanticDuplicateWithdrawer {
                     int chunkEnd = Math.min(start + chunkSize, duplicateGroups.size());
                     scope.fork(() -> {
                         for (int i = chunkStart; i < chunkEnd; i++) {
-                            IntObjectPair<MutableIntList> entry = duplicateGroups.get(i);
+                            LongObjectPair<MutableLongList> entry = duplicateGroups.get(i);
                             ComponentOutcome outcome = processComponent(patternEntity, entry.getOne(), entry.getTwo());
                             duplicatesWithdrawn.addAndGet(outcome.withdrawn);
                             alreadyWithdrawn.addAndGet(outcome.alreadyWithdrawn);
@@ -306,25 +310,25 @@ public final class SingleSemanticDuplicateWithdrawer {
                 nullCount.get());
     }
 
-    private MutableIntObjectMap<MutableIntList> parallelGroupByComponent(
-            MutableIntList allNids, AtomicInteger nullCount,
+    private MutableLongObjectMap<MutableLongList> parallelGroupByComponent(
+            MutableLongList allNids, AtomicInteger nullCount,
             AtomicLong processedNids, ProgressListener listener) {
-        MutableIntObjectMap<MutableIntList> merged = IntObjectMaps.mutable.empty();
+        MutableLongObjectMap<MutableLongList> merged = LongObjectMaps.mutable.empty();
         if (allNids.isEmpty()) {
             return merged;
         }
         int chunkSize = chunkSize(allNids.size());
-        ImmutableIntList nids = allNids.toImmutable();
-        List<StructuredTaskScope.Subtask<MutableIntObjectMap<MutableIntList>>> subtasks = new ArrayList<>();
-        try (var scope = StructuredScopes.<MutableIntObjectMap<MutableIntList>>open()) {
+        ImmutableLongList nids = allNids.toImmutable();
+        List<StructuredTaskScope.Subtask<MutableLongObjectMap<MutableLongList>>> subtasks = new ArrayList<>();
+        try (var scope = StructuredScopes.<MutableLongObjectMap<MutableLongList>>open()) {
             for (int start = 0; start < nids.size(); start += chunkSize) {
                 int chunkStart = start;
                 int chunkEnd = Math.min(start + chunkSize, nids.size());
                 subtasks.add(scope.fork(() -> {
-                    MutableIntObjectMap<MutableIntList> local = IntObjectMaps.mutable.empty();
+                    MutableLongObjectMap<MutableLongList> local = LongObjectMaps.mutable.empty();
                     for (int i = chunkStart; i < chunkEnd; i++) {
-                        int nid = nids.get(i);
-                        Entity<?> entity = EntityService.get().getEntityFast(nid);
+                        long nid = nids.get(i);
+                        Entity<?> entity = EntityHandle.get(nid).orNull();
                         if (entity == null) {
                             nullCount.incrementAndGet();
                             continue;
@@ -335,7 +339,7 @@ public final class SingleSemanticDuplicateWithdrawer {
                                     nid, entity.getClass().getSimpleName());
                             continue;
                         }
-                        local.getIfAbsentPut(semantic.referencedComponentNid(), IntLists.mutable::empty).add(nid);
+                        local.getIfAbsentPut(semantic.referencedComponentNid(), LongLists.mutable::empty).add(nid);
                     }
                     long now = processedNids.addAndGet(chunkEnd - chunkStart);
                     listener.onNidsProcessed(now);
@@ -347,10 +351,10 @@ public final class SingleSemanticDuplicateWithdrawer {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Interrupted grouping semantics by component", e);
         }
-        for (StructuredTaskScope.Subtask<MutableIntObjectMap<MutableIntList>> subtask : subtasks) {
-            MutableIntObjectMap<MutableIntList> local = subtask.get();
+        for (StructuredTaskScope.Subtask<MutableLongObjectMap<MutableLongList>> subtask : subtasks) {
+            MutableLongObjectMap<MutableLongList> local = subtask.get();
             local.forEachKeyValue((componentNid, nidsForComponent) ->
-                    merged.getIfAbsentPut(componentNid, IntLists.mutable::empty).addAll(nidsForComponent));
+                    merged.getIfAbsentPut(componentNid, LongLists.mutable::empty).addAll(nidsForComponent));
         }
         return merged;
     }
@@ -364,16 +368,16 @@ public final class SingleSemanticDuplicateWithdrawer {
 
     private record ComponentOutcome(int withdrawn, int alreadyWithdrawn, int wrongPattern, boolean noCanonicalMatch) {}
 
-    private ComponentOutcome processComponent(PatternEntity<?> patternEntity, int componentNid, MutableIntList semanticNids) {
+    private ComponentOutcome processComponent(PatternEntity<?> patternEntity, long componentNid, MutableLongList semanticNids) {
         PublicId componentPublicId = PrimitiveData.publicId(componentNid);
         UUID canonicalUuid = UuidT5Generator.singleSemanticUuid(patternEntity, componentPublicId);
 
-        int canonicalNid = -1;
-        MutableIntList nonCanonical = IntLists.mutable.empty();
+        long canonicalNid = -1;
+        MutableLongList nonCanonical = LongLists.mutable.empty();
         int wrongPattern = 0;
 
         for (int i = 0; i < semanticNids.size(); i++) {
-            int semanticNid = semanticNids.get(i);
+            long semanticNid = semanticNids.get(i);
             SemanticEntity<?> semantic = EntityHandle.getSemanticOrThrow(semanticNid);
             if (semantic.patternNid() != patternEntity.nid()) {
                 wrongPattern++;
@@ -399,7 +403,7 @@ public final class SingleSemanticDuplicateWithdrawer {
         if (canonicalNid == -1) {
             noCanonicalMatch = true;
             nonCanonical.sortThis();
-            int chosenVisibleNid = nonCanonical.removeAtIndex(0);
+            long chosenVisibleNid = nonCanonical.removeAtIndex(0);
             LOG.info("No canonical UUID match for pattern {} component {}; canonicalUuid={}, keeping nid {} visible, withdrawing {}",
                     PrimitiveData.textWithNid(patternEntity.nid()),
                     PrimitiveData.textWithNid(componentNid),
@@ -411,7 +415,7 @@ public final class SingleSemanticDuplicateWithdrawer {
         int withdrawn = 0;
         int alreadyWithdrawn = 0;
         for (int i = 0; i < nonCanonical.size(); i++) {
-            int duplicateNid = nonCanonical.get(i);
+            long duplicateNid = nonCanonical.get(i);
             WithdrawOutcome o = withdrawDuplicate(duplicateNid);
             switch (o) {
                 case WITHDRAWN -> withdrawn++;
@@ -424,7 +428,7 @@ public final class SingleSemanticDuplicateWithdrawer {
 
     private enum WithdrawOutcome { WITHDRAWN, ALREADY_WITHDRAWN, SKIPPED_NO_VERSIONS }
 
-    private WithdrawOutcome withdrawDuplicate(int duplicateNid) {
+    private WithdrawOutcome withdrawDuplicate(long duplicateNid) {
         SemanticRecord chronicle = EntityHandle.get(duplicateNid).expectSemanticRecord();
         SemanticVersionRecord mostRecent = mostRecentVersion(chronicle);
         if (mostRecent == null) {
@@ -438,7 +442,7 @@ public final class SingleSemanticDuplicateWithdrawer {
             return WithdrawOutcome.WITHDRAWN;
         }
 
-        int withdrawalStampNid = transaction.getStamp(
+        long withdrawalStampNid = transaction.getStamp(
                 State.WITHDRAWN,
                 currentAuthorNid,
                 mostRecentStamp.moduleNid(),

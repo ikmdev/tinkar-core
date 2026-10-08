@@ -17,13 +17,13 @@ package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
-import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.component.FeatureDefinition;
 import io.soabase.recordbuilder.core.RecordBuilder;
 
 @RecordBuilder
-public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaningNid, int patternVersionStampNid,
-                                    int patternNid, int indexInPattern)
-        implements FieldDefinitionForEntity, FieldDefinitionRecordBuilder.With, FieldDefinition {
+public record FieldDefinitionRecord(long dataTypeNid, long purposeNid, long meaningNid, long patternVersionStampNid,
+                                    long patternNid, int indexInPattern)
+        implements FieldDefinitionForEntity, FieldDefinitionRecordBuilder.With {
 
     public FieldDefinitionRecord {
         Validator.notZero(dataTypeNid);
@@ -32,7 +32,7 @@ public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaning
         Validator.notZero(patternVersionStampNid);
         Validator.notZero(patternNid);
     }
-    public FieldDefinitionRecord(FieldDefinition fieldDefinition, PatternEntityVersion patternVersion, int indexInPattern) {
+    public FieldDefinitionRecord(FeatureDefinition fieldDefinition, PatternEntityVersion patternVersion, int indexInPattern) {
         this(Entity.nid(fieldDefinition.dataType()),
                 Entity.nid(fieldDefinition.purpose()),
                 Entity.nid(fieldDefinition.meaning()),
@@ -42,7 +42,7 @@ public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaning
         );
     }
 
-    public FieldDefinitionRecord(FieldDefinition fieldDefinition, int patternVersionStampNid, int patternNid, int indexInPattern) {
+    public FieldDefinitionRecord(FeatureDefinition fieldDefinition, long patternVersionStampNid, long patternNid, int indexInPattern) {
         this(Entity.nid(fieldDefinition.dataType()),
                 Entity.nid(fieldDefinition.purpose()),
                 Entity.nid(fieldDefinition.meaning()),

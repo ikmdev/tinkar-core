@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.ConceptVersion;
 import io.soabase.recordbuilder.core.RecordBuilder;
@@ -22,7 +23,7 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 import java.util.Objects;
 
 @RecordBuilder
-public record ConceptVersionRecord(ConceptRecord chronology, int stampNid)
+public record ConceptVersionRecord(ConceptRecord chronology, long stampNid)
         implements ConceptEntityVersion, ImmutableVersion, ConceptVersionRecordBuilder.With {
 
 
@@ -49,7 +50,7 @@ public record ConceptVersionRecord(ConceptRecord chronology, int stampNid)
 
     @Override
     public int hashCode() {
-        return Integer.hashCode(stampNid);
+        return Nid.hash(stampNid);
     }
 
     @Override

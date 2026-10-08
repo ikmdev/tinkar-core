@@ -339,7 +339,7 @@ ViewCalculator currentCalc = ViewCalculatorWithCache.getCalculator(currentView);
 // Switch to historical view
 StampPositionRecord historicPosition = StampPositionRecord.make(
     historicTimestamp,
-    TinkarTerm.MASTER_PATH
+    KernelTerm.MASTER_PATH
 );
 ViewCoordinateRecord historicView = currentView.withStampCoordinate(
     currentView.stampCoordinate().withStampPosition(historicPosition)

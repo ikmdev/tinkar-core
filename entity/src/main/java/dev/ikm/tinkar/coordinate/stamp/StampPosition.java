@@ -20,6 +20,7 @@ package dev.ikm.tinkar.coordinate.stamp;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.terms.ConceptFacade;
 
 import java.time.Instant;
@@ -66,11 +67,11 @@ public interface StampPosition
             return comparison;
         }
 
-        return Integer.compare(this.getPathForPositionNid(), o.getPathForPositionNid());
+        return Long.compare(this.getPathForPositionNid(), o.getPathForPositionNid());
     }
 
 
-    int getPathForPositionNid();
+    long getPathForPositionNid();
 
     /**
      * Gets the stamp path ConceptFacade.
@@ -78,13 +79,13 @@ public interface StampPosition
      * @return the stamp path ConceptFacade
      */
     default ConceptFacade getPathForPositionConcept() {
-        return Entity.getFast(getPathForPositionNid());
+        return EntityHandle.get(getPathForPositionNid()).expectConcept();
     }
 
 
     StampPosition withTime(long time);
 
-    StampPosition withPathForPositionNid(int pathForPositionNid);
+    StampPosition withPathForPositionNid(long pathForPositionNid);
 
     StampPositionRecord toStampPositionImmutable();
 

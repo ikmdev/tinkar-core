@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
@@ -8,7 +9,6 @@ import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ class ChangeSetExportIT {
         ActiveStamp stamp = Stamp.active("2026-07-03T00:00:00Z",
                 set.conceptRef("Probe author (Probe)"),
                 set.conceptRef("Probe module (Probe)"),
-                TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.DEVELOPMENT_PATH);
         set.concept("Probe author (Probe)").at(stamp).synonym("Probe author");
         set.concept("Probe module (Probe)").at(stamp).synonym("Probe module");
         set.concept("Probe thing (Probe)").at(stamp).synonym("Probe thing");

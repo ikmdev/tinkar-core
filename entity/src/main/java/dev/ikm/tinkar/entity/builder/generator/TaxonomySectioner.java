@@ -15,15 +15,15 @@
  */
 package dev.ikm.tinkar.entity.builder.generator;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
-import dev.ikm.tinkar.terms.TinkarTerm;
-import org.eclipse.collections.api.factory.primitive.IntLists;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.factory.primitive.LongLists;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -51,8 +51,8 @@ import java.util.Set;
  */
 public final class TaxonomySectioner {
 
-    private final Map<Integer, MutableIntList> children = new HashMap<>();
-    private final Map<Integer, MutableIntList> parents = new HashMap<>();
+    private final Map<Long, MutableLongList> children = new HashMap<>();
+    private final Map<Long, MutableLongList> parents = new HashMap<>();
 
     private TaxonomySectioner() {
     }
@@ -67,12 +67,12 @@ public final class TaxonomySectioner {
      */
     public static TaxonomySectioner fromStatedNavigation(StampCalculator calculator) {
         TaxonomySectioner sectioner = new TaxonomySectioner();
-        calculator.forEachSemanticVersionOfPattern(TinkarTerm.STATED_NAVIGATION_PATTERN,
+        calculator.forEachSemanticVersionOfPattern(KernelTerm.STATED_NAVIGATION_PATTERN,
                 (semanticVersion, patternVersion) -> {
-                    int child = semanticVersion.referencedComponentNid();
+                    long child = semanticVersion.referencedComponentNid();
                     int parentsFieldIndex = originFieldIndex(patternVersion);
                     Object field = semanticVersion.fieldValues().get(parentsFieldIndex);
-                    if (field instanceof IntIdSet parentNids) {
+                    if (field instanceof LongIdSet parentNids) {
                         parentNids.forEach(parentNid -> sectioner.addEdge(parentNid, child));
                     }
                 });
@@ -94,9 +94,9 @@ public final class TaxonomySectioner {
      */
     public static TaxonomySectioner fromStatedAxioms(StampCalculator calculator) {
         TaxonomySectioner sectioner = new TaxonomySectioner();
-        calculator.forEachSemanticVersionOfPattern(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+        calculator.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                 (semanticVersion, patternVersion) -> {
-                    int child = semanticVersion.referencedComponentNid();
+                    long child = semanticVersion.referencedComponentNid();
                     if (semanticVersion.fieldValues().isEmpty()) {
                         return;
                     }
@@ -111,9 +111,9 @@ public final class TaxonomySectioner {
         return sectioner;
     }
 
-    private void addEdge(int parentNid, int childNid) {
-        children.computeIfAbsent(parentNid, key -> IntLists.mutable.empty()).add(childNid);
-        parents.computeIfAbsent(childNid, key -> IntLists.mutable.empty()).add(parentNid);
+    private void addEdge(long parentNid, long childNid) {
+        children.computeIfAbsent(parentNid, key -> LongLists.mutable.empty()).add(childNid);
+        parents.computeIfAbsent(childNid, key -> LongLists.mutable.empty()).add(parentNid);
     }
 
     /**
@@ -134,22 +134,22 @@ public final class TaxonomySectioner {
     }
 
     /** The direct children of a concept in the built taxonomy graph, empty if none. */
-    public List<Integer> childrenOf(int nid) {
-        int[] childNids = children.getOrDefault(nid, IntLists.mutable.empty()).toArray();
+    public List<Long> childrenOf(long nid) {
+        long[] childNids = children.getOrDefault(nid, LongLists.mutable.empty()).toArray();
         return Arrays.stream(childNids).boxed().toList();
     }
 
     /** Every concept nid reachable from (and including) the given root, depth-first. */
-    public List<Integer> subtreeOf(int rootNid) {
-        List<Integer> subtree = new ArrayList<>();
-        Set<Integer> visited = new HashSet<>();
-        Deque<Integer> pending = new ArrayDeque<>();
+    public List<Long> subtreeOf(long rootNid) {
+        List<Long> subtree = new ArrayList<>();
+        Set<Long> visited = new HashSet<>();
+        Deque<Long> pending = new ArrayDeque<>();
         pending.push(rootNid);
         while (!pending.isEmpty()) {
-            int nid = pending.pop();
+            long nid = pending.pop();
             if (visited.add(nid)) {
                 subtree.add(nid);
-                for (int child : children.getOrDefault(nid, IntLists.mutable.empty()).toArray()) {
+                for (long child : children.getOrDefault(nid, LongLists.mutable.empty()).toArray()) {
                     pending.push(child);
                 }
             }
@@ -184,9 +184,9 @@ public final class TaxonomySectioner {
      *                        section rather than split further)
      * @return one {@link Section} per bucket, in stable (sorted by root's nid) order
      */
-    public List<Section> sectionsUnder(int taxonomyRootNid, int splitThreshold, int maxDepth) {
+    public List<Section> sectionsUnder(long taxonomyRootNid, int splitThreshold, int maxDepth) {
         List<Section> sections = new ArrayList<>();
-        for (int child : childrenOf(taxonomyRootNid)) {
+        for (long child : childrenOf(taxonomyRootNid)) {
             splitInto(child, splitThreshold, maxDepth, 1, sections, new HashSet<>());
         }
         // childrenOf/splitInto walk in HashMap iteration order (ultimately driven by
@@ -194,7 +194,7 @@ public final class TaxonomySectioner {
         // here so the documented "stable (sorted by root's nid)" contract actually
         // holds regardless of store iteration order, which is what makes regenerating
         // the ledger produce a reviewable, stable diff.
-        sections.sort(Comparator.comparingInt(Section::rootNid));
+        sections.sort(Comparator.comparingLong(Section::rootNid));
         return sections;
     }
 
@@ -217,18 +217,18 @@ public final class TaxonomySectioner {
      * @param residualBatchSize the maximum members per residual-catch-all section
      * @return every section needed for full-store coverage, deduplicated
      */
-    public List<Section> sectionsCoveringFullStore(int taxonomyRootNid, int splitThreshold, int maxDepth,
+    public List<Section> sectionsCoveringFullStore(long taxonomyRootNid, int splitThreshold, int maxDepth,
                                                     int residualBatchSize) {
         List<Section> sections = sectionsUnder(taxonomyRootNid, splitThreshold, maxDepth);
 
-        Set<Integer> assigned = new HashSet<>();
+        Set<Long> assigned = new HashSet<>();
         List<Section> exclusiveSections = new ArrayList<>();
         for (Section section : sections) {
-            List<Integer> exclusiveMembers = section.members().stream().filter(assigned::add).toList();
+            List<Long> exclusiveMembers = section.members().stream().filter(assigned::add).toList();
             exclusiveSections.add(new Section(section.rootNid(), exclusiveMembers));
         }
 
-        List<Integer> residualMembers = new ArrayList<>();
+        List<Long> residualMembers = new ArrayList<>();
         EntityService.get().forEachConceptEntity(concept -> {
             if (assigned.add(concept.nid())) {
                 residualMembers.add(concept.nid());
@@ -240,15 +240,15 @@ public final class TaxonomySectioner {
             }
         });
         for (int start = 0; start < residualMembers.size(); start += residualBatchSize) {
-            List<Integer> batch = residualMembers.subList(start,
+            List<Long> batch = residualMembers.subList(start,
                     Math.min(start + residualBatchSize, residualMembers.size()));
             exclusiveSections.add(new Section(taxonomyRootNid, List.copyOf(batch)));
         }
         return exclusiveSections;
     }
 
-    private void splitInto(int nid, int splitThreshold, int maxDepth, int depth, List<Section> sections,
-                           Set<Integer> ancestorPath) {
+    private void splitInto(long nid, int splitThreshold, int maxDepth, int depth, List<Section> sections,
+                           Set<Long> ancestorPath) {
         if (!ancestorPath.add(nid)) {
             // A genuine cycle — this node is its own ancestor in the current
             // splitting path. A dual-parented (but acyclic) node reached via a
@@ -260,8 +260,8 @@ public final class TaxonomySectioner {
             return;
         }
         try {
-            List<Integer> subtree = subtreeOf(nid);
-            List<Integer> grandchildren = childrenOf(nid);
+            List<Long> subtree = subtreeOf(nid);
+            List<Long> grandchildren = childrenOf(nid);
             if (subtree.size() <= splitThreshold || depth >= maxDepth || grandchildren.isEmpty()) {
                 sections.add(new Section(nid, List.copyOf(subtree)));
                 return;
@@ -269,7 +269,7 @@ public final class TaxonomySectioner {
             // This node's descendants are being split out below — but the node itself
             // still needs a home, or it silently vanishes from every generated section.
             sections.add(new Section(nid, List.of(nid)));
-            for (int grandchild : grandchildren) {
+            for (long grandchild : grandchildren) {
                 splitInto(grandchild, splitThreshold, maxDepth, depth + 1, sections, ancestorPath);
             }
         } finally {
@@ -285,7 +285,7 @@ public final class TaxonomySectioner {
      * @param rootNid the concept whose subtree this section covers
      * @param members every concept nid in the subtree, root included
      */
-    public record Section(int rootNid, List<Integer> members) {
+    public record Section(long rootNid, List<Long> members) {
         public String name() {
             return dev.ikm.tinkar.common.service.PrimitiveData.text(rootNid);
         }

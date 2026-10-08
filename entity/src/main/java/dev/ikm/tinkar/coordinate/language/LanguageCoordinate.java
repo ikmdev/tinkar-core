@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.language;
 
-import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -54,28 +54,28 @@ public interface LanguageCoordinate {
      *
      * @return the description pattern nid array
      */
-    IntIdList descriptionPatternPreferenceNidList();
+    LongIdList descriptionPatternPreferenceNidList();
 
     /**
      * Gets the description type preference nid array.
      *
      * @return the description type preference nid array
      */
-    IntIdList descriptionTypePreferenceNidList();
+    LongIdList descriptionTypePreferenceNidList();
 
     /**
      * Gets the dialect pattern preference nid array.
      *
      * @return the dialect pattern preference nid array
      */
-    IntIdList dialectPatternPreferenceNidList();
+    LongIdList dialectPatternPreferenceNidList();
 
     /**
      * Gets the language concept nid.
      *
      * @return the language concept nid
      */
-    int languageConceptNid();
+    long languageConceptNid();
 
     /**
      * Gets the module preference nid array. Used to adjudicate which component to
@@ -85,7 +85,7 @@ public interface LanguageCoordinate {
      * @return the module preference nid array.  If this array is empty, the returned preferred
      * name in the multiple case is unspecified.
      */
-    IntIdList modulePreferenceNidListForLanguage();
+    LongIdList modulePreferenceNidListForLanguage();
 
     PatternFacade[] descriptionPatternPreferenceArray();
 

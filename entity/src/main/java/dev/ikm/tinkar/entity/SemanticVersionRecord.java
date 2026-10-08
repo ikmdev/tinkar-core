@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
@@ -32,7 +32,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 @RecordBuilder
-public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
+public record SemanticVersionRecord(SemanticRecord chronology, long stampNid,
                                     ImmutableList<Object> fieldValues)
         implements SemanticEntityVersion, ImmutableVersion, SemanticVersionRecordBuilder.With {
 
@@ -57,7 +57,7 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
 
     @Override
     public int hashCode() {
-        return Integer.hashCode(stampNid);
+        return Nid.hash(stampNid);
     }
 
     @Override
@@ -94,7 +94,7 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                     fieldStringBuilder.append(string);
                 } else if (field instanceof Instant instant) {
                     fieldStringBuilder.append(DateTimeUtil.format(instant));
-                } else if (field instanceof IntIdList intIdList) {
+                } else if (field instanceof LongIdList intIdList) {
                     if (intIdList.size() == 0) {
                         fieldStringBuilder.append("ø");
                     } else {
@@ -105,11 +105,11 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                             fieldStringBuilder.append(PrimitiveData.text(intIdList.get(j)));
                         }
                     }
-                } else if (field instanceof IntIdSet intIdSet) {
+                } else if (field instanceof LongIdSet intIdSet) {
                     if (intIdSet.size() == 0) {
                         fieldStringBuilder.append("ø");
                     } else {
-                        int[] idSetArray = intIdSet.toArray();
+                        long[] idSetArray = intIdSet.toArray();
                         for (int j = 0; j < idSetArray.length; j++) {
                             if (j > 0) {
                                 fieldStringBuilder.append(", ");
@@ -154,7 +154,7 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                 } else if (field instanceof Long aLong) {
                     sb.append("Long: ");
                     sb.append(DateTimeUtil.format(aLong));
-                } else if (field instanceof IntIdList intIdList) {
+                } else if (field instanceof LongIdList intIdList) {
                     sb.append(field.getClass().getSimpleName());
                     sb.append(": ");
                     if (intIdList.size() == 0) {
@@ -167,13 +167,13 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                             sb.append(PrimitiveData.text(intIdList.get(j)));
                         }
                     }
-                } else if (field instanceof IntIdSet intIdSet) {
+                } else if (field instanceof LongIdSet intIdSet) {
                     sb.append(field.getClass().getSimpleName());
                     sb.append(": ");
                     if (intIdSet.size() == 0) {
                         sb.append("ø, ");
                     } else {
-                        int[] idSetArray = intIdSet.toArray();
+                        long[] idSetArray = intIdSet.toArray();
                         for (int j = 0; j < idSetArray.length; j++) {
                             if (j > 0) {
                                 sb.append(", ");

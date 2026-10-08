@@ -48,7 +48,7 @@ class NidCodec8Test {
             assertEquals(pattern, NidCodec8.decodePatternSequence(nid));
             assertEquals(element, NidCodec8.decodeElementSequence(nid));
             assertDoesNotThrow(() -> NidCodec8.validateNid(nid));
-            assertEquals(nid, NidCodec8.nidForLongKey(NidCodec8.longKeyForNid(nid)));
+            assertEquals(nid, NidCodec8.nidForRocksKey(NidCodec8.rocksKeyForNid(nid)));
         }
 
         @Test
@@ -79,10 +79,10 @@ class NidCodec8Test {
 
         @Test
         @DisplayName("Long key keeps the 16/48 RocksDB layout")
-        void longKeyLayout() {
+        void rocksKeyLayout() {
             int nid = NidCodec8.encode(200, 12_345);
-            assertEquals(KeyUtil.patternSequenceElementSequenceToLongKey(200, 12_345),
-                    NidCodec8.longKeyForNid(nid));
+            assertEquals(KeyUtil.patternSequenceElementSequenceToRocksKey(200, 12_345),
+                    NidCodec8.rocksKeyForNid(nid));
         }
     }
 

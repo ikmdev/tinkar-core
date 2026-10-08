@@ -26,7 +26,7 @@ open module dev.ikm.tinkar.reasoner.elksnomed.test {
 and src/test/java/module-info.java is:
 
 ```
-open module dev.ikm.tinkar.reasoner.elksnomed.test2 {
+open module dev.ikm.tinkar.reasoner.elksnomed.test.it {
 ...
 	requires transitive org.junit.jupiter.api;
 	requires transitive org.junit.jupiter.engine;

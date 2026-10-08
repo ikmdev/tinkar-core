@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Calculators;
@@ -23,9 +24,8 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.builder.generator.SectionEmitter;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
-import dev.ikm.tinkar.entity.builder.generator.TinkarTermReferenceResolver;
+import dev.ikm.tinkar.entity.builder.generator.BindingReferenceResolver;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,13 +94,13 @@ public final class LedgerGeneratorMain {
             new LoadEntitiesFromProtobufFile(pbZip).compute();
 
             StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
-            TinkarTermReferenceResolver resolver = TinkarTermReferenceResolver.build();
+            BindingReferenceResolver resolver = BindingReferenceResolver.build();
             LanguageCalculator languageCalculator =
                     Calculators.Language.UsEnglishFullyQualifiedName(calculator.stampCoordinate());
             TaxonomySectioner sectioner = TaxonomySectioner.fromStatedNavigation(calculator);
 
             List<Section> sections = sectioner.sectionsCoveringFullStore(
-                    TinkarTerm.ROOT_VERTEX.nid(), 60, 4, 50);
+                    KernelTerm.ROOT_VERTEX.nid(), 60, 4, 50);
             distinctMembers = sections.stream().mapToInt(section -> section.members().size()).sum();
 
             List<String> emissionNotes = new ArrayList<>();

@@ -24,6 +24,7 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 
 import java.nio.charset.StandardCharsets;
@@ -113,7 +114,7 @@ public class DecoderInput {
     }
 
 
-    public int readNid() {return PrimitiveData.nid(readPublicId());}
+    public long readNid() {return PrimitiveData.nid(readPublicId());}
 
     public PublicId readPublicId() {
         int uuidListSize = readVarInt();
@@ -124,21 +125,21 @@ public class DecoderInput {
         return PublicIds.of(uuidList);
     }
 
-    public int[] readNidArray() {
+    public long[] readNidArray() {
         return readNidList().toArray();
     }
 
-    public IntIdList readIntIdList() {
-        return IntIds.list.of(readNidArray());
+    public LongIdList readLongIdList() {
+        return LongIds.list.of(readNidArray());
     }
 
-    public ImmutableIntList readNidList() {
+    public ImmutableLongList readNidList() {
         int listSize = readVarInt();
         MutableList<PublicId> publidIdList = Lists.mutable.ofInitialCapacity(listSize);
         for (int i = 0; i < listSize; i++) {
             publidIdList.add(readPublicId());
         }
-        return publidIdList.collectInt(publicId -> PrimitiveData.nid(publicId)).toImmutable();
+        return publidIdList.collectLong(publicId -> PrimitiveData.nid(publicId)).toImmutable();
     }
 
     public <T extends Encodable> T decode() {

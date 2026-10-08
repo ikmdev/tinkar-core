@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.entity.util.StampRealizer;
@@ -40,9 +40,9 @@ public interface StampService {
     /**
      * Very inefficient. Please override.
      *
-     * @return IntIdSet of the stamp nids.
+     * @return LongIdSet of the stamp nids.
      */
-    default IntIdSet getStampNids() {
+    default LongIdSet getStampNids() {
         StampRealizer stampRealizer = new StampRealizer();
         EntityService.get().forEachStampEntity(stampRealizer);
          return stampRealizer.stampNids();
@@ -50,33 +50,33 @@ public interface StampService {
 
     default ImmutableSet<ConceptFacade> getAuthorsInUse() {
         MutableSet<ConceptFacade> authors = Sets.mutable.empty();
-        for (int authorNid : getAuthorNidsInUse().toArray()) {
+        for (long authorNid : getAuthorNidsInUse().toArray()) {
             authors.add(EntityProxy.Concept.make(authorNid));
         }
         return authors.toImmutable();
     }
 
-    IntIdSet getAuthorNidsInUse();
+    LongIdSet getAuthorNidsInUse();
 
     default ImmutableSet<ConceptFacade> getModulesInUse() {
         MutableSet<ConceptFacade> modules = Sets.mutable.empty();
-        for (int moduleNid : getModuleNidsInUse().toArray()) {
+        for (long moduleNid : getModuleNidsInUse().toArray()) {
             modules.add(EntityProxy.Concept.make(moduleNid));
         }
         return modules.toImmutable();
     }
 
-    IntIdSet getModuleNidsInUse();
+    LongIdSet getModuleNidsInUse();
 
     default ImmutableSet<ConceptFacade> getPathsInUse() {
         MutableSet<ConceptFacade> paths = Sets.mutable.empty();
-        for (int pathNid : getPathNidsInUse().toArray()) {
+        for (long pathNid : getPathNidsInUse().toArray()) {
             paths.add(EntityProxy.Concept.make(pathNid));
         }
         return paths.toImmutable();
     }
 
-    IntIdSet getPathNidsInUse();
+    LongIdSet getPathNidsInUse();
 
     ImmutableLongList getTimesInUse();
 

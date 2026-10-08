@@ -15,20 +15,17 @@
  */
 package dev.ikm.tinkar.coordinate.navigation;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.set.ImmutableSet;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -41,8 +38,8 @@ import java.util.UUID;
  */
 public interface NavigationCoordinate {
 
-    static IntIdSet defaultNavigationConceptIdentifierNids() {
-        return IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION.nid());
+    static LongIdSet defaultNavigationConceptIdentifierNids() {
+        return LongIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid());
     }
 
     default UUID getNavigationCoordinateUuid() {
@@ -51,7 +48,7 @@ public interface NavigationCoordinate {
 
     static UUID getNavigationCoordinateUuid(NavigationCoordinate navigationCoordinate) {
         ArrayList<UUID> uuidList = new ArrayList<>();
-        for (int nid : navigationCoordinate.navigationPatternNids().toArray()) {
+        for (long nid : navigationCoordinate.navigationPatternNids().toArray()) {
             Entity.provider().addSortedUuids(uuidList, nid);
         }
         return UUID.nameUUIDFromBytes(uuidList.toString().getBytes());
@@ -59,7 +56,7 @@ public interface NavigationCoordinate {
 
     //---------------------------
 
-    IntIdSet navigationPatternNids();
+    LongIdSet navigationPatternNids();
 
     /**
      * Priority list of patterns used to sort vertices. If empty, and sortVertices() is true,
@@ -68,7 +65,7 @@ public interface NavigationCoordinate {
      * @return the priority list of patterns to use to sort the vertices.
      */
     default ImmutableList<PatternFacade> verticesSortPatternList() {
-        return Lists.immutable.of(verticesSortPatternNidList().intStream()
+        return Lists.immutable.of(verticesSortPatternNidList().longStream()
                 .mapToObj(nid -> (PatternFacade) EntityProxy.Pattern.make(nid)).toArray(PatternFacade[]::new));
     }
 
@@ -78,23 +75,19 @@ public interface NavigationCoordinate {
      *
      * @return the priority list of patterns to use to sort the vertices.
      */
-    IntIdList verticesSortPatternNidList();
-
-    default ImmutableSet<Concept> getNavigationIdentifierConcepts() {
-        return IntSets.immutable.of(navigationPatternNids().toArray()).collect(nid -> Entity.getFast(nid));
-    }
+    LongIdList verticesSortPatternNidList();
 
     NavigationCoordinateRecord toNavigationCoordinateRecord();
 
     default String toUserString() {
         StringBuilder sb = new StringBuilder("Navigators: ");
-        for (int nid : navigationPatternNids().toArray()) {
+        for (long nid : navigationPatternNids().toArray()) {
             sb.append("\n     ").append(PrimitiveData.text(nid));
         }
         sb.append("\n\nVertex states:\n").append(vertexStates());
         if (sortVertices()) {
             sb.append("\n\nSort: \n");
-            for (int patternNid : verticesSortPatternNidList().toArray()) {
+            for (long patternNid : verticesSortPatternNidList().toArray()) {
                 sb.append("  ");
                 sb.append(PrimitiveData.text(patternNid));
                 sb.append("\n");

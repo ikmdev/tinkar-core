@@ -17,7 +17,11 @@ package dev.ikm.tinkar.provider.search;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.LongField;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
@@ -81,6 +85,14 @@ public final class IndexerSchema {
      */
     public static final int VERSION = 4;
 
+    /**
+     * The schema version this build writes for a 64-bit store (IKE-Network/ike-issues#1258):
+     * as v4, except that {@code nid} is a {@link LongField}, since a 64-bit nid does not fit
+     * the {@code int} of {@link #NID}. A store is one layout for its life, so an index is one
+     * of the two, and {@link #version()} says which this build writes.
+     */
+    public static final int SIXTY_FOUR_BIT_VERSION = 5;
+
     /** Lucene commit-user-data key under which {@link #VERSION} is stored. */
     public static final String VERSION_KEY = "ike.indexer.schemaVersion";
 
@@ -95,8 +107,55 @@ public final class IndexerSchema {
      */
     private static final int LEGACY_INDEX_VERSION = 0;
 
-    /** Indexed (BKD point + doc-values) and stored {@code int} nid of the source semantic. */
+    /** Indexed (BKD point + doc-values) and stored {@code int} nid of the source semantic, in a legacy-layout store. */
     public static final IntDescriptor NID = new IntDescriptor("nid");
+
+    /** The same field as {@link #NID}, as the {@code long} a 64-bit store's nids need (schema v5). */
+    public static final LongDescriptor NID_64 = new LongDescriptor("nid");
+
+    /**
+     * The schema version this build writes: {@link #SIXTY_FOUR_BIT_VERSION} when the open
+     * store is in the 64-bit nid layout, else {@link #VERSION}.
+     *
+     * @return the version to write and to compare an existing index against
+     */
+    public static int version() {
+        return NidLayout.active() == NidLayout.SIXTY_FOUR_BIT ? SIXTY_FOUR_BIT_VERSION : VERSION;
+    }
+
+    /**
+     * The {@code nid} field of a document, in the width the open store's layout needs.
+     *
+     * @param nid the semantic's nid
+     * @return the field to add to the document
+     */
+    public static IndexableField nidField(long nid) {
+        return version() == SIXTY_FOUR_BIT_VERSION ? NID_64.make(nid) : NID.make(Nid.narrowChecked(nid));
+    }
+
+    /**
+     * The query that matches every document of a semantic, in the width the open store's
+     * layout needs.
+     *
+     * @param nid the semantic's nid
+     * @return the exact query on the {@code nid} field
+     */
+    public static Query nidQuery(long nid) {
+        return version() == SIXTY_FOUR_BIT_VERSION
+                ? LongField.newExactQuery(NID_64.name(), nid)
+                : IntField.newExactQuery(NID.name(), Nid.narrowChecked(nid));
+    }
+
+    /**
+     * The nid a hit's document stores, whichever width it was written in.
+     *
+     * @param doc the document, with {@code nid} among its loaded fields
+     * @return the nid, or null if the document has none
+     */
+    public static Long readNid(Document doc) {
+        IndexableField field = doc.getField(NID.name());
+        return field == null ? null : field.numericValue().longValue();
+    }
 
     /** Indexed (BKD point + doc-values) and stored {@code int} ordinal — the position
      *  of the matched value within the semantic's {@code fieldValues()} list.
@@ -146,7 +205,7 @@ public final class IndexerSchema {
      */
     public static void attachVersion(IndexWriter writer) {
         writer.setLiveCommitData(
-                Map.of(VERSION_KEY, Integer.toString(VERSION)).entrySet()
+                Map.of(VERSION_KEY, Integer.toString(version())).entrySet()
         );
     }
 
@@ -174,7 +233,7 @@ public final class IndexerSchema {
      */
     public static int readVersion(Directory directory) throws IOException {
         if (!DirectoryReader.indexExists(directory)) {
-            return VERSION;
+            return version();
         }
         try (DirectoryReader reader = DirectoryReader.open(directory)) {
             String stored = reader.getIndexCommit().getUserData().get(VERSION_KEY);
@@ -190,7 +249,7 @@ public final class IndexerSchema {
      *
      * @param <T> the Java type returned by {@link #read(Document)}
      */
-    public sealed interface Descriptor<T> permits IntDescriptor, TextDescriptor {
+    public sealed interface Descriptor<T> permits IntDescriptor, LongDescriptor, TextDescriptor {
         /**
          * @return the Lucene field name this descriptor reads and writes
          */
@@ -249,6 +308,19 @@ public final class IndexerSchema {
      * {@link Descriptor} interface requires it; v3 callers should not use
      * it — text comes from the entity binary store via re-analysis.
      */
+    public record LongDescriptor(String name) implements Descriptor<Long> {
+        @Override
+        public IndexableField make(Long value) {
+            return new LongField(name, value, Field.Store.YES);
+        }
+
+        @Override
+        public Long read(Document doc) {
+            IndexableField field = doc.getField(name);
+            return field == null ? null : field.numericValue().longValue();
+        }
+    }
+
     public record TextDescriptor(String name) implements Descriptor<String> {
         /**
          * @param value the text to analyze and index

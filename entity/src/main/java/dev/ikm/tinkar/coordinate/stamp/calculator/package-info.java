@@ -192,10 +192,10 @@
  * <p>Determining if a stamp is visible on a coordinate's path:</p>
  *
  * <pre>{@code
- * boolean isVisibleOnPath(int stampNid) {
+ * boolean isVisibleOnPath(long stampNid) {
  *     StampEntity stamp = Entity.getStamp(stampNid);
- *     int stampPathNid = stamp.pathNid();
- *     int coordPathNid = stampCoord.pathNidForFilter();
+ *     long stampPathNid = stamp.pathNid();
+ *     long coordPathNid = stampCoord.pathNidForFilter();
  *
  *     // Direct path match
  *     if (stampPathNid == coordPathNid) {
@@ -203,8 +203,8 @@
  *     }
  *
  *     // Check path origins (branching)
- *     StampPath coordPath = pathService.getPath(coordPathNid);
- *     for (StampPosition origin : coordPath.pathOrigins()) {
+ *     StampPath coordPath = StampPathImmutable.make(coordPathNid);
+ *     for (StampPosition origin : coordPath.getPathOrigins()) {
  *         if (origin.getPathForPositionNid() == stampPathNid &&
  *             stamp.time() <= origin.time()) {
  *             return true; // Stamp predates branch point
@@ -248,7 +248,7 @@
  * // Create snapshot of concept at specific time
  * StampPositionRecord historicPosition = StampPositionRecord.make(
  *     historicTimestamp,
- *     TinkarTerm.MASTER_PATH
+ *     KernelTerm.MASTER_PATH
  * );
  *
  * EntitySnapshot snapshot = calculator.snapshot(conceptEntity, historicPosition);
@@ -264,7 +264,7 @@
  *
  * <pre>{@code
  * // Process all concepts in a set
- * IntIdSet conceptNids = ...;
+ * LongIdSet conceptNids = ...;
  *
  * calculator.forEachLatestVersion(conceptNids, latest -> {
  *     if (latest.isPresent()) {
@@ -274,7 +274,7 @@
  * });
  *
  * // Stream pattern matching
- * calculator.streamLatestVersionForPattern(TinkarTerm.DESCRIPTION_PATTERN)
+ * calculator.streamLatestVersionForPattern(KernelTerm.DESCRIPTION_PATTERN)
  *     .filter(Latest::isPresent)
  *     .map(Latest::get)
  *     .forEach(desc -> {

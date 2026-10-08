@@ -16,13 +16,13 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.component.FeatureDefinition;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.ConceptToDataType;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
 
-public interface FieldDefinitionForEntity extends FieldDefinition {
+public interface FieldDefinitionForEntity extends FeatureDefinition {
 
     /**
      * Underlying object type such as String or Integer.
@@ -33,7 +33,7 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
         return EntityHandle.getConceptOrThrow(dataTypeNid());
     }
 
-    int dataTypeNid();
+    long dataTypeNid();
 
     /**
      * How this field is intended to be used. The objective to be reached; a target; an aim; a goal.
@@ -49,7 +49,7 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
         return EntityHandle.getConceptOrThrow(purposeNid());
     }
 
-    int purposeNid();
+    long purposeNid();
 
     /**
      * The meaning of this field. Maybe it is the "SNOMED code" in a mapping.
@@ -66,7 +66,7 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
         return EntityHandle.getConceptOrThrow(meaningNid());
     }
 
-    int meaningNid();
+    long meaningNid();
 
     /**
      * The index of this field in the entity (patttern and semantic).
@@ -74,13 +74,13 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
      */
     int indexInPattern();
 
-    int patternNid();
+    long patternNid();
 
     default PatternFacade pattern() {
         return EntityProxy.Pattern.make(patternNid());
     }
 
-    int patternVersionStampNid();
+    long patternVersionStampNid();
 
     default FieldDataType fieldDataType() {
         return ConceptToDataType.convert(dataType());

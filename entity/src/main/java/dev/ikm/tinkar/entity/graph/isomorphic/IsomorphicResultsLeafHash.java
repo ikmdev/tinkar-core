@@ -15,15 +15,20 @@
  */
 package dev.ikm.tinkar.entity.graph.isomorphic;
 
+import org.eclipse.collections.api.factory.primitive.LongSets;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.ArrayUtil;
 import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
 import dev.ikm.tinkar.entity.graph.DiGraphAbstract;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.DiTreeText;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.VisitProcessor;
 import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -118,9 +123,14 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
      * @param sortedNids a sorted array of nids
      * @return a hashcode, other than -1
      */
-    public static final int makeNidListHash(int vertexMeaning, int[] sortedNids) {
-        int arrayHash = Arrays.hashCode(sortedNids);
-        arrayHash = 31 * arrayHash + vertexMeaning;
+    public static final int makeNidListHash(long vertexMeaning, long[] sortedNids) {
+        // Arrays.hashCode of the nids as they were when nids were int: Nid.hash of a nid that fits
+        // an int is the int, so the hash, and the solver's grouping by it, are unchanged.
+        int arrayHash = 1;
+        for (long nid : sortedNids) {
+            arrayHash = 31 * arrayHash + Nid.hash(nid);
+        }
+        arrayHash = 31 * arrayHash + Nid.hash(vertexMeaning);
         while (arrayHash == -1) {
             arrayHash = 31 * arrayHash + 7;
         }
@@ -137,11 +147,11 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
      * @param referenceTree  the reference tree
      * @param comparisonTree the comparison tree
      */
-    public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
+    public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, long referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
         super(referenceTree, comparisonTree, referencedConceptNid, stopwatch);
     }
 
-    public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid) {
+    public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, long referencedConceptNid) {
         super(referenceTree, comparisonTree, referencedConceptNid, null);
     }
 
@@ -151,8 +161,8 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
     }
 
     public void vertexStartProcessor(EntityVertex vertex, DiGraphAbstract<EntityVertex> graph, VVD visitData) {
-        MutableIntSet nidsReferencedByThisVertexOrAbove = visitData.nidsReferencedAtVertexOrAboveIndexMap.getIfAbsentPut(
-                vertex.vertexIndex(), () -> IntSets.mutable.empty());
+        MutableLongSet nidsReferencedByThisVertexOrAbove = visitData.nidsReferencedAtVertexOrAboveIndexMap.getIfAbsentPut(
+                vertex.vertexIndex(), () -> LongSets.mutable.empty());
         nidsReferencedByThisVertexOrAbove.add(vertex.getMeaningNid());
         // Add nids from this vertex.
         for (Object value : vertex.properties().values()) {
@@ -165,7 +175,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
         if (predecessorIndex.isPresent()) {
             // Add nids from predecessor, which transitively already has nids from its predecessor...
             visitData.nidsReferencedAtVertexOrAboveIndexMap.getIfAbsentPut(predecessorIndex.getAsInt(),
-                    () -> IntSets.mutable.empty()).forEach(conceptNid -> nidsReferencedByThisVertexOrAbove.add(conceptNid));
+                    () -> LongSets.mutable.empty()).forEach(conceptNid -> nidsReferencedByThisVertexOrAbove.add(conceptNid));
         }
         int vertexNidHash = makeNidListHash(vertex.getMeaningNid(), nidsReferencedByThisVertexOrAbove.toSortedArray());
         visitData.vertexHashArray[vertex.vertexIndex()] = vertexNidHash;
@@ -503,7 +513,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                         addFragment(elementToAdd, this.comparisonTree, rootToAddParentIndexInMergedTree, treeBuilder);
                     } else {
                         // Decide where to put it.
-                        if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, TinkarTerm.NECESSARY_SET)) {
+                        if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelTerm.NECESSARY_SET)) {
                             // Easy case is if it is inside  the necessary set, since there is only one necessary set
                             BitSet necessarySetIndexes = this.referenceVisitData().necessarySetIndexes();
                             switch (necessarySetIndexes.cardinality()) {
@@ -517,12 +527,12 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                                 case 1 -> {
                                     // Find the AND under the necessary set...
                                     DiTreeEntity tree = treeBuilder.build();
-                                    EntityVertex necessarySet = tree.firstVertexWithMeaning(TinkarTerm.NECESSARY_SET).get();
+                                    EntityVertex necessarySet = tree.firstVertexWithMeaning(KernelTerm.NECESSARY_SET).get();
                                     ImmutableList<EntityVertex> necessarySetSuccessors = tree.successors(necessarySet);
 
                                     necessarySetSuccessors.getFirstOptional().ifPresent(andVertex -> {
-                                        if (andVertex.getMeaningNid() != TinkarTerm.AND.nid()) {
-                                            throw new IllegalStateException("Missing necessary set and: " + tree);
+                                        if (andVertex.getMeaningNid() != KernelTerm.AND.nid()) {
+                                            throw new IllegalStateException("Missing necessary set and:\n" + DiTreeText.diagnostic(tree));
                                         }
                                         addFragment(elementToAdd, this.comparisonTree, andVertex.vertexIndex(), treeBuilder);
                                     });
@@ -532,17 +542,17 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                                 default ->
                                         throw new IllegalStateException("More than one necessary set found: " + necessarySetIndexes);
                             }
-                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, TinkarTerm.SUFFICIENT_SET)) {
+                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelTerm.SUFFICIENT_SET)) {
                             //@TODO simple algorithm for now, just add all sufficient sets. In the future, do more complete comparison.
                             int andParentIndex =
                                     this.comparisonVisitData().predecessorIndex(elementToAdd.vertexIndex()).getAsInt();
-                            if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != TinkarTerm.AND.nid()) {
-                                throw new IllegalStateException("Element to add does not have AND for its parent: " + this.comparisonTree.vertex(andParentIndex));
+                            if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != KernelTerm.AND.nid()) {
+                                throw new IllegalStateException("Element to add does not have AND for its parent: " + DiTreeText.diagnostic(this.comparisonTree.vertex(andParentIndex)));
                             }
                             int sufficientSetIndexInComparison = this.comparisonVisitData().predecessorIndex(andParentIndex).getAsInt();
                             EntityVertex sufficientSetVertexInComparison = this.comparisonTree.vertex(sufficientSetIndexInComparison);
-                            if (sufficientSetVertexInComparison.getMeaningNid() != TinkarTerm.SUFFICIENT_SET.nid()) {
-                                throw new IllegalStateException("Element to add does not have SUFFICIENT_SET for its ancestor: " + sufficientSetVertexInComparison);
+                            if (sufficientSetVertexInComparison.getMeaningNid() != KernelTerm.SUFFICIENT_SET.nid()) {
+                                throw new IllegalStateException("Element to add does not have SUFFICIENT_SET for its ancestor: " + DiTreeText.diagnostic(sufficientSetVertexInComparison));
                             }
                             AtomicBoolean notAdded = new AtomicBoolean(true);
                             treeBuilder.vertexMap().forEach((Consumer<EntityVertex>) treeBuilderEntityVertex -> {
@@ -554,18 +564,18 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                             if (notAdded.get()) {
                                 addFragment(sufficientSetVertexInComparison, this.comparisonTree, treeBuilder.getRoot().vertexIndex(), treeBuilder);
                             }
-                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, TinkarTerm.INCLUSION_SET)) {
+                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelTerm.INCLUSION_SET)) {
                             // There can be multiple implication sets
                             //@TODO simple algorithm for now, just add all implication sets. In the future, do more complete comparison.
                             int andParentIndex =
                                     this.comparisonVisitData().predecessorIndex(elementToAdd.vertexIndex()).getAsInt();
-                            if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != TinkarTerm.AND.nid()) {
-                                throw new IllegalStateException("Element to add does not have AND for its parent: " + this.comparisonTree.vertex(andParentIndex));
+                            if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != KernelTerm.AND.nid()) {
+                                throw new IllegalStateException("Element to add does not have AND for its parent: " + DiTreeText.diagnostic(this.comparisonTree.vertex(andParentIndex)));
                             }
                             int implicationSetIndexInComparison = this.comparisonVisitData().predecessorIndex(andParentIndex).getAsInt();
                             EntityVertex implicationSetVertexInComparison = this.comparisonTree.vertex(implicationSetIndexInComparison);
-                            if (implicationSetVertexInComparison.getMeaningNid() != TinkarTerm.INCLUSION_SET.nid()) {
-                                throw new IllegalStateException("Element to add does not have IMPLICATION_SET for its ancestor: " + implicationSetVertexInComparison);
+                            if (implicationSetVertexInComparison.getMeaningNid() != KernelTerm.INCLUSION_SET.nid()) {
+                                throw new IllegalStateException("Element to add does not have IMPLICATION_SET for its ancestor: " + DiTreeText.diagnostic(implicationSetVertexInComparison));
                             }
                             AtomicBoolean notAdded = new AtomicBoolean(true);
                             treeBuilder.vertexMap().forEach((Consumer<EntityVertex>) treeBuilderEntityVertex -> {
@@ -577,7 +587,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                             if (notAdded.get()) {
                                 addFragment(implicationSetVertexInComparison, this.comparisonTree, treeBuilder.getRoot().vertexIndex(), treeBuilder);
                             }
-                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, TinkarTerm.PROPERTY_SET)) {
+                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelTerm.PROPERTY_SET)) {
                             // Easy case is if it is inside  the property set, since there is only one property set
                             BitSet propertySetIndexes = this.referenceVisitData().propertySetIndexes();
                             switch (propertySetIndexes.cardinality()) {
@@ -591,12 +601,12 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                                 case 1 -> {
                                     // Find the AND under the property set...
                                     DiTreeEntity tree = treeBuilder.build();
-                                    EntityVertex propertySet = tree.firstVertexWithMeaning(TinkarTerm.PROPERTY_SET).get();
+                                    EntityVertex propertySet = tree.firstVertexWithMeaning(KernelTerm.PROPERTY_SET).get();
                                     ImmutableList<EntityVertex> propertySetSuccessors = tree.successors(propertySet);
 
                                     propertySetSuccessors.getFirstOptional().ifPresent(andVertex -> {
-                                        if (andVertex.getMeaningNid() != TinkarTerm.AND.nid()) {
-                                            throw new IllegalStateException("Missing property set and: " + tree);
+                                        if (andVertex.getMeaningNid() != KernelTerm.AND.nid()) {
+                                            throw new IllegalStateException("Missing property set and:\n" + DiTreeText.diagnostic(tree));
                                         }
                                         addFragment(elementToAdd, this.comparisonTree, andVertex.vertexIndex(), treeBuilder);
                                     });
@@ -607,7 +617,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                         }
                     }
                 } else {
-                    throw new IllegalStateException("Element to add does not have a predecessor: " + elementToAdd);
+                    throw new IllegalStateException("Element to add does not have a predecessor: " + DiTreeText.diagnostic(elementToAdd));
                 }
                 this.mergedTree = treeBuilder.build();
                 if (stopwatch != null) {

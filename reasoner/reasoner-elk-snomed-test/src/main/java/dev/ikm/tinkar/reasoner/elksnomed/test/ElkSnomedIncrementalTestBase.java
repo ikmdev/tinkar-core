@@ -31,7 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import org.junit.jupiter.api.Tag;
 
+@Tag("snomed") // TestTags.SNOMED: needs SNOMED CT test data; run with -Psnomed
 public class ElkSnomedIncrementalTestBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedIncrementalTestBase.class);

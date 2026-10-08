@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
@@ -24,7 +25,6 @@ import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -75,7 +75,7 @@ class KonceptExtractorSectionsIT {
     void sectionsMatchTaxonomySectioner() {
         String yaml = KonceptExtractor.extractYaml();
 
-        Map<String, UUID> uuidByIdentifier = new HashMap<>();
+        Map<String, List<UUID>> uuidByIdentifier = new HashMap<>();
         Map<String, String> sectionByIdentifier = new HashMap<>();
         parseEntries(yaml, uuidByIdentifier, sectionByIdentifier);
         assertFalse(uuidByIdentifier.isEmpty(), "sanity: the real starter set extracts a non-empty koncept set");
@@ -91,11 +91,14 @@ class KonceptExtractorSectionsIT {
         // no stated-navigation cache at all. See KonceptExtractor's class javadoc.
         TaxonomySectioner sectioner = TaxonomySectioner.fromStatedAxioms(calculator);
         List<Section> sections = sectioner.sectionsCoveringFullStore(
-                TinkarTerm.ROOT_VERTEX.nid(), SPLIT_THRESHOLD, MAX_DEPTH, RESIDUAL_BATCH_SIZE);
+                KernelTerm.ROOT_VERTEX.nid(), SPLIT_THRESHOLD, MAX_DEPTH, RESIDUAL_BATCH_SIZE);
 
+        // Every UUID the extract lists for a koncept finds its section.
         Map<UUID, String> sectionByUuid = new HashMap<>();
         for (Map.Entry<String, String> e : sectionByIdentifier.entrySet()) {
-            sectionByUuid.put(uuidByIdentifier.get(e.getKey()), e.getValue());
+            for (UUID uuid : uuidByIdentifier.getOrDefault(e.getKey(), List.of())) {
+                sectionByUuid.put(uuid, e.getValue());
+            }
         }
 
         // A dual-parented node reached at different depths via different top-level
@@ -105,7 +108,7 @@ class KonceptExtractorSectionsIT {
         // anyway. What must never happen is two DIFFERENT root nids producing the same
         // section: value, so the check below groups by value and asserts one root each.
         Set<String> sectionValuesClaimedSoFar = new HashSet<>();
-        Map<String, Integer> rootNidByValue = new HashMap<>();
+        Map<String, Long> rootNidByValue = new HashMap<>();
         int nonEmptySectionCount = 0;
         for (Section section : sections) {
             if (section.members().isEmpty()) {
@@ -113,20 +116,28 @@ class KonceptExtractorSectionsIT {
             }
             nonEmptySectionCount++;
             Set<String> valuesInThisSection = new HashSet<>();
-            for (int memberNid : section.members()) {
-                UUID memberUuid = PrimitiveData.publicId(memberNid).asUuidArray()[0];
-                String extractedValue = sectionByUuid.get(memberUuid);
+            for (long memberNid : section.members()) {
+                String extractedValue = null;
+                for (UUID memberUuid : PrimitiveData.publicId(memberNid).asUuidArray()) {
+                    extractedValue = sectionByUuid.get(memberUuid);
+                    if (extractedValue != null) {
+                        break;
+                    }
+                }
                 if (extractedValue == null) {
                     continue; // member has no FQN in-store -- naturally excluded, as documented
                 }
                 valuesInThisSection.add(extractedValue);
+            }
+            if (valuesInThisSection.isEmpty()) {
+                continue; // no member has an FQN in-store -- the whole section is excluded
             }
             assertEquals(1, valuesInThisSection.size(),
                     "every member of one TaxonomySectioner Section must share one section: value, got "
                             + valuesInThisSection + " for root nid " + section.rootNid());
             String theValue = valuesInThisSection.iterator().next();
             sectionValuesClaimedSoFar.add(theValue);
-            Integer priorRootNid = rootNidByValue.putIfAbsent(theValue, section.rootNid());
+            Long priorRootNid = rootNidByValue.putIfAbsent(theValue, section.rootNid());
             if (priorRootNid != null) {
                 assertEquals(priorRootNid, section.rootNid(),
                         "section: value \"" + theValue + "\" was produced by two different root nids: "
@@ -151,7 +162,7 @@ class KonceptExtractorSectionsIT {
     private static final Pattern SECTION_LINE = Pattern.compile("^ {2}section: \"(.*)\"$");
 
     /** Parses the flat, hand-emitted YAML for just the fields this test needs. */
-    private static void parseEntries(String yaml, Map<String, UUID> uuidByIdentifier,
+    private static void parseEntries(String yaml, Map<String, List<UUID>> uuidByIdentifier,
                                       Map<String, String> sectionByIdentifier) {
         String currentIdentifier = null;
         boolean afterUuidsKey = false;
@@ -175,11 +186,14 @@ class KonceptExtractorSectionsIT {
                 continue;
             }
             if (afterUuidsKey) {
+                // The uuids: list names every UUID of the koncept, one per line.
                 Matcher uuidLine = UUID_LINE.matcher(line);
                 if (uuidLine.matches()) {
-                    uuidByIdentifier.putIfAbsent(currentIdentifier, UUID.fromString(uuidLine.group(1)));
+                    uuidByIdentifier.computeIfAbsent(currentIdentifier, _ -> new java.util.ArrayList<>())
+                            .add(UUID.fromString(uuidLine.group(1)));
+                } else {
+                    afterUuidsKey = false;
                 }
-                afterUuidsKey = false;
             }
         }
     }

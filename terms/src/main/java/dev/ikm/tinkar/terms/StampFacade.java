@@ -3,11 +3,11 @@ package dev.ikm.tinkar.terms;
 public interface StampFacade
         extends dev.ikm.tinkar.component.Stamp, EntityFacade {
 
-    static StampFacade make(int nid) {
+    static StampFacade make(long nid) {
         return EntityProxy.Stamp.make(nid);
     }
 
-    static int toNid(StampFacade facade) {
+    static long toNid(StampFacade facade) {
         return facade.nid();
     }
 

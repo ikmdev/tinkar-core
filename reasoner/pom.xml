@@ -10,7 +10,6 @@
 	<name>TINKAR Reasoner Service and Implementations</name>
 
 	<subprojects>
-		<subproject>reasoner-elk-owl</subproject>
 		<subproject>reasoner-elk-snomed</subproject>
 		<subproject>reasoner-elk-snomed-test</subproject>
 		<subproject>reasoner-hybrid</subproject>
@@ -20,6 +19,8 @@
 	<properties>
 		<maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
 		<reasoner-test-data.groupid>dev.ikm.reasoner-test-data</reasoner-test-data.groupid>
+		<!-- The integration tests here need SNOMED CT test data (tag "snomed"); they
+		     are left out unless the snomed profile is on. -->
 		<skipITs>true</skipITs>
 		<snomed-test-data.groupid>dev.ikm.snomed</snomed-test-data.groupid>
 		<snomed-test-data.version>0.1.0</snomed-test-data.version>
@@ -113,32 +114,13 @@
 						</goals>
 						<configuration>
 							<ignoreUnusedRuntime>true</ignoreUnusedRuntime>
-							<ignoredUnusedDeclaredDependencies>
-								<!-- Test infrastructure inherited from tinkar-core/ike-parent -->
-								<ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-slf4j2-impl</ignoredUnusedDeclaredDependency>
-								<ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter</ignoredUnusedDeclaredDependency>
+							<!-- The shared test-infrastructure entries come from the
+							     tinkar-core root; these are the reasoner modules' own. -->
+							<ignoredUnusedDeclaredDependencies combine.children="append">
 								<ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter-engine</ignoredUnusedDeclaredDependency>
-								<ignoredUnusedDeclaredDependency>org.junit.platform:junit-platform-console</ignoredUnusedDeclaredDependency>
-								<ignoredUnusedDeclaredDependency>org.apache.maven.surefire:common-java5</ignoredUnusedDeclaredDependency>
-								<!-- Build infrastructure from ike-parent -->
-								<ignoredUnusedDeclaredDependency>network.ike:ike-build-standards</ignoredUnusedDeclaredDependency>
-								<ignoredUnusedDeclaredDependency>network.ike:ike-build-tools</ignoredUnusedDeclaredDependency>
 								<!-- JPMS ServiceLoader providers (runtime, not compile-visible) -->
 								<ignoredUnusedDeclaredDependency>dev.ikm.tinkar:executor-provider</ignoredUnusedDeclaredDependency>
-								<!-- JPMS module-info requires at compile scope, only test bytecode refs -->
-								<ignoredUnusedDeclaredDependency>dev.ikm.elk:elk-snomed-owl-el</ignoredUnusedDeclaredDependency>
-								<ignoredUnusedDeclaredDependency>dev.ikm.elk:elk-snomed-test</ignoredUnusedDeclaredDependency>
-								<ignoredUnusedDeclaredDependency>dev.ikm.elk:elk-snomed-owl-el</ignoredUnusedDeclaredDependency>
 							</ignoredUnusedDeclaredDependencies>
-							<ignoredNonTestScopedDependencies>
-								<!-- JPMS module-info requires these at compile scope -->
-								<ignoredNonTestScopedDependency>dev.ikm.elk:elk-owlapi</ignoredNonTestScopedDependency>
-								<ignoredNonTestScopedDependency>dev.ikm.elk:elk-snomed</ignoredNonTestScopedDependency>
-								<ignoredNonTestScopedDependency>dev.ikm.elk:elk-snomed-test</ignoredNonTestScopedDependency>
-								<ignoredNonTestScopedDependency>dev.ikm.owlapi:owlapi-apibinding</ignoredNonTestScopedDependency>
-								<ignoredNonTestScopedDependency>dev.ikm.tinkar:component</ignoredNonTestScopedDependency>
-								<ignoredNonTestScopedDependency>dev.ikm.tinkar.ext.owl:owl-extension</ignoredNonTestScopedDependency>
-							</ignoredNonTestScopedDependencies>
 						</configuration>
 					</execution>
 				</executions>
@@ -168,4 +150,14 @@
 			</plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<!-- Runs the integration tests tagged "snomed": unpacks the SNOMED CT test data
+		     and lets failsafe run. The data is on a repository only some machines reach. -->
+		<profile>
+			<id>snomed</id>
+			<properties>
+				<skipITs>false</skipITs>
+			</properties>
+		</profile>
+	</profiles>
 </project>

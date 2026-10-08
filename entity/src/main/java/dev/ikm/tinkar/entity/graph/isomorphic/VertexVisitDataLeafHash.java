@@ -21,6 +21,7 @@ import dev.ikm.tinkar.entity.graph.VisitProcessor;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import java.util.BitSet;
@@ -39,7 +40,7 @@ public class VertexVisitDataLeafHash extends VertexVisitData {
 
     protected final MutableIntObjectMap<BitSet> vertexHashToVertexIndexMap;
 
-    protected final MutableIntObjectMap<MutableIntSet> nidsReferencedAtVertexOrAboveIndexMap;
+    protected final MutableIntObjectMap<MutableLongSet> nidsReferencedAtVertexOrAboveIndexMap;
 
     public VertexVisitDataLeafHash(int graphSize) {
         this(graphSize, null, null);

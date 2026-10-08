@@ -15,15 +15,25 @@
  */
 package dev.ikm.tinkar.provider.mvstore;
 
+import org.eclipse.collections.api.block.procedure.primitive.LongProcedure;
+import java.util.function.ObjLongConsumer;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.common.service.SequentialNids;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
 import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.common.service.SearchService;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
@@ -45,20 +55,18 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 /**
  * TODO: Maybe also consider making use of: https://blogs.oracle.com/javamagazine/creating-a-java-off-heap-in-memory-database?source=:em:nw:mt:::RC_WWMK200429P00043:NSL400123121
  */
-public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
+public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(MVStoreProvider.class);
     private static final File defaultDataDirectory = new File("target/mvstore/");
     private static final String databaseFileName = "mvstore.dat";
-    private static final UUID nextNidKey = new UUID(Long.MAX_VALUE, Long.MIN_VALUE);
     protected static MVStoreProvider singleton;
-    protected final AtomicInteger nextNid;
+    final NidAllocator nidAllocator;
     final OffHeapStore offHeap;
     final MVStore store;
     final MVMap<Integer, byte[]> nidToComponentMap;
@@ -80,6 +88,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     public MVStoreProvider() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening MVStoreProvider");
+        NidLayout.activate(NidLayout.SEQUENTIAL);
         this.offHeap = new OffHeapStore();
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
@@ -107,11 +116,9 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
             }
         }
 
-        if (this.uuidToNidMap.containsKey(nextNidKey)) {
-            this.nextNid = new AtomicInteger(this.uuidToNidMap.get(nextNidKey));
-        } else {
-            this.nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
-        }
+        this.nidAllocator = new NidAllocator(uuidToNidMap,
+                SequentialNids.FIRST_NID, NidAllocator.DEFAULT_BLOCK_SIZE,
+                List.of(nidToComponentMap, nidToPatternNidMap));
 
         MVStoreProvider.singleton = this;
         stopwatch.stop();
@@ -137,8 +144,8 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public int newNid() {
-        return nextNid.getAndIncrement();
+    public long newNid() {
+        return nidAllocator.newNid();
     }
 
     @Override
@@ -163,7 +170,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     public void save() {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Saving MVStoreProvider");
-        this.uuidToNidMap.put(nextNidKey, nextNid.get());
+        // The nid watermark is maintained by NidAllocator ahead of allocation; nothing to write here.
         for (Pair<Integer, ConcurrentHashMap<Integer, Integer>> keyValue : patternElementNidsMap.keyValuesView()) {
             patternToElementNidsMap.put(keyValue.getOne(), keyValue.getTwo().keySet()
                     .stream().mapToInt(value -> (int) value).toArray());
@@ -175,13 +182,13 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public int nidForUuids(UUID... uuids) {
-        return PrimitiveDataService.nidForUuids(uuidToNidMap, this, uuids);
+    public long nidForUuids(UUID... uuids) {
+        return SequentialNids.nidForUuids(uuidToNidMap, () -> Nid.narrowChecked(newNid()), uuids);
     }
 
     @Override
-    public int nidForUuids(ImmutableList<UUID> uuidList) {
-        return PrimitiveDataService.nidForUuids(uuidToNidMap, this, uuidList);
+    public long nidForUuids(ImmutableList<UUID> uuidList) {
+        return SequentialNids.nidForUuids(uuidToNidMap, () -> Nid.narrowChecked(newNid()), uuidList);
     }
 
     @Override
@@ -195,47 +202,66 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public void forEach(ObjIntConsumer<byte[]> action) {
+    public void forEach(ObjLongConsumer<byte[]> action) {
         nidToComponentMap.entrySet().forEach(entry -> action.accept(entry.getValue(), entry.getKey()));
     }
 
     @Override
-    public void forEachParallel(ObjIntConsumer<byte[]> action) {
+    public void forEachParallel(ObjLongConsumer<byte[]> action) {
         nidToComponentMap.entrySet().stream().parallel().forEach(entry -> action.accept(entry.getValue(), entry.getKey()));
     }
 
     @Override
-    public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public byte[] getBytes(int nid) {
-        return this.nidToComponentMap.get(nid);
-    }
-
-    @Override
-    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity dataActivity) {
-        if (!nidToPatternNidMap.containsKey(nid)) {
-            this.nidToPatternNidMap.put(nid, patternNid);
-            if (patternNid != Integer.MAX_VALUE) {
-
-                this.nidToPatternNidMap.put(nid, patternNid);
-                if (patternNid != Integer.MAX_VALUE) {
-                    long citationLong = IntsInLong.ints2Long(nid, patternNid);
-                    this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
-                            PrimitiveDataService::mergeCitations);
-                    // TODO this will be slow merge for large sets. Consider alternatives.
-                    this.addToElementSet(patternNid, nid);
-                }
+    public void forEachParallel(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
+        nids.primitiveParallelStream().forEach(nid -> {
+            byte[] bytes = nidToComponentMap.get(Nid.narrowChecked(nid));
+            if (bytes != null) {
+                action.accept(bytes, nid);
             }
+        });
+    }
+
+    @Override
+    public void forEach(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
+        nids.forEach(nid -> {
+            byte[] bytes = nidToComponentMap.get(Nid.narrowChecked(nid));
+            if (bytes != null) {
+                action.accept(bytes, nid);
+            }
+        });
+    }
+
+    @Override
+    public byte[] getBytes(long nid) {
+        return this.nidToComponentMap.get(Nid.narrowChecked(nid));
+    }
+
+    @Override
+    public byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject, DataActivity dataActivity) {
+        // putIfAbsent makes "first writer indexes" atomic; the former containsKey/put pair let
+        // concurrent first merges of the same nid race.
+        Integer priorPatternNid = this.nidToPatternNidMap.putIfAbsent(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
+        if (priorPatternNid == null) {
+            // A concept, pattern or stamp comes with the not-applicable sentinel,
+            // Integer.MAX_VALUE (Nid.NOT_APPLICABLE), as its pattern; only a semantic is indexed.
+            if (!Nid.isNotApplicable(patternNid)) {
+                long citationLong = IntsInLong.ints2Long(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
+                this.nidToCitingComponentsNidMap.merge(Nid.narrowChecked(referencedComponentNid), new long[]{citationLong},
+                        PrimitiveDataService::mergeCitations);
+                // TODO this will be slow merge for large sets. Consider alternatives.
+                this.addToElementSet(Nid.narrowChecked(patternNid), Nid.narrowChecked(nid));
+            }
+        } else if (priorPatternNid != patternNid) {
+            // A nid's pattern never changes. A mismatch means two different components were
+            // given the same nid, e.g. a concept (pattern not applicable, MAX_VALUE) reusing a semantic's nid.
+            // Only collisions involving a semantic are detectable here; concepts, patterns and
+            // stamps all pass the not-applicable sentinel, MAX_VALUE. Fail fast rather than merge unrelated bytes.
+            String message = "Nid collision: nid " + nid + " already bound to pattern " + priorPatternNid
+                    + " but merge supplied pattern " + patternNid + " for " + sourceObject;
+            LOG.error(message);
+            throw new IllegalStateException(message);
         }
-        byte[] mergedBytes = nidToComponentMap.merge(nid, value, PrimitiveDataService::merge);
+        byte[] mergedBytes = nidToComponentMap.merge(Nid.narrowChecked(nid), value, PrimitiveDataService::merge);
         writeSequence.increment();
 
         // Delegate indexing to SearchProvider.
@@ -287,16 +313,16 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
-        Set<Integer> elementNids = getElementNidsForPatternNid(patternNid);
+    public void forEachSemanticNidOfPattern(long patternNid, LongProcedure procedure) {
+        Set<Integer> elementNids = getElementNidsForPatternNid(Nid.narrowChecked(patternNid));
         if (elementNids != null && elementNids.size() > 0) {
             for (int elementNid : elementNids) {
                 procedure.accept(elementNid);
             }
         } else {
-            Entity entity = Entity.getFast(patternNid);
+            Entity entity = EntityHandle.get(patternNid).orNull();
             if (entity instanceof PatternEntity == false) {
-                throw new IllegalStateException("Trying to iterate elements for entity that is not a pattern: " + entity);
+                throw new IllegalStateException("Trying to iterate elements for entity that is not a pattern: " + EntityText.diagnostic(entity));
             }
 
         }
@@ -310,28 +336,46 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public void forEachPatternNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+    public void forEachPatternNid(LongProcedure procedure) {
+        forEachNidOfType(PATTERN_TOKEN, procedure);
     }
 
     @Override
-    public void forEachConceptNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+    public void forEachConceptNid(LongProcedure procedure) {
+        forEachNidOfType(CONCEPT_TOKEN, procedure);
     }
 
     @Override
-    public void forEachStampNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+    public void forEachStampNid(LongProcedure procedure) {
+        forEachNidOfType(STAMP_TOKEN, procedure);
     }
 
     @Override
-    public void forEachSemanticNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+    public void forEachSemanticNid(LongProcedure procedure) {
+        forEachNidOfType(SEMANTIC_TOKEN, procedure);
+    }
+
+    // The entity type token of an entity's bytes: the chronology's first byte, after the
+    // array count, the chronology's length, and the entity format (see PrimitiveDataService.merge).
+    private static final int TYPE_TOKEN_OFFSET = 9;
+    private static final byte CONCEPT_TOKEN = 1;
+    private static final byte PATTERN_TOKEN = 2;
+    private static final byte SEMANTIC_TOKEN = 3;
+    private static final byte STAMP_TOKEN = PrimitiveDataService.STAMP_DATA_TYPE;
+
+    /** Visits the nid of every entity of one type, by the type token its bytes begin with. */
+    private void forEachNidOfType(byte typeToken, LongProcedure procedure) {
+        nidToComponentMap.entrySet().forEach(entry -> {
+            byte[] bytes = entry.getValue();
+            if (bytes != null && bytes.length > TYPE_TOKEN_OFFSET && bytes[TYPE_TOKEN_OFFSET] == typeToken) {
+                procedure.accept(entry.getKey());
+            }
+        });
     }
 
     @Override
-    public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
-        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+    public void forEachSemanticNidForComponent(long componentNid, LongProcedure procedure) {
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(Nid.narrowChecked(componentNid));
         if (citationLongs != null) {
             for (long citationLong : citationLongs) {
                 int citingComponentNid = (int) (citationLong >> 32);
@@ -341,8 +385,8 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
-        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+    public void forEachSemanticNidForComponentOfPattern(long componentNid, long patternNid, LongProcedure procedure) {
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(Nid.narrowChecked(componentNid));
         if (citationLongs != null) {
             for (long citationLong : citationLongs) {
                 int citingComponentNid = (int) (citationLong >> 32);

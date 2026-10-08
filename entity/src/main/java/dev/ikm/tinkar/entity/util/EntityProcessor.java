@@ -21,7 +21,7 @@ import dev.ikm.tinkar.entity.*;
 
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
-import java.util.function.ObjIntConsumer;
+import java.util.function.ObjLongConsumer;
 
 /**
  * Generic entity processor supporting both byte-based and typed entity processing.
@@ -32,7 +32,7 @@ import java.util.function.ObjIntConsumer;
  * @param <V> The entity version type (must extend EntityVersion)
  */
 public abstract class EntityProcessor<E extends Entity<V>, V extends EntityVersion>
-        implements ObjIntConsumer<byte[]>, Consumer<E> {
+        implements ObjLongConsumer<byte[]>, Consumer<E> {
 
     LongAdder totalCount = new LongAdder();
     LongAdder conceptCount = new LongAdder();
@@ -43,11 +43,11 @@ public abstract class EntityProcessor<E extends Entity<V>, V extends EntityVersi
     Stopwatch stopwatch = new Stopwatch();
 
     /**
-     * Entry point from ObjIntConsumer for byte-based processing (legacy mode).
+     * Entry point from ObjLongConsumer for byte-based processing (legacy mode).
      * Converts bytes to entity and delegates to {@link #process(Entity)}.
      */
     @Override
-    public final void accept(byte[] bytes, int nid) {
+    public final void accept(byte[] bytes, long nid) {
         // Parse the entity type from bytes
         FieldDataType componentType = FieldDataType.fromToken(bytes[9]);
         totalCount.increment();

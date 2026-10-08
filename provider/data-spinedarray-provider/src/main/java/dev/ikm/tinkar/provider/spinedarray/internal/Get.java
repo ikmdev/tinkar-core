@@ -15,10 +15,11 @@
  */
 package dev.ikm.tinkar.provider.spinedarray.internal;
 
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
@@ -37,13 +38,13 @@ public class Get {
     }
 
     public static int nidForUuids(ImmutableList<UUID> uuidList) {
-        return SpinedArrayProvider.get().nidForUuids(uuidList);
+        return Nid.narrowChecked(SpinedArrayProvider.get().nidForUuids(uuidList));
     }
 
     public static int stampNid(Stamp stamp) {
         return switch (stamp) {
-            case StampEntity stampEntity -> stampEntity.nid();
-            case Stamp stampComponent -> Entity.getFast(PrimitiveData.nid(stampComponent.publicId())).nid();
+            case StampEntity stampEntity -> Nid.narrowChecked(stampEntity.nid());
+            case Stamp stampComponent -> Nid.narrowChecked(EntityHandle.get(PrimitiveData.nid(stampComponent.publicId())).expectStamp().nid());
             case null -> throw new IllegalArgumentException("Stamp cannot be null");
         };
     }

@@ -12,21 +12,25 @@ public interface EntityKey {
     int MAX_16BIT_UNSIGNED = (1 << 16) - 1;
 
     /**
-     * Combines the pattern sequence and element sequence into a single long key. Necessary
-     * until we get JEP 401: Value Classes, then we can make the entity key a value class.
-     * @return
+     * The RocksDB store key, as the active {@link NidLayout} composes it: in the legacy layouts
+     * {@code [patternSequence:16][elementSequence:48]}, which is not a nid (a typical one passes
+     * {@link Nid#isValid64(long)}, so one passed as a nid shows up only as a lookup that finds
+     * nothing; hence the name); in the 64-bit layout the nid itself. Used only by rocks-kb, to
+     * key its column families (design {@code design-2026-09-30-64-bit-nids}).
+     *
+     * @return the rocks key
      */
-    public long longKey();
+    long rocksKey();
 
     /**
-     * The pattern sequence. A 16-bit unsigned number.
-     * @return an int &gt; 0 and &lt; 2^16 (65,536)
+     * The pattern sequence: 16 bits in the legacy layouts, 31 in the 64-bit one.
+     * @return an int &gt; 0 and at most {@value Nid#MAX_SEQUENCE_64}
      */
     int patternSequence();
 
     /**
-     * The element sequence. A 48-bit unsigned number.
-     * @return an int &gt; 0 and &lt; 2^48 (281,474,976,710,656)
+     * The element sequence: 48 bits in the legacy layouts, 31 in the 64-bit one.
+     * @return a long &gt; 0 and &lt; 2^48 (281,474,976,710,656)
      */
     long elementSequence();
 
@@ -34,36 +38,37 @@ public interface EntityKey {
      * Returns the unique native identifier (NID) for this entity key.
      * The implementation of this method provides an integer ID representing
      * the entity in unique terms within its context. Native identifiers start at
-     * {@code dev.ikm.tinkar.common.service.PrimitiveDataService.FIRST_NID} and increment by 1 for each new entity.
+     * {@code dev.ikm.tinkar.common.service.SequentialNids.FIRST_NID} and increment by 1 for each new entity.
      *
-     * @return an integer representing the unique identifier (NID)
+     * @return the nid, widened from the {@code int} a 6-bit, 8-bit, or sequential store holds
      */
-    default int nid() {
+    default long nid() {
         return NidLayout.active().encode(patternSequence(), elementSequence());
     }
 
     default byte[] toBytes() {
-        return KeyUtil.entityKeyToBytes(longKey());
+        return KeyUtil.entityKeyToBytes(rocksKey());
     }
 
     default EntityKey fromBytes(byte[] bytes) {
-        return EntityKey.ofLongKey(KeyUtil.byteArrayToLong(bytes));
+        return EntityKey.ofRocksKey(KeyUtil.byteArrayToLong(bytes));
     }
 
+    /** The store key as eight big-endian bytes; the same bytes in every layout. */
     default byte[] key() {
-        return KeyUtil.patternSequenceElementSequenceToKey(patternSequence(), elementSequence());
+        return KeyUtil.longToByteArray(rocksKey());
     }
 
     static EntityKey of(int patternSequence, long elementSequence) {
         return new EntityKeyRecord(patternSequence, elementSequence);
     }
 
-    static EntityKey ofNid(int nid) {
+    static EntityKey ofNid(long nid) {
         return new EntityKeyRecord(NidLayout.active().decodePatternSequence(nid), NidLayout.active().decodeElementSequence(nid));
     }
 
-    static EntityKey ofLongKey(long longKey) {
-        return new EntityKeyRecord(longKey);
+    static EntityKey ofRocksKey(long rocksKey) {
+        return new EntityKeyRecord(rocksKey);
     }
 
     default byte[] patternSequenceAsByteArray() {
@@ -87,22 +92,22 @@ public interface EntityKey {
 
     record EntityKeyRecord(int patternSequence, long elementSequence) implements EntityKey {
         @Override
-        public long longKey() {
-            return KeyUtil.patternSequenceElementSequenceToLongKey(patternSequence(), elementSequence());
+        public long rocksKey() {
+            return NidLayout.active().rocksKey(patternSequence(), elementSequence());
         }
         public EntityKeyRecord {
             checkPatternSequence(patternSequence());
             checkElementSequence(elementSequence());
         }
-        public EntityKeyRecord(long longKey) {
-            this(KeyUtil.longKeyToPatternSequence(longKey), KeyUtil.longKeyToElementSequence(longKey));
+        public EntityKeyRecord(long rocksKey) {
+            this(NidLayout.active().patternSequenceOfRocksKey(rocksKey), NidLayout.active().elementSequenceOfRocksKey(rocksKey));
         }
     }
 
     record EntityVersionKeyRecord(int patternSequence, long elementSequence, int stampSequence) implements EntityVersionKey {
         @Override
-        public long longKey() {
-            return KeyUtil.patternSequenceElementSequenceToLongKey(patternSequence(), elementSequence());
+        public long rocksKey() {
+            return KeyUtil.patternSequenceElementSequenceToRocksKey(patternSequence(), elementSequence());
         }
     }
 
@@ -112,8 +117,9 @@ public interface EntityKey {
         }
     }
 
+    /** A pattern sequence is non-negative and at most {@value Nid#MAX_SEQUENCE_64}; each layout narrows the range further when it encodes. */
     static void checkPatternSequence(int patternSequence) {
-        if (patternSequence < 0 || patternSequence > MAX_16BIT_UNSIGNED) {
+        if (patternSequence < 0 || patternSequence > Nid.MAX_SEQUENCE_64) {
             throw new IllegalArgumentException("patternSequence is out of range: " + patternSequence);
         }
     }
@@ -124,9 +130,9 @@ public interface EntityKey {
         }
     }
 
-    static void checkLongKey(long longKey) {
-        checkElementSequence(KeyUtil.longKeyToElementSequence(longKey));
-        checkPatternSequence(KeyUtil.longKeyToPatternSequence(longKey));
+    static void checkRocksKey(long rocksKey) {
+        checkElementSequence(KeyUtil.rocksKeyToElementSequence(rocksKey));
+        checkPatternSequence(KeyUtil.rocksKeyToPatternSequence(rocksKey));
     }
 
     /**
@@ -159,7 +165,7 @@ public interface EntityKey {
         }
 
         @Override
-        public long longKey() {
+        public long rocksKey() {
             // Pack as [0:16][elementSequence:48] for consistency
             return elementSequence() & MAX_48BIT_UNSIGNED;
         }
@@ -168,7 +174,7 @@ public interface EntityKey {
          * Returns the original sequential NID directly, bypassing NidLayout.active().
          */
         @Override
-        public int nid() {
+        public long nid() {
             return sequentialNid;
         }
     }
@@ -180,8 +186,8 @@ public interface EntityKey {
      * @param nid the sequential NID from a non-pattern-encoded provider
      * @return an EntityKey that preserves the NID unchanged
      */
-    static EntityKey ofSequentialNid(int nid) {
-        return new SequentialNidEntityKey(nid);
+    static EntityKey ofSequentialNid(long nid) {
+        return new SequentialNidEntityKey(Nid.narrowChecked(nid));
     }
 
 }

@@ -20,7 +20,7 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.builder.generator.ComponentDecompiler;
 import dev.ikm.tinkar.entity.builder.generator.ComponentDecompiler.ComponentSource;
-import dev.ikm.tinkar.entity.builder.generator.TinkarTermReferenceResolver;
+import dev.ikm.tinkar.entity.builder.generator.BindingReferenceResolver;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
@@ -66,11 +66,11 @@ class ComponentDecompilerIT {
     @DisplayName("Every concept and pattern decompiles to well-formed verb lines, with zero manifest notes")
     void decompileEveryComponent() {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
-        TinkarTermReferenceResolver resolver = TinkarTermReferenceResolver.build();
+        BindingReferenceResolver resolver = BindingReferenceResolver.build();
 
-        List<Integer> conceptNids = new ArrayList<>();
+        List<Long> conceptNids = new ArrayList<>();
         EntityService.get().forEachConceptEntity(concept -> conceptNids.add(concept.nid()));
-        List<Integer> patternNids = new ArrayList<>();
+        List<Long> patternNids = new ArrayList<>();
         EntityService.get().forEachPatternEntity(pattern -> patternNids.add(pattern.nid()));
 
         int totalComponents = conceptNids.size() + patternNids.size();
@@ -79,9 +79,9 @@ class ComponentDecompilerIT {
         Map<String, Integer> verbKindCounts = new TreeMap<>();
         List<String> allNotes = new ArrayList<>();
 
-        List<Integer> allNids = new ArrayList<>(conceptNids);
+        List<Long> allNids = new ArrayList<>(conceptNids);
         allNids.addAll(patternNids);
-        for (Integer nid : allNids) {
+        for (Long nid : allNids) {
             EntityFacade component = EntityFacade.make(nid);
             ComponentSource source = ComponentDecompiler.decompile(component, calculator, resolver);
             totalVerbLines += source.verbLines().size();
@@ -106,12 +106,15 @@ class ComponentDecompilerIT {
         LOG.info("Verb kinds: {}", verbKindCounts);
         allNotes.forEach(note -> LOG.info("Manifest note: {}", note));
 
-        assertEquals(407, totalComponents, "379 concepts + 28 patterns");
+        assertEquals(1295 + 64, totalComponents, "1295 concepts + 64 patterns");
         assertTrue(totalVerbLines > 2000, "expected thousands of verb lines across the full set");
+        // Every stated definition — the 43 beyond the simple isA shape included — decompiles to a
+        // declared-identity statedAxioms call carrying its full builder expression.
         assertEquals(0, verbKindCounts.getOrDefault("TODO", 0),
-                "every axiom in this starter set decompiles to a declared-identity statedAxioms call"
-                        + " — no hand-authoring TODOs expected");
-        assertEquals(28, verbKindCounts.getOrDefault("patternDefinition", 0),
+                "every axiom decompiles to a declared-identity statedAxioms call — no hand-authoring TODOs");
+        assertEquals(1295, verbKindCounts.getOrDefault("statedAxioms", 0),
+                "every one of the set's 1295 stated definitions is one statedAxioms line");
+        assertEquals(64, verbKindCounts.getOrDefault("patternDefinition", 0),
                 "every pattern declares exactly one meaning/purpose/field definition line");
         assertTrue(allNotes.isEmpty(), "expected zero manifest notes for this starter set: " + allNotes);
     }

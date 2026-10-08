@@ -17,17 +17,17 @@ package dev.ikm.tinkar.terms;
 
 
 import dev.ikm.tinkar.common.id.PublicId;
-import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
+import org.eclipse.collections.api.map.primitive.ImmutableLongObjectMap;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
+import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
 
 public enum State implements dev.ikm.tinkar.component.Concept, ComponentWithNid {
-    ACTIVE(TinkarTerm.ACTIVE_STATE),
-    INACTIVE(TinkarTerm.INACTIVE_STATE),
-    WITHDRAWN(TinkarTerm.WITHDRAWN_STATE),
-    CANCELED(TinkarTerm.CANCELED_STATE),
+    ACTIVE(KernelTerm.ACTIVE_STATE),
+    INACTIVE(KernelTerm.INACTIVE_STATE),
+    WITHDRAWN(KernelTerm.WITHDRAWN_STATE),
+    CANCELED(KernelTerm.CANCELED_STATE),
     /* TODO Consider changing from PRIMORDIAL to Pre-inception (historically "premundane") */
-    PRIMORDIAL(TinkarTerm.PRIMORDIAL_STATE);
+    PRIMORDIAL(KernelTerm.PRIMORDIAL_STATE);
 
     final EntityProxy.Concept proxyForState;
 
@@ -41,15 +41,15 @@ public enum State implements dev.ikm.tinkar.component.Concept, ComponentWithNid 
     }
 
     @Override
-    public int nid() {
+    public long nid() {
         return proxyForState.nid();
     }
 
-    private static ImmutableIntObjectMap<State> nidStateMap;
+    private static ImmutableLongObjectMap<State> nidStateMap;
 
-    public static State fromConceptNid(int conceptNid) {
+    public static State fromConceptNid(long conceptNid) {
         if (nidStateMap == null) {
-            MutableIntObjectMap<State> mutableNidStateMap = IntObjectMaps.mutable.ofInitialCapacity(5);
+            MutableLongObjectMap<State> mutableNidStateMap = LongObjectMaps.mutable.ofInitialCapacity(5);
             for (State state : State.values()) {
                 mutableNidStateMap.put(state.nid(), state);
             }

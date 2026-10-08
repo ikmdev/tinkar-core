@@ -15,8 +15,10 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
+import java.util.function.LongConsumer;
+
 import dev.ikm.tinkar.common.service.EntityCountSummary;
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import org.slf4j.Logger;
@@ -26,7 +28,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.util.function.IntConsumer;
 
 public abstract class EntityAggregator {
     private static final Logger LOG = LoggerFactory.getLogger(EntityAggregator.class);
@@ -39,7 +40,7 @@ public abstract class EntityAggregator {
     /** Checked during a scan; once true, the scan skips what is left and the aggregation throws. */
     private volatile BooleanSupplier cancelled = () -> false;
 
-    public abstract EntityCountSummary aggregate(IntConsumer nidConsumer);
+    public abstract EntityCountSummary aggregate(LongConsumer nidConsumer);
 
     /**
      * Makes the aggregation stop early once {@code cancelled} returns true, throwing
@@ -79,19 +80,19 @@ public abstract class EntityAggregator {
      *
      * @return the entity, or null if the nid has no entity bytes
      */
-    protected static Entity<?> readUncached(int nid) {
-        byte[] bytes = PrimitiveData.get().getBytes(nid);
+    protected static Entity<?> readUncached(long nid) {
+        byte[] bytes = EntityStore.current().getBytes(nid);
         return bytes == null ? null : EntityRecordFactory.make(bytes);
     }
 
     /**
-     * Aggregates entities by resolving each nid produced by {@link #aggregate(IntConsumer)}
+     * Aggregates entities by resolving each nid produced by {@link #aggregate(LongConsumer)}
      * to its {@link Entity} and forwarding non-null results to {@code entityConsumer}.
      * Orphan nids — sequences allocated by the store but with no committed entity bytes
      * (typically a component that was canceled between sequence allocation and commit) —
      * are silently skipped and reported in aggregate at INFO level.
      *
-     * <p>The default implementation delegates to {@link #aggregate(IntConsumer)} and
+     * <p>The default implementation delegates to {@link #aggregate(LongConsumer)} and
      * therefore inherits whatever per-bucket counting that method performs. With the
      * {@link DefaultEntityAggregator} that means per-bucket counts will overstate by
      * the number of orphans, since they are incremented per nid visited rather than
@@ -104,7 +105,7 @@ public abstract class EntityAggregator {
      */
     public EntityCountSummary aggregateEntities(Consumer<Entity<?>> entityConsumer) {
         AtomicLong orphanCount = new AtomicLong();
-        EntityCountSummary summary = aggregate((int nid) -> {
+        EntityCountSummary summary = aggregate((long nid) -> {
             if (isCancelled()) {
                 return;
             }

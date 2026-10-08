@@ -16,15 +16,15 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +40,9 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
 
     private final PatternFacade rf2OwlPattern;
     private final PatternFacade logicalAxiomPattern;
-    private int authorNid = TinkarTerm.USER.nid();
-    private int moduleNid = Integer.MAX_VALUE;
-    private int pathNid = Integer.MAX_VALUE;
+    private long authorNid = KernelTerm.USER.nid();
+    private long moduleNid = Integer.MAX_VALUE;
+    private long pathNid = Integer.MAX_VALUE;
 
     public Rf2OwlToLogicAxiomTransformer(Transaction transaction,
                                          PatternFacade rf2OwlPattern,
@@ -57,7 +57,7 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
     public Rf2OwlToLogicAxiomTransformer(Transaction transaction,
                                          PatternFacade rf2OwlPattern,
                                          PatternFacade logicalAxiomPattern,
-                                         int authorNid, int moduleNid, int pathNid) {
+                                         long authorNid, long moduleNid, long pathNid) {
         this(transaction, rf2OwlPattern, logicalAxiomPattern);
         this.authorNid = authorNid;
         this.moduleNid = moduleNid;
@@ -74,14 +74,16 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
         updateMessage("Transforming stated OWL RF2 expressions...");
         List<TransformationGroup> statedTransformList = new ArrayList<>();
         AtomicInteger count = new AtomicInteger();
-        int rf2OwlPatternNid = rf2OwlPattern.nid();
+        long rf2OwlPatternNid = rf2OwlPattern.nid();
 
         EntityService.get().beginLoadPhase();
         try {
             List<Callable<Void>> tasks = new ArrayList<>();
 
-            PrimitiveData.get().forEachConceptNid(conceptNid -> {
-                int[] semanticNids = EntityService.get().semanticNidsForComponentOfPattern(conceptNid, rf2OwlPatternNid);
+            EntityService.get().forEachConceptEntity(concept -> {
+                long conceptNid = concept.nid();
+                long[] semanticNids = EntityService.get().semanticsForComponentOfPattern(conceptNid, rf2OwlPatternNid)
+                        .mapToLong(SemanticEntity::nid).toArray();
                 if (semanticNids != null) {
                     if (semanticNids.length > 0) {
                         TransformationGroup tg = new TransformationGroup(conceptNid, semanticNids, PremiseType.STATED);

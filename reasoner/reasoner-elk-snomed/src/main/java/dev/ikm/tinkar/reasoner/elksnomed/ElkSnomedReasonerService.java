@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import java.util.HashMap;
 import java.util.concurrent.CancellationException;
 import java.util.List;
@@ -23,12 +24,11 @@ import java.util.Set;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.eclipse.collections.api.factory.primitive.LongObjectMaps;
 import org.eclipse.collections.api.factory.primitive.LongSets;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,13 +40,11 @@ import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.ext.lang.owl.OwlElToLogicalExpression;
 import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
 import dev.ikm.tinkar.reasoner.service.UnsupportedReasonerProcessIncremental;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
@@ -190,11 +188,6 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public void processIncremental(SemanticEntityVersion update, TrackingCallable<?> progressUpdater) {
 		processIncremental(List.of(), List.of(update), new TrackingCallable<Object>() {
 			@Override
@@ -205,8 +198,8 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater) {
-		for (int delete : deletes) {
+	public void processIncremental(List<Long> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater) {
+		for (long delete : deletes) {
 			Concept concept = builder.processDelete(delete);
 			if (concept != null) {
 				reasoner.processDelete(concept);
@@ -236,17 +229,17 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		logMissingReasonerConcepts(superConcepts);
 		
 		nnfb = NecessaryNormalFormBuilder.create(ontology, superConcepts, superRoleTypes, 
-			TinkarTerm.ROOT_VERTEX.nid(), 
+			KernelTerm.ROOT_VERTEX.nid(), 
 			(int workDone, int max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
 	}
 
 	private void logMissingReasonerConcepts(MutableLongObjectMap<MutableLongSet> superConcepts) {
-		ImmutableIntList conceptSet = data.getReasonerConceptSet();
+		ImmutableLongList conceptSet = data.getReasonerConceptSet();
 		int missingCount = 0;
 		StringBuilder sample = new StringBuilder();
 		int sampleLimit = 10;
-		for (int nid : conceptSet.toArray()) {
+		for (long nid : conceptSet.toArray()) {
 			if (!superConcepts.containsKey((long) nid)) {
 				if (missingCount < sampleLimit) {
 					if (sample.length() > 0) {
@@ -281,40 +274,40 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public ImmutableIntList getReasonerConceptSet() {
+	public ImmutableLongList getReasonerConceptSet() {
 		return data.getReasonerConceptSet();
 	}
 
-	protected ImmutableIntSet toIntSet(MutableLongSet classes) {
+	/**
+	 * The reasoner's concept ids are nids, as longs; nothing narrows them (a 64-bit store's nids
+	 * do not fit an int, IKE-Network/ike-issues#1258).
+	 */
+	protected ImmutableLongSet toLongSet(MutableLongSet classes) {
 		if (classes == null)
 			return null;
-		MutableIntSet parentNids = IntSets.mutable.withInitialCapacity(classes.size());
-		for (long parent : classes.toArray()) {
-			parentNids.add((int) parent);
-		}
-		return parentNids.toImmutable();
+		return classes.toImmutable();
 	}
 
 	@Override
-	public ImmutableIntSet getEquivalent(int id) {
+	public ImmutableLongSet getEquivalent(long id) {
 		MutableLongSet eqs = reasoner.getEquivalentConcepts(id);
-		return toIntSet(eqs);
+		return toLongSet(eqs);
 	}
 
 	@Override
-	public ImmutableIntSet getParents(int id) {
+	public ImmutableLongSet getParents(long id) {
 		MutableLongSet supers = reasoner.getSuperConcepts(id);
-		return toIntSet(supers);
+		return toLongSet(supers);
 	}
 
 	@Override
-	public ImmutableIntSet getChildren(int id) {
+	public ImmutableLongSet getChildren(long id) {
 		MutableLongSet subs = reasoner.getSubConcepts(id);
-		return toIntSet(subs);
+		return toLongSet(subs);
 	}
 
 	@Override
-	public LogicalExpression getNecessaryNormalForm(int id) {
+	public LogicalExpression getNecessaryNormalForm(long id) {
 		Definition def = nnfb.getNecessaryNormalForm(id);
 		if (def == null)
 			return null;

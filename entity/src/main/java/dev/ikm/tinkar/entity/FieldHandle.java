@@ -1,6 +1,8 @@
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.component.graph.DiGraph;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.Vertex;
@@ -75,17 +77,17 @@ import java.util.function.Supplier;
  * ConceptFacade concept = FieldHandle.of(version, 0).expectConcept();
  *
  * // By meaning (when you know the semantic meaning):
- * ConceptFacade caseSig = FieldHandle.of(version, TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE, stampCalculator)
+ * ConceptFacade caseSig = FieldHandle.of(version, KernelTerm.DESCRIPTION_CASE_SIGNIFICANCE, stampCalculator)
  *     .expectConcept();
  *
  * // By purpose (when you want to find by purpose):
- * String text = FieldHandle.ofPurpose(version, TinkarTerm.TEXT_FOR_DESCRIPTION, stampCalculator)
+ * String text = FieldHandle.ofPurpose(version, KernelTerm.TEXT_FOR_DESCRIPTION, stampCalculator)
  *     .expectString();
  *
  * // Compared to the verbose alternative:
  * PatternEntityVersion pattern = stampCalculator.latestPatternEntityVersion(version.pattern())
  *     .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
- * int index = pattern.indexForMeaning(TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE);
+ * int index = pattern.indexForMeaning(KernelTerm.DESCRIPTION_CASE_SIGNIFICANCE);
  * ConceptFacade caseSig2 = FieldHandle.of(version.fieldValues().get(index)).expectConcept();
  * }</pre>
  *
@@ -156,11 +158,11 @@ public interface FieldHandle {
      * field but not its position:
      * <pre>{@code
      * // Instead of:
-     * int index = patternVersion.indexForMeaning(TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE);
+     * int index = patternVersion.indexForMeaning(KernelTerm.DESCRIPTION_CASE_SIGNIFICANCE);
      * FieldHandle.of(version.fieldValues().get(index))
      *
      * // You can write:
-     * FieldHandle.of(version, TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE, stampCalculator)
+     * FieldHandle.of(version, KernelTerm.DESCRIPTION_CASE_SIGNIFICANCE, stampCalculator)
      * }</pre>
      *
      * @param version the semantic version containing the field
@@ -172,11 +174,13 @@ public interface FieldHandle {
      */
     static FieldHandle of(SemanticEntityVersion version, ConceptFacade meaning, StampCalculator stampCalculator) {
         PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
-                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
+                .orElseThrow(() -> new IllegalStateException(
+                        "No latest pattern version for: " + DiagnosticText.component(version.patternNid())));
         int index = patternVersion.indexForMeaning(meaning);
         if (index < 0) {
             throw new IllegalArgumentException(
-                    "No field with meaning '" + meaning.toXmlFragment() + "' found in pattern");
+                    "No field with meaning " + DiagnosticText.component(meaning.nid()) + " found in pattern "
+                            + DiagnosticText.component(patternVersion.nid()));
         }
         return of(version.fieldValues().get(index));
     }
@@ -201,13 +205,15 @@ public interface FieldHandle {
      * @throws IllegalArgumentException if no field with the specified meaning NID exists
      * @throws IllegalStateException if no latest pattern version can be determined
      */
-    static FieldHandle ofMeaning(SemanticEntityVersion version, int meaningNid, StampCalculator stampCalculator) {
+    static FieldHandle ofMeaning(SemanticEntityVersion version, long meaningNid, StampCalculator stampCalculator) {
         PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
-                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
+                .orElseThrow(() -> new IllegalStateException(
+                        "No latest pattern version for: " + DiagnosticText.component(version.patternNid())));
         int index = patternVersion.indexForMeaning(meaningNid);
         if (index < 0) {
             throw new IllegalArgumentException(
-                    "No field with meaning NID '" + meaningNid + "' found in pattern");
+                    "No field with meaning " + DiagnosticText.component(meaningNid) + " found in pattern "
+                            + DiagnosticText.component(patternVersion.nid()));
         }
         return of(version.fieldValues().get(index));
     }
@@ -218,7 +224,7 @@ public interface FieldHandle {
      * then retrieves the field value. This is useful when you want to find a field by its purpose
      * rather than its semantic meaning:
      * <pre>{@code
-     * FieldHandle.ofPurpose(version, TinkarTerm.REFERENCED_COMPONENT_PURPOSE, stampCalculator)
+     * FieldHandle.ofPurpose(version, MyTerms.REFERENCED_COMPONENT_PURPOSE, stampCalculator)
      * }</pre>
      *
      * @param version the semantic version containing the field
@@ -230,11 +236,13 @@ public interface FieldHandle {
      */
     static FieldHandle ofPurpose(SemanticEntityVersion version, ConceptFacade purpose, StampCalculator stampCalculator) {
         PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
-                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
+                .orElseThrow(() -> new IllegalStateException(
+                        "No latest pattern version for: " + DiagnosticText.component(version.patternNid())));
         int index = patternVersion.indexForPurpose(purpose);
         if (index < 0) {
             throw new IllegalArgumentException(
-                    "No field with purpose '" + purpose.toXmlFragment() + "' found in pattern");
+                    "No field with purpose " + DiagnosticText.component(purpose.nid()) + " found in pattern "
+                            + DiagnosticText.component(patternVersion.nid()));
         }
         return of(version.fieldValues().get(index));
     }
@@ -254,13 +262,15 @@ public interface FieldHandle {
      * @throws IllegalArgumentException if no field with the specified purpose NID exists
      * @throws IllegalStateException if no latest pattern version can be determined
      */
-    static FieldHandle ofPurpose(SemanticEntityVersion version, int purposeNid, StampCalculator stampCalculator) {
+    static FieldHandle ofPurpose(SemanticEntityVersion version, long purposeNid, StampCalculator stampCalculator) {
         PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
-                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
+                .orElseThrow(() -> new IllegalStateException(
+                        "No latest pattern version for: " + DiagnosticText.component(version.patternNid())));
         int index = patternVersion.indexForPurpose(purposeNid);
         if (index < 0) {
             throw new IllegalArgumentException(
-                    "No field with purpose NID '" + purposeNid + "' found in pattern");
+                    "No field with purpose " + DiagnosticText.component(purposeNid) + " found in pattern "
+                            + DiagnosticText.component(patternVersion.nid()));
         }
         return of(version.fieldValues().get(index));
     }
@@ -337,9 +347,9 @@ public interface FieldHandle {
         return this;
     }
 
-    default FieldHandle ifPublicIdSet(Consumer<ImmutableSet<PublicId>> consumer) {
+    default FieldHandle ifPublicIdSet(Consumer<ImmutableSet<PublicId>> consumer) { // public-id-hash-key: accessor for a field value's own type, built nowhere in main code
         if (value() instanceof ImmutableSet<?> set && (set.isEmpty() || set.iterator().next() instanceof PublicId)) {
-            consumer.accept((ImmutableSet<PublicId>) set);
+            consumer.accept((ImmutableSet<PublicId>) set); // public-id-hash-key: as above
         }
         return this;
     }
@@ -480,9 +490,9 @@ public interface FieldHandle {
         return Optional.empty();
     }
 
-    default Optional<ImmutableSet<PublicId>> asPublicIdSet() {
+    default Optional<ImmutableSet<PublicId>> asPublicIdSet() { // public-id-hash-key: as above
         if (value() instanceof ImmutableSet<?> set && (set.isEmpty() || set.iterator().next() instanceof PublicId)) {
-            return Optional.of((ImmutableSet<PublicId>) set);
+            return Optional.of((ImmutableSet<PublicId>) set); // public-id-hash-key: as above
         }
         return Optional.empty();
     }

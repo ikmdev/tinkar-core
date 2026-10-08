@@ -41,16 +41,16 @@ public interface SemanticEntity<T extends SemanticEntityVersion> extends Entity<
         return EntityHandle.getEntityOrThrow(referencedComponentNid());
     }
 
-    int referencedComponentNid();
+    long referencedComponentNid();
 
     @Override
     default PatternEntity pattern() {
         return EntityHandle.getPatternOrThrow(patternNid());
     }
 
-    int patternNid();
+    long patternNid();
 
-    default int topEnclosingComponentNid() {
+    default long topEnclosingComponentNid() {
         return topEnclosingComponent().nid();
     }
 

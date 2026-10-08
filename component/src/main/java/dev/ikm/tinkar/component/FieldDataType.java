@@ -69,7 +69,7 @@ public enum FieldDataType {
     SPATIAL_POINT((byte) 24, SpatialPoint.class),
     STAMP_VERSION((byte) 25, Stamp.class),
 
-	FIELD_DEFINITION((byte) 26, FieldDefinition.class),
+	FIELD_DEFINITION((byte) 26, FeatureDefinition.class),
 	LONG((byte) 27, Long.class),
 	DECIMAL((byte) 28, BigDecimal.class),
 

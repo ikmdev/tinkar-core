@@ -15,13 +15,14 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * (IKE-Network/ike-issues#937): {@code KnowledgeSet.write()} sweeps every reference the
  * written store carries and reports each one that does not resolve to a present entity.
  * The ledger below is deliberately <em>open</em> — in this bare ephemeral store, every
- * {@code TinkarTerm} it cites is a forward-minted nid with no entity — and it is shaped
+ * {@code KernelTerm} it cites is a forward-minted nid with no entity — and it is shaped
  * to exercise each swept surface: stamp dimensions (status, author, module, path),
  * component-id list field members, logical-expression vertices (meaning, property key,
  * component-valued property), description field values, and the semantic's pattern.
@@ -75,13 +76,13 @@ class TestReferentialClosure {
         // Stamp dimensions dangle: USER / DEVELOPMENT_MODULE / DEVELOPMENT_PATH and the
         // Active status concept have no entities in a bare store.
         ActiveStamp birth = Stamp.active("2026-08-11T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // The roster pattern is declared, so the pattern itself is present — only its
-        // meaning/purpose/field-definition references (TinkarTerm) dangle.
+        // meaning/purpose/field-definition references (KernelTerm) dangle.
         OPEN_SET.pattern("Roster pattern (ClosureTest)").at(birth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
-                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.COMPONENT_ID_LIST_FIELD)
+                .meaning(IkeTerms.MODEL_CONCEPT).purpose(KernelTerm.USER)
+                .field(IkeTerms.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.COMPONENT_ID_LIST_FIELD)
                 .synonym("Roster pattern");
 
         // The concept's stated axiom cites MODEL_CONCEPT — a graph vertex property value
@@ -90,7 +91,7 @@ class TestReferentialClosure {
         // roster semantic carries the one component-id list member that must dangle.
         OPEN_SET.concept("Rooted kind (ClosureTest)").at(birth)
                 .synonym("Rooted kind")
-                .isA(TinkarTerm.MODEL_CONCEPT)
+                .isA(IkeTerms.MODEL_CONCEPT)
                 .semantic(OPEN_SET.patternRef("Roster pattern (ClosureTest)"),
                         PublicIds.of(OPEN_SET.uuidFor("Roster (ClosureTest)")),
                         PublicIds.list.of(PublicIds.of(ABSENT_MEMBER)));
@@ -129,8 +130,9 @@ class TestReferentialClosure {
             assertTrue(message.contains("graph vertex meaning"), message);
             assertTrue(message.contains("graph vertex property key"), message);
             assertTrue(message.contains("graph vertex property value"), message);
-            assertTrue(message.contains(TinkarTerm.MODEL_CONCEPT.publicId().asUuidArray()[0].toString()),
-                    message);
+            for (java.util.UUID uuid : IkeTerms.MODEL_CONCEPT.publicId().asUuidArray()) {
+                assertTrue(message.contains(uuid.toString()), message);
+            }
 
             // The original surfaces still report: description fields and their pattern.
             assertTrue(message.contains("field value"), message);

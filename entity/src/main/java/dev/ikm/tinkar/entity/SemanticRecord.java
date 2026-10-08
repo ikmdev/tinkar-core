@@ -33,7 +33,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
 @RecordBuilder
 public record SemanticRecord(
         long mostSignificantBits, long leastSignificantBits,
-        ImmutableLongList additionalUuidLongs, int nid, int patternNid, int referencedComponentNid,
+        ImmutableLongList additionalUuidLongs, long nid, long patternNid, long referencedComponentNid,
         ImmutableList<SemanticVersionRecord> versions)
         implements SemanticEntity<SemanticVersionRecord>, ImmutableEntity<SemanticVersionRecord>, SemanticRecordBuilder.With {
 
@@ -46,16 +46,16 @@ public record SemanticRecord(
             Objects.requireNonNull(versions);
         }
 
-    public static SemanticRecord makeNew(PublicId publicId, PatternFacade patternFacade, int referencedComponentNid,
+    public static SemanticRecord makeNew(PublicId publicId, PatternFacade patternFacade, long referencedComponentNid,
                                          RecordListBuilder versionListBuilder) {
         return makeNew(publicId, patternFacade.nid(), referencedComponentNid, versionListBuilder);
     }
 
-    public static SemanticRecord makeNew(PublicId publicId, int patternNid, int referencedComponentNid,
+    public static SemanticRecord makeNew(PublicId publicId, long patternNid, long referencedComponentNid,
                                          RecordListBuilder versionListBuilder) {
         PublicIdentifierRecord publicIdRecord = PublicIdentifierRecord.make(publicId);
 
-        int nid = ScopedValue
+        long nid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, PrimitiveData.publicId(patternNid))
                 .call(() -> PrimitiveData.nid(publicId));
 
@@ -65,13 +65,13 @@ public record SemanticRecord(
     }
 
     public static SemanticRecord build(UUID semanticUuid,
-                                       int patternNid,
-                                       int referencedComponentNid,
+                                       long patternNid,
+                                       long referencedComponentNid,
                                        StampEntityVersion stampVersion,
                                        ImmutableList<Object> fields) {
         RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
-        int semanticNid = ScopedValue
-                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, Entity.getFast(patternNid))
+        long semanticNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityHandle.get(patternNid).expectPattern().publicId())
                 .call(() -> PrimitiveData.nid(semanticUuid));
 
         SemanticRecord semanticRecord = SemanticRecordBuilder.builder()

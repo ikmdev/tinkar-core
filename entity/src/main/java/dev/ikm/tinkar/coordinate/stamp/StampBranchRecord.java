@@ -29,7 +29,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 @RecordBuilder
-public record StampBranchRecord(int branchConceptNid, long branchOriginTime)
+public record StampBranchRecord(long branchConceptNid, long branchOriginTime)
         implements StampBranch, ImmutableCoordinate, StampBranchRecordBuilder.With {
 
     @Decoder
@@ -40,11 +40,11 @@ public record StampBranchRecord(int branchConceptNid, long branchOriginTime)
         }
     }
 
-    public static StampBranchRecord make(int pathConceptNid, long branchOriginTime) {
+    public static StampBranchRecord make(long pathConceptNid, long branchOriginTime) {
         return new StampBranchRecord(pathConceptNid, branchOriginTime);
     }
 
-    public static StampBranchRecord make(int pathConceptNid, Instant branchOriginInstant) {
+    public static StampBranchRecord make(long pathConceptNid, Instant branchOriginInstant) {
         return new StampBranchRecord(pathConceptNid, DateTimeUtil.instantToEpochMs(branchOriginInstant));
     }
 
@@ -68,7 +68,7 @@ public record StampBranchRecord(int branchConceptNid, long branchOriginTime)
         return branchOriginTime;
     }
 
-    public int getPathOfBranchNid() {
+    public long getPathOfBranchNid() {
         return this.branchConceptNid;
     }
 

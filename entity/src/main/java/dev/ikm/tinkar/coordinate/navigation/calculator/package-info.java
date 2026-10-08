@@ -70,8 +70,8 @@
  *     NavigationCalculatorWithCache.getCalculator(stampCoord, navCoord);
  *
  * // Traverse the graph (results cached)
- * IntIdSet parents = calculator.parentsOf(conceptNid);
- * IntIdSet children = calculator.childrenOf(conceptNid);
+ * LongIdSet parents = calculator.parentsOf(conceptNid);
+ * LongIdSet children = calculator.childrenOf(conceptNid);
  * }</pre>
  *
  * <p><b>NavigationCalculatorDelegate</b></p>
@@ -107,13 +107,13 @@
  * NavigationCalculator calc = NavigationCalculatorWithCache.getCalculator(stamp, nav);
  *
  * // Get immediate parents
- * IntIdSet parents = calc.parentsOf(conceptNid);
+ * LongIdSet parents = calc.parentsOf(conceptNid);
  * parents.forEach(parentNid -> {
  *     // Process each parent
  * });
  *
  * // Get immediate children (sorted if coordinate specifies)
- * IntIdSet children = calc.childrenOf(conceptNid);
+ * LongIdSet children = calc.childrenOf(conceptNid);
  * children.forEach(childNid -> {
  *     // Process each child
  * });
@@ -125,10 +125,10 @@
  * <p><b>Transitive Relationships</b></p>
  * <pre>{@code
  * // Get all ancestors (parents, grandparents, etc.)
- * IntIdSet ancestors = calc.ancestorsOf(conceptNid);
+ * LongIdSet ancestors = calc.ancestorsOf(conceptNid);
  *
  * // Get all descendants (children, grandchildren, etc.)
- * IntIdSet descendants = calc.descendantsOf(conceptNid);
+ * LongIdSet descendants = calc.descendantsOf(conceptNid);
  *
  * // Test transitive relationship (subsumption)
  * boolean isDescendant = calc.isDescendentOf(descendantNid, ancestorNid);
@@ -140,13 +140,13 @@
  * <p><b>Special Nodes</b></p>
  * <pre>{@code
  * // Get root concepts (no parents)
- * IntIdSet roots = calc.roots();
+ * LongIdSet roots = calc.roots();
  *
  * // Get leaf concepts (no children)
- * IntIdSet leaves = calc.leaves();
+ * LongIdSet leaves = calc.leaves();
  *
  * // Get all concepts in the navigation graph
- * IntIdSet allConcepts = calc.allReachableConcepts();
+ * LongIdSet allConcepts = calc.allReachableConcepts();
  * }</pre>
  *
  * <p><b>Graph Construction Process</b></p>
@@ -156,7 +156,7 @@
  * <ol>
  * <li><strong>Pattern Collection</strong>
  * <pre>{@code
- * for (int patternNid : navCoord.navigationPatternNids().toArray()) {
+ * for (long patternNid : navCoord.navigationPatternNids().toArray()) {
  *     // Load navigation semantic for this pattern
  * }
  * }</pre>
@@ -206,12 +206,12 @@
  *
  * <pre>{@code
  * NavigationCoordinateRecord multiPattern = NavigationCoordinateRecord.make(
- *     IntIds.set.of(
- *         TinkarTerm.INFERRED_NAVIGATION.nid(),
- *         TinkarTerm.PART_OF_NAVIGATION.nid()
+ *     LongIds.set.of(
+ *         KernelTerm.INFERRED_NAVIGATION.nid(),
+ *         MyTerms.PART_OF_NAVIGATION.nid()
  *     ),
  *     StateSet.ACTIVE,
- *     IntIds.list.empty(),
+ *     LongIds.list.empty(),
  *     true
  * );
  *
@@ -219,7 +219,7 @@
  *     NavigationCalculatorWithCache.getCalculator(stamp, multiPattern);
  *
  * // Parents includes both is-a parents and part-of parents
- * IntIdSet parents = calc.parentsOf(conceptNid);
+ * LongIdSet parents = calc.parentsOf(conceptNid);
  * }</pre>
  *
  * <p><b>Sorting Implementation</b></p>
@@ -230,7 +230,7 @@
  * List<Integer> sortedChildren = new ArrayList<>(children);
  *
  * // Stage 1: Apply custom sort patterns in priority order
- * for (int sortPatternNid : navCoord.verticesSortPatternNidList().toArray()) {
+ * for (long sortPatternNid : navCoord.verticesSortPatternNidList().toArray()) {
  *     sortedChildren = applySortPattern(sortedChildren, sortPatternNid);
  * }
  *
@@ -247,23 +247,23 @@
  * <p><b>Building Hierarchy Trees</b></p>
  * <pre>{@code
  * // Recursively build tree from root
- * void buildTree(int conceptNid, NavigationCalculator calc, int depth) {
+ * void buildTree(long conceptNid, NavigationCalculator calc, int depth) {
  *     String indent = "  ".repeat(depth);
  *     String name = langCalc.getDescriptionText(conceptNid);
  *     System.out.println(indent + name);
  *
- *     IntIdSet children = calc.childrenOf(conceptNid);
+ *     LongIdSet children = calc.childrenOf(conceptNid);
  *     children.forEach(childNid -> buildTree(childNid, calc, depth + 1));
  * }
  * }</pre>
  *
  * <p><b>Finding Common Ancestors</b></p>
  * <pre>{@code
- * IntIdSet ancestors1 = calc.ancestorsOf(concept1Nid);
- * IntIdSet ancestors2 = calc.ancestorsOf(concept2Nid);
+ * LongIdSet ancestors1 = calc.ancestorsOf(concept1Nid);
+ * LongIdSet ancestors2 = calc.ancestorsOf(concept2Nid);
  *
  * // Intersection = common ancestors
- * IntIdSet commonAncestors = ancestors1.intersect(ancestors2);
+ * LongIdSet commonAncestors = ancestors1.intersect(ancestors2);
  * }</pre>
  *
  * <p><b>Subsumption Testing</b></p>
@@ -314,7 +314,7 @@
  * ViewCalculator viewCalc = ViewCalculatorWithCache.getCalculator(viewCoord);
  *
  * // ViewCalculator delegates to NavigationCalculator
- * IntIdSet parents = viewCalc.parentsOf(conceptNid);
+ * LongIdSet parents = viewCalc.parentsOf(conceptNid);
  * boolean isDescendant = viewCalc.isDescendentOf(childNid, parentNid);
  * }</pre>
  *

@@ -160,7 +160,7 @@
  *
  * // Unified operations combining multiple coordinate types
  * String description = calculator.getDescriptionText(conceptNid);  // Language + STAMP
- * IntIdSet parents = calculator.parentsOf(conceptNid);             // Navigation + STAMP
+ * LongIdSet parents = calculator.parentsOf(conceptNid);             // Navigation + STAMP
  * Latest<DiTreeEntity> axioms = calculator.getStatedAxiomTree(conceptNid);  // Logic + STAMP
  * boolean isDefined = calculator.isDefined(conceptNid);            // Logic + STAMP
  * }</pre>
@@ -287,13 +287,13 @@
  * <p>View coordinates are commonly passed as context to service methods:</p>
  * <pre>{@code
  * public class ConceptService {
- *     public ConceptDTO getConcept(int conceptNid, ViewCoordinate view) {
+ *     public ConceptDTO getConcept(long conceptNid, ViewCoordinate view) {
  *         ViewCalculator calc = ViewCalculatorWithCache.getCalculator(
  *             view.toViewCoordinateRecord()
  *         );
  *
  *         String name = calc.getDescriptionText(conceptNid);
- *         IntIdSet parents = calc.parentsOf(conceptNid);
+ *         LongIdSet parents = calc.parentsOf(conceptNid);
  *
  *         return new ConceptDTO(conceptNid, name, parents);
  *     }

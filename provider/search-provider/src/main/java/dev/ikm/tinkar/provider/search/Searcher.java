@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.provider.search;
 
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
@@ -35,9 +36,9 @@ import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
@@ -55,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -233,15 +235,15 @@ public class Searcher {
             // is indexed-only in v3, so the override pulls source text from the
             // entity binary store per hit. Uppercase <B>/</B> tags match what
             // HighlightedSegments parses on the UI side.
-            UnifiedHighlighter highlighter = new EntityStoreBackedHighlighter(indexSearcher, Indexer.analyzer());
-            highlighter.setFormatter(new DefaultPassageFormatter("<B>", "</B>", "", false));
+            UnifiedHighlighter highlighter = new EntityStoreBackedHighlighter(indexSearcher, Indexer.analyzer(),
+                    new DefaultPassageFormatter("<B>", "</B>", "", false));
             String[] snippets = highlighter.highlight(IndexerSchema.TEXT.name(), query.get(), topDocs);
 
             PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];
             for (int i = 0; i < hits.length; i++) {
                 int docId = hits[i].doc;
                 Document hitDoc = indexSearcher.storedFields().document(docId, IndexerSchema.FIELDS_TO_LOAD);
-                int nid = IndexerSchema.NID.read(hitDoc);
+                long nid = IndexerSchema.readNid(hitDoc);
                 int fieldOrdinal = IndexerSchema.INDEXED_FIELD_ORDINAL.read(hitDoc);
                 results[i] = new PrimitiveDataSearchResult(nid, fieldOrdinal, hits[i].score, snippets[i]);
             }
@@ -309,8 +311,8 @@ public class Searcher {
      */
     public static List<PublicId> childrenOf(NavigationCalculator navCalc, PublicId parentConceptId) {
         List<PublicId> childIds = new ArrayList<>();
-        int[] childNidList = navCalc.childrenOf(EntityService.get().nidForPublicId(parentConceptId)).toArray();
-        for (int childNid : childNidList) {
+        long[] childNidList = navCalc.childrenOf(EntityService.get().nidForPublicId(parentConceptId)).toArray();
+        for (long childNid : childNidList) {
             EntityHandle.get(childNid).ifPresent((entity) -> childIds.add(entity.publicId()));
         }
         return childIds;
@@ -339,8 +341,8 @@ public class Searcher {
      */
     public static List<PublicId> descendantsOf(NavigationCalculator navCalc, PublicId ancestorConceptId) {
         List<PublicId> descendantIds = new ArrayList<>();
-        int[] descendantNidList = navCalc.descendentsOf(EntityService.get().nidForPublicId(ancestorConceptId)).toArray();
-        for (int descendantNid : descendantNidList) {
+        long[] descendantNidList = navCalc.descendentsOf(EntityService.get().nidForPublicId(ancestorConceptId)).toArray();
+        for (long descendantNid : descendantNidList) {
             EntityHandle.get(descendantNid).ifPresent((entity) -> descendantIds.add(entity.publicId()));
         }
         return descendantIds;
@@ -390,8 +392,8 @@ public class Searcher {
     public static List<PublicId> getLidrRecordSemanticsFromTestKit(PublicId testKitId){
         List<PublicId> lidrRecordSemanticIds = new ArrayList<>();
 
-        int diagnosticDevicePatternNid;
-        int lidrRecordPatternNid;
+        long diagnosticDevicePatternNid;
+        long lidrRecordPatternNid;
         try {
             diagnosticDevicePatternNid = DIAGNOSTIC_DEVICE_PATTERN.nid();
             lidrRecordPatternNid = LIDR_RECORD_PATTERN.nid();
@@ -462,7 +464,7 @@ public class Searcher {
                 .ifPresent((lidrRecordVersion) -> {
                     SemanticEntityVersion lidrRecordSemanticVersion = (SemanticEntityVersion) lidrRecordVersion;
                     int idxResultConformances = 5;
-                    ((IntIdSet) lidrRecordSemanticVersion.fieldValues().get(idxResultConformances))
+                    ((LongIdSet) lidrRecordSemanticVersion.fieldValues().get(idxResultConformances))
                             .map(PrimitiveData::publicId)
                             .forEach(resultConformanceList::add);
                 }));
@@ -490,9 +492,9 @@ public class Searcher {
     public static List<PublicId> getAllowedResultsFromResultConformance(NavigationCalculator navCalc, PublicId resultConformanceId) {
         List<PublicId> allowedResultsList = new ArrayList<>();
 
-        int resultConformanceNid;
-        int quantitativePatternNid;
-        int qualitativePatternNid;
+        long resultConformanceNid;
+        long quantitativePatternNid;
+        long qualitativePatternNid;
         try {
             resultConformanceNid = EntityService.get().nidForPublicId(resultConformanceId);
             quantitativePatternNid = QUANTITATIVE_ALLOWED_RESULT_SET_PATTERN.nid();
@@ -505,14 +507,14 @@ public class Searcher {
         EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, quantitativePatternNid,
                 (quantitativeResultSet) -> navCalc.stampCalculator().latest(quantitativeResultSet)
                         .ifPresent((latestQuantitativeResultSet) -> {
-                            ((IntIdSet) latestQuantitativeResultSet.fieldValues().get(0))
+                            ((LongIdSet) latestQuantitativeResultSet.fieldValues().get(0))
                                     .map(PrimitiveData::publicId)
                                     .forEach(allowedResultsList::add);
                         }));
         EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, qualitativePatternNid,
                 (qualitativeResultSet) -> navCalc.stampCalculator().latest(qualitativeResultSet)
                         .ifPresent((latestQualitativeResultSet) -> {
-                            ((IntIdSet) latestQualitativeResultSet.fieldValues().get(0))
+                            ((LongIdSet) latestQualitativeResultSet.fieldValues().get(0))
                                     .map(PrimitiveData::publicId)
                                     .forEach(allowedResultsList::add);
                         }));
@@ -549,20 +551,21 @@ public class Searcher {
      */
     public static Optional<PublicId> getPublicId(PublicId identifierSource, String identifierValue) {
         ViewCalculator viewCalc = Calculators.View.Default();
-        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(TinkarTerm.IDENTIFIER_PATTERN);
+        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(KernelTerm.IDENTIFIER_PATTERN);
 
         if (latestIdPattern.isAbsent()) {
             throw new RuntimeException("Identifier Pattern is absent from data set");
         }
 
         try {
-            int[] semanticNids = EntityService.get().semanticNidsOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid());
-            for (int nid : semanticNids) {
-                EntityVersion entityVersion = viewCalc.latest(nid).get();
+            Iterator<SemanticEntity<SemanticEntityVersion>> semantics =
+                    EntityService.get().semanticsOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid()).iterator();
+            while (semantics.hasNext()) {
+                EntityVersion entityVersion = viewCalc.latest(semantics.next()).get();
                 if (entityVersion instanceof SemanticEntityVersion semanticEntityVersion) {
-                    Object idValue = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_VALUE, semanticEntityVersion);
+                    Object idValue = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_VALUE, semanticEntityVersion);
                     if (identifierValue != null && identifierValue.equals(idValue)) {
-                        Component idSource = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_SOURCE, semanticEntityVersion);
+                        Component idSource = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_SOURCE, semanticEntityVersion);
                         if (identifierSource != null && idSource != null && PublicId.equals(idSource.publicId(), identifierSource)) {
                             return Optional.of(semanticEntityVersion.referencedComponent().publicId());
                         }

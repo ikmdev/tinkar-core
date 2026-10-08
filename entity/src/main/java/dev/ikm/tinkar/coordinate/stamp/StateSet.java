@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.coordinate.stamp;
 
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
 import dev.ikm.tinkar.common.binary.Decoder;
 import dev.ikm.tinkar.common.binary.DecoderInput;
 import dev.ikm.tinkar.common.binary.Encodable;
@@ -33,15 +32,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An immutable bitset implementation of a State set.
  */
 public class StateSet implements ImmutableCoordinate, Iterable<State> {
 
-    private static final ConcurrentReferenceHashMap<StateSet, StateSet> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final ConcurrentHashMap<StateSet, StateSet> SINGLETONS = new ConcurrentHashMap<>();
 
     public static final StateSet ACTIVE = make(State.ACTIVE);
     public static final StateSet ACTIVE_AND_INACTIVE = make(State.ACTIVE, State.INACTIVE);

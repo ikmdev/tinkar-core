@@ -17,11 +17,11 @@ package dev.ikm.tinkar.terms;
 
 
 public interface ConceptFacade extends EntityFacade, dev.ikm.tinkar.component.Concept {
-    static ConceptFacade make(int nid) {
+    static ConceptFacade make(long nid) {
         return EntityProxy.Concept.make(nid);
     }
 
-    static int toNid(ConceptFacade facade) {
+    static long toNid(ConceptFacade facade) {
         return facade.nid();
     }
 

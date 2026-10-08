@@ -15,8 +15,11 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+
+import network.ike.foundation.ike.bindings.IkeTerms;
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
@@ -24,6 +27,7 @@ import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
@@ -36,15 +40,15 @@ import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -75,13 +79,13 @@ class DefaultsTemplateDslIT {
     private static final String SUBJECT_FQN = "Verb probe subject (Test)";
 
     private static final ActiveStamp BIRTH = Stamp.active("2020-01-01T00:00:00Z",
-            TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+            KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
     private static final ActiveStamp SUPPORT = Stamp.active("2020-02-01T00:00:00Z",
-            TinkarTerm.USER, DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
-            TinkarTerm.DEVELOPMENT_PATH);
+            KernelTerm.USER, DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
+            KernelTerm.DEVELOPMENT_PATH);
     private static final ActiveStamp SUPPORT_LATER = Stamp.active("2020-03-01T00:00:00Z",
-            TinkarTerm.USER, DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
-            TinkarTerm.DEVELOPMENT_PATH);
+            KernelTerm.USER, DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
+            KernelTerm.DEVELOPMENT_PATH);
 
     /** Identity the fieldDefaults verb must compute for the probe pattern's default. */
     private static UUID defaultId;
@@ -120,14 +124,14 @@ class DefaultsTemplateDslIT {
                 .meaning(TEST_SET.conceptRef("Verb probe meaning (Test)"))
                 .purpose(TEST_SET.conceptRef("Verb probe purpose (Test)"))
                 .field(TEST_SET.conceptRef("Verb text field meaning (Test)"),
-                        TEST_SET.conceptRef("Verb field purpose (Test)"), TinkarTerm.STRING)
+                        TEST_SET.conceptRef("Verb field purpose (Test)"), KernelTerm.STRING)
                 .field(TEST_SET.conceptRef("Verb concept field meaning (Test)"),
-                        TEST_SET.conceptRef("Verb field purpose (Test)"), TinkarTerm.CONCEPT_FIELD);
+                        TEST_SET.conceptRef("Verb field purpose (Test)"), KernelTerm.CONCEPT_FIELD);
         TEST_SET.pattern(RETIRED_PATTERN_FQN).at(BIRTH)
                 .meaning(TEST_SET.conceptRef("Verb probe meaning (Test)"))
                 .purpose(TEST_SET.conceptRef("Verb probe purpose (Test)"))
                 .field(TEST_SET.conceptRef("Verb text field meaning (Test)"),
-                        TEST_SET.conceptRef("Verb field purpose (Test)"), TinkarTerm.STRING);
+                        TEST_SET.conceptRef("Verb field purpose (Test)"), KernelTerm.STRING);
 
         // The purpose: minted through the verb, two scopes — the isA parentage under the
         // Template concept must be stated once, in the birth scope only.
@@ -145,9 +149,9 @@ class DefaultsTemplateDslIT {
         // A default authored then retired through the verb's retirement scope.
         TEST_SET.fieldDefaults(RETIRED_PATTERN_FQN)
                 .at(SUPPORT).values("short-lived default")
-                .at(Stamp.inactive("2020-04-01T00:00:00Z", TinkarTerm.USER,
+                .at(Stamp.inactive("2020-04-01T00:00:00Z", KernelTerm.USER,
                         DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
-                        TinkarTerm.DEVELOPMENT_PATH))
+                        KernelTerm.DEVELOPMENT_PATH))
                 .retire();
 
         TEST_SET.write();
@@ -160,11 +164,11 @@ class DefaultsTemplateDslIT {
 
     private static StampCalculatorWithCache calculator(StateSet allowedStates) {
         return StampCoordinateRecord.make(allowedStates,
-                StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.DEVELOPMENT_PATH.nid()))
+                StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.DEVELOPMENT_PATH.nid()))
                 .stampCalculator();
     }
 
-    private static int nidOf(UUID semanticUuid) {
+    private static long nidOf(UUID semanticUuid) {
         return EntityService.get().nidForPublicId(PublicIds.of(semanticUuid));
     }
 
@@ -204,13 +208,13 @@ class DefaultsTemplateDslIT {
     @Test
     @DisplayName("templatePurpose states the isA parentage under the Template concept, once")
     void templatePurposeParentsUnderTemplateConcept() {
-        int purposeNid = TEST_SET.conceptRef(PURPOSE_FQN).nid();
-        int[] axiomNids = EntityService.get().semanticNidsForComponentOfPattern(
-                purposeNid, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
-        assertEquals(1, axiomNids.length, "the purpose must carry its stated-axiom semantic");
+        long purposeNid = TEST_SET.conceptRef(PURPOSE_FQN).nid();
+        List<SemanticEntity<SemanticEntityVersion>> axioms = EntityService.get().semanticsForComponentOfPattern(
+                purposeNid, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
+        assertEquals(1, axioms.size(), "the purpose must carry its stated-axiom semantic");
 
         Latest<SemanticEntityVersion> latestAxioms =
-                calculator(StateSet.ACTIVE).latest(axiomNids[0]);
+                calculator(StateSet.ACTIVE).latest(axioms.getFirst().nid());
         assertTrue(latestAxioms.isPresent());
         DiTreeEntity diTree = assertInstanceOf(DiTreeEntity.class,
                 latestAxioms.get().fieldValues().get(0));
@@ -220,15 +224,15 @@ class DefaultsTemplateDslIT {
         assertTrue(parented, "the verb must state isA(Template concept) — a purpose cannot be"
                 + " minted detached from the template taxonomy");
 
-        assertEquals(1, EntityService.get().getEntityFast(axiomNids[0]).versions().size(),
+        assertEquals(1, axioms.getFirst().versions().size(),
                 "the parentage is stated in the birth scope only — a resumed scope must not restate it");
     }
 
     @Test
     @DisplayName("verb-authored tuples honor the category boundary: excluded from version iteration")
     void verbAuthoredTuplesExcludedFromVersionIteration() {
-        int patternNid = TEST_SET.patternRef(PATTERN_FQN).nid();
-        MutableIntSet iterated = IntSets.mutable.empty();
+        long patternNid = TEST_SET.patternRef(PATTERN_FQN).nid();
+        MutableLongSet iterated = LongSets.mutable.empty();
         calculator(StateSet.ACTIVE_AND_INACTIVE).forEachSemanticVersionOfPattern(patternNid,
                 (semanticVersion, patternVersion) -> iterated.add(semanticVersion.nid()));
         assertFalse(iterated.contains(nidOf(defaultId)),
@@ -236,8 +240,8 @@ class DefaultsTemplateDslIT {
         assertFalse(iterated.contains(nidOf(templateId)),
                 "the template semantic must be excluded from version iteration");
 
-        MutableIntSet chronologyNids =
-                IntSets.mutable.of(PrimitiveData.get().semanticNidsOfPattern(patternNid));
+        MutableLongSet chronologyNids =
+                LongSets.mutable.of(EntityService.get().semanticsOfPattern(patternNid).mapToLong(SemanticEntity::nid).toArray());
         assertTrue(chronologyNids.contains(nidOf(defaultId)),
                 "chronology enumeration is store truth — the nids are still there");
         assertTrue(chronologyNids.contains(nidOf(templateId)));
@@ -273,9 +277,9 @@ class DefaultsTemplateDslIT {
                 .meaning(set.conceptRef("Gate meaning (Test)"))
                 .purpose(set.conceptRef("Gate purpose (Test)"))
                 .field(set.conceptRef("Gate text field meaning (Test)"),
-                        set.conceptRef("Gate field purpose (Test)"), TinkarTerm.STRING)
+                        set.conceptRef("Gate field purpose (Test)"), KernelTerm.STRING)
                 .field(set.conceptRef("Gate concept field meaning (Test)"),
-                        set.conceptRef("Gate field purpose (Test)"), TinkarTerm.CONCEPT_FIELD);
+                        set.conceptRef("Gate field purpose (Test)"), KernelTerm.CONCEPT_FIELD);
         return set;
     }
 

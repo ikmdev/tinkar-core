@@ -25,7 +25,7 @@ public interface StampPositionDelegate extends StampPosition {
     }
 
     @Override
-    default int getPathForPositionNid() {
+    default long getPathForPositionNid() {
         return getStampPosition().getPathForPositionNid();
     }
 
@@ -40,7 +40,7 @@ public interface StampPositionDelegate extends StampPosition {
     }
 
     @Override
-    default StampPosition withPathForPositionNid(int pathForPositionNid) {
+    default StampPosition withPathForPositionNid(long pathForPositionNid) {
         throw new UnsupportedOperationException();
     }
 }

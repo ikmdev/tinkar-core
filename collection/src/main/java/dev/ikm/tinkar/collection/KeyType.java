@@ -17,7 +17,7 @@ package dev.ikm.tinkar.collection;
 
 public enum KeyType {
     /**
-     * NID_KEYs start at PrimitiveDataService.FIRST_NID
+     * NID_KEYs start at SequentialNids.FIRST_NID
      */
     NID_KEY,
 

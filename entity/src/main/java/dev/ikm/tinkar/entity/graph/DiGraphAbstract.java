@@ -77,7 +77,7 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
     }
 
     protected static ImmutableList<EntityVertex> readVertexEntities(ByteBuf readBuf, byte entityFormatVersion) {
-        int vertexMapSize = readBuf.readInt();
+        int vertexMapSize = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec2.FORMAT ? readBuf.readVarInt() : readBuf.readInt();
         MutableList<EntityVertex> vertexMap = Lists.mutable.ofInitialCapacity(vertexMapSize);
         for (int i = 0; i < vertexMapSize; i++) {
             EntityVertex entityVertex = EntityVertex.make(readBuf, entityFormatVersion);
@@ -87,11 +87,17 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
     }
 
     protected static ImmutableIntObjectMap<ImmutableIntList> readIntIntListMap(ByteBuf readBuf) {
-        int successorMapSize = readBuf.readInt();
+        return readIntIntListMap(readBuf, ENTITY_FORMAT_VERSION);
+    }
+
+    /** Reads a vertex-to-vertices map: in format 2 its counts are varints, the vertex indexes ints in every format. */
+    protected static ImmutableIntObjectMap<ImmutableIntList> readIntIntListMap(ByteBuf readBuf, byte entityFormatVersion) {
+        boolean format2 = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec2.FORMAT;
+        int successorMapSize = format2 ? readBuf.readVarInt() : readBuf.readInt();
         MutableIntObjectMap<ImmutableIntList> successorMap = IntObjectMaps.mutable.ofInitialCapacity(successorMapSize);
         for (int i = 0; i < successorMapSize; i++) {
             int vertexSequence = readBuf.readInt();
-            int successorListSize = readBuf.readInt();
+            int successorListSize = format2 ? readBuf.readVarInt() : readBuf.readInt();
             MutableIntList successorList = IntLists.mutable.empty();
             for (int j = 0; j < successorListSize; j++) {
                 successorList.add(readBuf.readInt());
@@ -126,7 +132,7 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
     public Optional<V> firstVertexWithMeaning(ConceptFacade vertexMeaning) {
         return firstVertexWithMeaning(vertexMeaning.nid());
     }
-    public Optional<V>  firstVertexWithMeaning(int vertexMeaningNid) {
+    public Optional<V>  firstVertexWithMeaning(long vertexMeaningNid) {
         for (V vertex : vertexMap) {
             if (vertex.meaningNid == vertexMeaningNid) {
                 return Optional.of(vertex);
@@ -139,7 +145,7 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
         return containsVertexWithMeaning(meaning.nid());
     }
 
-    public boolean containsVertexWithMeaning(int meaningNid) {
+    public boolean containsVertexWithMeaning(long meaningNid) {
         for (V vertex : vertexMap) {
             if (vertex.meaningNid == meaningNid) {
                 return true;
@@ -198,10 +204,24 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
      * @param map     the map to write
      */
     protected void writeIntIntListMap(ByteBuf byteBuf, ImmutableIntObjectMap<ImmutableIntList> map) {
-        byteBuf.writeInt(map.size());
+        writeIntIntListMap(byteBuf, map, ENTITY_FORMAT_VERSION);
+    }
+
+    /** Writes a vertex-to-vertices map as {@link #readIntIntListMap(ByteBuf, byte)} reads it. */
+    protected void writeIntIntListMap(ByteBuf byteBuf, ImmutableIntObjectMap<ImmutableIntList> map, byte entityFormatVersion) {
+        boolean format2 = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec2.FORMAT;
+        if (format2) {
+            byteBuf.writeVarInt(map.size());
+        } else {
+            byteBuf.writeInt(map.size());
+        }
         map.forEachKeyValue((int vertexIndex, ImmutableIntList destinationVertexes) -> {
             byteBuf.writeInt(vertexIndex);
-            byteBuf.writeInt(destinationVertexes.size());
+            if (format2) {
+                byteBuf.writeVarInt(destinationVertexes.size());
+            } else {
+                byteBuf.writeInt(destinationVertexes.size());
+            }
             destinationVertexes.forEach(destinationIndex -> byteBuf.writeInt(destinationIndex));
         });
     }
@@ -211,9 +231,18 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
     }
 
     protected void writeVertexMap(ByteBuf byteBuf) {
-        byteBuf.writeInt(vertexMap.size());
+        writeVertexMap(byteBuf, ENTITY_FORMAT_VERSION);
+    }
+
+    /** Writes the vertices as {@link #readVertexEntities(ByteBuf, byte)} reads them: a count, then each vertex's bytes in the format. */
+    protected void writeVertexMap(ByteBuf byteBuf, byte entityFormatVersion) {
+        if (entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec2.FORMAT) {
+            byteBuf.writeVarInt(vertexMap.size());
+        } else {
+            byteBuf.writeInt(vertexMap.size());
+        }
         vertexMap.forEach(vertexEntity -> {
-            byteBuf.write(vertexEntity.getBytes());
+            byteBuf.write(vertexEntity.getBytes(entityFormatVersion));
         });
     }
 

@@ -15,9 +15,10 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculatorDelegate;
 import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
@@ -26,7 +27,6 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.ImmutableList;
 
 public interface NavigationCalculator extends StampCalculatorDelegate, LanguageCalculatorDelegate {
@@ -35,11 +35,11 @@ public interface NavigationCalculator extends StampCalculatorDelegate, LanguageC
 
     StateSet allowedVertexStates();
 
-    default IntIdList parentsOf(ConceptFacade concept) {
+    default LongIdList parentsOf(ConceptFacade concept) {
         return parentsOf(concept.nid());
     }
 
-    default IntIdList parentsOf(int conceptNid) {
+    default LongIdList parentsOf(long conceptNid) {
         if (sortVertices()) {
             return sortedParentsOf(conceptNid);
         }
@@ -48,53 +48,53 @@ public interface NavigationCalculator extends StampCalculatorDelegate, LanguageC
 
     boolean sortVertices();
 
-    IntIdList sortedParentsOf(int conceptNid);
+    LongIdList sortedParentsOf(long conceptNid);
 
-    IntIdList unsortedParentsOf(int conceptNid);
+    LongIdList unsortedParentsOf(long conceptNid);
 
-    default IntIdSet descendentsOf(ConceptFacade concept) {
+    default LongIdSet descendentsOf(ConceptFacade concept) {
         return descendentsOf(concept.nid());
     }
 
-    IntIdSet descendentsOf(int conceptNid);
+    LongIdSet descendentsOf(long conceptNid);
 
-    default IntIdSet ancestorsOf(ConceptFacade concept) {
+    default LongIdSet ancestorsOf(ConceptFacade concept) {
         return descendentsOf(concept.nid());
     }
 
-    IntIdSet ancestorsOf(int conceptNid);
+    LongIdSet ancestorsOf(long conceptNid);
 
-    default IntIdSet kindOf(ConceptFacade concept) {
+    default LongIdSet kindOf(ConceptFacade concept) {
         return kindOf(concept.nid());
     }
 
-    IntIdSet kindOf(int conceptNid);
+    LongIdSet kindOf(long conceptNid);
 
     default ImmutableList<Edge> parentEdges(ConceptFacade concept) {
         return childEdges(concept.nid());
     }
 
-    default ImmutableList<Edge> childEdges(int conceptNid) {
+    default ImmutableList<Edge> childEdges(long conceptNid) {
         if (sortVertices()) {
             return sortedChildEdges(conceptNid);
         }
         return unsortedChildEdges(conceptNid);
     }
 
-    ImmutableList<Edge> sortedChildEdges(int conceptNid);
+    ImmutableList<Edge> sortedChildEdges(long conceptNid);
 
-    ImmutableList<Edge> unsortedChildEdges(int conceptNid);
+    ImmutableList<Edge> unsortedChildEdges(long conceptNid);
 
-    default ImmutableList<Edge> parentEdges(int conceptNid) {
+    default ImmutableList<Edge> parentEdges(long conceptNid) {
         if (sortVertices()) {
             return sortedParentEdges(conceptNid);
         }
         return unsortedParentEdges(conceptNid);
     }
 
-    ImmutableList<Edge> sortedParentEdges(int conceptNid);
+    ImmutableList<Edge> sortedParentEdges(long conceptNid);
 
-    ImmutableList<Edge> unsortedParentEdges(int conceptNid);
+    ImmutableList<Edge> unsortedParentEdges(long conceptNid);
 
     default ImmutableList<Edge> sortedParentEdges(ConceptFacade concept) {
         return sortedParentEdges(concept.nid());
@@ -116,65 +116,65 @@ public interface NavigationCalculator extends StampCalculatorDelegate, LanguageC
         return unsortedChildEdges(concept.nid());
     }
 
-    default IntIdList childrenOf(ConceptFacade concept) {
+    default LongIdList childrenOf(ConceptFacade concept) {
         return childrenOf(concept.nid());
     }
 
-    default IntIdList childrenOf(int conceptNid) {
+    default LongIdList childrenOf(long conceptNid) {
         if (sortVertices()) {
             return sortedChildrenOf(conceptNid);
         }
         return unsortedChildrenOf(conceptNid);
     }
 
-    IntIdList sortedChildrenOf(int conceptNid);
+    LongIdList sortedChildrenOf(long conceptNid);
 
-    IntIdList unsortedChildrenOf(int conceptNid);
+    LongIdList unsortedChildrenOf(long conceptNid);
 
-    IntIdList unsortedUnversionedChildrenOf(int conceptNid);
+    LongIdList unsortedUnversionedChildrenOf(long conceptNid);
 
-    IntIdList unsortedUnversionedParentsOf(int conceptNid);
+    LongIdList unsortedUnversionedParentsOf(long conceptNid);
 
-    default IntIdList sortedParentsOf(ConceptFacade concept) {
+    default LongIdList sortedParentsOf(ConceptFacade concept) {
         return sortedParentsOf(concept.nid());
     }
 
-    default IntIdList sortedChildrenOf(ConceptFacade concept) {
+    default LongIdList sortedChildrenOf(ConceptFacade concept) {
         return sortedChildrenOf(concept.nid());
     }
 
-    default IntIdList unsortedChildrenOf(ConceptFacade concept) {
+    default LongIdList unsortedChildrenOf(ConceptFacade concept) {
         return unsortedChildrenOf(concept.nid());
     }
 
-    default IntIdList unsortedParentsOf(ConceptFacade concept) {
+    default LongIdList unsortedParentsOf(ConceptFacade concept) {
         return unsortedParentsOf(concept.nid());
     }
 
-    default IntIdList toSortedList(IntIdSet inputSet) {
+    default LongIdList toSortedList(LongIdSet inputSet) {
         // TODO add pattern sort to implementation...
-        return toSortedList(IntIds.list.of(inputSet.toArray()));
+        return toSortedList(LongIds.list.of(inputSet.toArray()));
     }
 
-    IntIdList toSortedList(IntIdList inputList);
+    LongIdList toSortedList(LongIdList inputList);
 
     NavigationCoordinateRecord navigationCoordinate();
 
 
-    default IntIdList unsortedParentsOf(ConceptFacade concept, PatternFacade patternFacade) {
+    default LongIdList unsortedParentsOf(ConceptFacade concept, PatternFacade patternFacade) {
         return unsortedParentsOf(concept.nid(), patternFacade.nid());
     }
 
-    IntIdList unsortedParentsOf(int conceptNid, int patternNid);
+    LongIdList unsortedParentsOf(long conceptNid, long patternNid);
 
 
     default boolean isMultiparent(EntityFacade facade) {
         return isMultiparent(facade.nid());
     }
 
-    default boolean isMultiparent(int conceptNid) {
+    default boolean isMultiparent(long conceptNid) {
         if (conceptNid == -1
-                || conceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
+                || conceptNid == KernelTerm.UNINITIALIZED_COMPONENT.nid()) {
             return false;
         }
         return parentsOf(conceptNid).size() > 1;

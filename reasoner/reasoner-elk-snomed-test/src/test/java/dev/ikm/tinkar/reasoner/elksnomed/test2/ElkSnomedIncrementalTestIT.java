@@ -15,6 +15,9 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test2;
 
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
+
+import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -52,7 +55,6 @@ import dev.ikm.tinkar.reasoner.elksnomed.test.ElkSnomedTestBase;
 import dev.ikm.tinkar.reasoner.elksnomed.test.PrimitiveDataTestUtil;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.reasoner.service.UnsupportedReasonerProcessIncremental;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 
@@ -62,7 +64,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 		LOG.info("Init reasoner service");
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator(version);
 		ReasonerService rs = ElkSnomedTestBase.getElkSnomedReasonerService();
-		rs.init(vc, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+		rs.init(vc, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
 		rs.extractData(new TrackingCallable<Object>() {
 			@Override
 			protected Object compute() throws Exception {
@@ -97,12 +99,12 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 			ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator(effective_time);
 			long time = ((StampCalculatorWithCache) vc.stampCalculator()).filter().time();
 			LOG.info("\tView calculator time: " + Instant.ofEpochMilli(time) + " " + time);
-			HashMap<Integer, SemanticEntityVersion> active = new HashMap<>();
-			HashMap<Integer, SemanticEntityVersion> inactive = new HashMap<>();
-			vc.forEachSemanticVersionOfPattern(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+			HashMap<Long, SemanticEntityVersion> active = new HashMap<>();
+			HashMap<Long, SemanticEntityVersion> inactive = new HashMap<>();
+			vc.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 					(semanticEntityVersion, _) -> {
 						if (semanticEntityVersion.time() == time) {
-							int nid = semanticEntityVersion.referencedComponentNid();
+							long nid = semanticEntityVersion.referencedComponentNid();
 							if (semanticEntityVersion.active()) {
 								if (active.containsKey(nid))
 									throw new RuntimeException("" + nid);
@@ -131,7 +133,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 				Matcher m = Pattern.compile("-\\d+").matcher(ex.getMessage());
 				if (m.find()) {
 					String nid_str = m.group();
-					int nid = Integer.parseInt(nid_str);
+					long nid = Integer.parseInt(nid_str);
 					LOG.error("\tSctid: " + PrimitiveDataTestUtil.getSctid(nid, vc));
 					LOG.error("\t" + nid_str + " " + PrimitiveData.text(nid));
 				}
@@ -149,7 +151,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 		LOG.info("NNF: " + nnf_times.size() + " " + nnf_times.stream().collect(Collectors.averagingLong(x -> x)));
 	}
 
-	private Set<Long> toSctids(ImmutableIntSet nids, HashMap<Integer, Long> nid_sctid_map) {
+	private Set<Long> toSctids(ImmutableLongSet nids, HashMap<Long, Long> nid_sctid_map) {
 		return Arrays.stream(nids.toArray()).mapToObj(nid -> nid_sctid_map.get(nid)).collect(Collectors.toSet());
 	}
 
@@ -159,14 +161,14 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 		int non_snomed_cnt = 0;
 		int miss_cnt = 0;
 		SnomedIsa isas = SnomedIsa.init(rels_file, version);
-		HashMap<Integer, Long> nid_sctid_map = new HashMap<>();
+		HashMap<Long, Long> nid_sctid_map = new HashMap<>();
 		for (long sctid : isas.getOrderedConcepts().toArray()) {
-			int nid = ElkSnomedData.getNid(sctid);
+			long nid = ElkSnomedData.getNid(sctid);
 			nid_sctid_map.put(nid, sctid);
 		}
-		for (int nid : rs.getReasonerConceptSet().toArray()) {
+		for (long nid : rs.getReasonerConceptSet().toArray()) {
 			Set<Long> sups = toSctids(rs.getParents(nid), nid_sctid_map);
-			Long sctid = nid_sctid_map.get((int) nid);
+			Long sctid = nid_sctid_map.get(nid);
 			if (sctid == null) {
 				non_snomed_cnt++;
 				continue;
@@ -176,7 +178,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
 				assertEquals(1, sups.size());
-				assertEquals(TinkarTerm.PHENOMENON.nid(), rs.getParents(nid).intIterator().next());
+				assertEquals(KernelTerm.PHENOMENON.nid(), rs.getParents(nid).longIterator().next());
 				continue;
 			} else {
 				assertNotNull(parents);
@@ -192,7 +194,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 		for (int i = 0; i < limit; i++) {
 			long sctid = selectedIds.get(i);
 					UUID uuid = UuidUtil.fromSNOMED("" + sctid);
-					int nid = PrimitiveData.nid(uuid);
+					long nid = PrimitiveData.nid(uuid);
 					LOG.error("Miss: " + sctid + " " + PrimitiveData.text(nid));
 					Set<Long> sups = toSctids(rs.getParents(nid), nid_sctid_map);
 					Set<Long> parents = isas.getParents(sctid).toSet().boxed();

@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.entity.constraint;
 
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.terms.ConstraintTerm;
@@ -121,12 +121,12 @@ class MemberMatchEvaluatorTest {
         assertTrue(equal.matches(new Object[]{"a", 1}, new Object[]{"a", 1}));
         assertFalse(equal.matches(new Object[]{"a", 1}, new Object[]{"a"}));
 
-        assertTrue(equal.matches(IntIds.list.of(1, 2), IntIds.list.of(1, 2)));
-        assertFalse(equal.matches(IntIds.list.of(1, 2), IntIds.list.of(2, 1)),
+        assertTrue(equal.matches(LongIds.list.of(1, 2), LongIds.list.of(1, 2)));
+        assertFalse(equal.matches(LongIds.list.of(1, 2), LongIds.list.of(2, 1)),
                 "id lists are ordered — order-sensitive element identity");
-        assertTrue(equal.matches(IntIds.set.of(1, 2), IntIds.set.of(2, 1)),
+        assertTrue(equal.matches(LongIds.set.of(1, 2), LongIds.set.of(2, 1)),
                 "id sets are unordered — membership equality");
-        assertFalse(equal.matches(IntIds.set.of(1, 2), IntIds.set.of(1, 3)));
+        assertFalse(equal.matches(LongIds.set.of(1, 2), LongIds.set.of(1, 3)));
     }
 
     @Test

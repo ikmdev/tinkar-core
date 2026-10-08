@@ -62,12 +62,12 @@ public class VertexSortNone implements VertexSort, Encodable {
     }
 
     @Override
-    public String getVertexLabel(int vertexConceptNid, LanguageCalculator languageCalculator) {
+    public String getVertexLabel(long vertexConceptNid, LanguageCalculator languageCalculator) {
         return languageCalculator.getDescriptionText(vertexConceptNid).orElse(PrimitiveData.text(vertexConceptNid));
     }
 
     @Override
-    public int[] sortVertexes(int[] vertexConceptNids, NavigationCalculator navigationCalculator) {
+    public long[] sortVertexes(long[] vertexConceptNids, NavigationCalculator navigationCalculator) {
         return vertexConceptNids;
     }
 

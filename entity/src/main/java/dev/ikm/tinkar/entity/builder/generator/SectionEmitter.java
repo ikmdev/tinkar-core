@@ -73,7 +73,7 @@ public final class SectionEmitter {
      */
     public static EmittedSection emitSection(String packageName, String className, Section section,
                                              StampCalculator calculator, LanguageCalculator languageCalculator,
-                                             TinkarTermReferenceResolver resolver, String stampRef) {
+                                             BindingReferenceResolver resolver, String stampRef) {
         StringBuilder source = new StringBuilder();
         List<String> notes = new ArrayList<>();
         source.append("package ").append(packageName).append(";\n\n");
@@ -87,26 +87,49 @@ public final class SectionEmitter {
             source.append("import dev.ikm.tinkar.entity.builder.Stamp;\n");
         }
         source.append("import dev.ikm.tinkar.terms.EntityProxy;\n");
-        source.append("import dev.ikm.tinkar.terms.TinkarTerm;\n");
+        for (Class<?> bindingClass : resolver.bindingClasses()) {
+            source.append("import ").append(bindingClass.getName()).append(";\n");
+        }
         source.append("import java.time.Instant;\n\n");
         source.append("/** The \"").append(section.name()).append("\" section — a taxonomy subtree of the")
                 .append(" retrofitted starter set (IKE-Network/ike-issues#869). */\n");
         source.append("final class ").append(className).append(" {\n\n");
         source.append("    private ").append(className).append("() {\n    }\n\n");
-        source.append("    static void compose(KnowledgeSet set) {\n");
-        source.append("        ActiveStamp inception = ").append(stampRef).append(";\n\n");
-
-        for (int memberNid : section.members()) {
-            emitComponent(memberNid, calculator, languageCalculator, resolver, source, notes, section.name());
+        // Each component is composed in its own method: a method's bytecode is capped at
+        // 64 KB, and a section of heavily described components (the IKE starter set's ELM
+        // catalog) exceeds that in one method long before it has too many members.
+        StringBuilder calls = new StringBuilder();
+        StringBuilder methods = new StringBuilder();
+        int methodCount = 0;
+        for (long memberNid : section.members()) {
+            StringBuilder component = new StringBuilder();
+            if (emitComponent(memberNid, calculator, languageCalculator, resolver, component, notes, section.name())) {
+                String method = "component" + methodCount++;
+                calls.append("        ").append(method).append("(set, inception);\n");
+                methods.append("\n    private static void ").append(method)
+                        .append("(KnowledgeSet set, ActiveStamp inception) {\n")
+                        .append(component)
+                        .append("    }\n");
+            }
         }
-
-        source.append("    }\n}\n");
+        source.append("    static void compose(KnowledgeSet set) {\n");
+        source.append("        ActiveStamp inception = ").append(stampRef).append(";\n");
+        source.append(calls);
+        source.append("    }\n");
+        source.append(methods);
+        source.append("}\n");
         return new EmittedSection(source.toString(), List.copyOf(notes));
     }
 
-    private static void emitComponent(int memberNid, StampCalculator calculator,
-                                      LanguageCalculator languageCalculator, TinkarTermReferenceResolver resolver,
-                                      StringBuilder source, List<String> notes, String sectionName) {
+    /**
+     * Appends one component's composition statement to {@code source}, or a manifest
+     * note when it cannot be declared.
+     *
+     * @return whether a statement was appended
+     */
+    private static boolean emitComponent(long memberNid, StampCalculator calculator,
+                                         LanguageCalculator languageCalculator, BindingReferenceResolver resolver,
+                                         StringBuilder source, List<String> notes, String sectionName) {
         EntityHandle handle = EntityHandle.get(memberNid);
         boolean isPattern = handle.isPattern();
         EntityFacade component = isPattern ? EntityProxy.Pattern.make(memberNid) : EntityProxy.Concept.make(memberNid);
@@ -121,20 +144,21 @@ public final class SectionEmitter {
         if (rawFqn.isEmpty()) {
             notes.add("Skipped component nid " + memberNid + " in section \"" + sectionName
                     + "\": no fully-qualified-name description — every component must carry one");
-            return;
+            return false;
         }
 
         ComponentSource componentSource = ComponentDecompiler.decompile(component, calculator, resolver);
         notes.addAll(componentSource.manifestNotes());
 
-        String fqn = TinkarTermReferenceResolver.escapeForJavaStringLiteral(rawFqn.get());
-        String declaredId = TinkarTermReferenceResolver.publicIdLiteral(component.publicId());
+        String fqn = BindingReferenceResolver.escapeForJavaStringLiteral(rawFqn.get());
+        String declaredId = BindingReferenceResolver.publicIdLiteral(component.publicId());
         source.append("        set.").append(isPattern ? "pattern(" : "concept(")
                 .append('"').append(fqn).append("\", ").append(declaredId).append(").at(inception)\n");
         for (String verbLine : componentSource.verbLines()) {
             source.append("                ").append(verbLine).append('\n');
         }
-        source.append("                ;\n\n");
+        source.append("                ;\n");
+        return true;
     }
 
     /**

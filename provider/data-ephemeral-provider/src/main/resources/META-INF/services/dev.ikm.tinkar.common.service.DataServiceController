@@ -1,0 +1,2 @@
+# Class-path registration; module-info declares the same providers for the module path.
+dev.ikm.tinkar.provider.ephemeral.ProviderEphemeral$NewController

@@ -25,28 +25,28 @@ public interface StampEntityVersion extends EntityVersion, StampVersion {
         return State.fromConceptNid(stateNid());
     }
 
-    int stateNid();
+    long stateNid();
 
     long time();
 
     @Override
     default ConceptFacade author() {
-        return Entity.provider().getEntityFast(authorNid());
+        return EntityHandle.get(authorNid()).expectConcept();
     }
 
     @Override
     default ConceptFacade module() {
-        return Entity.provider().getEntityFast(moduleNid());
+        return EntityHandle.get(moduleNid()).expectConcept();
     }
 
     @Override
     default ConceptFacade path() {
-        return Entity.provider().getEntityFast(pathNid());
+        return EntityHandle.get(pathNid()).expectConcept();
     }
 
-    int authorNid();
+    long authorNid();
 
-    int moduleNid();
+    long moduleNid();
 
-    int pathNid();
+    long pathNid();
 }

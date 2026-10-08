@@ -15,8 +15,11 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+
+import network.ike.foundation.ike.bindings.IkeTerms;
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
@@ -24,6 +27,7 @@ import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
@@ -32,9 +36,8 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -98,9 +101,9 @@ class DefaultsTemplateCalculatorIT {
         // category's live-and-die invariant is about defaults/template chronologies,
         // and the anchor concepts themselves are ordinary content.
         ActiveStamp birth = Stamp.active("2020-01-01T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        ActiveStamp defaultsAuthored = Stamp.active("2020-02-01T00:00:00Z", TinkarTerm.USER,
-                DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+        ActiveStamp defaultsAuthored = Stamp.active("2020-02-01T00:00:00Z", KernelTerm.USER,
+                DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // The three seam concepts, minted here with the identities tinkar-core declares
         // (in ike-starter-set the IkeFoundation ledger mints them from the same birth
@@ -113,12 +116,12 @@ class DefaultsTemplateCalculatorIT {
                 .semantic(p1, PublicIds.of(p1DefaultId), "parent default value")
                 .semantic(p2, PublicIds.of(p2DefaultId), "retired default value")
                 // Retirement of P2's default: an inactive version, same module, same path.
-                .at(Stamp.inactive("2020-03-01T00:00:00Z", TinkarTerm.USER,
-                        DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, TinkarTerm.DEVELOPMENT_PATH))
+                .at(Stamp.inactive("2020-03-01T00:00:00Z", KernelTerm.USER,
+                        DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelTerm.DEVELOPMENT_PATH))
                 .retireSemantic(p2, PublicIds.of(p2DefaultId))
                 // A later default for P1 authored on the child path overrides the
                 // parent-path default for calculators positioned on the child path.
-                .at(Stamp.active("2021-01-01T00:00:00Z", TinkarTerm.USER,
+                .at(Stamp.active("2021-01-01T00:00:00Z", KernelTerm.USER,
                         DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
                         TEST_SET.conceptRef(CHILD_PATH_FQN)))
                 .semantic(p1, PublicIds.of(p1DefaultId), "child default value");
@@ -132,7 +135,7 @@ class DefaultsTemplateCalculatorIT {
                 .at(birth).synonym("Defaults");
 
         // Self-minted pattern metadata: a bare ephemeral store materializes only the
-        // TinkarTerm concepts the STAMP dimensions need, so probe patterns declare
+        // kernel concepts the STAMP dimensions need, so probe patterns declare
         // their own meaning/purpose/field concepts.
         TEST_SET.concept("Probe meaning (Test)").at(birth);
         TEST_SET.concept("Probe purpose (Test)").at(birth);
@@ -166,15 +169,15 @@ class DefaultsTemplateCalculatorIT {
         // A child path forked from the development path at 2020-06-01: a paths-pattern
         // membership semantic plus a path-origins semantic (origin path, origin instant).
         TEST_SET.concept(CHILD_PATH_FQN).at(birth)
-                .semantic(TinkarTerm.PATHS_PATTERN,
+                .semantic(KernelTerm.PATHS_PATTERN,
                         PublicIds.of(UuidT5Generator.singleSemanticUuid(
-                                TinkarTerm.PATHS_PATTERN.publicId(),
+                                KernelTerm.PATHS_PATTERN.publicId(),
                                 TEST_SET.conceptRef(CHILD_PATH_FQN).publicId())))
-                .semantic(TinkarTerm.PATH_ORIGINS_PATTERN,
+                .semantic(KernelTerm.PATH_ORIGINS_PATTERN,
                         PublicIds.of(UuidT5Generator.singleSemanticUuid(
-                                TinkarTerm.PATH_ORIGINS_PATTERN.publicId(),
+                                KernelTerm.PATH_ORIGINS_PATTERN.publicId(),
                                 TEST_SET.conceptRef(CHILD_PATH_FQN).publicId())),
-                        TinkarTerm.DEVELOPMENT_PATH, Instant.parse("2020-06-01T00:00:00Z"));
+                        KernelTerm.DEVELOPMENT_PATH, Instant.parse("2020-06-01T00:00:00Z"));
 
         TEST_SET.write();
     }
@@ -184,16 +187,16 @@ class DefaultsTemplateCalculatorIT {
         TestHelper.stopDatabase();
     }
 
-    private static StampCalculatorWithCache calculatorOn(int pathNid, StateSet allowedStates) {
+    private static StampCalculatorWithCache calculatorOn(long pathNid, StateSet allowedStates) {
         return StampCoordinateRecord.make(allowedStates,
                 StampPositionRecord.make(Long.MAX_VALUE, pathNid)).stampCalculator();
     }
 
     private static StampCalculatorWithCache developmentCalculator() {
-        return calculatorOn(TinkarTerm.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE_AND_INACTIVE);
+        return calculatorOn(KernelTerm.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE_AND_INACTIVE);
     }
 
-    private static int nidOf(UUID semanticUuid) {
+    private static long nidOf(UUID semanticUuid) {
         return EntityService.get().nidForPublicId(PublicIds.of(semanticUuid));
     }
 
@@ -228,19 +231,19 @@ class DefaultsTemplateCalculatorIT {
     @DisplayName("version iteration excludes defaults/template semantics; chronology enumeration keeps them")
     void versionIterationExcludesDefaultsButChronologyEnumerationIncludesThem() {
         StampCalculatorWithCache calculator = developmentCalculator();
-        int p1Nid = TEST_SET.patternRef(P1_FQN).nid();
-        int defaultsNid = nidOf(p1DefaultId);
-        int templateNid = nidOf(templateId);
-        int ordinaryNid = nidOf(ordinaryId);
+        long p1Nid = TEST_SET.patternRef(P1_FQN).nid();
+        long defaultsNid = nidOf(p1DefaultId);
+        long templateNid = nidOf(templateId);
+        long ordinaryNid = nidOf(ordinaryId);
 
-        MutableIntSet iterated = IntSets.mutable.empty();
+        MutableLongSet iterated = LongSets.mutable.empty();
         calculator.forEachSemanticVersionOfPattern(p1Nid,
                 (semanticVersion, patternVersion) -> iterated.add(semanticVersion.nid()));
         assertTrue(iterated.contains(ordinaryNid), "ordinary semantics must keep surfacing");
         assertFalse(iterated.contains(defaultsNid), "the default value semantic must be excluded");
         assertFalse(iterated.contains(templateNid), "the template semantic must be excluded");
 
-        MutableIntSet streamed = IntSets.mutable.empty();
+        MutableLongSet streamed = LongSets.mutable.empty();
         calculator.streamLatestVersionForPattern(p1Nid)
                 .filter(Latest::isPresent)
                 .forEach(latest -> streamed.add(latest.get().nid()));
@@ -249,31 +252,31 @@ class DefaultsTemplateCalculatorIT {
         assertFalse(streamed.contains(templateNid));
 
         // Chronology-level enumeration is store truth — the excluded nids are still there.
-        MutableIntSet patternChronologyNids =
-                IntSets.mutable.of(PrimitiveData.get().semanticNidsOfPattern(p1Nid));
+        MutableLongSet patternChronologyNids =
+                LongSets.mutable.of(EntityService.get().semanticsOfPattern(p1Nid).mapToLong(SemanticEntity::nid).toArray());
         assertTrue(patternChronologyNids.contains(defaultsNid),
                 "chronology enumeration for the pattern must still return the defaults semantic nid");
         assertTrue(patternChronologyNids.contains(templateNid));
 
         // The same boundary on the component surface: iteration over the attachment
         // concept's semantics excludes the defaults semantics, enumeration keeps them.
-        int attachmentNid = DefaultsTemplateTerm.DEFAULT_VALUE_CONCEPT.nid();
-        MutableIntSet componentIterated = IntSets.mutable.empty();
+        long attachmentNid = DefaultsTemplateTerm.DEFAULT_VALUE_CONCEPT.nid();
+        MutableLongSet componentIterated = LongSets.mutable.empty();
         calculator.forEachSemanticVersionForComponent(attachmentNid,
                 (semanticVersion, entityVersion) -> componentIterated.add(semanticVersion.nid()));
         assertFalse(componentIterated.isEmpty(),
                 "iteration must still present the attachment concept's ordinary semantics (its FQN description)");
         assertFalse(componentIterated.contains(defaultsNid));
         assertFalse(componentIterated.contains(nidOf(p2DefaultId)));
-        MutableIntSet componentChronologyNids =
-                IntSets.mutable.of(PrimitiveData.get().semanticNidsForComponent(attachmentNid));
+        MutableLongSet componentChronologyNids =
+                LongSets.mutable.of(EntityService.get().semanticsForComponent(attachmentNid).mapToLong(SemanticEntity::nid).toArray());
         assertTrue(componentChronologyNids.contains(defaultsNid));
     }
 
     @Test
     @DisplayName("a default authored on a child path overrides the parent-path default")
     void childPathDefaultOverridesParentPathDefault() {
-        int childPathNid = TEST_SET.conceptRef(CHILD_PATH_FQN).nid();
+        long childPathNid = TEST_SET.conceptRef(CHILD_PATH_FQN).nid();
         StampCalculatorWithCache childCalculator =
                 calculatorOn(childPathNid, StateSet.ACTIVE_AND_INACTIVE);
 
@@ -301,7 +304,7 @@ class DefaultsTemplateCalculatorIT {
                 "retirement restates the prior version's fields");
 
         Latest<SemanticEntityVersion> activeOnly =
-                calculatorOn(TinkarTerm.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE)
+                calculatorOn(KernelTerm.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE)
                         .getDefault(TEST_SET.patternRef(P2_FQN));
         assertTrue(activeOnly.isAbsent(),
                 "an ACTIVE-only calculator must not resurrect the earlier active default");

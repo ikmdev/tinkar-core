@@ -16,9 +16,9 @@
 package dev.ikm.tinkar.common.service;
 
 import dev.ikm.tinkar.common.alert.AlertStreams;
-import dev.ikm.tinkar.common.id.IntIdCollection;
-import org.eclipse.collections.api.list.primitive.IntList;
-import org.eclipse.collections.api.set.primitive.IntSet;
+import dev.ikm.tinkar.common.id.LongIdCollection;
+import org.eclipse.collections.api.list.primitive.LongList;
+import org.eclipse.collections.api.set.primitive.LongSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,19 +30,19 @@ import java.util.Optional;
  * service will provide the first description found irrespective of type, status, language, or dialect.
  */
 public interface DefaultDescriptionForNidService {
-    default List<Optional<String>> optionalTextList(IntIdCollection nids) {
+    default List<Optional<String>> optionalTextList(LongIdCollection nids) {
         return optionalTextList(nids.toArray());
     }
 
-    default List<Optional<String>> optionalTextList(int... nids) {
+    default List<Optional<String>> optionalTextList(long... nids) {
         List<Optional<String>> textList = new ArrayList<>(nids.length);
-        for (int nid : nids) {
+        for (long nid : nids) {
             textList.add(textOptional(nid));
         }
         return textList;
     }
 
-    default Optional<String> textOptional(int nid) {
+    default Optional<String> textOptional(long nid) {
         try {
             return Optional.ofNullable(textFast(nid));
         } catch (RuntimeException ex) {
@@ -55,25 +55,25 @@ public interface DefaultDescriptionForNidService {
      * May throw a RuntimeException if invoked prior to database initialization. Otherwise, should always return
      * a String.
      */
-    String textFast(int nid);
+    String textFast(long nid);
 
-    default List<Optional<String>> optionalTextList(IntList nids) {
+    default List<Optional<String>> optionalTextList(LongList nids) {
         return optionalTextList(nids.toArray());
     }
 
-    default List<Optional<String>> optionalTextList(IntSet nids) {
+    default List<Optional<String>> optionalTextList(LongSet nids) {
         return optionalTextList(nids.toArray());
     }
 
-    default List<String> textList(int... nids) {
+    default List<String> textList(long... nids) {
         List<String> textList = new ArrayList<>(nids.length);
-        for (int nid : nids) {
+        for (long nid : nids) {
             textList.add(text(nid));
         }
         return textList;
     }
 
-    default String text(int nid) {
+    default String text(long nid) {
         String textFast = textFast(nid);
         if (textFast == null) {
             textFast = "<" + nid + ">";
@@ -81,15 +81,15 @@ public interface DefaultDescriptionForNidService {
         return textFast;
     }
 
-    default List<Optional<String>> textList(IntIdCollection nids) {
+    default List<Optional<String>> textList(LongIdCollection nids) {
         return optionalTextList(nids.toArray());
     }
 
-    default List<Optional<String>> textList(IntList nids) {
+    default List<Optional<String>> textList(LongList nids) {
         return optionalTextList(nids.toArray());
     }
 
-    default List<Optional<String>> textList(IntSet nids) {
+    default List<Optional<String>> textList(LongSet nids) {
         return optionalTextList(nids.toArray());
     }
 

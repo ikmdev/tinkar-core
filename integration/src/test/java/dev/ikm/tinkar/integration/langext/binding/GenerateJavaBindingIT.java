@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.integration.langext.binding;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
@@ -81,11 +80,11 @@ public class GenerateJavaBindingIT {
 
         try (DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(bindingJavaOutput)))) {
 
-            //Given a stream of Concepts and Patterns from the Tinkar Starter Data
+            //Given a stream of Concepts and Patterns from the IKE starter set
             Stream.Builder<Entity<? extends EntityVersion>> conceptStreamBuilder = Stream.builder();
             Stream.Builder<Entity<? extends EntityVersion>> patternStreamBuilder = Stream.builder();
-            PrimitiveData.get().forEachConceptNid(nid -> conceptStreamBuilder.add(EntityService.get().getEntityFast(nid)));
-            PrimitiveData.get().forEachPatternNid(nid -> patternStreamBuilder.add(EntityService.get().getEntityFast(nid)));
+            EntityService.get().forEachConceptEntity(conceptStreamBuilder::add);
+            EntityService.get().forEachPatternEntity(patternStreamBuilder::add);
 
             //When interpolating the concept and pattern streams to a java file
             GenerateJavaBindingTask generateJavaBindingTask = new GenerateJavaBindingTask(

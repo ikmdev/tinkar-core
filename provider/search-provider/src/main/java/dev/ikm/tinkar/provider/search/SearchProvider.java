@@ -56,6 +56,7 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
     private final Path indexPath;
     private final String name;
     private final AtomicBoolean closed = new AtomicBoolean(false);
+    private volatile boolean loadPhase = false;
 
     public static SearchProvider get() {
         return SINGLETON.orElseSet(SearchProvider::new);
@@ -198,14 +199,14 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
             LOG.info("Lucene index already exists ({} documents, schema v{})",
                     String.format("%,d", docCount), schemaVersion);
 
-            boolean schemaStale = schemaVersion < IndexerSchema.VERSION;
+            boolean schemaStale = schemaVersion < IndexerSchema.version();
             boolean emptyButHasData = dataExists && docCount == 0;
 
             if (schemaStale || emptyButHasData) {
                 RecreateReason reason;
                 if (schemaStale) {
                     LOG.warn("Lucene index schema v{} predates current v{} — scheduling index recreation",
-                            schemaVersion, IndexerSchema.VERSION);
+                            schemaVersion, IndexerSchema.version());
                     reason = RecreateReason.SCHEMA_OUTDATED;
                 } else {
                     LOG.warn("Lucene index is empty but database exists — scheduling index recreation");
@@ -235,7 +236,21 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
         // names live in description semantics and reach the index via their semantics.
         if (object instanceof SemanticEntity<?> semanticEntity) {
             indexer.index(semanticEntity);
-            // Ensure the NRT searcher sees the new document immediately.
+            // Outside a load phase, ensure the NRT searcher sees the new
+            // document immediately. A load phase refreshes once at its end
+            // instead: a blocking refresh per semantic costs about a
+            // millisecond each, which made it most of a change-set import.
+            if (!loadPhase) {
+                Searcher.refreshAfterIndex();
+            }
+        }
+    }
+
+    @Override
+    public void setLoadPhase(boolean loadPhase) {
+        boolean ending = this.loadPhase && !loadPhase;
+        this.loadPhase = loadPhase;
+        if (ending && !closed.get()) {
             Searcher.refreshAfterIndex();
         }
     }

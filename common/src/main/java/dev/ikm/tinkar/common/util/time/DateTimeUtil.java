@@ -54,7 +54,15 @@ public class DateTimeUtil {
     public static final DateTimeFormatter COMPRESSED_DATE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssz");
     public static final DateTimeFormatter COMPRESSED_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
 
+    /**
+     * The rendered word for {@code Long.MAX_VALUE} as a time: latest, as the time of a position,
+     * and uncommitted, as the time of a stamp, which commit replaces with the commit time. A time
+     * sentinel; nids have sentinels of their own ({@code dev.ikm.tinkar.common.id.Nid}).
+     */
     public static final String LATEST = "Latest";
+    /**
+     * The rendered word for {@code Long.MIN_VALUE} as a time: the time of a canceled stamp.
+     */
     public static final String CANCELED = "Canceled";
     /**
      * The rendered word for the pre-inception time sentinel — the platform's
@@ -159,7 +167,11 @@ public class DateTimeUtil {
      * {@link #formatUtc(long)} delegates at UTC (generated artifacts render
      * machine-independently).
      *
-     * @param epochMilliSecond the epoch time in milliseconds, or a sentinel value
+     * @param epochMilliSecond the epoch time in milliseconds, or a time sentinel:
+     *                         {@code Long.MAX_VALUE} (latest, or uncommitted),
+     *                         {@code Long.MIN_VALUE} (canceled),
+     *                         {@link PrimitiveData#PRE_INCEPTION_TIME}, or
+     *                         {@link PrimitiveData#INCEPTION_EPOCH}
      * @param formatter        the date-time formatter to render with
      * @param zone             the zone to render the instant at
      * @return the sentinel word, or the time rendered at {@code zone}
@@ -373,6 +385,53 @@ public class DateTimeUtil {
 
     public static long toEpochMilliseconds(LocalDateTime localDateTime) {
         return localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+
+    /**
+     * How long ago an instant was, in words: the largest whole unit that fits,
+     * from {@code "3 years ago"} down to {@code "12 seconds ago"}, or
+     * {@code "just now"} within the last second (and for an instant in the future,
+     * which a clock difference can produce). Months are thirty days.
+     *
+     * @param then the instant to describe
+     * @return the phrase, measured against the clock now
+     */
+    public static String elapsedSince(Instant then) {
+        return elapsedBetween(then, Instant.now());
+    }
+
+    /**
+     * {@link #elapsedSince(Instant)} for an epoch time in milliseconds.
+     */
+    public static String elapsedSince(long epochMilliSecond) {
+        return elapsedSince(Instant.ofEpochMilli(epochMilliSecond));
+    }
+
+    static String elapsedBetween(Instant then, Instant now) {
+        long elapsedMs = now.toEpochMilli() - then.toEpochMilli();
+        if (elapsedMs < MS_IN_SEC) {
+            return "just now";
+        }
+        if (elapsedMs >= MS_IN_YEAR) {
+            return ago(elapsedMs / MS_IN_YEAR, "year");
+        }
+        if (elapsedMs >= MS_IN_MONTH) {
+            return ago(elapsedMs / MS_IN_MONTH, "month");
+        }
+        if (elapsedMs >= MS_IN_DAY) {
+            return ago(elapsedMs / MS_IN_DAY, "day");
+        }
+        if (elapsedMs >= MS_IN_HOUR) {
+            return ago(elapsedMs / MS_IN_HOUR, "hour");
+        }
+        if (elapsedMs >= MS_IN_MINUTE) {
+            return ago(elapsedMs / MS_IN_MINUTE, "minute");
+        }
+        return ago(elapsedMs / MS_IN_SEC, "second");
+    }
+
+    private static String ago(long count, String unit) {
+        return count + " " + unit + (count == 1 ? "" : "s") + " ago";
     }
     public static String getDayOfMonthSuffix(final int n) {
         if (n < 1 || n > 31) {

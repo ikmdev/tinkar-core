@@ -24,7 +24,7 @@ import org.eclipse.collections.api.list.ImmutableList;
  */
 public interface PatternVersion extends Version, Pattern {
 
-    ImmutableList<? extends FieldDefinition> fieldDefinitions();
+    ImmutableList<? extends FeatureDefinition> fieldDefinitions();
 
     Concept semanticPurpose();
 

@@ -15,10 +15,13 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.DeclaredStamp;
 import dev.ikm.tinkar.terms.State;
 
 import java.time.Instant;
@@ -48,7 +51,7 @@ import java.util.UUID;
  * {@link ConceptBuilder#at(InactiveStamp)} yields only retirement verbs, so authoring
  * content under an inactive stamp (or retiring under an active one) does not compile.
  */
-public sealed interface Stamp permits ActiveStamp, InactiveStamp {
+public sealed interface Stamp permits ActiveStamp, InactiveStamp, PrimordialStamp {
 
     /**
      * The status dimension of this stamp.
@@ -113,9 +116,11 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp {
      * Derives the deterministic identity of a stamp tuple: a type-5 UUID in
      * {@link UuidT5Generator#STAMP_NAMESPACE} seeded by the canonical form
      * {@code statusUuid|time|authorUuid|moduleUuid|pathUuid}, where each UUID is the
-     * primordial (first) UUID of the concept's public id and time is epoch milliseconds
-     * in decimal. Two declarations of the same tuple therefore resolve to the same stamp
-     * entity, which is what makes ledger replay idempotent at the stamp level.
+     * least UUID of the concept's public id ({@link PublicId#leastUuid()}) and time is epoch
+     * milliseconds in decimal. Taking the least makes the identity depend on each concept's
+     * UUIDs, not on the order its public id lists them. Two declarations of the same tuple
+     * therefore resolve to the same stamp entity, which is what makes ledger replay idempotent
+     * at the stamp level.
      *
      * @param state  the status dimension
      * @param time   the time dimension, in epoch milliseconds
@@ -125,11 +130,11 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp {
      * @return the tuple-derived UUID
      */
     static UUID stampUuid(State state, long time, ConceptFacade author, ConceptFacade module, ConceptFacade path) {
-        String canonical = state.publicId().asUuidArray()[0]
+        String canonical = state.publicId().leastUuid()
                 + "|" + time
-                + "|" + author.publicId().asUuidArray()[0]
-                + "|" + module.publicId().asUuidArray()[0]
-                + "|" + path.publicId().asUuidArray()[0];
+                + "|" + author.publicId().leastUuid()
+                + "|" + module.publicId().leastUuid()
+                + "|" + path.publicId().leastUuid();
         return UuidT5Generator.get(UuidT5Generator.STAMP_NAMESPACE, canonical);
     }
 
@@ -186,6 +191,23 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp {
     static ActiveStamp active(PublicId declaredIdentity, long time,
                               ConceptFacade author, ConceptFacade module, ConceptFacade path) {
         return new ActiveStamp(time, author, module, path, requireDeclared(declaredIdentity));
+    }
+
+    /**
+     * The non-existent stamp: the stamp of the value a component had before it existed, which
+     * the change chronology compares a component's first version against. Primordial, at
+     * pre-inception time, by the author-for-version concept, on the uninitialized module and
+     * path, under its permanent identity {@link PrimitiveData#NONEXISTENT_STAMP_UUID}; the
+     * same stamp {@link dev.ikm.tinkar.entity.StampRecord#nonExistentStamp()} names. A starter
+     * set declares it ({@link KnowledgeSet#stamp(Stamp)}) so every store loaded from the set
+     * holds it.
+     *
+     * @return the non-existent stamp
+     */
+    static PrimordialStamp nonExistent() {
+        return new PrimordialStamp(PrimitiveData.PRE_INCEPTION_TIME, KernelTerm.AUTHOR_FOR_VERSION,
+                KernelTerm.UNINITIALIZED_COMPONENT, KernelTerm.UNINITIALIZED_COMPONENT,
+                PublicIds.of(PrimitiveData.NONEXISTENT_STAMP_UUID));
     }
 
     /**
@@ -269,6 +291,33 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp {
     static InactiveStamp inactive(PublicId declaredIdentity, long time,
                                   ConceptFacade author, ConceptFacade module, ConceptFacade path) {
         return new InactiveStamp(time, author, module, path, requireDeclared(declaredIdentity));
+    }
+
+    /**
+     * The builder stamp a set's generated bindings declare: active, inactive or primordial as
+     * its status dimension says, carrying its identity as a declared identity unless the
+     * identity is the one its dimensions derive.
+     *
+     * @param declared a stamp from a set's generated bindings
+     * @return the stamp, for authoring under it
+     * @throws IllegalArgumentException if the status is not active, inactive or primordial
+     */
+    static Stamp from(DeclaredStamp declared) {
+        PublicId identity = declared.identity().publicId();
+        boolean derived = identity.uuidCount() == 1 && identity.contains(
+                stampUuid(declared.state(), declared.time(), declared.author(), declared.module(), declared.path()));
+        return switch (declared.state()) {
+            case ACTIVE -> derived
+                    ? new ActiveStamp(declared.time(), declared.author(), declared.module(), declared.path())
+                    : new ActiveStamp(declared.time(), declared.author(), declared.module(), declared.path(), identity);
+            case INACTIVE -> derived
+                    ? new InactiveStamp(declared.time(), declared.author(), declared.module(), declared.path())
+                    : new InactiveStamp(declared.time(), declared.author(), declared.module(), declared.path(), identity);
+            case PRIMORDIAL -> new PrimordialStamp(declared.time(), declared.author(), declared.module(),
+                    declared.path(), identity);
+            default -> throw new IllegalArgumentException("A declared stamp is active, inactive or primordial, not "
+                    + declared.state() + ": " + identity.idString());
+        };
     }
 
     private static PublicId requireDeclared(PublicId declaredIdentity) {

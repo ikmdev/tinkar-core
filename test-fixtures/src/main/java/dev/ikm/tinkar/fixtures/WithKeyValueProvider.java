@@ -90,7 +90,7 @@ public @interface WithKeyValueProvider {
     /**
      * Optional path or glob pattern(s) pointing to protobuf files to import after startup.
      * Multiple patterns can be separated by commas (","). Examples:
-     * - "target/data/tinkar-starter-data-reasoned-pb.zip"
+     * - "target/data/ike-starter-set-reasoned-pb.zip"
      * - "target/data/*-pb.zip"
      * - "target/data/*-pb.zip,target/extra/*.zip"
      */

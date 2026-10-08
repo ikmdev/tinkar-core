@@ -15,9 +15,10 @@
  */
 package dev.ikm.tinkar.fixtures;
 
-import dev.ikm.tinkar.common.id.IntIdCollection;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
+import dev.ikm.tinkar.common.id.LongIdCollection;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -65,7 +66,7 @@ public class DataIntegrity {
         startup(new File(System.getProperty("user.home") + "/Solor/" + "MayConnectathon-5-15-2024_reasoned"));
         TinkExecutor.threadPool().awaitTermination(5, TimeUnit.SECONDS);
 
-        List<Integer> aggregatedNullNidList = new ArrayList<>();
+        List<Long> aggregatedNullNidList = new ArrayList<>();
         Map<String, List<? extends Entity>> typeNameEntityMap = new HashMap<>();
         typeNameEntityMap.put("Stamp", validateStampReferences(aggregatedNullNidList));
         typeNameEntityMap.put("Concept", validateConceptReferences(aggregatedNullNidList));
@@ -102,10 +103,10 @@ public class DataIntegrity {
         PrimitiveData.stop();
     }
 
-    public static List<Entity> validateStampReferences(List<Integer> nullNidList) {
+    public static List<Entity> validateStampReferences(List<Long> nullNidList) {
         LOG.info("Validating Stamp References");
         List<Entity> listMisconfiguredStamps = new ArrayList<>();
-        PrimitiveData.get().forEachStampNid((stampNid) -> {
+        EntityStore.current().forEachStampNid((stampNid) -> {
             EntityHandle handle = EntityHandle.get(stampNid);
             if (handle.isPresent()) {
                 try {
@@ -133,10 +134,10 @@ public class DataIntegrity {
         return isNullReferences.get();
     }
 
-    public static List<Entity> validateConceptReferences(List<Integer> nullNidList) {
+    public static List<Entity> validateConceptReferences(List<Long> nullNidList) {
         LOG.info("Validating Concept References");
         List<Entity> listMisconfiguredConcepts = new ArrayList<>();
-        PrimitiveData.get().forEachConceptNid((conceptNid) -> {
+        EntityStore.current().forEachConceptNid((conceptNid) -> {
             try {
                 EntityHandle.get(conceptNid).expectConcept();
             } catch (Exception e) {
@@ -158,10 +159,10 @@ public class DataIntegrity {
         return isNullReferences.get();
     }
 
-    public static List<Entity> validateSemanticReferences(List<Integer> nullNidList) {
+    public static List<Entity> validateSemanticReferences(List<Long> nullNidList) {
         LOG.info("Validating Semantics References");
         List<Entity> listMisconfiguredSemantics = new ArrayList<>();
-        PrimitiveData.get().forEachSemanticNid((semanticNid) -> {
+        EntityStore.current().forEachSemanticNid((semanticNid) -> {
             EntityHandle entityHandle = EntityHandle.get(semanticNid);
             if (entityHandle.isPresent()) {
                 try {
@@ -194,7 +195,7 @@ public class DataIntegrity {
                     // No references to check
                     isNullReferences.get();
                 } else if (fieldVal instanceof DiTree diTree) {
-                    List<Integer> diTreeRefs = new ArrayList<>();
+                    List<Long> diTreeRefs = new ArrayList<>();
                     ImmutableList<Vertex> vertexList = diTree.vertexMap();
                     vertexList.forEach(vertex -> {
                         diTreeRefs.add(PrimitiveData.nid(vertex.meaning().publicId()));
@@ -204,7 +205,7 @@ public class DataIntegrity {
                             vertex.property(propKey).ifPresent(propVal -> {
                                 if (propVal instanceof Component propValComponent) {
                                     diTreeRefs.add(PrimitiveData.nid(propValComponent.publicId()));
-                                } else if (propVal instanceof IntIdCollection intIdCollection) {
+                                } else if (propVal instanceof LongIdCollection intIdCollection) {
                                     intIdCollection.forEach(diTreeRefs::add);
                                 }
                             });
@@ -215,13 +216,13 @@ public class DataIntegrity {
                             isNullReferences.set(true);
                         }
                     });
-                } else if (fieldVal instanceof IntIdSet nidSet) {
+                } else if (fieldVal instanceof LongIdSet nidSet) {
                     nidSet.forEach((nid) -> {
                         if (referencedEntityIsNull(nid)) {
                             isNullReferences.set(true);
                         }
                     });
-                } else if (fieldVal instanceof IntIdList nidList) {
+                } else if (fieldVal instanceof LongIdList nidList) {
                     nidList.forEach((nid) -> {
                         if (referencedEntityIsNull(nid)) {
                             isNullReferences.set(true);
@@ -237,10 +238,10 @@ public class DataIntegrity {
         return isNullReferences.get();
     }
 
-    public static List<Entity> validatePatternReferences(List<Integer> nullNidList) {
+    public static List<Entity> validatePatternReferences(List<Long> nullNidList) {
         LOG.info("Validating Pattern References");
         List<Entity> listMisconfiguredPatterns = new ArrayList<>();
-        PrimitiveData.get().forEachPatternNid((patternNid) -> {
+        EntityStore.current().forEachPatternNid((patternNid) -> {
             EntityHandle handle = EntityHandle.get(patternNid);
             if (handle.isPresent()) {
                 try {
@@ -276,7 +277,7 @@ public class DataIntegrity {
         return isNullReferences.get();
     }
 
-    public static boolean referencedEntityIsNull(int nid) {
+    public static boolean referencedEntityIsNull(long nid) {
         AtomicBoolean result = new AtomicBoolean(true);
         try {
             EntityHandle.get(nid).ifPresent((ignored) -> {
@@ -291,14 +292,12 @@ public class DataIntegrity {
     public static List<SemanticEntity> validateSemanticFieldDataTypes() {
         LOG.info("Validating Semantic Field Values align with Pattern Field Definitions");
         List<SemanticEntity> misconfiguredSemanticsSet = new ArrayList<>();
-        PrimitiveData.get().forEachSemanticNid((semanticNid) -> {
-            EntityHandle.get(semanticNid).ifPresent((entity) -> {
-                if (entity instanceof SemanticEntity semanticEntity) {
-                    if (!validateSemanticFieldDataType(semanticEntity)) {
-                        misconfiguredSemanticsSet.add(semanticEntity);
-                    }
+        EntityService.get().forEachEntity((entity) -> {
+            if (entity instanceof SemanticEntity semanticEntity) {
+                if (!validateSemanticFieldDataType(semanticEntity)) {
+                    misconfiguredSemanticsSet.add(semanticEntity);
                 }
-            });
+            }
         });
         return misconfiguredSemanticsSet;
     }

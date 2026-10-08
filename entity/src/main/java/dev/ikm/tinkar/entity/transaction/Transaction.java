@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.entity.transaction;
 
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+
 import dev.ikm.tinkar.common.binary.Decoder;
 import dev.ikm.tinkar.common.binary.DecoderInput;
 import dev.ikm.tinkar.common.binary.Encodable;
@@ -51,10 +53,11 @@ import java.io.UncheckedIOException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import org.eclipse.collections.api.factory.primitive.IntLists;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.factory.primitive.LongLists;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
@@ -65,14 +68,29 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * and components, as well as handling transactional operations.
  */
 public class Transaction implements Comparable<Transaction>, Encodable {
-    private static final int marshalVersion = 1;
+    /**
+     * Version 2 writes the components in the transaction by public id, as it writes the stamps;
+     * version 1 wrote them as {@code int} nids of the store that wrote it, and is still read.
+     */
+    private static final int marshalVersion = 2;
+    private static final int marshalVersionIntNids = 1;
 
     private static ConcurrentHashSet<Transaction> activeTransactions = new ConcurrentHashSet<>();
     private final UUID transactionUuid;
     private final String transactionName;
     ConcurrentHashSet<UUID> stampsInTransaction = new ConcurrentHashSet<>();
-    ConcurrentHashSet<Integer> componentsInTransaction = new ConcurrentHashSet<>();
+    ConcurrentHashSet<Long> componentsInTransaction = new ConcurrentHashSet<>();
     private long commitTime = Long.MAX_VALUE;
+
+    /**
+     * How far this transaction is toward its one ending (IKE-Network/ike-issues#1243). It ends
+     * once, committed or canceled. Repeating the ending it had is a silent no-op; the other
+     * ending is refused, since the stored stamps can honor only one. An ending that fails part
+     * way returns the transaction to {@code OPEN}, so a caller can cancel what it left behind.
+     */
+    private enum Ending { OPEN, COMMITTING, COMMITTED, CANCELING, CANCELED }
+
+    private final AtomicReference<Ending> ending = new AtomicReference<>(Ending.OPEN);
 
     /**
      * Constructs a new Transaction instance with the specified UUID and name.
@@ -162,13 +180,13 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     public static Optional<Transaction> forVersion(EntityVersion version) {
         StampEntity stamp = version.stamp();
         UUID[] stampUuids = stamp.asUuidArray();
-        if (stampUuids.length > 1) {
-            throw new IllegalStateException("Can only handle one UUID for stamp. Found: " + version);
-        }
         for (Transaction transaction : activeTransactions) {
-            if (transaction.stampsInTransaction.contains(stampUuids[0])) {
-                if (transaction.componentsInTransaction.contains(version.nid())) {
-                    return Optional.of(transaction);
+            if (transaction.componentsInTransaction.contains(version.nid())) {
+                // A stamp has one UUID (getStamp mints it); the loop only avoids reading it by position.
+                for (UUID stampUuid : stampUuids) {
+                    if (transaction.stampsInTransaction.contains(stampUuid)) {
+                        return Optional.of(transaction);
+                    }
                 }
             }
         }
@@ -264,7 +282,8 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * Validates the given state and its associated parameters.
      *
      * @param state       the state to validate; must not be null
-     * @param time        a timestamp representing the time; must not be Long.MIN_VALUE
+     * @param time        a timestamp representing the time, or Long.MAX_VALUE for uncommitted;
+     *                    must not be Long.MIN_VALUE, the time of a canceled stamp
      * @param authorNull  flag indicating if the author is null; must be false
      * @param moduleNull  flag indicating if the module is null; must be false
      * @param pathNull    flag indicating if the path is null; must be false
@@ -323,25 +342,26 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * @param pathNid The identifier of the path associated with the stamp.
      * @return The retrieved or newly created StampEntity.
      */
-    public StampEntity getStamp(State state, int authorNid, int moduleNid, int pathNid) {
+    public StampEntity getStamp(State state, long authorNid, long moduleNid, long pathNid) {
         return getStamp(state, Long.MAX_VALUE, authorNid, moduleNid, pathNid);
     }
 
     /**
      * Retrieves or creates a {@code StampEntity} based on the given parameters.
      * Validates input arguments to ensure they are within defined constraints.
-     * <p>     * Time can be Long.MAX_VALUE, and will be set at commit time, or Time can be a
+     * <p>     * Time can be Long.MAX_VALUE, the uncommitted time, and will be set at commit time, or Time can be a
      * time in the past, and on commit, time is preserved. This strategy allows transactions to
      * work on import of historic content.
      * <p>     * @param state the state of the stamp to retrieve; must not be null
-     * @param time the timestamp associated with the stamp; must not be {@code Long.MIN_VALUE}
+     * @param time the timestamp associated with the stamp; must not be {@code Long.MIN_VALUE},
+     *             the time of a canceled stamp
      * @param authorNid the identifier of the author; must not be zero
      * @param moduleNid the identifier of the module; must not be zero
      * @param pathNid the identifier of the path; must not be zero
      * @return a {@code StampEntity} that matches the provided parameters
      * @throws IllegalStateException if any of the provided parameters are invalid
      */
-    public StampEntity getStamp(State state, long time, int authorNid, int moduleNid, int pathNid) {
+    public StampEntity getStamp(State state, long time, long authorNid, long moduleNid, long pathNid) {
         if (state == null) throw new IllegalStateException("State cannot be null...");
         if (time == Long.MIN_VALUE) throw new IllegalStateException("Time cannot be Long.MIN_VALUE...");
         if (authorNid == 0) throw new IllegalStateException("Author cannot be zero...");
@@ -362,7 +382,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * @param extraEntities additional entities to associate with the stamp
      * @return a StampEntity representing the combination of the specified parameters
      */
-    public StampEntity getStampForEntities(State state, int authorNid, int moduleNid, int pathNid, EntityFacade firstEntity, EntityFacade... extraEntities) {
+    public StampEntity getStampForEntities(State state, long authorNid, long moduleNid, long pathNid, EntityFacade firstEntity, EntityFacade... extraEntities) {
         StampEntity stampEntity = getStamp(state, Long.MAX_VALUE, authorNid, moduleNid, pathNid);
         addComponent(firstEntity);
         for (EntityFacade entityFacade : extraEntities) {
@@ -396,7 +416,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      *                  (must not be zero).
      * @throws IllegalStateException if the entity nid is zero.
      */
-    public void addComponent(int entityNid) {
+    public void addComponent(long entityNid) {
         if (entityNid == 0) {
             throw new IllegalStateException("Entity nid cannot = 0. ");
         }
@@ -414,25 +434,86 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * with the appropriate commit time. It also updates the list of active transactions by
      * removing the committed transaction and triggers a notification to indicate that a refresh
      * is required.
+     * <p>A transaction ends once (IKE-Network/ike-issues#1243). Committing a transaction that was
+     * already committed does nothing and announces nothing. Committing one that was canceled is
+     * refused. A commit that fails part way leaves the transaction open, so the caller can cancel
+     * it; the stamps it finalized before failing are canceled with the rest.
      *
-     * @return the total number of stamps that were finalized and committed.
+     * @return the total number of stamps that were finalized and committed; 0 if the transaction
+     *         was already committed
+     * @throws IllegalStateException if the transaction was canceled
      */
     public int commit() {
-        AtomicInteger stampCount = new AtomicInteger();
-        this.commitTime = System.currentTimeMillis();
-        activeTransactions.remove(this);
-        MutableIntList finalizedStampNids = IntLists.mutable.empty();
-        forEachStampInTransaction(stampUuid -> {
-            finalizedStampNids.add(commitStamp(stampUuid, this.commitTime));
-            stampCount.incrementAndGet();
-        });
-        Entity.provider().notifyRefreshRequired(this);
-        MutableIntList changedComponentNids = IntLists.mutable.empty();
-        forEachComponentInTransaction(componentNid -> changedComponentNids.add(componentNid));
-        CommitBroadcaster.publish(new CommitBroadcaster.CommitNotification(
-                this.transactionUuid, this.transactionName, this.commitTime,
-                finalizedStampNids.toArray(), changedComponentNids.toArray(), stampCount.get()));
-        return stampCount.get();
+        if (!begin(Ending.COMMITTING, Ending.COMMITTED, "committed")) {
+            return 0;
+        }
+        try {
+            AtomicInteger stampCount = new AtomicInteger();
+            this.commitTime = System.currentTimeMillis();
+            activeTransactions.remove(this);
+            MutableLongList finalizedStampNids = LongLists.mutable.empty();
+            forEachStampInTransaction(stampUuid -> {
+                finalizedStampNids.add(commitStamp(stampUuid, this.commitTime));
+                stampCount.incrementAndGet();
+            });
+            Entity.provider().notifyRefreshRequired(this);
+            MutableLongList changedComponentNids = LongLists.mutable.empty();
+            forEachComponentInTransaction(componentNid -> changedComponentNids.add(componentNid));
+            ending.set(Ending.COMMITTED);
+            CommitBroadcaster.publish(new CommitBroadcaster.CommitNotification(
+                    this.transactionUuid, this.transactionName, this.commitTime,
+                    finalizedStampNids.toArray(), changedComponentNids.toArray(), stampCount.get()));
+            return stampCount.get();
+        } catch (RuntimeException | Error failure) {
+            reopen();
+            this.commitTime = Long.MAX_VALUE;
+            throw failure;
+        }
+    }
+
+    /**
+     * Whether this transaction is still open: neither committed nor canceled, nor being either.
+     * A caller that may reach its error handling after a successful commit cancels only while
+     * the transaction is open.
+     *
+     * @return {@code true} until the transaction is committed or canceled
+     */
+    public boolean isOpen() {
+        return ending.get() == Ending.OPEN;
+    }
+
+    /**
+     * Starts this transaction's ending.
+     *
+     * @param inProgress the state while ending: {@code COMMITTING} or {@code CANCELING}
+     * @param done       the state once ended: {@code COMMITTED} or {@code CANCELED}
+     * @param verb       {@code "committed"} or {@code "canceled"}, for the refusal
+     * @return {@code true} to proceed; {@code false} if the transaction already has, or is
+     *         reaching, this ending, which makes the call a no-op
+     * @throws IllegalStateException if the transaction has, or is reaching, the other ending
+     */
+    private boolean begin(Ending inProgress, Ending done, String verb) {
+        while (true) {
+            Ending current = ending.get();
+            if (current == Ending.OPEN) {
+                if (ending.compareAndSet(Ending.OPEN, inProgress)) {
+                    return true;
+                }
+            } else if (current == inProgress || current == done) {
+                return false;
+            } else {
+                boolean wasCommitted = current == Ending.COMMITTING || current == Ending.COMMITTED;
+                throw new IllegalStateException("Transaction " + transactionName + " (" + transactionUuid
+                        + ") was " + (wasCommitted ? "committed" : "canceled")
+                        + "; it cannot also be " + verb + " (IKE-Network/ike-issues#1243)");
+            }
+        }
+    }
+
+    /** Returns a transaction whose ending failed to open, and to the active transactions. */
+    private void reopen() {
+        ending.set(Ending.OPEN);
+        activeTransactions.add(this);
     }
 
     public void forEachStampInTransaction(Consumer<? super UUID> action) {
@@ -441,15 +522,15 @@ public class Transaction implements Comparable<Transaction>, Encodable {
 
     /**
      * Finalizes a stamp by committing it with the provided commit time. If the stamp's
-     * current time is not set (represented by Long.MAX_VALUE), a new version of the stamp
+     * current time is not set (the uncommitted time, Long.MAX_VALUE), a new version of the stamp
      * is created with the commit time. This method ensures that the stamp's state and its
      * associated metadata are appropriately updated and stored.
      *
      * @param stampUuid   The unique identifier of the stamp being committed.
      * @param commitTime  The timestamp to be associated with the stamp upon commitment.
      */
-    private int commitStamp(UUID stampUuid, long commitTime) {
-        int stampNid = ScopedValue
+    private long commitStamp(UUID stampUuid, long commitTime) {
+        long stampNid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern().publicId())
                 .call(() -> PrimitiveData.nid(stampUuid));
         StampRecord stampEntity = Entity.getStamp(stampNid);
@@ -477,9 +558,9 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * them to the given consumer action.
      *
      * @param action the {@code Consumer} to be applied to each component in the transaction.
-     *               The action consumes an integer, which represents a component nid.
+     *               The action consumes a component nid.
      */
-    public void forEachComponentInTransaction(Consumer<? super Integer> action) {
+    public void forEachComponentInTransaction(Consumer<? super Long> action) {
         componentsInTransaction.forEach(action);
     }
 
@@ -488,19 +569,36 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * to "CANCELED." This operation updates each stamp to an analogue version
      * with the canceled state and notifies the entity provider that a refresh
      * is required. The transaction is also removed from the list of active transactions.
+     * <p>A transaction ends once (IKE-Network/ike-issues#1243). Canceling a transaction that was
+     * already canceled does nothing. Canceling one that was committed is refused, so committed
+     * stamps are never canceled. A cancel that fails part way leaves the transaction open.
      *
-     * @return the number of stamps that were processed during the cancellation.
+     * @return the number of stamps that were processed during the cancellation; 0 if the
+     *         transaction was already canceled
+     * @throws IllegalStateException if the transaction was committed
      */
     public int cancel() {
+        if (!begin(Ending.CANCELING, Ending.CANCELED, "canceled")) {
+            return 0;
+        }
+        try {
+            return cancelStamps();
+        } catch (RuntimeException | Error failure) {
+            reopen();
+            throw failure;
+        }
+    }
+
+    private int cancelStamps() {
         AtomicInteger stampCount = new AtomicInteger();
         forEachStampInTransaction(stampUuid -> {
-            int stampNid = ScopedValue
+            long stampNid = ScopedValue
                     .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern().publicId())
                     .call(() -> PrimitiveData.nid(stampUuid));
             StampRecord stampEntity = Entity.getStamp(stampNid);
             StampEntityVersion stampVersion = stampEntity.lastVersion();
             if (stampVersion.time() == Long.MIN_VALUE) {
-                // already canceled.
+                // Already canceled: Long.MIN_VALUE is the time of a canceled stamp.
             } else {
                 StampAnalogueBuilder newStampBuilder = stampEntity.analogueBuilder();
                 newStampBuilder.add(new StampVersionRecord(newStampBuilder.analogue(),
@@ -516,6 +614,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
 //            processTransaction(uncommittedStamp, stampSequence, childTransaction);
 //        }
         activeTransactions.remove(this);
+        ending.set(Ending.CANCELED);
         Entity.provider().notifyRefreshRequired(this);
         return stampCount.get();
     }
@@ -536,7 +635,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     public static Transaction decode(DecoderInput in) {
         int objectMarshalVersion = in.readInt();
         return switch (objectMarshalVersion) {
-            case marshalVersion -> {
+            case marshalVersion, marshalVersionIntNids -> {
                 Transaction transaction = new Transaction(in.readUuid(), in.readString(), in.readLong());
                 int stampsInTransactionCount = in.readInt();
                 for (int i = 0; i < stampsInTransactionCount; i++) {
@@ -544,7 +643,8 @@ public class Transaction implements Comparable<Transaction>, Encodable {
                 }
                 int componentsInTransactionCount = in.readInt();
                 for (int i = 0; i < componentsInTransactionCount; i++) {
-                    transaction.componentsInTransaction.add(in.readInt());
+                    long componentNid = objectMarshalVersion == marshalVersionIntNids ? in.readInt() : in.readNid();
+                    transaction.componentsInTransaction.add(componentNid);
                 }
                 yield transaction;
             }
@@ -572,8 +672,8 @@ public class Transaction implements Comparable<Transaction>, Encodable {
             out.writeUuid(stampUuid);
         }
         out.writeInt(componentsInTransaction.size());
-        for (int componentNid : componentsInTransaction) {
-            out.writeInt(componentNid);
+        for (long componentNid : componentsInTransaction) {
+            out.writeNid(componentNid);
         }
     }
 

@@ -56,9 +56,9 @@ public class TestEntityToProtobufStampTransformIT {
         Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
         Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
 
-        PublicId stampPublicId = PublicIds.newRandom();
-        int stampNid = Entity.nid(stampPublicId);
-        UUID stampUuid = stampPublicId.asUuidArray()[0];
+        UUID stampUuid = UUID.randomUUID();
+        PublicId stampPublicId = PublicIds.of(stampUuid);
+        long stampNid = Entity.nid(stampPublicId);
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()
@@ -94,10 +94,10 @@ public class TestEntityToProtobufStampTransformIT {
         assertTrue(msg.hasStampChronology());
         assertTrue(msg.getStampChronology().hasFirstStampVersion());
         assertEquals(expectedTime, msg.getStampChronology().getFirstStampVersion().getTime());
-        assertFalse(msg.getStampChronology().getFirstStampVersion().getStatusPublicId().getUuidsList().isEmpty());
-        assertFalse(msg.getStampChronology().getFirstStampVersion().getAuthorPublicId().getUuidsList().isEmpty());
-        assertFalse(msg.getStampChronology().getFirstStampVersion().getModulePublicId().getUuidsList().isEmpty());
-        assertFalse(msg.getStampChronology().getFirstStampVersion().getPathPublicId().getUuidsList().isEmpty());
+        assertFalse(msg.getStampChronology().getFirstStampVersion().getStatusPublicId().getUuidBitsList().isEmpty());
+        assertFalse(msg.getStampChronology().getFirstStampVersion().getAuthorPublicId().getUuidBitsList().isEmpty());
+        assertFalse(msg.getStampChronology().getFirstStampVersion().getModulePublicId().getUuidBitsList().isEmpty());
+        assertFalse(msg.getStampChronology().getFirstStampVersion().getPathPublicId().getUuidBitsList().isEmpty());
     }
 
     @Test
@@ -190,9 +190,9 @@ public class TestEntityToProtobufStampTransformIT {
         Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
         Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
 
-        PublicId stampPublicId = PublicIds.newRandom();
-        int stampNid = Entity.nid(stampPublicId);
-        UUID stampUuid = stampPublicId.asUuidArray()[0];
+        UUID stampUuid = UUID.randomUUID();
+        PublicId stampPublicId = PublicIds.of(stampUuid);
+        long stampNid = Entity.nid(stampPublicId);
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()

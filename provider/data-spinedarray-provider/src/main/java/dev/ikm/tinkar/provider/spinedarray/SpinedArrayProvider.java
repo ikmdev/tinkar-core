@@ -15,14 +15,20 @@
  */
 package dev.ikm.tinkar.provider.spinedarray;
 
+import org.eclipse.collections.api.block.procedure.primitive.LongProcedure;
+import java.util.function.ObjLongConsumer;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.common.service.SequentialNids;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.SetOnce;
-import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedByteArrayMap;
-import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
@@ -48,10 +54,8 @@ import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.set.MutableSet;
-import org.eclipse.collections.api.set.primitive.IntSet;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -80,7 +84,7 @@ import java.util.function.ObjIntConsumer;
  * TODO: consider if we remove ConcurrentUuidIntHashMap, or improve.
  * <p>MVStore performs worse when iterating over entities.
  */
-public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, PrimitiveDataRepair {
+public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, NidGenerator, PrimitiveDataRepair {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
     protected static final File defaultDataDirectory = new File("target/spinedarrays/");
 
@@ -110,7 +114,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
     protected static LongAdder writeSequence = new LongAdder();
     protected final CountDownLatch uuidsLoadedLatch = new CountDownLatch(1);
-    final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
+    final AtomicInteger nextNid = new AtomicInteger(SequentialNids.FIRST_NID);
 
     final ConcurrentHashMap<UUID, Integer> uuidToNidMap = ConcurrentHashMap.newMap();
     final ConcurrentHashSet<Integer> patternNids = new ConcurrentHashSet();
@@ -120,13 +124,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     final ConcurrentHashMap<Integer, ConcurrentHashSet<Integer>> patternElementNidsMap = ConcurrentHashMap.newMap();
 
     final SpinedByteArrayMap entityToBytesMap;
-    final SpinedIntIntMap nidToPatternNidMap;
     /**
      * Using "citing" instead of "referencing" to make the field names more distinct.
      */
     final SpinedIntLongArrayMap nidToCitingComponentsNidMap;
 
-    final File nidToPatternNidMapDirectory;
     final File nidToByteArrayMapDirectory;
     final File nidToCitingComponentNidMapDirectory;
     final File nextNidKeyFile;
@@ -148,6 +150,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     private SpinedArrayProvider() throws IOException, ExecutionException, InterruptedException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening SpinedArrayProvider on thread: {}", Thread.currentThread().getName());
+        NidLayout.activate(NidLayout.SEQUENTIAL);
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
         if (expectEmpty) {
@@ -158,8 +161,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         configuredRoot.mkdirs();
         LOG.info("Datastore root: " + configuredRoot.getAbsolutePath());
 
-        this.nidToPatternNidMapDirectory = new File(configuredRoot, "nidToPatternNidMap");
-        this.nidToPatternNidMapDirectory.mkdirs();
         this.nidToByteArrayMapDirectory = new File(configuredRoot, "nidToByteArrayMap");
         this.nidToByteArrayMapDirectory.mkdirs();
         this.nidToCitingComponentNidMapDirectory = new File(configuredRoot, "nidToCitingComponentNidMap");
@@ -168,8 +169,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         this.absentIdentitiesFile = new File(configuredRoot, "absentIdentities.txt");
 
         this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayFileStore(nidToByteArrayMapDirectory));
-        this.nidToPatternNidMap = new SpinedIntIntMap(KeyType.NID_KEY);
-        this.nidToPatternNidMap.read(this.nidToPatternNidMapDirectory);
         this.nidToCitingComponentsNidMap = new SpinedIntLongArrayMap(new IntLongArrayFileStore(nidToCitingComponentNidMapDirectory));
 
         if (nextNidKeyFile.exists()) {
@@ -199,43 +198,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                     LOG.info("Finished UUID strategy 2 in: " + uuidNidMapFromEntitiesStopwatch.durationString());
                     LOG.info(uuidNidCollector.report());
                 }
-                LOG.info("Starting virtual thread for listAndCancelUncommittedStamps");
-                int[] sortedStampNids = stampNids.stream().sorted().mapToInt(value -> (int) value).toArray();
-                Thread.ofVirtual().name("cancel-uncommitted-stamps").start(() -> {
-                    // EntityService starts in ENTITIES phase, after DATA_STORAGE where this provider starts.
-                    // Wait for it to become available rather than failing immediately.
-                    ServiceLifecycleManager lifecycleManager = ServiceLifecycleManager.get();
-                    int maxAttempts = 60;
-                    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-                        // Stop waiting if startup is no longer in progress — e.g. a
-                        // non-retryable failure (data store already open in another
-                        // process) aborted it. Without this check the loop spins out
-                        // its full budget logging "getRunningService(EntityService)
-                        // called in state DISCOVERED" once per cycle for a service
-                        // that will never appear.
-                        if (!lifecycleManager.isStartupActive()) {
-                            LOG.info("Service startup no longer in progress (state {}); skipping "
-                                            + "uncommitted stamp cancellation at startup",
-                                    lifecycleManager.getState());
-                            return;
-                        }
-                        Optional<EntityService> entityServiceOpt =
-                                lifecycleManager.getRunningService(EntityService.class);
-                        if (entityServiceOpt.isPresent()) {
-                            entityServiceOpt.get().listAndCancelUncommittedStamps(sortedStampNids);
-                            return;
-                        }
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            LOG.warn("Interrupted while waiting for EntityService");
-                            return;
-                        }
-                    }
-                    LOG.warn("EntityService not available after {}s, skipping uncommitted stamp cancellation at startup",
-                            maxAttempts / 2);
-                });
                 LOG.info("UUID loading task completed");
             }).get();
             LOG.info("UUID loading task .get() returned successfully");
@@ -301,15 +263,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                 this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
                 save();
 
-                // Check for uncommitted stamps using EntityProvider while EntityService is still available
-                // This must happen before data provider shutdown since EntityProvider needs access to entities
-                try {
-                    EntityService.get().listAndCancelUncommittedStamps(
-                        stampNids.stream().sorted().mapToInt(value -> (int) value).toArray()
-                    );
-                } catch (java.util.NoSuchElementException e) {
-                    LOG.warn("EntityService not available during shutdown, skipping uncommitted stamp check");
-                }
 
                 entityToBytesMap.close();
             } catch (Exception e) {
@@ -329,7 +282,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         LOG.info("Saving SpinedArrayProvider");
         try {
             Files.writeString(this.nextNidKeyFile.toPath(), Integer.toString(nextNid.get()));
-            nidToPatternNidMap.write(this.nidToPatternNidMapDirectory);
             this.entityToBytesMap.write();
             this.nidToCitingComponentsNidMap.write();
             saveAbsentIdentities();
@@ -363,7 +315,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
      * export — failed.
      */
     @Override
-    public PublicId publicIdForNid(int nid) {
+    public PublicId publicIdForNid(long longNid) {
+        int nid = Nid.narrowChecked(longNid);
         List<UUID> known = absentUuids.get(nid);
         if (known != null && !known.isEmpty()) {
             return PublicIds.of(known);
@@ -440,20 +393,22 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public int nidForUuids(UUID... uuids) {
+    public long nidForUuids(UUID... uuids) {
         try {
             this.uuidsLoadedLatch.await();
             if (uuids.length == 1) {
-                return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
+                return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> Nid.narrowChecked(newNid()));
             }
 
             OptionalInt optionalNid = optionalNid(uuids);
 
+            // Integer.MAX_VALUE, which is never a nid, marks "no nid yet" until one of the UUIDs
+            // has one or the first is given a new one.
             int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
 
             for (UUID uuid : uuids) {
-                if (nid == Integer.MAX_VALUE) {
-                    nid = uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
+                if (Nid.isNotApplicable(nid)) {
+                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> Nid.narrowChecked(newNid()));
                 } else {
                     uuidToNidMap.put(uuid, nid);
                 }
@@ -478,25 +433,27 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public int newNid() {
+    public long newNid() {
         return nextNid.getAndIncrement();
     }
 
     @Override
-    public int nidForUuids(ImmutableList<UUID> uuidList) {
+    public long nidForUuids(ImmutableList<UUID> uuidList) {
         try {
             this.uuidsLoadedLatch.await();
             if (uuidList.size() == 1) {
-                return uuidToNidMap.computeIfAbsent(uuidList.get(0), uuidKey -> newNid());
+                return uuidToNidMap.computeIfAbsent(uuidList.get(0), uuidKey -> Nid.narrowChecked(newNid()));
             }
 
             OptionalInt optionalNid = optionalNid(uuidList.toArray(new UUID[uuidList.size()]));
 
+            // Integer.MAX_VALUE, which is never a nid, marks "no nid yet" until one of the UUIDs
+            // has one or the first is given a new one.
             int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
 
             for (UUID uuid : uuidList) {
-                if (nid == Integer.MAX_VALUE) {
-                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> newNid());
+                if (Nid.isNotApplicable(nid)) {
+                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> Nid.narrowChecked(newNid()));
                 } else {
                     uuidToNidMap.put(uuid, nid);
                 }
@@ -522,68 +479,79 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public void forEach(ObjIntConsumer<byte[]> action) {
-        this.entityToBytesMap.forEach(action);
+    public void forEach(ObjLongConsumer<byte[]> action) {
+        this.entityToBytesMap.forEach((bytes, nid) -> action.accept(bytes, nid));
     }
 
     @Override
-    public void forEachParallel(ObjIntConsumer<byte[]> action) {
+    public void forEachParallel(ObjLongConsumer<byte[]> action) {
         try {
-            this.entityToBytesMap.forEachParallel(action);
+            this.entityToBytesMap.forEachParallel((bytes, nid) -> action.accept(bytes, nid));
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+    public void forEachParallel(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
         try {
-            this.entityToBytesMap.forEachParallel(nids, action);
+            this.entityToBytesMap.forEachParallel(narrow(nids), (bytes, nid) -> action.accept(bytes, nid));
         } catch (ExecutionException | InterruptedException e) {
             AlertStreams.dispatchToRoot(e);
         }
     }
 
     @Override
-    public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+    public void forEach(ImmutableLongList nids, ObjLongConsumer<byte[]> action) {
         try {
-            this.entityToBytesMap.forEach(nids, action);
+            this.entityToBytesMap.forEach(narrow(nids), (bytes, nid) -> action.accept(bytes, nid));
         } catch (ExecutionException | InterruptedException e) {
             AlertStreams.dispatchToRoot(e);
         }
     }
 
 
-    @Override
-    public byte[] getBytes(int nid) {
-        return this.entityToBytesMap.get(nid);
+    /** The nids of a widened list, narrowed for the spined maps, which hold int nids. */
+    private static ImmutableIntList narrow(ImmutableLongList nids) {
+        int[] narrowed = new int[nids.size()];
+        for (int i = 0; i < narrowed.length; i++) {
+            narrowed[i] = Nid.narrowChecked(nids.get(i));
+        }
+        return IntLists.immutable.of(narrowed);
     }
 
     @Override
-    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
-        if (nid == Integer.MIN_VALUE) {
+    public byte[] getBytes(long nid) {
+        return this.entityToBytesMap.get(Nid.narrowChecked(nid));
+    }
+
+    @Override
+    public byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
+        if (Nid.isNone(nid)) {
             LOG.error("NID should not be Integer.MIN_VALUE");
             throw new IllegalStateException("NID should not be Integer.MIN_VALUE");
         }
-        if (!this.entityToBytesMap.containsKey(nid)) {
-            this.nidToPatternNidMap.put(nid, patternNid);
-            if (patternNid != Integer.MAX_VALUE) {
-                long citationLong = IntsInLong.ints2Long(nid, patternNid);
-                this.nidToCitingComponentsNidMap.accumulateAndGet(referencedComponentNid, new long[]{citationLong},
+        if (!this.entityToBytesMap.containsKey(Nid.narrowChecked(nid))) {
+            // A concept, pattern or stamp comes with the not-applicable sentinel, Integer.MAX_VALUE
+            // (Nid.NOT_APPLICABLE), as its pattern; only a semantic is indexed under its pattern and
+            // referenced component. An entity's pattern is read from its bytes, never from a map.
+            if (!Nid.isNotApplicable(patternNid)) {
+                long citationLong = IntsInLong.ints2Long(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
+                this.nidToCitingComponentsNidMap.accumulateAndGet(Nid.narrowChecked(referencedComponentNid), new long[]{citationLong},
                         PrimitiveDataService::mergeCitations);
-                addToPatternElementSet(patternNid, nid);
+                addToPatternElementSet(Nid.narrowChecked(patternNid), Nid.narrowChecked(nid));
             }
             if (sourceObject instanceof ConceptEntity concept) {
-                this.conceptNids.add(concept.nid());
+                this.conceptNids.add(Nid.narrowChecked(concept.nid()));
             } else if (sourceObject instanceof SemanticEntity semanticEntity) {
-                this.semanticNids.add(semanticEntity.nid());
+                this.semanticNids.add(Nid.narrowChecked(semanticEntity.nid()));
             } else if (sourceObject instanceof PatternEntity patternEntity) {
-                this.patternNids.add(patternEntity.nid());
+                this.patternNids.add(Nid.narrowChecked(patternEntity.nid()));
             } else if (sourceObject instanceof StampEntity stampEntity) {
-                this.stampNids.add(stampEntity.nid());
+                this.stampNids.add(Nid.narrowChecked(stampEntity.nid()));
             }
         }
-        byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(nid, value, PrimitiveDataService::merge);
+        byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(Nid.narrowChecked(nid), value, PrimitiveDataService::merge);
         this.writeSequence.increment();
         this.changeSetWriterServices.forEach(writerService -> writerService.writeToChangeSet((Entity) sourceObject, activity));
 
@@ -642,43 +610,43 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public int[] semanticNidsOfPattern(int patternNid) {
-        IntSet elementNids = getElementNidsForPatternNid(patternNid);
-        if (elementNids.notEmpty()) {
-            MutableIntList elementNidList = IntLists.mutable.withInitialCapacity(elementNids.size());
-            elementNids.forEach(integer -> elementNidList.add(integer));
-            return elementNidList.toArray();
+    public long[] semanticNidsOfPattern(long patternNid) {
+        ConcurrentHashSet<Integer> elementNids = patternElementNidsMap.get(Nid.narrowChecked(patternNid));
+        if (elementNids == null || elementNids.isEmpty()) {
+            return new long[0];
         }
-        return new int[0];
+        // The set may grow while it is read; the list grows with it.
+        MutableLongList elementNidList = LongLists.mutable.withInitialCapacity(elementNids.size());
+        for (int elementNid : elementNids) {
+            elementNidList.add(elementNid);
+        }
+        return elementNidList.toArray();
     }
 
-    public IntSet getElementNidsForPatternNid(int patternNid) {
-        if (patternElementNidsMap.containsKey(patternNid)) {
-            return IntSets.immutable.ofAll(patternElementNidsMap.get(patternNid).stream().mapToInt(value -> (int) value));
+    /**
+     * Visits the elements of a pattern from the set the provider keeps for it. No copy is made:
+     * a visit over a pattern with millions of elements costs its iteration and nothing more,
+     * where it once built an immutable int set of them first, on every call. The set is
+     * concurrent, so an element added while it is read may or may not be visited. A pattern no
+     * semantic has been merged under has no set, and no elements.
+     */
+    private void forEachElementNid(int patternNid, IntProcedure procedure) {
+        ConcurrentHashSet<Integer> elementNids = patternElementNidsMap.get(patternNid);
+        if (elementNids != null) {
+            for (int elementNid : elementNids) {
+                procedure.accept(elementNid);
+            }
         }
-        return IntSets.immutable.empty();
     }
 
     @Override
-    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
+    public void forEachSemanticNidOfPattern(long patternNid, LongProcedure procedure) {
         EntityHandle.get(patternNid).expectPattern("Trying to iterate elements for entity that is not a pattern: ");
-
-        IntSet elementNids;
-        if (LOG.isTraceEnabled()) {
-            Stopwatch sw = new Stopwatch();
-            elementNids = getElementNidsForPatternNid(patternNid);
-            LOG.atTrace().log("getElementNidsForPatternNid " + PrimitiveData.text(patternNid) +
-                    " time: " + sw.durationString());
-        } else {
-            elementNids = getElementNidsForPatternNid(patternNid);
-        }
-        if (elementNids.notEmpty()) {
-            elementNids.forEach(procedure);
-        }
+        forEachElementNid(Nid.narrowChecked(patternNid), procedure::value);
     }
 
     @Override
-    public void forEachPatternNid(IntProcedure procedure) {
+    public void forEachPatternNid(LongProcedure procedure) {
         try {
             this.uuidsLoadedLatch.await();
             this.patternNids.forEach(patternNid -> procedure.accept(patternNid));
@@ -689,7 +657,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public void forEachConceptNid(IntProcedure procedure) {
+    public void forEachConceptNid(LongProcedure procedure) {
         try {
             this.uuidsLoadedLatch.await();
             this.conceptNids.forEach(conceptNid -> procedure.accept(conceptNid));
@@ -700,7 +668,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public void forEachStampNid(IntProcedure procedure) {
+    public void forEachStampNid(LongProcedure procedure) {
         try {
             this.uuidsLoadedLatch.await();
             this.stampNids.forEach(stampNid -> procedure.accept(stampNid));
@@ -711,7 +679,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public void forEachSemanticNid(IntProcedure procedure) {
+    public void forEachSemanticNid(LongProcedure procedure) {
         try {
             this.uuidsLoadedLatch.await();
             this.semanticNids.forEach(semanticNid -> procedure.accept(semanticNid));
@@ -722,8 +690,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
-        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+    public void forEachSemanticNidForComponent(long componentNid, LongProcedure procedure) {
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(Nid.narrowChecked(componentNid));
         if (citationLongs != null) {
             for (long citationLong : citationLongs) {
                 int citingComponentNid = (int) (citationLong >> 32);
@@ -733,8 +701,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
-        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+    public void forEachSemanticNidForComponentOfPattern(long componentNid, long patternNid, LongProcedure procedure) {
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(Nid.narrowChecked(componentNid));
         if (citationLongs != null) {
             for (long citationLong : citationLongs) {
                 int citingComponentNid = (int) (citationLong >> 32);
@@ -752,14 +720,13 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public void erase(int nid) {
-        this.entityToBytesMap.put(nid, null);
-        this.nidToPatternNidMap.put(nid, Integer.MAX_VALUE);
-        this.nidToCitingComponentsNidMap.put(nid, null);
-        this.conceptNids.remove(nid);
-        this.semanticNids.remove(nid);
-        this.patternNids.remove(nid);
-        this.stampNids.remove(nid);
+    public void erase(long nid) {
+        this.entityToBytesMap.put(Nid.narrowChecked(nid), null);
+        this.nidToCitingComponentsNidMap.put(Nid.narrowChecked(nid), null);
+        this.conceptNids.remove(Nid.narrowChecked(nid));
+        this.semanticNids.remove(Nid.narrowChecked(nid));
+        this.patternNids.remove(Nid.narrowChecked(nid));
+        this.stampNids.remove(Nid.narrowChecked(nid));
         this.nidToCitingComponentsNidMap.forEach((nidPatternsCitingComponent, referencedComponentNid) -> {
             MutableLongList nidPatternInLongToRemove = LongLists.mutable.withInitialCapacity(2);
             for (long nidPatternInLong : nidPatternsCitingComponent) {
@@ -779,10 +746,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public void mergeThenErase(int nidToErase, int nidToMergeInto) {
+    public void mergeThenErase(long nidToErase, long nidToMergeInto) {
 
 
-        byte[] mergedBytes = merge(PrimitiveData.get().getBytes(nidToMergeInto), PrimitiveData.get().getBytes(nidToErase), DataActivity.DATA_REPAIR);
+        byte[] mergedBytes = merge(getBytes(nidToMergeInto), getBytes(nidToErase), DataActivity.DATA_REPAIR);
         erase(nidToErase);
         put(nidToMergeInto, mergedBytes);
         EntityService.get().invalidateCaches(nidToErase, nidToMergeInto);
@@ -885,8 +852,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public void put(int nid, byte[] bytesToOverwrite) {
-        this.entityToBytesMap.put(nid, bytesToOverwrite);
+    public void put(long nid, byte[] bytesToOverwrite) {
+        this.entityToBytesMap.put(Nid.narrowChecked(nid), bytesToOverwrite);
     }
 
 
@@ -1008,11 +975,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             if (!checkDir.exists() || !checkDir.isDirectory()) {
                 return false;
             }
-            File nidToPatternDir = new File(checkDir, "nidToPatternNidMap");
+            // The two directories every spined-array store has. A store written before 2026-10-07
+            // also holds a nidToPatternNidMap directory, a map nothing read, which is ignored.
             File nidToBytesDir = new File(checkDir, "nidToByteArrayMap");
             File nidToCitingDir = new File(checkDir, "nidToCitingComponentNidMap");
-            return nidToPatternDir.isDirectory()
-                    && nidToBytesDir.isDirectory()
+            return nidToBytesDir.isDirectory()
                     && nidToCitingDir.isDirectory();
         }
 

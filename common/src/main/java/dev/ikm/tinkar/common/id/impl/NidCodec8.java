@@ -127,23 +127,23 @@ public final class NidCodec8 {
      * Converts a nid to the 64-bit RocksDB key {@code [patternSequence:16][elementSequence:48]}.
      *
      * @param nid the nid
-     * @return the long key
+     * @return the rocks key
      */
-    public static long longKeyForNid(int nid) {
-        return KeyUtil.patternSequenceElementSequenceToLongKey(
+    public static long rocksKeyForNid(int nid) {
+        return KeyUtil.patternSequenceElementSequenceToRocksKey(
                 decodePatternSequence(nid), decodeElementSequence(nid));
     }
 
     /**
      * Converts a 64-bit RocksDB key back to a nid.
      *
-     * @param longKey the long key
+     * @param rocksKey the rocks key
      * @return the nid
      * @throws IllegalArgumentException if the key's sequences do not fit this layout
      */
-    public static int nidForLongKey(long longKey) {
-        return encode(KeyUtil.longKeyToPatternSequence(longKey),
-                KeyUtil.longKeyToElementSequence(longKey));
+    public static int nidForRocksKey(long rocksKey) {
+        return encode(KeyUtil.rocksKeyToPatternSequence(rocksKey),
+                KeyUtil.rocksKeyToElementSequence(rocksKey));
     }
 
     /**

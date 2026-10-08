@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
+import dev.ikm.tinkar.terms.KernelTerm;
+import java.util.List;
 import java.util.UUID;
 
 import org.eclipse.collections.api.factory.Lists;
@@ -22,11 +24,13 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -39,7 +43,6 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class TempEditUtil {
 
@@ -55,17 +58,17 @@ public class TempEditUtil {
 		this.statedAxiomPattern = statedAxiomPattern;
 	}
 
-	private int getStatedSemanticNid(int concept) {
-		int[] statedSemanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(concept,
-				statedAxiomPattern.nid());
-		if (statedSemanticNids.length == 0)
-			throw new IllegalStateException("No stated form for concept: " + PrimitiveData.text(concept));
-		if (statedSemanticNids.length > 1)
-			throw new IllegalStateException("More than one stated form for concept: " + PrimitiveData.text(concept));
-		return statedSemanticNids[0];
+	private long getStatedSemanticNid(long concept) {
+		List<SemanticEntity<SemanticEntityVersion>> statedSemantics = EntityService.get()
+				.semanticsForComponentOfPattern(concept, statedAxiomPattern.nid()).toList();
+		if (statedSemantics.isEmpty())
+			throw new IllegalStateException("No stated form for concept: " + DiagnosticText.component(concept));
+		if (statedSemantics.size() > 1)
+			throw new IllegalStateException("More than one stated form for concept: " + DiagnosticText.component(concept));
+		return statedSemantics.getFirst().nid();
 	}
 
-	private void update(int statedSemanticNid, LogicalExpression newStatedExpression) {
+	private void update(long statedSemanticNid, LogicalExpression newStatedExpression) {
 		Transaction updateStatedTransaction = Transaction.make();
 		StampEntity<?> updateStamp = updateStatedTransaction.getStamp(State.ACTIVE,
 				viewCalculator.viewCoordinateRecord().getAuthorNidForChanges(),
@@ -79,9 +82,9 @@ public class TempEditUtil {
 	}
 
 	public DiTreeEntity setParent(UUID conceptUuid, UUID parentUuid) {
-		int conceptNid = PrimitiveData.nid(conceptUuid);
-		int parentNid = PrimitiveData.nid(parentUuid);
-		int statedSemanticNid = getStatedSemanticNid(conceptNid);
+		long conceptNid = PrimitiveData.nid(conceptUuid);
+		long parentNid = PrimitiveData.nid(parentUuid);
+		long statedSemanticNid = getStatedSemanticNid(conceptNid);
 		Latest<SemanticEntityVersion> latestStatedSemantic = viewCalculator.latest(statedSemanticNid);
 		LOG.info("Stated: " + latestStatedSemantic.get());
 		DiTreeEntity def = (DiTreeEntity) latestStatedSemantic.get().fieldValues().getFirst();
@@ -99,8 +102,8 @@ public class TempEditUtil {
 	}
 
 	public DiTreeEntity makeEquivalent(UUID conceptUuid) {
-		int conceptNid = PrimitiveData.nid(conceptUuid);
-		int statedSemanticNid = getStatedSemanticNid(conceptNid);
+		long conceptNid = PrimitiveData.nid(conceptUuid);
+		long statedSemanticNid = getStatedSemanticNid(conceptNid);
 		Latest<SemanticEntityVersion> latestStatedSemantic = viewCalculator.latest(statedSemanticNid);
 		LOG.info("Stated: " + latestStatedSemantic.get());
 		DiTreeEntity def = (DiTreeEntity) latestStatedSemantic.get().fieldValues().getFirst();
@@ -111,9 +114,9 @@ public class TempEditUtil {
 		LOG.info("Axiom: " + axiom);
 		switch (axiom) {
 		case LogicalAxiom.LogicalSet setAxiom -> {
-			statedBuilder.changeSetType(setAxiom, TinkarTerm.SUFFICIENT_SET);
+			statedBuilder.changeSetType(setAxiom, KernelTerm.SUFFICIENT_SET);
 		}
-		default -> throw new IllegalStateException("Unexpected value: " + axiom);
+		default -> throw new IllegalStateException("Unexpected kind of axiom: " + axiom.getClass().getSimpleName());
 		}
 		LogicalExpression newStatedExpression = statedBuilder.build();
 

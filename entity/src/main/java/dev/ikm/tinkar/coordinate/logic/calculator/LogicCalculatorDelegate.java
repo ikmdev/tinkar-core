@@ -31,30 +31,30 @@ public interface LogicCalculatorDelegate extends LogicCalculator, StampCalculato
     }
 
     @Override
-    default boolean hasSufficientSet(int nid) {
+    default boolean hasSufficientSet(long nid) {
         return logicCalculator().hasSufficientSet(nid);
     }
 
     @Override
-    default Latest<DiTreeEntity> getAxiomTreeForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
+    default Latest<DiTreeEntity> getAxiomTreeForEntity(long entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
         return logicCalculator().getAxiomTreeForEntity(entityNid, stampCalculator, premiseType);
     }
 
-    default Latest<SemanticEntityVersion> getAxiomSemanticForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
+    default Latest<SemanticEntityVersion> getAxiomSemanticForEntity(long entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
         return logicCalculator().getAxiomSemanticForEntity(entityNid, stampCalculator, premiseType);
     }
 
     LogicCalculator logicCalculator();
 
-    default Latest<SemanticEntityVersion> getAxiomSemanticForEntity(int entityNid, PremiseType premiseType) {
+    default Latest<SemanticEntityVersion> getAxiomSemanticForEntity(long entityNid, PremiseType premiseType) {
         return logicCalculator().getAxiomSemanticForEntity(entityNid, stampCalculator(), premiseType);
     }
 
-    default Latest<SemanticEntityVersion> getStatedAxiomSemanticForEntity(int entityNid) {
+    default Latest<SemanticEntityVersion> getStatedAxiomSemanticForEntity(long entityNid) {
         return logicCalculator().getAxiomSemanticForEntity(entityNid, stampCalculator(), PremiseType.STATED);
     }
 
-    default Latest<SemanticEntityVersion> getInferredAxiomSemanticForEntity(int entityNid) {
+    default Latest<SemanticEntityVersion> getInferredAxiomSemanticForEntity(long entityNid) {
         return logicCalculator().getAxiomSemanticForEntity(entityNid, stampCalculator(), PremiseType.INFERRED);
     }
 
@@ -71,15 +71,15 @@ public interface LogicCalculatorDelegate extends LogicCalculator, StampCalculato
     }
 
 
-    default Latest<DiTreeEntity> getAxiomTreeForEntity(int entityNid, PremiseType premiseType) {
+    default Latest<DiTreeEntity> getAxiomTreeForEntity(long entityNid, PremiseType premiseType) {
         return logicCalculator().getAxiomTreeForEntity(entityNid, stampCalculator(), premiseType);
     }
 
-    default Latest<DiTreeEntity> getStatedAxiomTreeForEntity(int entityNid) {
+    default Latest<DiTreeEntity> getStatedAxiomTreeForEntity(long entityNid) {
         return logicCalculator().getAxiomTreeForEntity(entityNid, stampCalculator(), PremiseType.STATED);
     }
 
-    default Latest<DiTreeEntity> getInferredAxiomTreeForEntity(int entityNid) {
+    default Latest<DiTreeEntity> getInferredAxiomTreeForEntity(long entityNid) {
         return logicCalculator().getAxiomTreeForEntity(entityNid, stampCalculator(), PremiseType.INFERRED);
     }
 

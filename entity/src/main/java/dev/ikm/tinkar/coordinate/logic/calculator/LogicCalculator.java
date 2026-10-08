@@ -31,21 +31,21 @@ public interface LogicCalculator {
         return hasSufficientSet(entityFacade.nid());
     }
 
-    boolean hasSufficientSet(int nid);
+    boolean hasSufficientSet(long nid);
 
     default Latest<DiTreeEntity> getStatedLogicalExpressionForEntity(EntityFacade entity, StampCalculator stampCalculator) {
         return getAxiomTreeForEntity(entity.nid(), stampCalculator, PremiseType.STATED);
     }
 
-    Latest<DiTreeEntity> getAxiomTreeForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType);
+    Latest<DiTreeEntity> getAxiomTreeForEntity(long entityNid, StampCalculator stampCalculator, PremiseType premiseType);
 
-    Latest<SemanticEntityVersion> getAxiomSemanticForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType);
+    Latest<SemanticEntityVersion> getAxiomSemanticForEntity(long entityNid, StampCalculator stampCalculator, PremiseType premiseType);
 
     default Latest<DiTreeEntity> getAxiomTreeForEntity(EntityFacade entity, StampCalculator stampCalculator, PremiseType premiseType) {
         return getAxiomTreeForEntity(entity.nid(), stampCalculator, premiseType);
     }
 
-    default Latest<DiTreeEntity> getStatedLogicalExpressionForEntity(int entityNid, StampCalculator stampCalculator) {
+    default Latest<DiTreeEntity> getStatedLogicalExpressionForEntity(long entityNid, StampCalculator stampCalculator) {
         return getAxiomTreeForEntity(entityNid, stampCalculator, PremiseType.STATED);
     }
 
@@ -53,7 +53,7 @@ public interface LogicCalculator {
         return getAxiomTreeForEntity(entity.nid(), stampCalculator, PremiseType.INFERRED);
     }
 
-    default Latest<DiTreeEntity> getInferredLogicalExpressionForEntity(int entityNid, StampCalculator stampCalculator) {
+    default Latest<DiTreeEntity> getInferredLogicalExpressionForEntity(long entityNid, StampCalculator stampCalculator) {
         return getAxiomTreeForEntity(entityNid, stampCalculator, PremiseType.INFERRED);
     }
 

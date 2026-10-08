@@ -17,13 +17,12 @@ package dev.ikm.tinkar.reasoner.service;
 
 import java.util.List;
 
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.terms.PatternFacade;
 
@@ -59,18 +58,6 @@ public interface ReasonerService {
 
 	boolean isIncrementalReady();
 
-	@Deprecated
-	void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater);
-
-	default void processIncremental(DiTreeEntity definition, int conceptNid) {
-		processIncremental(definition, conceptNid, new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-	}
-
 	void processIncremental(SemanticEntityVersion update, TrackingCallable<?> progressUpdater);
 
 	default void processIncremental(SemanticEntityVersion update) {
@@ -82,9 +69,9 @@ public interface ReasonerService {
 		});
 	}
 
-	void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater);
+	void processIncremental(List<Long> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater);
 
-	default void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates) {
+	default void processIncremental(List<Long> deletes, List<SemanticEntityVersion> updates) {
 		this.processIncremental(deletes, updates, new TrackingCallable<Object>() {
 			@Override
 			protected Object compute() throws Exception {
@@ -116,27 +103,14 @@ public interface ReasonerService {
 
 	int getConceptCount();
 
-	ImmutableIntList getReasonerConceptSet();
+	ImmutableLongList getReasonerConceptSet();
 
-	ImmutableIntSet getEquivalent(int id);
+	ImmutableLongSet getEquivalent(long id);
 
-	ImmutableIntSet getParents(int id);
+	ImmutableLongSet getParents(long id);
 
-	ImmutableIntSet getChildren(int id);
+	ImmutableLongSet getChildren(long id);
 
-	LogicalExpression getNecessaryNormalForm(int id);
-
-	@Deprecated
-	ClassifierResults processResults(boolean reinferAllHierarchy, TrackingCallable<ClassifierResults> trackingCallable) throws Exception;
-
-	@Deprecated
-	default ClassifierResults processResults(boolean reinferAllHierarchy) throws Exception {
-		return processResults(reinferAllHierarchy, new TrackingCallable<ClassifierResults>() {
-			@Override
-			protected ClassifierResults compute() throws Exception {
-				return null;
-			}
-		});
-	}
+	LogicalExpression getNecessaryNormalForm(long id);
 
 }

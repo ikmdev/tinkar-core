@@ -30,7 +30,7 @@ public interface PatternEntityVersion extends EntityVersion, PatternVersion {
 
     // TODO: should allow more than one index for meaning?
     // TODO: Note the stamp calculator caches these indexes. Consider how to optimize, and eliminate unoptimized calls?
-    default int indexForMeaning(int meaningNid) {
+    default int indexForMeaning(long meaningNid) {
         for (int i = 0; i < fieldDefinitions().size(); i++) {
             if (fieldDefinitions().get(i).meaningNid() == meaningNid) {
                 return i;
@@ -44,17 +44,17 @@ public interface PatternEntityVersion extends EntityVersion, PatternVersion {
 
     @Override
     default ConceptEntity semanticPurpose() {
-        return EntityService.get().getEntityFast(semanticPurposeNid());
+        return EntityHandle.get(semanticPurposeNid()).expectConcept();
     }
 
-    int semanticPurposeNid();
+    long semanticPurposeNid();
 
     @Override
     default ConceptEntity semanticMeaning() {
-        return EntityService.get().getEntityFast(semanticMeaningNid());
+        return EntityHandle.get(semanticMeaningNid()).expectConcept();
     }
 
-    int semanticMeaningNid();
+    long semanticMeaningNid();
 
     default <T> T getFieldWithPurpose(ConceptFacade fieldPurpose, SemanticEntityVersion version) {
         return (T) version.fieldValues().get(indexForPurpose(fieldPurpose));
@@ -66,7 +66,7 @@ public interface PatternEntityVersion extends EntityVersion, PatternVersion {
 
     // TODO: should allow more than one index for purpose?
     // TODO: Note the stamp calculator caches these indexes. Consider how to optimize, and eliminate unoptimized calls?
-    default int indexForPurpose(int purposeNid) {
+    default int indexForPurpose(long purposeNid) {
         for (int i = 0; i < fieldDefinitions().size(); i++) {
             if (fieldDefinitions().get(i).purposeNid() == purposeNid) {
                 return i;

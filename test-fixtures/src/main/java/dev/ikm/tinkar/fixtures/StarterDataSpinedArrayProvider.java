@@ -3,10 +3,10 @@ package dev.ikm.tinkar.fixtures;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * JUnit 5 extension that loads tinkar-starter-data into SpinedArray store.
+ * JUnit 5 extension that loads the IKE starter set into SpinedArray store.
  * <p><b>Store Type:</b> SpinedArray (persistent, file-based)
  * <br>
- * <b>Data Loaded:</b> tinkar-starter-data-reasoned-pb.zip
+ * <b>Data Loaded:</b> ike-starter-set-reasoned-pb.zip
  * <br>
  * <b>Storage Location:</b> target/spinedarrays
  */
@@ -22,7 +22,7 @@ public class StarterDataSpinedArrayProvider extends NewSpinedArrayKeyValueProvid
             cfg.dataPath = "target/spinedarrays/" + testClassName;
         }
         if (cfg.importPath == null || cfg.importPath.isBlank()) {
-            cfg.importPath = "target/data/tinkar-starter-data-reasoned-pb.zip";
+            cfg.importPath = "target/data/ike-starter-set-reasoned-pb.zip";
         }
         return cfg;
     }

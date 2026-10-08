@@ -17,11 +17,11 @@ package dev.ikm.tinkar.terms;
 
 public interface PatternFacade extends dev.ikm.tinkar.component.Pattern, EntityFacade {
 
-    static PatternFacade make(int nid) {
+    static PatternFacade make(long nid) {
         return EntityProxy.Pattern.make(nid);
     }
 
-    static int toNid(PatternFacade facade) {
+    static long toNid(PatternFacade facade) {
         return facade.nid();
     }
 

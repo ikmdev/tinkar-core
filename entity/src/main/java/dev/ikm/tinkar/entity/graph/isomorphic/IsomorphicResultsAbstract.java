@@ -42,7 +42,7 @@ import static dev.ikm.tinkar.common.util.Symbols.NULL_SIGN;
 public abstract class IsomorphicResultsAbstract<VVD extends VertexVisitData>
         implements IsomorphicResults, Callable<IsomorphicResults> {
 
-    protected final int referencedConceptNid;
+    protected final long referencedConceptNid;
 
     protected final DiTreeEntity referenceTree;
     private final VVD referenceVisitData;
@@ -93,7 +93,7 @@ public abstract class IsomorphicResultsAbstract<VVD extends VertexVisitData>
 
     protected final MultipleEndpointTimer.Stopwatch stopwatch;
 
-    public IsomorphicResultsAbstract(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
+    public IsomorphicResultsAbstract(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, long referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
         this.referenceTree = referenceTree;
         this.comparisonTree = comparisonTree;
         this.referenceVisitData = makeVertexVisitData(referenceTree.vertexCount(), this::vertexStartProcessor, this::vertexEndProcessor);

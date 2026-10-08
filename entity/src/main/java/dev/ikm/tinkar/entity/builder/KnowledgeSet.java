@@ -15,12 +15,14 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
-import dev.ikm.tinkar.common.id.IntIdCollection;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
+import dev.ikm.tinkar.common.id.LongIdCollection;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.FieldDefinitionForEntity;
 import dev.ikm.tinkar.entity.PatternEntity;
@@ -38,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -98,6 +99,9 @@ public final class KnowledgeSet {
     private final Map<String, ConceptBuilder> concepts = new LinkedHashMap<>();
     private final Map<String, PatternBuilder> patterns = new LinkedHashMap<>();
     private final SessionRegistry registry = new SessionRegistry();
+    private final List<Stamp> declaredStamps = new ArrayList<>();
+    private final Map<String, BindingClass> bindingClasses = new LinkedHashMap<>();
+    private final List<StampBinding> stampBindings = new ArrayList<>();
     private final Set<String> derivedReferencesIssued = new LinkedHashSet<>();
 
     private KnowledgeSet(UUID uuid) {
@@ -379,6 +383,27 @@ public final class KnowledgeSet {
     }
 
     /**
+     * Declares a stamp the set carries whether or not any of its versions uses it, such as
+     * the non-existent stamp ({@link Stamp#nonExistent()}) every store needs. The stamp is
+     * written with the set ({@link #write()}), so a store loaded from the set's export holds
+     * it. Declaring the same stamp again is a no-op; declaring another tuple under the same
+     * identity is refused, as for any declared stamp.
+     *
+     * @param stamp the stamp to carry
+     * @return this knowledge set
+     * @throws IllegalArgumentException if the stamp's identity is already declared with a
+     *                                  different tuple
+     */
+    public KnowledgeSet stamp(Stamp stamp) {
+        registry.requireStampAgreement(stamp);
+        // The same stamp is the one sharing any UUID; the registry has refused another tuple.
+        if (declaredStamps.stream().noneMatch(declared -> PublicId.equals(declared.publicId(), stamp.publicId()))) {
+            declaredStamps.add(stamp);
+        }
+        return this;
+    }
+
+    /**
      * Replays the whole session — every concept and pattern builder this knowledge set
      * has opened — into the open datastore. Idempotent and repeatable: identities and stamps
      * are derived, so writing again merges to the same state. May be called mid-ledger
@@ -389,6 +414,9 @@ public final class KnowledgeSet {
      *                               pending version lacks meaning or purpose
      */
     public void write() {
+        for (Stamp stamp : declaredStamps) {
+            ComponentLedger.putStampEntity(stamp, EntityService.get().nidForStamp(stamp.publicId()));
+        }
         for (ConceptBuilder builder : concepts.values()) {
             builder.writeInto();
         }
@@ -418,8 +446,8 @@ public final class KnowledgeSet {
      */
     private void verifyReferentialClosure() {
         List<String> dangling = new ArrayList<>();
-        PrimitiveData.get().forEachSemanticNid(nid -> {
-            if (EntityService.get().getEntityFast(nid) instanceof SemanticEntity<?> semantic) {
+        EntityStore.current().forEachSemanticNid(nid -> {
+            if (EntityHandle.get(nid).orNull() instanceof SemanticEntity<?> semantic) {
                 requirePresent(dangling, semantic, "referenced component", semantic.referencedComponentNid());
                 requirePresent(dangling, semantic, "pattern", semantic.patternNid());
                 for (SemanticEntityVersion version : semantic.versions()) {
@@ -429,8 +457,8 @@ public final class KnowledgeSet {
                 }
             }
         });
-        PrimitiveData.get().forEachPatternNid(nid -> {
-            if (EntityService.get().getEntityFast(nid) instanceof PatternEntity<?> pattern) {
+        EntityStore.current().forEachPatternNid(nid -> {
+            if (EntityHandle.get(nid).orNull() instanceof PatternEntity<?> pattern) {
                 for (PatternEntityVersion version : pattern.versions()) {
                     requirePresent(dangling, pattern, "pattern meaning", version.semanticMeaningNid());
                     requirePresent(dangling, pattern, "pattern purpose", version.semanticPurposeNid());
@@ -442,8 +470,8 @@ public final class KnowledgeSet {
                 }
             }
         });
-        PrimitiveData.get().forEachStampNid(nid -> {
-            if (EntityService.get().getEntityFast(nid) instanceof StampEntity<?> stamp) {
+        EntityStore.current().forEachStampNid(nid -> {
+            if (EntityHandle.get(nid).orNull() instanceof StampEntity<?> stamp) {
                 for (StampEntityVersion version : stamp.versions()) {
                     requirePresent(dangling, stamp, "stamp status", version.stateNid());
                     requirePresent(dangling, stamp, "stamp author", version.authorNid());
@@ -493,7 +521,7 @@ public final class KnowledgeSet {
     private static void requireFieldReferencesPresent(List<String> dangling, Entity<?> source, Object field) {
         switch (field) {
             case EntityFacade facade -> requirePresent(dangling, source, "field value", facade.nid());
-            case IntIdCollection members -> members.forEach(memberNid ->
+            case LongIdCollection members -> members.forEach(memberNid ->
                     requirePresent(dangling, source, "component-id field member", memberNid));
             case DiGraphAbstract<?> graph -> {
                 for (EntityVertex vertex : graph.vertexMap()) {
@@ -519,8 +547,8 @@ public final class KnowledgeSet {
      * @param role         the role the reference plays (e.g. {@code "pattern"})
      * @param referenceNid the referenced component's nid
      */
-    private static void requirePresent(List<String> dangling, Entity<?> source, String role, int referenceNid) {
-        if (EntityService.get().getEntityFast(referenceNid) != null) {
+    private static void requirePresent(List<String> dangling, Entity<?> source, String role, long referenceNid) {
+        if (EntityHandle.get(referenceNid).isPresent()) {
             return;
         }
         String target;
@@ -543,13 +571,147 @@ public final class KnowledgeSet {
         List<Declaration> result = new ArrayList<>();
         for (ConceptBuilder builder : concepts.values()) {
             result.add(new Declaration(Declaration.Kind.CONCEPT, builder.ledger().birthFqn,
-                    builder.publicId(), builder.ledger().currentDefinition()));
+                    builder.publicId(), builder.ledger().currentDefinition(), bindingsOf(builder.ledger())));
         }
         for (PatternBuilder builder : patterns.values()) {
             result.add(new Declaration(Declaration.Kind.PATTERN, builder.ledger().birthFqn,
-                    builder.publicId(), builder.ledger().currentDefinition()));
+                    builder.publicId(), builder.ledger().currentDefinition(), bindingsOf(builder.ledger())));
         }
         return result;
+    }
+
+    /**
+     * Declares a stamp of this set ({@link #stamp(Stamp)}) and binds it in a binding class
+     * under a constant name: the generated class carries it as a
+     * {@link dev.ikm.tinkar.terms.DeclaredStamp}, so code that authors under the set's stamps
+     * names them as it names the set's components.
+     *
+     * @param stamp        the stamp
+     * @param bindingClass a binding class this set declares
+     * @param constant     the constant's name, a Java identifier
+     * @return this knowledge set
+     * @throws IllegalArgumentException if the name is not a Java identifier
+     * @throws IllegalStateException    if the class is not this set's, or the stamp is already
+     *                                  bound in it under another name
+     */
+    public KnowledgeSet bindStamp(Stamp stamp, BindingClass bindingClass, String constant) {
+        if (!BindingClass.isJavaIdentifier(constant)) {
+            throw new IllegalArgumentException("A binding must be a Java identifier: \"" + constant + "\"");
+        }
+        if (!bindingClass.equals(bindingClasses.get(bindingClass.name()))) {
+            throw new IllegalStateException("A stamp is bound in " + bindingClass.name()
+                    + ", which this set does not declare");
+        }
+        stamp(stamp);
+        for (StampBinding prior : stampBindings) {
+            if (prior.bindingClass().equals(bindingClass) && prior.stamp().publicId().equals(stamp.publicId())) {
+                if (!prior.constant().equals(constant)) {
+                    throw new IllegalStateException("The stamp is bound in " + bindingClass.name() + " as "
+                            + prior.constant() + "; a stamp has one name in a binding class, not also " + constant);
+                }
+                return this;
+            }
+        }
+        stampBindings.add(new StampBinding(stamp, bindingClass, constant));
+        return this;
+    }
+
+    /**
+     * The stamps this set binds, in binding order.
+     *
+     * @return the stamp bindings
+     */
+    public List<StampBinding> stampBindings() {
+        return List.copyOf(stampBindings);
+    }
+
+    /**
+     * A stamp's name in a binding class.
+     *
+     * @param stamp        the stamp
+     * @param bindingClass the binding class
+     * @param constant     the constant's name
+     */
+    public record StampBinding(Stamp stamp, BindingClass bindingClass, String constant) {
+    }
+
+    /**
+     * Declares a binding class of this set: a generated class its declarations bind
+     * components into. Declared once, in the ledger; declarations then refer to it.
+     *
+     * @param name the generated class's simple name, a Java identifier
+     * @return the binding class
+     * @throws IllegalStateException if the set already declares a binding class of the name
+     */
+    public BindingClass bindingClass(String name) {
+        return bindingClass(null, name);
+    }
+
+    /**
+     * Declares a binding class of this set generated into a package of its own rather than the
+     * package of the set's bindings: the kernel, for one, which tinkar-core commits into
+     * {@code dev.ikm.tinkar.terms}.
+     *
+     * @param packageName the class's package, or {@code null} for the package of the set's bindings
+     * @param name        the generated class's simple name, a Java identifier
+     * @return the binding class
+     * @throws IllegalStateException if the set already declares a binding class of the name
+     */
+    public BindingClass bindingClass(String packageName, String name) {
+        BindingClass bindingClass = new BindingClass(uuid, packageName, name);
+        if (bindingClasses.putIfAbsent(name, bindingClass) != null) {
+            throw new IllegalStateException("The binding class " + name + " is already declared; a binding class "
+                    + "is declared once, and declarations refer to it");
+        }
+        return bindingClass;
+    }
+
+    /**
+     * Binds a component this set declares, found by its identity, in a binding class: for
+     * binding classes declared apart from the components they name, such as the kernel, whose
+     * members are declared throughout the ledger.
+     *
+     * @param identity     the component's identity; any of its UUIDs finds it
+     * @param bindingClass a binding class this set declares
+     * @param constant     the constant's name, a Java identifier
+     * @return this knowledge set
+     * @throws IllegalArgumentException if the set declares no component with the identity
+     * @throws IllegalStateException    if the component is bound in the class under another name
+     */
+    public KnowledgeSet bind(PublicId identity, BindingClass bindingClass, String constant) {
+        for (ConceptBuilder builder : concepts.values()) {
+            if (PublicId.equals(identity, builder.publicId())) {
+                builder.binding(bindingClass, constant);
+                return this;
+            }
+        }
+        for (PatternBuilder builder : patterns.values()) {
+            if (PublicId.equals(identity, builder.publicId())) {
+                builder.binding(bindingClass, constant);
+                return this;
+            }
+        }
+        throw new IllegalArgumentException("The set declares no component " + identity.idString()
+                + " to bind in " + bindingClass.name() + " as " + constant);
+    }
+
+    /**
+     * The binding classes this set declares, in declaration order.
+     *
+     * @return the declared binding classes
+     */
+    public List<BindingClass> bindingClasses() {
+        return List.copyOf(bindingClasses.values());
+    }
+
+    private Map<BindingClass, String> bindingsOf(ComponentLedger ledger) {
+        for (BindingClass bindingClass : ledger.bindings.keySet()) {
+            if (!bindingClass.equals(bindingClasses.get(bindingClass.name()))) {
+                throw new IllegalStateException(ledger.birthFqn + " is bound in " + bindingClass.name()
+                        + ", which this set does not declare");
+            }
+        }
+        return java.util.Collections.unmodifiableMap(new LinkedHashMap<>(ledger.bindings));
     }
 
     /**
@@ -562,8 +724,11 @@ public final class KnowledgeSet {
      * @param publicId   the identity — derived {@code T5(setUuid, birthFqn)}, or the
      *                   declared identity the ledger adopted
      * @param definition the current text of the first live definition description, if any
+     * @param bindings   the component's name in each binding class it is bound in; empty
+     *                   when it is bound in none, and named in the set's default class
      */
-    public record Declaration(Kind kind, String birthFqn, PublicId publicId, Optional<String> definition) {
+    public record Declaration(Kind kind, String birthFqn, PublicId publicId, Optional<String> definition,
+                              Map<BindingClass, String> bindings) {
 
         /** The kind of a declaration. */
         public enum Kind {
@@ -635,8 +800,7 @@ public final class KnowledgeSet {
             return;
         }
         UUID derived = uuidFor(fullyQualifiedName);
-        UUID[] declared = declaredIdentity.asUuidArray();
-        if (declared.length == 1 && declared[0].equals(derived)) {
+        if (declaredIdentity.uuidCount() == 1 && declaredIdentity.contains(derived)) {
             return;
         }
         throw new IllegalArgumentException(
@@ -656,10 +820,9 @@ public final class KnowledgeSet {
 
     private static void requireIdentityAgreement(String fullyQualifiedName, PublicId openedIdentity,
                                                  PublicId declaredIdentity) {
-        // Identity-exact agreement: the full UUID lists must match, in order. Comparison
-        // is by UUID array because PublicId implementations vary by arity.
-        if (declaredIdentity != null
-                && !Arrays.equals(declaredIdentity.asUuidArray(), openedIdentity.asUuidArray())) {
+        // Identity-exact agreement: the same UUIDs, in whatever order each lists them
+        // (compareTo compares the sorted UUIDs whole). No UUID among them is first.
+        if (declaredIdentity != null && declaredIdentity.compareTo(openedIdentity) != 0) {
             throw new IllegalArgumentException(
                     "\"" + fullyQualifiedName + "\" is already opened with identity " + openedIdentity
                             + " — cannot resume it with declared identity " + declaredIdentity);

@@ -145,5 +145,5 @@ public interface RemoteConceptSearchService {
      * @param publicIds the concept's public UUIDs (from a search result)
      * @return the local NID assigned to the concept after loading
      */
-    int loadConceptWithSemantics(List<UUID> publicIds);
+    long loadConceptWithSemantics(List<UUID> publicIds);
 }

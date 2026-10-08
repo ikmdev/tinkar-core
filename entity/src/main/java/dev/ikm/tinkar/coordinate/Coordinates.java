@@ -15,20 +15,18 @@
  */
 package dev.ikm.tinkar.coordinate;
 
-import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.coordinate.edit.EditCoordinateRecord;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinate;
 import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
-import dev.ikm.tinkar.coordinate.stamp.StampPathImmutable;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.factory.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,22 +38,22 @@ public class Coordinates {
     public static class Edit {
         public static EditCoordinateRecord Default() {
             return EditCoordinateRecord.make(
-                    TinkarTerm.USER.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),
-                    TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.DEVELOPMENT_PATH.nid(), TinkarTerm.DEVELOPMENT_PATH.nid()
+                    KernelTerm.USER.nid(), KernelTerm.SOLOR_OVERLAY_MODULE.nid(),
+                    KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.DEVELOPMENT_PATH.nid(), KernelTerm.DEVELOPMENT_PATH.nid()
             );
         }
     }
 
     public static class Logic {
         public static LogicCoordinateRecord ElPlusPlus() {
-            return LogicCoordinateRecord.make(TinkarTerm.SNOROCKET_CLASSIFIER,
-                    TinkarTerm.EL_PLUS_PLUS_PROFILE,
-                    TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
-                    TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-                    TinkarTerm.SOLOR_CONCEPT_ASSEMBLAGE,
-                    TinkarTerm.STATED_NAVIGATION_PATTERN,
-                    TinkarTerm.INFERRED_NAVIGATION_PATTERN,
-                    TinkarTerm.NAVIGATION_VERTEX);
+            return LogicCoordinateRecord.make(KernelTerm.SNOROCKET_CLASSIFIER,
+                    KernelTerm.EL_PLUS_PLUS_PROFILE,
+                    KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
+                    KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                    KernelTerm.SOLOR_CONCEPT_ASSEMBLAGE,
+                    KernelTerm.STATED_NAVIGATION_PATTERN,
+                    KernelTerm.INFERRED_NAVIGATION_PATTERN,
+                    KernelTerm.NAVIGATION_VERTEX);
         }
     }
 
@@ -68,11 +66,11 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord AnyLanguageRegularName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.LANGUAGE,
-                    IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.empty(),
-                    IntIds.list.empty()
+                    KernelTerm.LANGUAGE,
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.empty(),
+                    LongIds.list.empty()
             );
         }
 
@@ -84,11 +82,11 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord AnyLanguageFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.LANGUAGE,
-                    IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.empty(),
-                    IntIds.list.empty()
+                    KernelTerm.LANGUAGE,
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.empty(),
+                    LongIds.list.empty()
             );
         }
 
@@ -101,11 +99,11 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord AnyLanguageDefinition() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.LANGUAGE,
-                    IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.empty(),
-                    IntIds.list.empty()
+                    KernelTerm.LANGUAGE,
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.empty(),
+                    LongIds.list.empty()
             );
         }
 
@@ -114,12 +112,12 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord UsEnglishFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
-                    IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-                            TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.of(TinkarTerm.US_DIALECT_PATTERN.nid(), TinkarTerm.GB_DIALECT_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+                    KernelTerm.ENGLISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid(), KernelTerm.GB_DIALECT_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
 
@@ -128,58 +126,58 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord UsEnglishRegularName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
-                    IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-                            TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.of(TinkarTerm.US_DIALECT_PATTERN.nid(), TinkarTerm.GB_DIALECT_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+                    KernelTerm.ENGLISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid(), KernelTerm.GB_DIALECT_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord GbEnglishFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
-                    IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-                            TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.of(TinkarTerm.GB_DIALECT_PATTERN.nid(),
-                            TinkarTerm.US_DIALECT_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+                    KernelTerm.ENGLISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.of(KernelTerm.GB_DIALECT_PATTERN.nid(),
+                            KernelTerm.US_DIALECT_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord GbEnglishPreferredName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
-                    IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-                            TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.of(TinkarTerm.GB_DIALECT_PATTERN.nid(),
-                            TinkarTerm.US_DIALECT_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+                    KernelTerm.ENGLISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.of(KernelTerm.GB_DIALECT_PATTERN.nid(),
+                            KernelTerm.US_DIALECT_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord SpanishFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.SPANISH_LANGUAGE.nid(),
-                    IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-                            TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.empty(),
-                    IntIds.list.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+                    KernelTerm.SPANISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.empty(),
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord SpanishPreferredName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.SPANISH_LANGUAGE.nid(),
-                    IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
-                    IntIds.list.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-                            TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
-                    IntIds.list.empty(),
-                    IntIds.list.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+                    KernelTerm.SPANISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.empty(),
+                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
             );
         }
     }
@@ -188,53 +186,42 @@ public class Coordinates {
         public static StampCoordinateRecord DevelopmentLatestInactiveOnly() {
             return StampCoordinateRecord.make(StateSet.INACTIVE,
                     Position.LatestOnDevelopment(),
-                    IntIds.set.empty());
+                    LongIds.set.empty());
         }
 
 
         public static StampCoordinateRecord DevelopmentLatest() {
             return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
                     Position.LatestOnDevelopment(),
-                    IntIds.set.empty());
+                    LongIds.set.empty());
         }
 
         public static StampCoordinateRecord DevelopmentLatestActiveOnly() {
             return StampCoordinateRecord.make(StateSet.ACTIVE,
                     Position.LatestOnDevelopment(),
-                    IntIds.set.empty());
+                    LongIds.set.empty());
         }
 
         public static StampCoordinateRecord MasterLatest() {
             return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
                     Position.LatestOnMaster(),
-                    IntIds.set.empty());
+                    LongIds.set.empty());
         }
 
         public static StampCoordinateRecord MasterLatestActiveOnly() {
             return StampCoordinateRecord.make(StateSet.ACTIVE,
                     Position.LatestOnMaster(),
-                    IntIds.set.empty());
+                    LongIds.set.empty());
         }
     }
 
     public static class Position {
         public static StampPositionRecord LatestOnDevelopment() {
-            return StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.DEVELOPMENT_PATH);
+            return StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.DEVELOPMENT_PATH);
         }
 
         public static StampPositionRecord LatestOnMaster() {
-            return StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.MASTER_PATH);
-        }
-    }
-
-    public static class Path {
-
-        public static StampPathImmutable Master() {
-            return StampPathImmutable.make(TinkarTerm.MASTER_PATH, Sets.immutable.of(StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.PRIMORDIAL_PATH.nid())));
-        }
-
-        public static StampPathImmutable Development() {
-            return StampPathImmutable.make(TinkarTerm.DEVELOPMENT_PATH, Sets.immutable.of(StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.SANDBOX_PATH.nid())));
+            return StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.MASTER_PATH);
         }
     }
 

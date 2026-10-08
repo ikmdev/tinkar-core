@@ -25,3 +25,10 @@ mvn clean verify -DskipTests -T4
 - BOM: imports `dev.ikm.ike:ike-bom` for dependency version management
 - Sub-aggregators (provider, reasoner, language-extensions) use `<subprojects>`
 - `tinkar-bom` submodule manages internal dependency versions for consumers
+
+## Public ids
+
+Public ids are equal when they share any UUID, in any order: a shared first UUID proves
+identity, a differing one proves nothing. Never key a hash collection by a public id, or a
+component by its first UUID alone. See `PublicId`'s javadoc and
+the workspace's `CLAUDE-ike-komet-wsr.md`.

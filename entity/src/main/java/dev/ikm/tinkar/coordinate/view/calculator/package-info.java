@@ -61,7 +61,7 @@
  * Latest<DiTreeEntity> axioms = calc.getStatedAxiomTree(conceptNid);
  *
  * // Navigation operations (from NavigationCalculatorDelegate)
- * IntIdSet parents = calc.parentsOf(conceptNid);
+ * LongIdSet parents = calc.parentsOf(conceptNid);
  * }</pre>
  *
  * <p><b>ViewCalculatorWithCache</b></p>
@@ -82,7 +82,7 @@
  *
  * // All operations automatically use appropriate cached calculators
  * String text = calculator.getDescriptionText(conceptNid);
- * IntIdSet children = calculator.childrenOf(conceptNid);
+ * LongIdSet children = calculator.childrenOf(conceptNid);
  * }</pre>
  *
  * <p><b>ViewCalculatorDelegate</b></p>
@@ -138,8 +138,8 @@
  *     String fqn = calc.getFullyQualifiedName(conceptNid).orElse("Unknown");
  *
  *     // Navigation (Navigation + STAMP)
- *     IntIdSet parents = calc.parentsOf(conceptNid);
- *     IntIdSet children = calc.childrenOf(conceptNid);
+ *     LongIdSet parents = calc.parentsOf(conceptNid);
+ *     LongIdSet children = calc.childrenOf(conceptNid);
  *     boolean isRoot = parents.isEmpty();
  *
  *     // Logic (Logic + STAMP)
@@ -147,7 +147,7 @@
  *     boolean isDefined = calc.isDefined(conceptNid);
  *
  *     // Reasoning (Navigation + Logic + STAMP)
- *     IntIdSet ancestors = calc.ancestorsOf(conceptNid);
+ *     LongIdSet ancestors = calc.ancestorsOf(conceptNid);
  *     boolean isKindOf = calc.isDescendentOf(conceptNid, parentConceptNid);
  *
  *     // All operations use consistent view coordinate!
@@ -158,7 +158,7 @@
  *
  * <p><b>Concept Information Retrieval</b></p>
  * <pre>{@code
- * public ConceptInfo getConceptInfo(int conceptNid, ViewCoordinate view) {
+ * public ConceptInfo getConceptInfo(long conceptNid, ViewCoordinate view) {
  *     ViewCalculator calc = ViewCalculatorWithCache.getCalculator(
  *         view.toViewCoordinateRecord()
  *     );
@@ -177,7 +177,7 @@
  *
  * <p><b>Hierarchy Browsing</b></p>
  * <pre>{@code
- * public HierarchyNode buildHierarchy(int rootNid, ViewCoordinate view, int depth) {
+ * public HierarchyNode buildHierarchy(long rootNid, ViewCoordinate view, int depth) {
  *     ViewCalculator calc = ViewCalculatorWithCache.getCalculator(
  *         view.toViewCoordinateRecord()
  *     );
@@ -185,7 +185,7 @@
  *     return buildNode(rootNid, calc, depth);
  * }
  *
- * private HierarchyNode buildNode(int nid, ViewCalculator calc, int depth) {
+ * private HierarchyNode buildNode(long nid, ViewCalculator calc, int depth) {
  *     HierarchyNode node = new HierarchyNode(
  *         nid,
  *         calc.getDescriptionText(nid)
@@ -211,12 +211,12 @@
  *     List<SearchResult> results = new ArrayList<>();
  *
  *     // Search for matching concepts (implementation dependent)
- *     IntIdSet matches = searchIndex.find(query);
+ *     LongIdSet matches = searchIndex.find(query);
  *
  *     matches.forEach(conceptNid -> {
  *         // Get description and hierarchy info using same calculator
  *         String name = calc.getDescriptionText(conceptNid);
- *         IntIdSet parents = calc.parentsOf(conceptNid);
+ *         LongIdSet parents = calc.parentsOf(conceptNid);
  *
  *         // Get parent names for breadcrumb
  *         List<String> parentNames = parents.stream()
@@ -232,7 +232,7 @@
  *
  * <p><b>Subsumption Testing with Descriptions</b></p>
  * <pre>{@code
- * public boolean isKindOf(int specificNid, int generalNid, ViewCoordinate view) {
+ * public boolean isKindOf(long specificNid, long generalNid, ViewCoordinate view) {
  *     ViewCalculator calc = ViewCalculatorWithCache.getCalculator(
  *         view.toViewCoordinateRecord()
  *     );
@@ -253,7 +253,7 @@
  *
  * <p><b>Definition Analysis</b></p>
  * <pre>{@code
- * public DefinitionAnalysis analyzeDefinition(int conceptNid, ViewCoordinate view) {
+ * public DefinitionAnalysis analyzeDefinition(long conceptNid, ViewCoordinate view) {
  *     ViewCalculator calc = ViewCalculatorWithCache.getCalculator(
  *         view.toViewCoordinateRecord()
  *     );
@@ -267,7 +267,7 @@
  *         DiTreeEntity tree = statedAxioms.get();
  *         analysis.setStatedAxioms(tree);
  *         analysis.setSufficientlyDefined(
- *             tree.containsVertexWithMeaning(TinkarTerm.SUFFICIENT_SET)
+ *             tree.containsVertexWithMeaning(KernelTerm.SUFFICIENT_SET)
  *         );
  *     }
  *
@@ -278,7 +278,7 @@
  *     }
  *
  *     // Get inferred parents for comparison
- *     IntIdSet inferredParents = calc.parentsOf(conceptNid);
+ *     LongIdSet inferredParents = calc.parentsOf(conceptNid);
  *     analysis.setInferredParentNames(
  *         inferredParents.stream()
  *             .map(calc::getDescriptionText)
@@ -319,7 +319,7 @@
  * // All these operations see the same version
  * Latest<ConceptVersion> version = calc.latest(concept);
  * Latest<DiTreeEntity> axioms = calc.getStatedAxiomTree(conceptNid);
- * IntIdSet parents = calc.parentsOf(conceptNid);
+ * LongIdSet parents = calc.parentsOf(conceptNid);
  * String description = calc.getDescriptionText(conceptNid);
  *
  * // Same STAMP coordinate → same version visibility

@@ -25,7 +25,7 @@ public interface StampBranchDelegate extends StampBranch {
     }
 
     @Override
-    default int getPathOfBranchNid() {
+    default long getPathOfBranchNid() {
         return getStampBranch().getPathOfBranchNid();
     }
 

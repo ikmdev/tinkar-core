@@ -44,6 +44,11 @@
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>terms</artifactId>
         </dependency>
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>test-logging</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -54,35 +59,14 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>25</source>
-                    <target>25</target>
-                    <compilerArgs>--enable-preview</compilerArgs>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
-                    <!-- Make javadoc use the same Java release and enable preview -->
-                    <source>25</source>
+                    <!-- Enable preview for javadoc; the Java release is inherited from java.version -->
                     <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
                     <additionalOptions>
                         <additionalOption>--enable-preview</additionalOption>
-                        <additionalOption>--release</additionalOption>
-                        <additionalOption>25</additionalOption>
                     </additionalOptions>
-                    <failOnError>false</failOnError>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>javadoc</goal>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
