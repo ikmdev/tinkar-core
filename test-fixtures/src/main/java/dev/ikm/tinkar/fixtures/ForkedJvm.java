@@ -78,6 +78,17 @@ public final class ForkedJvm {
     /** The prefix of the system properties the child receives from the parent. */
     public static final String FORWARDED_PREFIX = "tinkar.";
 
+    /**
+     * The property {@link #run} and {@link #runWithoutAgents} set on the properties they return:
+     * the agent options the stage's JVM ran with, joined by spaces, or {@value #NO_AGENTS}. A
+     * timing stage records it beside its measurements, so a reference says what it was measured
+     * with.
+     */
+    public static final String AGENTS_PROPERTY = "forked.jvm.agents";
+
+    /** The value of {@link #AGENTS_PROPERTY} when the stage's JVM ran with no agent. */
+    public static final String NO_AGENTS = "none";
+
     /** How long a stage may run before the test fails, unless the test says otherwise. */
     public static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(10);
 
@@ -91,6 +102,22 @@ public final class ForkedJvm {
 
     /** Runs the stage in a new JVM, failing if it has not finished within the timeout. */
     public static Properties run(Class<? extends Stage> stage, Properties in, Duration timeout) {
+        return run(stage, in, timeout, true);
+    }
+
+    /**
+     * Runs the stage in a new JVM without the agents this JVM runs with, for a stage that times
+     * something. The JaCoCo agent that failsafe attaches writes a probe into one array per class
+     * at every branch; on one thread that costs a few percent, on a parallel scan a factor of
+     * fifteen, since every thread of the loop writes the same array (IKE-Network/ike-issues#1246,
+     * #1257). The stage's coverage is not collected, which a timing stage does not need; every
+     * other stage keeps its agents, and its coverage.
+     */
+    public static Properties runWithoutAgents(Class<? extends Stage> stage, Properties in, Duration timeout) {
+        return run(stage, in, timeout, false);
+    }
+
+    private static Properties run(Class<? extends Stage> stage, Properties in, Duration timeout, boolean withAgents) {
         try {
             Path exchange = Files.createTempDirectory("forked-" + stage.getSimpleName() + "-");
             Path inFile = exchange.resolve("in.properties");
@@ -100,9 +127,10 @@ public final class ForkedJvm {
                 in.store(stream, stage.getName());
             }
 
+            List<String> jvmOptions = jvmOptions(withAgents);
             List<String> command = new ArrayList<>();
             command.add(Path.of(System.getProperty("java.home"), "bin", "java").toString());
-            command.addAll(jvmOptions());
+            command.addAll(jvmOptions);
             command.addAll(forwardedProperties());
             command.add("-cp");
             command.add(classPath());
@@ -143,6 +171,7 @@ public final class ForkedJvm {
             try (InputStream stream = Files.newInputStream(outFile)) {
                 out.load(stream);
             }
+            out.setProperty(AGENTS_PROPERTY, agents(jvmOptions));
             return out;
         } catch (IOException e) {
             throw new AssertionError("Could not run stage " + stage.getSimpleName(), e);
@@ -227,14 +256,18 @@ public final class ForkedJvm {
 
     /**
      * The parent's JVM options without the ones that describe a module graph (the child
-     * runs on the class path) or attach a debugger (the port is taken).
+     * runs on the class path) or attach a debugger (the port is taken), and, for a timing
+     * stage, without the agents.
      */
-    private static List<String> jvmOptions() {
+    private static List<String> jvmOptions(boolean withAgents) {
         List<String> kept = new ArrayList<>();
         List<String> options = ManagementFactory.getRuntimeMXBean().getInputArguments();
         for (int i = 0; i < options.size(); i++) {
             String option = options.get(i);
             if (option.startsWith("-agentlib:jdwp") || option.startsWith("-Xrunjdwp") || option.startsWith("-Xdebug")) {
+                continue;
+            }
+            if (!withAgents && isAgent(option)) {
                 continue;
             }
             String name = option.contains("=") ? option.substring(0, option.indexOf('=')) : option;
@@ -263,6 +296,22 @@ public final class ForkedJvm {
             }
         }
         return kept;
+    }
+
+    /** Whether a JVM option attaches an agent: a Java agent, or a native one by library or path. */
+    static boolean isAgent(String option) {
+        return option.startsWith("-javaagent:") || option.startsWith("-agentlib:") || option.startsWith("-agentpath:");
+    }
+
+    /** The agent options among the options, joined by spaces, or {@value #NO_AGENTS}. */
+    static String agents(List<String> options) {
+        List<String> agents = new ArrayList<>();
+        for (String option : options) {
+            if (isAgent(option)) {
+                agents.add(option);
+            }
+        }
+        return agents.isEmpty() ? NO_AGENTS : String.join(" ", agents);
     }
 
     /** The value of a two-form option ({@code --opt value} or {@code --opt=value}) at this index, or null. */

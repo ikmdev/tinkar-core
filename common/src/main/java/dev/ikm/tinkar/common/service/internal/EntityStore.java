@@ -54,12 +54,23 @@ public interface EntityStore {
                 + service.getClass().getName());
     }
 
+    /** Visits every entity's bytes, with its nid, from the calling thread, in the store's own order. */
     void forEach(ObjLongConsumer<byte[]> action);
 
+    /**
+     * Visits every entity's bytes, with its nid. Where the store scans in parallel (Rocks does),
+     * the action runs on several threads at once and sees the entities in no particular order,
+     * so it must be safe to call concurrently; the other stores call it from the calling thread.
+     */
     void forEachParallel(ObjLongConsumer<byte[]> action);
 
+    /** Visits the bytes of the entities with these nids, from the calling thread. */
     void forEach(ImmutableLongList nids, ObjLongConsumer<byte[]> action);
 
+    /**
+     * Visits the bytes of the entities with these nids. As {@link #forEachParallel(ObjLongConsumer)}:
+     * the action may run on several threads at once and must be safe to call concurrently.
+     */
     void forEachParallel(ImmutableLongList nids, ObjLongConsumer<byte[]> action);
 
     byte[] getBytes(long nid);
@@ -129,6 +140,10 @@ public interface EntityStore {
 
     void forEachStampNid(LongProcedure procedure);
 
+    /**
+     * Visits the nid of every semantic. Where the store enumerates in parallel (Rocks does), the
+     * procedure runs on several threads at once and must be safe to call concurrently.
+     */
     void forEachSemanticNid(LongProcedure procedure);
 
     default long[] semanticNidsForComponent(long componentNid) {
