@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.spinedarray;
 
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedByteArrayMap;
@@ -129,6 +130,16 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     final File nidToByteArrayMapDirectory;
     final File nidToCitingComponentNidMapDirectory;
     final File nextNidKeyFile;
+
+    /**
+     * The UUIDs of nids that have no entity — components referenced but not present, such as a
+     * child listed by an imported navigation semantic whose own record was not in the changeset.
+     *
+     * <p>The UUID map is rebuilt from entity bytes at startup, so without this file such a nid
+     * would lose its identity on restart: nothing could say which component it is, and importing
+     * that component later would give it a second nid, leaving the reference dangling for good.
+     */
+    final File absentIdentitiesFile;
     final SetOnce<SearchService> searchService = new SetOnce<>();
     private volatile boolean loadPhase = false;
     final String name;
@@ -154,6 +165,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         this.nidToCitingComponentNidMapDirectory = new File(configuredRoot, "nidToCitingComponentNidMap");
         this.nidToCitingComponentNidMapDirectory.mkdirs();
         this.nextNidKeyFile = new File(configuredRoot, "nextNidKeyFile");
+        this.absentIdentitiesFile = new File(configuredRoot, "absentIdentities.txt");
 
         this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayFileStore(nidToByteArrayMapDirectory));
         this.nidToPatternNidMap = new SpinedIntIntMap(KeyType.NID_KEY);
@@ -164,6 +176,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             String nextNidString = Files.readString(this.nextNidKeyFile.toPath());
             nextNid.set(Integer.valueOf(nextNidString));
         }
+        // Nids minted before this opening were either given entities or recorded in
+        // absentIdentitiesFile by an earlier save; only newer ones need checking.
+        checkedBelowNid = nextNid.get();
+        loadAbsentIdentities();
         LOG.info("Submitting UUID loading task to thread pool...");
         try {
             TinkExecutor.threadPool().submit(() -> {
@@ -316,12 +332,111 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             nidToPatternNidMap.write(this.nidToPatternNidMapDirectory);
             this.entityToBytesMap.write();
             this.nidToCitingComponentsNidMap.write();
+            saveAbsentIdentities();
         } catch (Exception e) {
             LOG.error("Error saving SpinedArrayProvider", e);
         } finally {
             stopwatch.stop();
             LOG.info("Save SpinedArrayProvider in: " + stopwatch.durationString());
         }
+    }
+
+    /**
+     * UUIDs of nids that have no entity: loaded from {@link #absentIdentitiesFile}, and found on
+     * each save among the nids minted since the previous one. Small — such nids are rare.
+     */
+    private final java.util.concurrent.ConcurrentHashMap<Integer, List<UUID>> absentUuids =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Nids below this have been checked for missing entities by a save. Set when the store opens. */
+    private volatile int checkedBelowNid = Integer.MIN_VALUE;
+
+    /**
+     * The public id {@code nid} was minted from — for a component that is referenced but has no
+     * entity in this store.
+     *
+     * <p>Happens when a changeset refers to a component it does not carry: a time-range export
+     * includes the whole history of each changed component, and a navigation semantic in it can
+     * list a child created outside the range. Importing it mints the child a nid from its UUID with
+     * no entity behind it. Without this the store could not say which component that nid is, and
+     * anything that converts the referring semantic back to public ids — the gRPC service, an
+     * export — failed.
+     */
+    @Override
+    public PublicId publicIdForNid(int nid) {
+        List<UUID> known = absentUuids.get(nid);
+        if (known != null && !known.isEmpty()) {
+            return PublicIds.of(known);
+        }
+        // Not yet saved as absent — a scan of the identity map, as the ephemeral store does.
+        List<UUID> uuids = new ArrayList<>();
+        uuidToNidMap.forEach((uuid, mappedNid) -> {
+            if (mappedNid.intValue() == nid) { // ints, not two Integer references
+                uuids.add(uuid);
+            }
+        });
+        if (uuids.isEmpty()) {
+            throw new IllegalStateException("No public id minted for nid " + nid + " in this store");
+        }
+        return PublicIds.of(uuids);
+    }
+
+    private void loadAbsentIdentities() throws IOException {
+        if (!absentIdentitiesFile.exists()) {
+            return;
+        }
+        int loaded = 0;
+        for (String line : Files.readAllLines(absentIdentitiesFile.toPath())) {
+            String[] parts = line.trim().split("\\s+");
+            if (parts.length < 2) {
+                continue;
+            }
+            int nid = Integer.parseInt(parts[0]);
+            List<UUID> uuids = new java.util.concurrent.CopyOnWriteArrayList<>();
+            for (int i = 1; i < parts.length; i++) {
+                UUID uuid = UUID.fromString(parts[i]);
+                uuids.add(uuid);
+                uuidToNidMap.putIfAbsent(uuid, nid);
+            }
+            absentUuids.put(nid, uuids);
+            loaded++;
+        }
+        LOG.info("Loaded {} identities of referenced-but-absent components", loaded);
+    }
+
+    /**
+     * Writes the UUIDs of every nid still without an entity. Checks only the nids minted since the
+     * last save — nids are handed out in sequence — and finds the UUIDs of any new ones in a single
+     * pass over the identity map, so a save costs little unless something was actually left absent.
+     */
+    private void saveAbsentIdentities() throws IOException {
+        absentUuids.keySet().removeIf(nid -> entityToBytesMap.get(nid) != null);
+        int mintedUpTo = nextNid.get();
+        java.util.Set<Integer> newlyAbsent = new java.util.HashSet<>();
+        for (int nid = checkedBelowNid; nid < mintedUpTo; nid++) {
+            if (!absentUuids.containsKey(nid) && entityToBytesMap.get(nid) == null) {
+                newlyAbsent.add(nid);
+            }
+        }
+        if (!newlyAbsent.isEmpty()) {
+            uuidToNidMap.forEach((uuid, nid) -> {
+                if (newlyAbsent.contains(nid)) {
+                    absentUuids.computeIfAbsent(nid, key -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(uuid);
+                }
+            });
+        }
+        checkedBelowNid = mintedUpTo;
+        if (absentUuids.isEmpty()) {
+            Files.deleteIfExists(absentIdentitiesFile.toPath());
+            return;
+        }
+        StringBuilder lines = new StringBuilder();
+        absentUuids.forEach((nid, uuids) -> {
+            lines.append(nid);
+            uuids.forEach(uuid -> lines.append(' ').append(uuid));
+            lines.append('\n');
+        });
+        Files.writeString(absentIdentitiesFile.toPath(), lines);
     }
 
     @Override
