@@ -28,6 +28,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -63,6 +64,54 @@ class ChangeSetFormatTest {
             assertEquals(2, ChangeSetFormat.version(read.get().getMainAttributes(), changeSet.getFileName().toString()));
         }
         assertTrue(ChangeSetFormat.hasIdentityIndex(changeSet.toFile()));
+    }
+
+    @Test
+    void format3EntriesAreListedByTheManifestAndReadThroughGzip() throws IOException {
+        Path changeSet = dir.resolve("format3.zip");
+        byte[] records = "not really records, but bytes the gzip carries".getBytes();
+        java.io.ByteArrayOutputStream gzipped = new java.io.ByteArrayOutputStream();
+        try (java.util.zip.GZIPOutputStream gz = new java.util.zip.GZIPOutputStream(gzipped)) {
+            gz.write(records);
+        }
+        String first = ChangeSetFormat.recordEntryName(1, "patterns");
+        String second = ChangeSetFormat.recordEntryName(2, "stamps");
+        assertEquals("records/0001-patterns.pb.gz", first);
+        try (ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(changeSet))) {
+            for (String name : new String[]{second, first}) { // zip order is not the manifest's
+                ZipEntry entry = new ZipEntry(name);
+                entry.setMethod(ZipEntry.STORED);
+                entry.setSize(gzipped.size());
+                entry.setCompressedSize(gzipped.size());
+                java.util.zip.CRC32 crc = new java.util.zip.CRC32();
+                crc.update(gzipped.toByteArray());
+                entry.setCrc(crc.getValue());
+                out.putNextEntry(entry);
+                out.write(gzipped.toByteArray());
+                out.closeEntry();
+            }
+            Manifest manifest = new Manifest();
+            manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+            manifest.getMainAttributes().putValue(ChangeSetFormat.VERSION_ATTRIBUTE, "3");
+            manifest.getMainAttributes().putValue(ChangeSetFormat.RECORD_ENTRIES_ATTRIBUTE, "2");
+            manifest.getMainAttributes().putValue(ChangeSetFormat.entryAttribute(1), first + " 57 abc");
+            manifest.getMainAttributes().putValue(ChangeSetFormat.entryAttribute(2), second + " 10784 def");
+            out.putNextEntry(new ZipEntry(ChangeSetFormat.MANIFEST));
+            manifest.write(out);
+            out.closeEntry();
+        }
+        try (ZipFile zip = new ZipFile(changeSet.toFile())) {
+            Manifest manifest = ChangeSetFormat.manifest(zip).orElseThrow();
+            assertEquals(3, ChangeSetFormat.version(manifest.getMainAttributes(), "format3.zip"));
+            var entries = ChangeSetFormat.recordEntries(zip, manifest);
+            assertEquals(2, entries.size());
+            assertEquals(first, entries.get(0).entry().getName());
+            assertEquals(57, entries.get(0).count());
+            assertEquals("def", entries.get(1).sha256());
+            try (var in = ChangeSetFormat.openRecords(zip, entries.get(0).entry())) {
+                assertArrayEquals(records, in.readAllBytes());
+            }
+        }
     }
 
     @Test

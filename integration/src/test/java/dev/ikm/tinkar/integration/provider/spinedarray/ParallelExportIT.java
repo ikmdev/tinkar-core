@@ -82,26 +82,25 @@ class ParallelExportIT {
         assertTrue(exported.getTotalCount() > 1_000, "the starter data exports thousands of entities");
 
         long parsed = 0;
-        String manifest = null;
-        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(EXPORT_FILE))) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                if (entry.getName().equals("META-INF/MANIFEST.MF")) {
-                    manifest = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
-                    continue;
+        String totalCount;
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(EXPORT_FILE)) {
+            java.util.jar.Manifest manifest = ChangeSetFormat.manifest(zip).orElseThrow();
+            totalCount = manifest.getMainAttributes().getValue("Total-Count");
+            for (ChangeSetFormat.RecordEntry record : ChangeSetFormat.recordEntries(zip, manifest)) {
+                long inEntry = 0;
+                try (java.io.InputStream in = ChangeSetFormat.openRecords(zip, record.entry())) {
+                    // Throws InvalidProtocolBufferException on an interleaved stream.
+                    while (TinkarMsg.parseDelimitedFrom(in) != null) {
+                        inEntry++;
+                    }
                 }
-                if (ChangeSetFormat.isMetadata(entry.getName())) {
-                    continue; // the identity index, or other metadata: not records
+                if (record.count() >= 0) {
+                    assertEquals(record.count(), inEntry, "the manifest's count for " + record.entry().getName());
                 }
-                // Throws InvalidProtocolBufferException on an interleaved stream.
-                while (TinkarMsg.parseDelimitedFrom(zis) != null) {
-                    parsed++;
-                }
+                parsed += inEntry;
             }
         }
-
         assertEquals(exported.getTotalCount(), parsed, "every exported record parses back");
-        assertTrue(manifest != null && manifest.contains("Total-Count: " + parsed),
-                "the manifest count matches the records in the stream");
+        assertEquals(String.valueOf(parsed), totalCount, "the manifest count matches the records in the stream");
     }
 }

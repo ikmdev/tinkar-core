@@ -43,6 +43,9 @@ import dev.ikm.tinkar.schema.SemanticChronology;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.entity.changeset.ComponentTable;
+import java.util.zip.GZIPInputStream;
+import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -242,6 +245,10 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             List<Map.Entry<PublicId, String>> manifestEntryData = new ArrayList<>(); // a public id is never a hash key
             long expectedImports = analyzeManifest(manifestEntryData);
             LOG.info(expectedImports + " Entities to process, format version " + formatVersion + "...");
+            if (formatVersion >= 3) {
+                return ScopedValue.where(SCOPED_WATCH_LIST, Collections.unmodifiableSet(watchList))
+                        .call(() -> computeFormat3(expectedImports, manifestEntryData));
+            }
 
             // With an identity index every nid is assigned from it and the records are read
             // once, in either mode; without one (format version 1), the mode decides.
@@ -356,60 +363,12 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
              BufferedInputStream buffIn = new BufferedInputStream(fileIn, InputStreamBufferSize); // Increased buffer size
              CountingInputStream countingIn = new CountingInputStream(buffIn);
              ZipInputStream zis = new ZipInputStream(countingIn)) {
-            // Consumer to be run for each transformed Entity
-            Consumer<Entity<? extends EntityVersion>> entityConsumer = entity -> {
-                EntityService.get().putEntityNoCache(entity, DataActivity.LOADING_CHANGE_SET);
-                updateCounts(entity);
-                traceIfWatched(entity);
-            };
-
             ZipEntry zipEntry;
-            final AtomicInteger errorCount = new AtomicInteger();
             while ((zipEntry = zis.getNextEntry()) != null) {
                 if (ChangeSetFormat.isMetadata(zipEntry.getName())) {
                     continue;
                 }
-                try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
-                    Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 8);
-                    while (zis.available() > 0) {
-                        // zis.available returns 1 until AFTER EOF has been reached
-                        // Protobuf parser reads the data UP TO EOF, so zis.available
-                        // will return 1 when the only thing left is EOF
-                        // pbTinkarMsg should be null for this last entry
-                        TinkarMsg pbTinkarMsg = TinkarMsg.parseDelimitedFrom(zis);
-                        if (pbTinkarMsg == null) {
-                            continue;
-                        }
-                        permits.acquire();
-                        scope.fork(() -> ScopedValue.where(SCOPED_TINKAR_MSG, pbTinkarMsg).call(() -> {
-                            // TODO: Remove need for Stamp Consumer since Stamps are now consumed by Entity Consumer
-                            try {
-                                entityTransformer.transform(pbTinkarMsg, entityConsumer, (stampEntity) -> {
-                                });
-                                // Batch progress updates to prevent hanging the UI thread
-                                if (importCount.incrementAndGet() % 1000 == 0) {
-                                    updateProgress(fileLength + countingIn.getBytesRead(), fileLength * 2);
-                                }
-                            } catch (RuntimeException e) {
-                                if (e instanceof IllegalStateException && e.getMessage().contains("No entity key found for UUIDs")) {
-                                    LOG.error("{}. Error transforming Protobuf message: {} \n  {}", errorCount.getAndIncrement(), e.getMessage(), pbTinkarMsg);
-                                }
-                                if (e instanceof IllegalStateException && e.getMessage().contains("Entity byte[] not found")) {
-                                    LOG.error("{}. Error transforming Protobuf message: {} \n  {}", errorCount.getAndIncrement(), e.getMessage(), pbTinkarMsg);
-                                } else {
-                                    LOG.error("{}. Error transforming Protobuf message: {}  \n  {}", errorCount.getAndIncrement(), e.getMessage(), pbTinkarMsg, e);
-                                }
-                            } finally {
-                                permits.release();
-                            }
-                            return null;
-                        }));
-                    }
-                    LOG.info("Starting scope.join");
-                    scope.join();
-                    LOG.info("Finished scope.join");
-
-                }
+                importRecords(zis, () -> updateProgress(fileLength + countingIn.getBytesRead(), fileLength * 2));
             }
             StringBuilder stringBuilder = new StringBuilder();
 
@@ -452,6 +411,126 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             LOG.warn("ERROR: Expected " + expectedImports + " imported Entities, but imported " + importCount.get());
         }
         return summarize();
+    }
+
+    /**
+     * Imports the records of one stream: each is transformed on the pool and stored, with
+     * {@code tick} run every thousand records for progress. Shared by the format-2 records
+     * pass and every record entry of a format-3 changeset.
+     */
+    private void importRecords(InputStream in, Runnable tick) throws Exception {
+        Consumer<Entity<? extends EntityVersion>> entityConsumer = entity -> {
+            EntityService.get().putEntityNoCache(entity, DataActivity.LOADING_CHANGE_SET);
+            updateCounts(entity);
+            traceIfWatched(entity);
+        };
+        final AtomicInteger errorCount = new AtomicInteger();
+        try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
+            Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 8);
+            TinkarMsg pbTinkarMsg;
+            while ((pbTinkarMsg = TinkarMsg.parseDelimitedFrom(in)) != null) {
+                TinkarMsg record = pbTinkarMsg;
+                permits.acquire();
+                scope.fork(() -> ScopedValue.where(SCOPED_TINKAR_MSG, record).call(() -> {
+                    try {
+                        entityTransformer.transform(record, entityConsumer, (stampEntity) -> {
+                        });
+                        // Batch progress updates to prevent hanging the UI thread
+                        if (importCount.incrementAndGet() % 1000 == 0) {
+                            tick.run();
+                        }
+                    } catch (RuntimeException e) {
+                        if (e instanceof IllegalStateException && e.getMessage() != null
+                                && (e.getMessage().contains("No entity key found for UUIDs")
+                                || e.getMessage().contains("Entity byte[] not found"))) {
+                            LOG.error("{}. Error transforming Protobuf message: {} \n  {}", errorCount.getAndIncrement(), e.getMessage(), record);
+                        } else {
+                            LOG.error("{}. Error transforming Protobuf message: {}  \n  {}", errorCount.getAndIncrement(), e.getMessage(), record, e);
+                        }
+                    } finally {
+                        permits.release();
+                    }
+                    return null;
+                }));
+            }
+            scope.join();
+        }
+    }
+
+    /**
+     * Format 3 (IKE-Network/ike-issues#1275): registers the component table in table order, so
+     * every nid is minted before a record is read and a fresh store's nids ascend with the
+     * file; then imports the record entries in the order the manifest lists them, resolving
+     * references by sequence through the registered table.
+     */
+    private EntityCountSummary computeFormat3(long expectedImports, List<Map.Entry<PublicId, String>> manifestEntryData) throws Exception {
+        updateMessage("Starting format 3 import...");
+        EntityService.get().beginLoadPhase();
+        try (ZipFile zip = new ZipFile(importFile)) {
+            Manifest manifest = ChangeSetFormat.manifest(zip)
+                    .orElseThrow(() -> new IllegalStateException(importFile.getName() + " has no manifest"));
+            if (!ChangeSetFormat.hasComponentTable(zip)) {
+                throw new IllegalStateException(importFile.getName() + " names " + ChangeSetFormat.VERSION_ATTRIBUTE
+                        + ": " + formatVersion + " but carries no component table (" + ChangeSetFormat.COMPONENT_TABLE + ")");
+            }
+            List<ChangeSetFormat.RecordEntry> entries = ChangeSetFormat.recordEntries(zip, manifest);
+            String componentCountValue = manifest.getMainAttributes().getValue(ChangeSetFormat.COMPONENT_COUNT_ATTRIBUTE);
+            final long componentCount = Math.max(1, componentCountValue == null ? expectedImports : Long.parseLong(componentCountValue.strip()));
+            final long tableBytes = Math.max(1, compressedSize(zip, ChangeSetFormat.COMPONENT_TABLE) + compressedSize(zip, ChangeSetFormat.REFERENCE_TABLE));
+            long recordBytes = 0;
+            for (ChangeSetFormat.RecordEntry entry : entries) {
+                recordBytes += Math.max(0, entry.entry().getCompressedSize());
+            }
+            final long total = tableBytes + Math.max(1, recordBytes);
+            updateProgress(0, total);
+            updateMessage("Registering components from the table (step 1 of 2)...");
+            long[] nids = ComponentTable.registerNids(zip, componentCount, registered -> {
+                updateMessage(String.format("Registering components from the table (step 1 of 2): %,d of %,d", registered, componentCount));
+                updateProgress(Math.min(tableBytes, (long) ((double) registered / componentCount * tableBytes)), total);
+            });
+            identifierCount.set(nids.length - 1);
+            usedIdentityIndex = true;
+            updateMessage("Importing records (step 2 of 2)...");
+            final long[] done = {tableBytes};
+            for (ChangeSetFormat.RecordEntry entry : entries) {
+                CountingInputStream counting = new CountingInputStream(zip.getInputStream(entry.entry()));
+                try (InputStream in = entry.entry().getName().endsWith(ChangeSetFormat.GZIP_SUFFIX)
+                        ? new BufferedInputStream(new GZIPInputStream(counting, 1 << 16), InputStreamBufferSize)
+                        : new BufferedInputStream(counting, InputStreamBufferSize)) {
+                    ScopedValue.where(TinkarSchemaToEntityTransformer.SCOPED_SEQUENCE_NIDS, nids).call(() -> {
+                        importRecords(in, () -> updateProgress(done[0] + counting.getBytesRead(), total));
+                        return null;
+                    });
+                }
+                done[0] += Math.max(0, entry.entry().getCompressedSize());
+            }
+            LOG.info("Imported {} entities", String.format("%,d", importCount.get()));
+            verifyManifest(manifestEntryData);
+            reportWatchList();
+        } catch (IOException e) {
+            updateTitle("Import Protobuf Data from " + importFile.getName() + " with error(s)");
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                EntityService.get().endLoadPhase();
+            } catch (Exception e) {
+                LOG.error("Encountered exception {}", e.getMessage());
+            }
+            commitSearchIndexIfAvailable();
+            updateMessage("In " + durationString());
+            updateProgress(1, 1);
+        }
+        if (importCount.get() != expectedImports) {
+            IllegalStateException e = new IllegalStateException("Import Failed: Expected " + expectedImports + " Entities, but imported " + importCount.get());
+            AlertStreams.dispatchToRoot(e);
+            throw e;
+        }
+        return summarize();
+    }
+
+    private static long compressedSize(ZipFile zip, String name) {
+        ZipEntry entry = zip.getEntry(name);
+        return entry == null ? 0 : Math.max(0, entry.getCompressedSize());
     }
 
     private static void verifyManifest(List<Map.Entry<PublicId, String>> manifestEntryData) {

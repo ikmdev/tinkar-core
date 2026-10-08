@@ -25,6 +25,7 @@ import dev.ikm.tinkar.common.id.VertexId;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.component.Component;
+import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.component.graph.DiGraph;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.Vertex;
@@ -103,6 +104,36 @@ public class EntityToTinkarSchemaTransformer {
      * @param entity to be transformed to PB message
      * @return a Protobuf message of entity data type.
      */
+    /**
+     * Format 3: the sequence a component has in the changeset being written. Bound by the
+     * exporter while it writes records, so every reference is written as a sequence into the
+     * component table; unbound, references are written as public ids, as in format 2.
+     * The implementation allocates a sequence for a component referenced but not carried.
+     */
+    @FunctionalInterface
+    public interface SequenceOfNid {
+        int sequence(long nid);
+    }
+
+    public static final ScopedValue<SequenceOfNid> SCOPED_SEQUENCE_OF_NID = ScopedValue.newInstance();
+
+    /** A reference to the component with {@code nid}: its sequence when one is being written, else its public id. */
+    protected PublicId createPBReference(long nid) {
+        if (SCOPED_SEQUENCE_OF_NID.isBound()) {
+            return PublicId.newBuilder().setSequence(SCOPED_SEQUENCE_OF_NID.get().sequence(nid)).build();
+        }
+        return createPBPublicId(PrimitiveData.publicId(nid));
+    }
+
+    /** A reference to the component {@code id} names: its sequence when one is being written, else the id itself. */
+    protected PublicId createPBReference(dev.ikm.tinkar.common.id.PublicId id) {
+        if (SCOPED_SEQUENCE_OF_NID.isBound()) {
+            long nid = id instanceof ComponentWithNid withNid ? withNid.nid() : PrimitiveData.nid(id);
+            return createPBReference(nid);
+        }
+        return createPBPublicId(id);
+    }
+
     public TinkarMsg transform(Entity entity){
         return switch (entity.entityDataType()){
             case CONCEPT_CHRONOLOGY -> createPBConceptChronology((ConceptEntity<ConceptEntityVersion>) entity);
@@ -128,7 +159,7 @@ public class EntityToTinkarSchemaTransformer {
         }
         final ArrayList<ConceptVersion> pbConceptVersions = new ArrayList<>();
         conceptEntityVersions.forEach(conceptEntityVersion -> pbConceptVersions.add(ConceptVersion.newBuilder()
-                .setStampChronologyPublicId(createPBPublicId(conceptEntityVersion.stamp().publicId()))
+                .setStampChronologyPublicId(createPBReference(conceptEntityVersion.stampNid()))
                 .build()));
         return pbConceptVersions;
     }
@@ -143,8 +174,8 @@ public class EntityToTinkarSchemaTransformer {
         return TinkarMsg.newBuilder()
                 .setSemanticChronology(SemanticChronology.newBuilder()
                         .setPublicId(createPBPublicId(semanticEntity.publicId()))
-                        .setReferencedComponentPublicId(createPBPublicId(PrimitiveData.publicId(semanticEntity.referencedComponentNid())))
-                        .setPatternForSemanticPublicId(createPBPublicId(PrimitiveData.publicId(semanticEntity.patternNid())))
+                        .setReferencedComponentPublicId(createPBReference(semanticEntity.referencedComponentNid()))
+                        .setPatternForSemanticPublicId(createPBReference(semanticEntity.patternNid()))
                         .addAllSemanticVersions(createPBSemanticVersions(semanticEntity.versions()))
                         .build())
                 .build();
@@ -156,7 +187,7 @@ public class EntityToTinkarSchemaTransformer {
         }
         return semanticEntityVersions.stream()
                 .map(semanticEntityVersion -> SemanticVersion.newBuilder()
-                    .setStampChronologyPublicId(createPBPublicId(semanticEntityVersion.stamp().publicId()))
+                    .setStampChronologyPublicId(createPBReference(semanticEntityVersion.stampNid()))
                     .addAllFields(createPBFields(semanticEntityVersion.fieldValues()))
                     .build())
                 .toList();
@@ -177,9 +208,9 @@ public class EntityToTinkarSchemaTransformer {
         final ArrayList<PatternVersion> pbPatternVersions = new ArrayList<>();
         patternEntityVersions.forEach(patternEntityVersion -> pbPatternVersions
                 .add(PatternVersion.newBuilder()
-                .setStampChronologyPublicId(createPBPublicId(patternEntityVersion.stamp().publicId()))
-                .setReferencedComponentPurposePublicId(createPBPublicId(PrimitiveData.publicId(patternEntityVersion.semanticPurposeNid())))
-                .setReferencedComponentMeaningPublicId(createPBPublicId(PrimitiveData.publicId(patternEntityVersion.semanticMeaningNid())))
+                .setStampChronologyPublicId(createPBReference(patternEntityVersion.stampNid()))
+                .setReferencedComponentPurposePublicId(createPBReference(patternEntityVersion.semanticPurposeNid()))
+                .setReferencedComponentMeaningPublicId(createPBReference(patternEntityVersion.semanticMeaningNid()))
                 .addAllFieldDefinitions(createPBFieldDefinitions((ImmutableList<FieldDefinitionRecord>) patternEntityVersion.fieldDefinitions()))
                 .build()));
         return pbPatternVersions;
@@ -201,19 +232,19 @@ public class EntityToTinkarSchemaTransformer {
     // TODO: Check with Andrew, made this method return a singlar StampVersionRecord rather than a list
     protected StampVersion createPBStampVersion(StampVersionRecord stampVersionRecord){
         return StampVersion.newBuilder()
-                    .setStatusPublicId(createPBPublicId(stampVersionRecord.state().publicId()))
+                    .setStatusPublicId(createPBReference(stampVersionRecord.stateNid()))
                     .setTime(stampVersionRecord.time())
-                    .setAuthorPublicId(createPBPublicId(PrimitiveData.publicId(stampVersionRecord.authorNid())))
-                    .setModulePublicId(createPBPublicId(PrimitiveData.publicId(stampVersionRecord.moduleNid())))
-                    .setPathPublicId(createPBPublicId(PrimitiveData.publicId(stampVersionRecord.pathNid())))
+                    .setAuthorPublicId(createPBReference(stampVersionRecord.authorNid()))
+                    .setModulePublicId(createPBReference(stampVersionRecord.moduleNid()))
+                    .setPathPublicId(createPBReference(stampVersionRecord.pathNid()))
                     .build();
     }
 
     protected FieldDefinition createPBFieldDefinition(FieldDefinitionRecord fieldDefinitionRecord){
         return FieldDefinition.newBuilder()
-                .setMeaningPublicId(createPBPublicId(PrimitiveData.publicId(fieldDefinitionRecord.meaningNid())))
-                .setDataTypePublicId(createPBPublicId(PrimitiveData.publicId(fieldDefinitionRecord.dataTypeNid())))
-                .setPurposePublicId(createPBPublicId(PrimitiveData.publicId(fieldDefinitionRecord.purposeNid())))
+                .setMeaningPublicId(createPBReference(fieldDefinitionRecord.meaningNid()))
+                .setDataTypePublicId(createPBReference(fieldDefinitionRecord.dataTypeNid()))
+                .setPurposePublicId(createPBReference(fieldDefinitionRecord.purposeNid()))
                 .build();
     }
 
@@ -272,10 +303,13 @@ public class EntityToTinkarSchemaTransformer {
     }
 
     protected Field toPBComponent(Component value) {
-        return Field.newBuilder().setPublicId(createPBPublicId(value.publicId())).build();
+        if (SCOPED_SEQUENCE_OF_NID.isBound() && value instanceof ComponentWithNid withNid) {
+            return Field.newBuilder().setPublicId(createPBReference(withNid.nid())).build();
+        }
+        return Field.newBuilder().setPublicId(createPBReference(value.publicId())).build();
     }
     protected Field toPBPublicId(dev.ikm.tinkar.common.id.PublicId value) {
-        return Field.newBuilder().setPublicId(createPBPublicId(value)).build();
+        return Field.newBuilder().setPublicId(createPBReference(value)).build();
     }
     protected Field toPBPublicIdList(PublicIdList value) {
         return Field.newBuilder().setPublicIds(createPBPublicIdList(value)).build();
@@ -369,7 +403,7 @@ public class EntityToTinkarSchemaTransformer {
     protected dev.ikm.tinkar.schema.PublicIdList createPBPublicIdList(PublicIdList publicIdList){
         ArrayList<PublicId> pbPublicIds = new ArrayList<>();
         for(dev.ikm.tinkar.common.id.PublicId publicId : publicIdList.toIdArray()){
-            pbPublicIds.add(createPBPublicId(publicId));
+            pbPublicIds.add(createPBReference(publicId));
         }
         return dev.ikm.tinkar.schema.PublicIdList.newBuilder()
                 .addAllPublicIds(pbPublicIds)
@@ -381,7 +415,7 @@ public class EntityToTinkarSchemaTransformer {
         ArrayList<PublicId> pbPublicIds = new ArrayList<>();
         for(dev.ikm.tinkar.common.id.PublicId publicId : java.util.Arrays.stream(publicIdSet.toIdArray())
                 .map(dev.ikm.tinkar.common.id.PublicId.class::cast).sorted().toList()){
-            pbPublicIds.add(createPBPublicId(publicId));
+            pbPublicIds.add(createPBReference(publicId));
         }
         return dev.ikm.tinkar.schema.PublicIdSet.newBuilder()
                 .addAllPublicIds(pbPublicIds)
@@ -390,7 +424,7 @@ public class EntityToTinkarSchemaTransformer {
 
     protected dev.ikm.tinkar.schema.PublicIdList createPBPublicIdList(LongIdList intIdList){
         List<PublicId> pbPublicIds = new ArrayList<>();
-        intIdList.forEach(nid -> pbPublicIds.add(createPBPublicId(PrimitiveData.publicId(nid))));
+        intIdList.forEach(nid -> pbPublicIds.add(createPBReference(nid)));
         return dev.ikm.tinkar.schema.PublicIdList.newBuilder()
                 .addAllPublicIds(pbPublicIds)
                 .build();
@@ -398,10 +432,19 @@ public class EntityToTinkarSchemaTransformer {
 
     /** A set's members in public id order, not nid order, so the same set is written the same way in every store. */
     protected dev.ikm.tinkar.schema.PublicIdSet createPBPublicIdSet(LongIdSet intIdSet){
+        List<PublicId> pbPublicIds = new ArrayList<>();
+        if (SCOPED_SEQUENCE_OF_NID.isBound()) {
+            // In nid order: the same set is always written the same way, without a lookup.
+            long[] nids = intIdSet.toArray();
+            java.util.Arrays.sort(nids);
+            for (long nid : nids) {
+                pbPublicIds.add(createPBReference(nid));
+            }
+            return dev.ikm.tinkar.schema.PublicIdSet.newBuilder().addAllPublicIds(pbPublicIds).build();
+        }
         List<dev.ikm.tinkar.common.id.PublicId> members = new ArrayList<>();
         intIdSet.forEach(nid -> members.add(PrimitiveData.publicId(nid)));
         members.sort(null);
-        List<PublicId> pbPublicIds = new ArrayList<>();
         members.forEach(publicId -> pbPublicIds.add(createPBPublicId(publicId)));
         return dev.ikm.tinkar.schema.PublicIdSet.newBuilder()
                 .addAllPublicIds(pbPublicIds)
@@ -450,13 +493,13 @@ public class EntityToTinkarSchemaTransformer {
         vertexKeys.sort(java.util.Comparator.comparing(ConceptFacade::publicId));
         ArrayList<dev.ikm.tinkar.schema.Vertex.Property> pbPropertyList = new ArrayList<>();
         vertexKeys.forEach(concept -> pbPropertyList.add(dev.ikm.tinkar.schema.Vertex.Property.newBuilder()
-                .setPublicId(createPBPublicId(concept.publicId()))
+                .setPublicId(createPBReference(concept.publicId()))
                 .setField(createPBField(vertex.propertyFast(concept)))
                 .build()));
         return dev.ikm.tinkar.schema.Vertex.newBuilder()
                 .setVertexUuid(createPBVertexUUID(vertex.vertexId()))
                 .setIndex(pbVertexIndex)
-                .setMeaningPublicId(createPBPublicId(PrimitiveData.publicId(vertex.getMeaningNid())))
+                .setMeaningPublicId(createPBReference(vertex.getMeaningNid()))
                 .addAllProperties(pbPropertyList)
                 .build();
     }

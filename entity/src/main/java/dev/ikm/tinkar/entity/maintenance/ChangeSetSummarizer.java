@@ -54,6 +54,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import dev.ikm.tinkar.entity.changeset.ComponentTable;
+import java.io.InputStream;
+import java.util.zip.ZipFile;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
@@ -644,13 +647,12 @@ public final class ChangeSetSummarizer {
     // -- Manifest ------------------------------------------------------------
 
     private ManifestInfo readManifest(File zip) throws IOException {
-        try (FileInputStream fis = new FileInputStream(zip);
-             BufferedInputStream bis = new BufferedInputStream(fis);
-             ZipInputStream zis = new ZipInputStream(bis)) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                if (entry.getName().equals(ChangeSetFormat.MANIFEST)) {
-                    Manifest mf = new Manifest(zis);
+        // Through the central directory: the manifest is the last entry (IKE-Network/ike-issues#1269).
+        try (ZipFile zipFile = new ZipFile(zip)) {
+            Optional<Manifest> manifest = ChangeSetFormat.manifest(zipFile);
+            if (manifest.isPresent()) {
+                {
+                    Manifest mf = manifest.get();
                     Attributes main = mf.getMainAttributes();
                     MutableList<NamedPublicId> entries = Lists.mutable.empty();
                     for (Map.Entry<String, Attributes> e : mf.getEntries().entrySet()) {
@@ -669,7 +671,6 @@ public final class ChangeSetSummarizer {
                             parseLong(main.getValue("Stamp-Count")),
                             entries.toImmutable());
                 }
-                zis.closeEntry();
             }
         }
         return null;
@@ -703,24 +704,47 @@ public final class ChangeSetSummarizer {
                               AccumIndex<SemanticAccum> semantics,
                               AccumIndex<PatternAccum> patterns,
                               AccumIndex<StampAccum> stamps) throws IOException {
-        try (FileInputStream fis = new FileInputStream(zip);
-             BufferedInputStream bis = new BufferedInputStream(fis);
-             ZipInputStream zis = new ZipInputStream(bis)) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                // The manifest, the identity index, and any later metadata are not records.
-                if (ChangeSetFormat.isMetadata(entry.getName())) {
-                    zis.closeEntry();
-                    continue;
+        try (ZipFile zipFile = new ZipFile(zip)) {
+            Manifest manifest = ChangeSetFormat.manifest(zipFile).orElseGet(Manifest::new);
+            loadComponentTable(zipFile);
+            for (ChangeSetFormat.RecordEntry record : ChangeSetFormat.recordEntries(zipFile, manifest)) {
+                try (InputStream in = ChangeSetFormat.openRecords(zipFile, record.entry())) {
+                    TinkarMsg msg;
+                    while ((msg = TinkarMsg.parseDelimitedFrom(in)) != null) {
+                        classifyMessage(msg, concepts, semantics, patterns, stamps);
+                    }
                 }
-                while (zis.available() > 0) {
-                    TinkarMsg msg = TinkarMsg.parseDelimitedFrom(zis);
-                    if (msg == null) break;
-                    classifyMessage(msg, concepts, semantics, patterns, stamps);
-                }
-                zis.closeEntry();
             }
+        } finally {
+            componentsBySequence = null;
         }
+    }
+
+    /** Format 3: the component table, so a reference by sequence names its component. */
+    private static volatile PublicId[] componentsBySequence; // one summary at a time, as the tool runs
+
+    private static void loadComponentTable(ZipFile zipFile) throws IOException {
+        if (!ChangeSetFormat.hasComponentTable(zipFile)) {
+            componentsBySequence = null;
+            return;
+        }
+        List<PublicId> table = new ArrayList<>();
+        table.add(null); // sequences count from 1
+        ComponentTable.forEach(zipFile, component -> table.add(component.publicId()));
+        componentsBySequence = table.toArray(new PublicId[0]);
+    }
+
+    /** A schema public id as a public id: by sequence through the table when the record refers that way. */
+    private static PublicId publicIdOf(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        if (pbPublicId.hasSequence() && pbPublicId.getUuidBitsCount() == 0 && pbPublicId.getUuidsCount() == 0) {
+            PublicId[] table = componentsBySequence;
+            int sequence = pbPublicId.getSequence();
+            if (table == null || sequence <= 0 || sequence >= table.length) {
+                throw new IllegalStateException("Reference to component sequence " + sequence + " with no component table to resolve it");
+            }
+            return table[sequence];
+        }
+        return SchemaIds.toPublicId(pbPublicId);
     }
 
     private void classifyMessage(TinkarMsg msg,
@@ -1147,9 +1171,9 @@ public final class ChangeSetSummarizer {
     // -- Public-id helpers ---------------------------------------------------
 
     private static PublicId toPublicId(dev.ikm.tinkar.schema.PublicId pb) {
-        if (!SchemaIds.hasUuids(pb)) return null;
+        if (!SchemaIds.hasUuids(pb) && !pb.hasSequence()) return null;
         try {
-            return SchemaIds.toPublicId(pb);
+            return publicIdOf(pb);
         } catch (IllegalArgumentException e) {
             return null; // malformed
         }
