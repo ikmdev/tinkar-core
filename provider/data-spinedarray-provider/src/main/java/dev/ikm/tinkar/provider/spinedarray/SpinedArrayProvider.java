@@ -23,9 +23,7 @@ import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.service.SequentialNids;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
-import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedByteArrayMap;
-import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
@@ -55,10 +53,8 @@ import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.set.MutableSet;
-import org.eclipse.collections.api.set.primitive.IntSet;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -127,13 +123,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     final ConcurrentHashMap<Integer, ConcurrentHashSet<Integer>> patternElementNidsMap = ConcurrentHashMap.newMap();
 
     final SpinedByteArrayMap entityToBytesMap;
-    final SpinedIntIntMap nidToPatternNidMap;
     /**
      * Using "citing" instead of "referencing" to make the field names more distinct.
      */
     final SpinedIntLongArrayMap nidToCitingComponentsNidMap;
 
-    final File nidToPatternNidMapDirectory;
     final File nidToByteArrayMapDirectory;
     final File nidToCitingComponentNidMapDirectory;
     final File nextNidKeyFile;
@@ -156,8 +150,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         configuredRoot.mkdirs();
         LOG.info("Datastore root: " + configuredRoot.getAbsolutePath());
 
-        this.nidToPatternNidMapDirectory = new File(configuredRoot, "nidToPatternNidMap");
-        this.nidToPatternNidMapDirectory.mkdirs();
         this.nidToByteArrayMapDirectory = new File(configuredRoot, "nidToByteArrayMap");
         this.nidToByteArrayMapDirectory.mkdirs();
         this.nidToCitingComponentNidMapDirectory = new File(configuredRoot, "nidToCitingComponentNidMap");
@@ -165,8 +157,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         this.nextNidKeyFile = new File(configuredRoot, "nextNidKeyFile");
 
         this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayFileStore(nidToByteArrayMapDirectory));
-        this.nidToPatternNidMap = new SpinedIntIntMap(KeyType.NID_KEY);
-        this.nidToPatternNidMap.read(this.nidToPatternNidMapDirectory);
         this.nidToCitingComponentsNidMap = new SpinedIntLongArrayMap(new IntLongArrayFileStore(nidToCitingComponentNidMapDirectory));
 
         if (nextNidKeyFile.exists()) {
@@ -276,7 +266,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         LOG.info("Saving SpinedArrayProvider");
         try {
             Files.writeString(this.nextNidKeyFile.toPath(), Integer.toString(nextNid.get()));
-            nidToPatternNidMap.write(this.nidToPatternNidMapDirectory);
             this.entityToBytesMap.write();
             this.nidToCitingComponentsNidMap.write();
         } catch (Exception e) {
@@ -427,10 +416,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             throw new IllegalStateException("NID should not be Integer.MIN_VALUE");
         }
         if (!this.entityToBytesMap.containsKey(Nid.narrowChecked(nid))) {
-            // The pattern is stored as given, so a concept, pattern or stamp is stored with the
-            // not-applicable sentinel, Integer.MAX_VALUE (Nid.NOT_APPLICABLE), which this file
-            // keeps on disk; only a semantic is indexed under its pattern and referenced component.
-            this.nidToPatternNidMap.put(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
+            // A concept, pattern or stamp comes with the not-applicable sentinel, Integer.MAX_VALUE
+            // (Nid.NOT_APPLICABLE), as its pattern; only a semantic is indexed under its pattern and
+            // referenced component. An entity's pattern is read from its bytes, never from a map.
             if (!Nid.isNotApplicable(patternNid)) {
                 long citationLong = IntsInLong.ints2Long(Nid.narrowChecked(nid), Nid.narrowChecked(patternNid));
                 this.nidToCitingComponentsNidMap.accumulateAndGet(Nid.narrowChecked(referencedComponentNid), new long[]{citationLong},
@@ -507,38 +495,38 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
 
     @Override
     public long[] semanticNidsOfPattern(long patternNid) {
-        IntSet elementNids = getElementNidsForPatternNid(Nid.narrowChecked(patternNid));
-        if (elementNids.notEmpty()) {
-            MutableLongList elementNidList = LongLists.mutable.withInitialCapacity(elementNids.size());
-            elementNids.forEach(integer -> elementNidList.add(integer));
-            return elementNidList.toArray();
+        ConcurrentHashSet<Integer> elementNids = patternElementNidsMap.get(Nid.narrowChecked(patternNid));
+        if (elementNids == null || elementNids.isEmpty()) {
+            return new long[0];
         }
-        return new long[0];
+        // The set may grow while it is read; the list grows with it.
+        MutableLongList elementNidList = LongLists.mutable.withInitialCapacity(elementNids.size());
+        for (int elementNid : elementNids) {
+            elementNidList.add(elementNid);
+        }
+        return elementNidList.toArray();
     }
 
-    public IntSet getElementNidsForPatternNid(int patternNid) {
-        if (patternElementNidsMap.containsKey(patternNid)) {
-            return IntSets.immutable.ofAll(patternElementNidsMap.get(patternNid).stream().mapToInt(value -> (int) value));
+    /**
+     * Visits the elements of a pattern from the set the provider keeps for it. No copy is made:
+     * a visit over a pattern with millions of elements costs its iteration and nothing more,
+     * where it once built an immutable int set of them first, on every call. The set is
+     * concurrent, so an element added while it is read may or may not be visited. A pattern no
+     * semantic has been merged under has no set, and no elements.
+     */
+    private void forEachElementNid(int patternNid, IntProcedure procedure) {
+        ConcurrentHashSet<Integer> elementNids = patternElementNidsMap.get(patternNid);
+        if (elementNids != null) {
+            for (int elementNid : elementNids) {
+                procedure.accept(elementNid);
+            }
         }
-        return IntSets.immutable.empty();
     }
 
     @Override
     public void forEachSemanticNidOfPattern(long patternNid, LongProcedure procedure) {
         EntityHandle.get(patternNid).expectPattern("Trying to iterate elements for entity that is not a pattern: ");
-
-        IntSet elementNids;
-        if (LOG.isTraceEnabled()) {
-            Stopwatch sw = new Stopwatch();
-            elementNids = getElementNidsForPatternNid(Nid.narrowChecked(patternNid));
-            LOG.atTrace().log("getElementNidsForPatternNid " + PrimitiveData.text(patternNid) +
-                    " time: " + sw.durationString());
-        } else {
-            elementNids = getElementNidsForPatternNid(Nid.narrowChecked(patternNid));
-        }
-        if (elementNids.notEmpty()) {
-            elementNids.forEach(procedure::value);
-        }
+        forEachElementNid(Nid.narrowChecked(patternNid), procedure::value);
     }
 
     @Override
@@ -618,8 +606,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     @Override
     public void erase(long nid) {
         this.entityToBytesMap.put(Nid.narrowChecked(nid), null);
-        // The not-applicable sentinel: an erased nid has no pattern.
-        this.nidToPatternNidMap.put(Nid.narrowChecked(nid), Integer.MAX_VALUE);
         this.nidToCitingComponentsNidMap.put(Nid.narrowChecked(nid), null);
         this.conceptNids.remove(Nid.narrowChecked(nid));
         this.semanticNids.remove(Nid.narrowChecked(nid));
@@ -873,11 +859,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             if (!checkDir.exists() || !checkDir.isDirectory()) {
                 return false;
             }
-            File nidToPatternDir = new File(checkDir, "nidToPatternNidMap");
+            // The two directories every spined-array store has. A store written before 2026-10-07
+            // also holds a nidToPatternNidMap directory, a map nothing read, which is ignored.
             File nidToBytesDir = new File(checkDir, "nidToByteArrayMap");
             File nidToCitingDir = new File(checkDir, "nidToCitingComponentNidMap");
-            return nidToPatternDir.isDirectory()
-                    && nidToBytesDir.isDirectory()
+            return nidToBytesDir.isDirectory()
                     && nidToCitingDir.isDirectory();
         }
 
