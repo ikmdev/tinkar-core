@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -71,6 +72,52 @@ public class ServiceLifecycleManager {
      */
     public enum State {
         UNINITIALIZED, DISCOVERED, PREPARED, STARTING, RUNNING, FAILED, SHUTTING_DOWN, SHUTDOWN
+    }
+
+    /**
+     * One step of a startup: the service about to start, and where it falls among the steps and
+     * phases of {@link #startServices()}. Indexes count from zero; {@link #completed()} and
+     * {@link #remaining()} are the counts a progress indicator shows.
+     */
+    public record StartupStep(String serviceName, ServiceLifecyclePhase phase,
+                              int serviceIndex, int serviceCount, int phaseIndex, int phaseCount) {
+
+        /** Steps complete when this one begins. */
+        public int completed() {
+            return serviceIndex;
+        }
+
+        /** Steps still to come after this one. */
+        public int remaining() {
+            return serviceCount - serviceIndex - 1;
+        }
+
+        /** The phase in words: {@code DATA_STORAGE} as "Data storage". */
+        public String phaseLabel() {
+            String name = phase.name().toLowerCase(Locale.ROOT).replace('_', ' ');
+            return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        }
+    }
+
+    /**
+     * Told of each step of {@link #startServices()} as it begins. A progress indicator over
+     * {@link PrimitiveData#start()} follows these; the data load and the index rebuild within
+     * the steps report their own progress as tracking callables, with rows of their own.
+     */
+    @FunctionalInterface
+    public interface StartupListener {
+        void serviceStarting(StartupStep step);
+    }
+
+    private final CopyOnWriteArrayList<StartupListener> startupListeners = new CopyOnWriteArrayList<>();
+
+    /** Adds a listener told of each step as {@link #startServices()} runs. */
+    public void addStartupListener(StartupListener listener) {
+        startupListeners.add(listener);
+    }
+
+    public void removeStartupListener(StartupListener listener) {
+        startupListeners.remove(listener);
     }
 
     private final Map<Class<?>, ServiceLifecycle> discoveredServices = new ConcurrentHashMap<>();
@@ -597,6 +644,10 @@ public class ServiceLifecycleManager {
 
         long overallStartTime = System.currentTimeMillis();
         List<Map.Entry<Class<?>, ServiceLifecycle>> sortedServices = getSortedActiveServices();
+        int phaseCount = (int) sortedServices.stream()
+                .map(entry -> servicePriorities.get(entry.getKey()).phase).distinct().count();
+        int phaseIndex = -1;
+        int serviceIndex = 0;
 
         ServiceLifecyclePhase currentPhase = null;
         long phaseStartTime = 0;
@@ -616,12 +667,18 @@ public class ServiceLifecycleManager {
                     LOG.info("───────────────────────────────────────────────────────────");
                 }
                 currentPhase = priority.phase;
+                phaseIndex++;
                 phaseStartTime = System.currentTimeMillis();
                 phaseServiceCount = 0;
                 LOG.info("");
                 LOG.info("Starting Phase: {}", currentPhase.name());
             }
 
+            StartupStep step = new StartupStep(getServiceName(serviceClass), currentPhase,
+                    serviceIndex++, sortedServices.size(), phaseIndex, phaseCount);
+            for (StartupListener listener : startupListeners) {
+                listener.serviceStarting(step);
+            }
             startService(service, serviceClass, priority);
             phaseServiceCount++;
         }

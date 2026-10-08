@@ -269,20 +269,30 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     private EntityCountSummary computeMultiPass(long expectedImports, List<Map.Entry<PublicId, String>> manifestEntryData,
                                                 boolean indexed) throws Exception {
         updateMessage("Starting multi-pass import...");
-        updateProgress(0, expectedImports * 2);
+        // Progress is in bytes throughout: the first half of the bar is the first pass, the
+        // second half the second, so the bar never resets when a pass changes its measure. The
+        // identity index's registration reports components, scaled onto the first half.
+        final long fileLength = Math.max(1, this.importFile.length());
+        final long expected = Math.max(1, expectedImports);
+        updateProgress(0, fileLength * 2);
 
         // Pass 1: generate identifiers for all entities
         EntityService.get().beginLoadPhase();
         CopyOnWriteArrayList<PublicId> patternIds = new CopyOnWriteArrayList<>();
 
         if (indexed) {
-            updateMessage("Registering identifiers from the identity index...");
-            identifierCount.set(IdentityIndex.registerNids(importFile, registered -> updateProgress(registered, expectedImports * 2)));
+            updateMessage("Registering identifiers from the identity index (step 1 of 2)...");
+            identifierCount.set(IdentityIndex.registerNids(importFile, registered -> {
+                updateMessage(String.format("Registering identifiers from the identity index (step 1 of 2): %,d of %,d",
+                        registered, expected));
+                updateProgress(Math.min(fileLength, (long) ((double) registered / expected * fileLength)), fileLength * 2);
+            }));
             usedIdentityIndex = true;
         } else try (FileInputStream fileIn = new FileInputStream(importFile);
              BufferedInputStream buffIn = new BufferedInputStream(fileIn, InputStreamBufferSize);
              CountingInputStream countingIn = new CountingInputStream(buffIn);
              ZipInputStream zis = new ZipInputStream(countingIn)) {
+            updateMessage("Assigning identifiers by reading every record (step 1 of 2)...");
             ZipEntry zipEntry;
             int messageIndex = 0;
             while ((zipEntry = zis.getNextEntry()) != null) {
@@ -300,7 +310,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                                                 if (pbTinkarMsg != null) {
                                                     // Batch progress updates to prevent hanging the UI thread
                                                     if (identifierCount.incrementAndGet() % 1000 == 0) {
-                                                        updateProgress(countingIn.getBytesRead(), this.importFile.length() * 2);
+                                                        updateProgress(countingIn.getBytesRead(), fileLength * 2);
                                                     }
                                                     long nid = switch (pbTinkarMsg.getValueCase()) {
                                                         case CONCEPT_CHRONOLOGY ->
@@ -339,6 +349,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         }
 
         // Pass 2: load entities into RocksDB
+        updateMessage("Importing records (step 2 of 2)...");
         try (FileInputStream fileIn = new FileInputStream(importFile);
              BufferedInputStream buffIn = new BufferedInputStream(fileIn, InputStreamBufferSize); // Increased buffer size
              CountingInputStream countingIn = new CountingInputStream(buffIn);
@@ -375,7 +386,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                                 });
                                 // Batch progress updates to prevent hanging the UI thread
                                 if (importCount.incrementAndGet() % 1000 == 0) {
-                                    updateProgress(this.importFile.length() + countingIn.getBytesRead(), this.importFile.length() * 2);
+                                    updateProgress(fileLength + countingIn.getBytesRead(), fileLength * 2);
                                 }
                             } catch (RuntimeException e) {
                                 if (e instanceof IllegalStateException && e.getMessage().contains("No entity key found for UUIDs")) {
