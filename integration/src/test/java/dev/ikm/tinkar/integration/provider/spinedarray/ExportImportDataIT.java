@@ -17,6 +17,9 @@ package dev.ikm.tinkar.integration.provider.spinedarray;
 
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.id.impl.LongIdListArray;
 import dev.ikm.tinkar.common.id.impl.LongIdSetArray;
 import dev.ikm.tinkar.common.util.io.FileUtil;
@@ -31,6 +34,9 @@ import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.fixtures.ForkedJvm;
@@ -39,6 +45,9 @@ import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.State;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.MutableList;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
@@ -163,8 +172,9 @@ class ExportImportDataIT {
         }
 
         /**
-         * Changes the cached semantic in place: {@code toArray()} of an id set or list
-         * returns its backing array, so the export writes the changed elements.
+         * Writes a new version of the semantic, its set's and its list's first element the
+         * active state, through the entity service: the export reads the store, not the cache,
+         * so a change has to be put, not made in a cached array.
          */
         private static void changeFirstSetAndListElementsToActive() {
             EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("dde159ca-415e-4947-9174-cae7e8e7202d")));
@@ -178,13 +188,24 @@ class ExportImportDataIT {
 
             PatternEntityVersion latestPattern = (PatternEntityVersion) Calculators.Stamp.DevelopmentLatest().latest(EXAMPLE_PATTERN_TWO).get();
 
+            StampEntity stamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(),
+                    KernelTerm.USER.publicId(), KernelTerm.PRIMORDIAL_MODULE.publicId(), KernelTerm.DEVELOPMENT_PATH.publicId());
+            EntityService.get().putEntity(stamp);
             EntityService.get().forEachSemanticForComponentOfPattern(concept.nid(), EXAMPLE_PATTERN_TWO.nid(), semanticEntity -> {
                 Latest<SemanticEntityVersion> latestActive = stampCalcActive.latest(semanticEntity);
                 if (latestActive.isPresent()) {
-                    LongIdSetArray intIdSet = latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive.get());
-                    intIdSet.toArray()[0] = KernelTerm.ACTIVE_STATE.nid();
-                    LongIdListArray intIdList = latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive.get());
-                    intIdList.toArray()[0] = KernelTerm.ACTIVE_STATE.nid();
+                    MutableList<Object> fields = Lists.mutable.withAll(latestActive.get().fieldValues());
+                    int setIndex = latestPattern.indexForMeaning(COMPONENT_SET_FIELD_MEANING);
+                    long[] set = ((LongIdSet) fields.get(setIndex)).toArray().clone();
+                    set[0] = KernelTerm.ACTIVE_STATE.nid();
+                    fields.set(setIndex, LongIds.set.of(set));
+                    int listIndex = latestPattern.indexForMeaning(COMPONENT_LIST_FIELD_MEANING);
+                    long[] list = ((LongIdList) fields.get(listIndex)).toArray().clone();
+                    list[0] = KernelTerm.ACTIVE_STATE.nid();
+                    fields.set(listIndex, LongIds.list.of(list));
+                    SemanticRecord changed = SemanticRecord.build(semanticEntity.publicId().asUuidArray()[0], semanticEntity.patternNid(),
+                            semanticEntity.referencedComponentNid(), stamp.lastVersion(), fields.toImmutable());
+                    EntityService.get().putEntity(changed);
                 }
             });
         }

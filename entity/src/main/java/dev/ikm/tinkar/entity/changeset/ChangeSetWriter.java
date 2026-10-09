@@ -41,8 +41,8 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * What every writer of a format-3 change set shares: a record entry written as a gzip spool
- * with its CRC and SHA-256, stored in the zip as it is; and the manifest that lists the
- * entries. The exporter writes from a store, the compaction from another change set.
+ * with the CRC and SHA-256 of its stored bytes, stored in the zip as it is; and the manifest
+ * that lists the entries. The exporter writes from a store, the compaction from another change set.
  */
 public final class ChangeSetWriter {
     private ChangeSetWriter() {
@@ -53,8 +53,9 @@ public final class ChangeSetWriter {
     }
 
     /**
-     * A gzip spool of records for one entry, digesting the records it is given and
-     * checksumming the gzip bytes, so the entry is stored by the zip without a second pass.
+     * A gzip spool of records for one entry, checksumming and digesting the gzip bytes as they
+     * are written, so the entry is stored by the zip without a second pass. The manifest's
+     * SHA-256 is of the stored bytes, the gzip stream as the zip holds it.
      */
     public static final class Spool implements Closeable {
         private final String name;
@@ -74,8 +75,8 @@ public final class ChangeSetWriter {
             }
             OutputStream file = new BufferedOutputStream(Files.newOutputStream(path), 1 << 20);
             CheckedOutputStream checked = new CheckedOutputStream(file, crc);
-            GZIPOutputStream gzip = new GZIPOutputStream(checked, 1 << 16);
-            this.out = new DigestOutputStream(gzip, sha256);
+            DigestOutputStream digested = new DigestOutputStream(checked, sha256);
+            this.out = new GZIPOutputStream(digested, 1 << 16);
         }
 
         public void write(TinkarMsg record) throws IOException {

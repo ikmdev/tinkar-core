@@ -39,7 +39,8 @@ import java.util.zip.ZipFile;
  * output, and what the {@code verify} goal and menu item report. For format 3: the manifest
  * names the version; the component table is there and the manifest's count matches it; the
  * pattern pattern names itself and patterns precede their members; every record entry the
- * manifest lists exists, holds the records it says, and hashes as it says; every record names
+ * manifest lists exists, holds the records it says, and its stored bytes hash as it says;
+ * every record names
  * itself by UUID words and refers to components by sequences within the table or by UUID
  * words; every carried record's component is listed, as carried, in file order. For formats
  * 1 and 2: the counts match the manifest, and a format-2 identity index lists every record.
@@ -204,9 +205,12 @@ public final class ChangeSetVerification extends TrackingCallable<ChangeSetVerif
                 throw new IllegalStateException(e);
             }
             long inEntry = 0;
-            try (InputStream in = new BufferedInputStream(new DigestInputStream(ChangeSetFormat.openRecords(zip, entry.entry()), sha256), 1 << 20)) {
+            // The manifest's SHA-256 is of the stored bytes: digested before the gunzip, and
+            // drained to the end, so bytes after the last record count too.
+            DigestInputStream stored = new DigestInputStream(zip.getInputStream(entry.entry()), sha256);
+            try (InputStream in = ChangeSetFormat.openRecords(entry.entry().getName(), stored)) {
                 TinkarMsg record;
-                while ((record = TinkarMsg.parseDelimitedFrom(in)) != null) {
+                while ((record = TinkarMsg.parseDelimitedFrom(in) ) != null) {
                     inEntry++;
                     records++;
                     PublicId own = ChangeSetFormat.componentOf(record);
@@ -236,6 +240,10 @@ public final class ChangeSetVerification extends TrackingCallable<ChangeSetVerif
                             error("reference", referenceErrors, first + " carries an empty reference");
                         }
                     });
+                }
+                byte[] rest = new byte[1 << 16];
+                while (stored.read(rest) > 0) {
+                    // the gzip trailer, already read through the digest, or nothing
                 }
             }
             String digest = HexFormat.of().formatHex(sha256.digest());

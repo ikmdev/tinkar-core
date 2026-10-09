@@ -75,7 +75,7 @@ class ParallelExportIT {
     }
 
     @Test
-    void concurrentlyDeliveredExport_parsesBackCompletely() throws IOException {
+    void concurrentlyDeliveredExport_parsesBackCompletely() throws Exception {
         EXPORT_FILE.delete();
         EntityCountSummary exported =
                 new ExportEntitiesToProtobufFile(EXPORT_FILE, new ParallelDeliveryAggregator()).compute();
@@ -102,5 +102,10 @@ class ParallelExportIT {
         }
         assertEquals(exported.getTotalCount(), parsed, "every exported record parses back");
         assertEquals(String.valueOf(parsed), totalCount, "the manifest count matches the records in the stream");
+        // The file conforms to its format: the table, every entry's count and the SHA-256 of its
+        // stored bytes, the ids and references of every record, the carried listing in order.
+        dev.ikm.tinkar.entity.changeset.ChangeSetVerification.Verification verified =
+                new dev.ikm.tinkar.entity.changeset.ChangeSetVerification(EXPORT_FILE).call();
+        assertTrue(verified.ok(), verified.text());
     }
 }

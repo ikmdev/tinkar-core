@@ -124,8 +124,8 @@ public final class ChangeSetFormat {
 
     /**
      * A record entry as the manifest describes it: its zip entry, the records it holds, and
-     * the SHA-256 of its records uncompressed. A format-1 or format-2 changeset describes
-     * nothing, so its entries carry {@code -1} and {@code null}.
+     * the SHA-256 of its stored bytes, the gzip stream as the zip holds it. A format-1 or
+     * format-2 changeset describes nothing, so its entries carry {@code -1} and {@code null}.
      */
     public record RecordEntry(ZipEntry entry, long count, String sha256) {
     }
@@ -173,11 +173,15 @@ public final class ChangeSetFormat {
      * zip itself. Buffered; the caller closes it.
      */
     public static InputStream openRecords(ZipFile zip, ZipEntry entry) throws IOException {
-        InputStream raw = zip.getInputStream(entry);
-        if (entry.getName().endsWith(GZIP_SUFFIX)) {
-            return new BufferedInputStream(new GZIPInputStream(raw, 1 << 16), 1 << 20);
+        return openRecords(entry.getName(), zip.getInputStream(entry));
+    }
+
+    /** As {@link #openRecords(ZipFile, ZipEntry)}, over an entry's stored bytes already opened, named to tell a gzip entry. */
+    public static InputStream openRecords(String entryName, InputStream stored) throws IOException {
+        if (entryName.endsWith(GZIP_SUFFIX)) {
+            return new BufferedInputStream(new GZIPInputStream(stored, 1 << 16), 1 << 20);
         }
-        return new BufferedInputStream(raw, 1 << 20);
+        return new BufferedInputStream(stored, 1 << 20);
     }
 
     /**

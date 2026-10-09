@@ -21,6 +21,7 @@ import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
@@ -66,6 +67,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
+import dev.ikm.tinkar.entity.EntityRecordFactory;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -145,18 +149,25 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         updateProgress(-1, 1);
         EntityCountSummary entityCountSummary = null;
         try {
+            long started = System.nanoTime();
             Buckets buckets = Buckets.collect(entityAggregator);
             EntityCountSummary aggregated = buckets.summary();
             addToTotalWork(aggregated.getTotalCount() * 2L);
             SequenceAllocator sequences = new SequenceAllocator(buckets);
+            long enumerated = System.nanoTime();
             try (FileOutputStream fos = new FileOutputStream(protobufFile);
                  BufferedOutputStream bos = new BufferedOutputStream(fos, 1 << 20);
                  ZipOutputStream zos = new ZipOutputStream(bos)) {
                 updateMessage("Writing the component table...");
                 writeComponentTable(zos, buckets, sequences);
+                long tabled = System.nanoTime();
                 updateMessage("Exporting Entities...");
                 List<WrittenEntry> written = writeRecordEntries(zos, buckets, sequences);
+                long recorded = System.nanoTime();
                 writeReferenceTable(zos, sequences);
+                LOG.info("Export phases: enumeration {} s, component table {} s, records {} s (chunks {} s, assembly {} s), reference table {} s",
+                        seconds(started, enumerated), seconds(enumerated, tabled), seconds(tabled, recorded),
+                        seconds(0, chunkNanos.get()), seconds(0, assemblyNanos.get()), seconds(recorded, System.nanoTime()));
                 long totalSkipped = skippedConcepts + skippedSemantics + skippedPatterns + skippedStamps;
                 entityCountSummary = new EntityCountSummary(
                         aggregated.conceptCount() - skippedConcepts,
@@ -254,49 +265,77 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         zos.closeEntry();
     }
 
-    /** A record entry as written: its name, its spool, and what the manifest says about it. */
-    private record WrittenEntry(String name, Path spool, long size, long crc, String sha256, long count) {
+    /** The time the record phase spent compressing chunks, and assembling the entries from them: for the phase log. */
+    private final java.util.concurrent.atomic.AtomicLong chunkNanos = new java.util.concurrent.atomic.AtomicLong();
+    private final java.util.concurrent.atomic.AtomicLong assemblyNanos = new java.util.concurrent.atomic.AtomicLong();
+
+    private static String seconds(long fromNanos, long toNanos) {
+        return String.format("%.1f", (toNanos - fromNanos) / 1_000_000_000.0);
+    }
+
+    /** A record entry as stored: its name, and what the manifest says about it. */
+    private record WrittenEntry(String name, long size, long crc, String sha256, long count) {
+    }
+
+    /** One chunk of a bucket's records, compressed on its own thread into one gzip member, spooled. */
+    private record Chunk(Path spool, long count) {
     }
 
     /**
-     * One gzip entry of records per bucket, each written on its own thread into a spool and
-     * then stored, uncompressed by the zip, in table order.
+     * Records per chunk. A bucket is split into chunks of this many records, each read from the
+     * store in one batch, transformed and compressed on its own thread; the entry is the chunks'
+     * gzip members in order, which a gzip reader takes as one stream. Without the split the
+     * largest pattern's entry was one thread's work for most of an export (DeX: one thread busy
+     * for minutes while fifteen cores idled, 2026-10-08).
+     */
+    static final int CHUNK_RECORDS = Integer.getInteger("ike.export.chunkRecords", 131_072);
+
+    /**
+     * One gzip entry of records per bucket, each the concatenation of its chunks' gzip members:
+     * every chunk is read in one batch, transformed and compressed on its own thread, as many
+     * at once as there are processors, so the largest bucket no longer sets the export's pace.
+     * The entries are then stored in table order with the size, CRC and SHA-256 of their stored
+     * bytes, which a stored zip entry needs before its bytes.
      */
     private List<WrittenEntry> writeRecordEntries(ZipOutputStream zos, Buckets buckets, SequenceAllocator sequences) throws Exception {
         List<Buckets.Bucket> order = buckets.inTableOrder();
         Path spoolDir = Files.createTempDirectory("ike-changeset-");
-        WrittenEntry[] written = new WrittenEntry[order.size()];
+        Chunk[][] chunks = new Chunk[order.size()][];
+        long forked = System.nanoTime();
         try {
             try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
                 Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors());
                 for (int i = 0; i < order.size(); i++) {
-                    int ordinal = i + 1;
                     Buckets.Bucket bucket = order.get(i);
-                    permits.acquire();
-                    scope.fork(() -> {
-                        try {
-                            written[ordinal - 1] = writeEntry(ordinal, bucket, spoolDir, sequences);
-                        } finally {
-                            permits.release();
-                        }
-                        return null;
-                    });
+                    long[] nids = danglingBuckets.contains(bucket.patternNid()) ? new long[0] : bucket.nids().toArray();
+                    // An empty bucket still gets one chunk: an empty gzip member, so its entry is a gzip stream.
+                    int count = Math.max(1, (nids.length + CHUNK_RECORDS - 1) / CHUNK_RECORDS);
+                    chunks[i] = new Chunk[count];
+                    for (int c = 0; c < count; c++) {
+                        final int bucketIndex = i;
+                        final int chunkIndex = c;
+                        final long[] slice = Arrays.copyOfRange(nids, Math.min(nids.length, c * CHUNK_RECORDS),
+                                Math.min(nids.length, (c + 1) * CHUNK_RECORDS));
+                        permits.acquire();
+                        scope.fork(() -> {
+                            try {
+                                chunks[bucketIndex][chunkIndex] = writeChunk(bucketIndex + 1, chunkIndex, slice, spoolDir, sequences);
+                            } finally {
+                                permits.release();
+                            }
+                            return null;
+                        });
+                    }
                 }
                 scope.join();
             }
-            List<WrittenEntry> result = new ArrayList<>(written.length);
-            for (WrittenEntry entry : written) {
-                ZipEntry zipEntry = new ZipEntry(entry.name());
-                zipEntry.setMethod(ZipEntry.STORED);
-                zipEntry.setSize(entry.size());
-                zipEntry.setCompressedSize(entry.size());
-                zipEntry.setCrc(entry.crc());
-                zos.putNextEntry(zipEntry);
-                Files.copy(entry.spool(), zos);
-                zos.closeEntry();
-                Files.delete(entry.spool());
-                result.add(entry);
+            long chunked = System.nanoTime();
+            chunkNanos.set(chunked - forked);
+            List<WrittenEntry> result = new ArrayList<>(order.size());
+            for (int i = 0; i < order.size(); i++) {
+                result.add(storeEntry(zos, ChangeSetFormat.recordEntryName(i + 1, order.get(i).label()), chunks[i]));
             }
+            assemblyNanos.set(System.nanoTime() - chunked);
             return result;
         } finally {
             try (var leftovers = Files.list(spoolDir)) {
@@ -306,36 +345,88 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         }
     }
 
-    /** One bucket's records, transformed with sequences for references, into a gzip spool. */
-    private WrittenEntry writeEntry(int ordinal, Buckets.Bucket bucket, Path spoolDir, SequenceAllocator sequences) throws Exception {
-        String name = ChangeSetFormat.recordEntryName(ordinal, bucket.label());
-        Path spool = spoolDir.resolve(String.format("%04d.pb.gz", ordinal));
-        MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-        CRC32 crc = new CRC32();
+    /** One chunk of a bucket, transformed with sequences for references, into a gzip spool of its own. */
+    private Chunk writeChunk(int ordinal, int index, long[] nids, Path spoolDir, SequenceAllocator sequences) throws Exception {
+        Path spool = spoolDir.resolve(String.format("%04d-%06d.gz", ordinal, index));
         long count;
         try (OutputStream file = new BufferedOutputStream(Files.newOutputStream(spool), 1 << 20);
-             CheckedOutputStream checked = new CheckedOutputStream(file, crc);
-             GZIPOutputStream gzip = new GZIPOutputStream(checked, 1 << 16);
-             DigestOutputStream out = new DigestOutputStream(gzip, sha256)) {
+             GZIPOutputStream gzip = new GZIPOutputStream(file, 1 << 16)) {
             count = ScopedValue.where(EntityToTinkarSchemaTransformer.SCOPED_SEQUENCE_OF_NID, sequences)
-                    .call(() -> writeRecords(bucket, out));
+                    .call(() -> writeRecords(nids, gzip));
         }
-        return new WrittenEntry(name, spool, Files.size(spool), crc.getValue(), HexFormat.of().formatHex(sha256.digest()), count);
+        return new Chunk(spool, count);
     }
 
-    private long writeRecords(Buckets.Bucket bucket, OutputStream out) throws IOException {
-        long[] nids = bucket.nids().toArray();
-        long count = 0;
-        if (danglingBuckets.contains(bucket.patternNid())) {
-            return 0; // tallied and skipped with the table
+    /**
+     * Stores an entry assembled from its chunks' gzip members, in order. A stored zip entry
+     * declares its size and CRC before its bytes, so the members are read once for the size, the
+     * CRC and the SHA-256 the manifest carries, then copied.
+     */
+    private static WrittenEntry storeEntry(ZipOutputStream zos, String name, Chunk[] chunks) throws IOException {
+        MessageDigest sha256;
+        try {
+            sha256 = MessageDigest.getInstance("SHA-256");
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
         }
-        for (long nid : nids) {
-            Entity<?> entity = EntityHandle.get(nid).orNull();
-            if (entity == null) {
-                LOG.warn("No entity for nid {} at export time; its table entry stays, its record is absent", nid);
+        CRC32 crc = new CRC32();
+        long size = 0;
+        long count = 0;
+        byte[] buffer = new byte[1 << 20];
+        for (Chunk chunk : chunks) {
+            try (InputStream in = Files.newInputStream(chunk.spool())) {
+                int read;
+                while ((read = in.read(buffer)) > 0) {
+                    crc.update(buffer, 0, read);
+                    sha256.update(buffer, 0, read);
+                    size += read;
+                }
+            }
+            count += chunk.count();
+        }
+        ZipEntry zipEntry = new ZipEntry(name);
+        zipEntry.setMethod(ZipEntry.STORED);
+        zipEntry.setSize(size);
+        zipEntry.setCompressedSize(size);
+        zipEntry.setCrc(crc.getValue());
+        zos.putNextEntry(zipEntry);
+        for (Chunk chunk : chunks) {
+            Files.copy(chunk.spool(), zos);
+            Files.delete(chunk.spool());
+        }
+        zos.closeEntry();
+        return new WrittenEntry(name, size, crc.getValue(), HexFormat.of().formatHex(sha256.digest()), count);
+    }
+
+    /**
+     * A chunk's records, read from the store in one batch and written in table order. The store
+     * delivers a batch in its own order, so the records are kept by their position in the chunk.
+     */
+    private long writeRecords(long[] nids, OutputStream out) throws IOException {
+        if (nids.length == 0) {
+            return 0;
+        }
+        // By position, not by binary search: the patterns bucket is not sorted, the pattern
+        // pattern leads it.
+        LongIntHashMap position = new LongIntHashMap(nids.length * 2);
+        for (int i = 0; i < nids.length; i++) {
+            position.put(nids[i], i);
+        }
+        byte[][] records = new byte[nids.length][];
+        EntityStore.current().forEach(LongLists.immutable.of(nids), (bytes, nid) -> {
+            int at = position.getIfAbsent(nid, -1);
+            if (at >= 0) {
+                records[at] = bytes;
+            }
+        });
+        long count = 0;
+        for (int i = 0; i < nids.length; i++) {
+            if (records[i] == null) {
+                LOG.warn("No entity for nid {} at export time; its table entry stays, its record is absent", nids[i]);
                 completedUnitOfWork();
                 continue;
             }
+            Entity<?> entity = EntityRecordFactory.make(records[i]);
             try {
                 if (entity instanceof StampEntity stampEntity) {
                     moduleNids.add(stampEntity.moduleNid());
