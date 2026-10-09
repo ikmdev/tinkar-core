@@ -367,6 +367,9 @@ public class TinkarSchemaToEntityTransformer {
      */
     public static final ScopedValue<long[]> SCOPED_SEQUENCE_NIDS = ScopedValue.newInstance();
 
+    /** Format 3: the public id of each pattern by nid, from the table, so a semantic's pattern needs no record yet. */
+    public static final ScopedValue<Map<Long, PublicId>> SCOPED_PATTERN_IDS = ScopedValue.newInstance();
+
     /** Pattern public ids by nid, for a semantic whose pattern is given by sequence. */
     private final ConcurrentHashMap<Long, PublicId> patternPublicIds = new ConcurrentHashMap<>();
 
@@ -397,6 +400,12 @@ public class TinkarSchemaToEntityTransformer {
 
     /** The public id of a pattern by nid, read once; a format-3 semantic names its pattern by sequence. */
     protected PublicId patternPublicIdOf(long patternNid) {
+        if (SCOPED_PATTERN_IDS.isBound()) {
+            PublicId fromTable = SCOPED_PATTERN_IDS.get().get(patternNid);
+            if (fromTable != null) {
+                return fromTable;
+            }
+        }
         return patternPublicIds.computeIfAbsent(patternNid, nid -> EntityHandle.get(nid).expectEntity().publicId());
     }
 

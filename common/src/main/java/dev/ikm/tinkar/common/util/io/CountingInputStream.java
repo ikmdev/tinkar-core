@@ -37,6 +37,34 @@ public class CountingInputStream extends InputStream implements AutoCloseable {
         return result ;
     }
 
+    /**
+     * Reads in bulk, as the stream beneath does. Without this, every bulk read above the
+     * counter fell back to one read() per byte of the stream beneath: over a zip entry read
+     * through the central directory, one synchronized file read per byte, which made a
+     * format-3 import of SNOMED CT take four minutes instead of one
+     * (IKE-Network/ike-issues#1275).
+     */
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+        int result = stream.read(b, off, len);
+        if (result > 0) {
+            bytesRead += result;
+        }
+        return result;
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+        long skipped = stream.skip(n);
+        bytesRead += skipped;
+        return skipped;
+    }
+
+    @Override
+    public int available() throws IOException {
+        return stream.available();
+    }
+
     @Override
     public void close() throws IOException {
         super.close();

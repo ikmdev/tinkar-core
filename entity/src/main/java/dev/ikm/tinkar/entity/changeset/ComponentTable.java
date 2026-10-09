@@ -103,6 +103,19 @@ public final class ComponentTable {
     }
 
     /**
+     * What registration produced: the nid of each component by its sequence
+     * ({@code nids[sequence]}, {@code nids[0]} unused), and the public id of each pattern by
+     * its nid, so a reader resolves a semantic's pattern without the pattern's record, which
+     * another reader may still be storing.
+     */
+    public record Registration(long[] nids, Map<Long, PublicId> patternIdsByNid) {
+        /** The number of components registered. */
+        public long count() {
+            return nids.length - 1;
+        }
+    }
+
+    /**
      * Registers every component of the table with the store, in table order, and returns the
      * nid of each by its sequence: {@code nids[sequence]}, with {@code nids[0]} unused. A
      * component already known to the store keeps its nid; a new one is minted under its
@@ -115,9 +128,10 @@ public final class ComponentTable {
      * @throws IllegalStateException if a component names a pattern the table has not yet
      *                               defined, or the pattern pattern never names itself
      */
-    public static long[] registerNids(ZipFile zip, long expectedComponents, LongConsumer progress) throws IOException {
+    public static Registration registerNids(ZipFile zip, long expectedComponents, LongConsumer progress) throws IOException {
         long[][] nids = {new long[(int) Math.max(16, Math.min(Integer.MAX_VALUE - 8, expectedComponents + 1))]};
         Map<Integer, PublicId> patternIds = new HashMap<>();
+        Map<Long, PublicId> patternIdsByNid = new HashMap<>();
         int[] patternPattern = {-1};
         long[] count = {0};
         long[] lastReported = {0};
@@ -142,6 +156,7 @@ public final class ComponentTable {
             nids[0][component.sequence()] = nid;
             if (component.patternSequence() == patternPattern[0]) {
                 patternIds.put(component.sequence(), id);
+                patternIdsByNid.put(nid, id);
             }
             count[0]++;
             if (progress != null && count[0] - lastReported[0] >= COMPONENTS_PER_MESSAGE) {
@@ -153,7 +168,8 @@ public final class ComponentTable {
             progress.accept(total);
         }
         LOG.info("Registered {} nid(s) from the component table of {}", String.format("%,d", total), zip.getName());
-        return total + 1 == nids[0].length ? nids[0] : Arrays.copyOf(nids[0], (int) total + 1);
+        long[] bySequence = total + 1 == nids[0].length ? nids[0] : Arrays.copyOf(nids[0], (int) total + 1);
+        return new Registration(bySequence, patternIdsByNid);
     }
 
     /** The UUIDs of a component entry: two longs each, most significant bits first. */

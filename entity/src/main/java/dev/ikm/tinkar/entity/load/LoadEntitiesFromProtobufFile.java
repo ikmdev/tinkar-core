@@ -59,6 +59,7 @@ import java.util.ArrayList;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -124,6 +125,8 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     public static final String WATCH_PROPERTY = "tinkar.import.watch";
 
     public static final ScopedValue<TinkarMsg> SCOPED_TINKAR_MSG = ScopedValue.newInstance();
+    /** Records in flight across every reader: parsed, not yet stored. */
+    private final Semaphore transformPermits = new Semaphore(Runtime.getRuntime().availableProcessors() * 8);
     /**
      * The watched UUIDs, bound for the whole of an import; stores and other code an import calls
      * read it to trace their work on watched components.
@@ -426,7 +429,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         };
         final AtomicInteger errorCount = new AtomicInteger();
         try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
-            Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 8);
+            Semaphore permits = transformPermits;
             TinkarMsg pbTinkarMsg;
             while ((pbTinkarMsg = TinkarMsg.parseDelimitedFrom(in)) != null) {
                 TinkarMsg record = pbTinkarMsg;
@@ -484,25 +487,51 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             final long total = tableBytes + Math.max(1, recordBytes);
             updateProgress(0, total);
             updateMessage("Registering components from the table (step 1 of 2)...");
-            long[] nids = ComponentTable.registerNids(zip, componentCount, registered -> {
+            ComponentTable.Registration registration = ComponentTable.registerNids(zip, componentCount, registered -> {
                 updateMessage(String.format("Registering components from the table (step 1 of 2): %,d of %,d", registered, componentCount));
                 updateProgress(Math.min(tableBytes, (long) ((double) registered / componentCount * tableBytes)), total);
             });
-            identifierCount.set(nids.length - 1);
+            long[] nids = registration.nids();
+            identifierCount.set(registration.count());
             usedIdentityIndex = true;
             updateMessage("Importing records (step 2 of 2)...");
-            final long[] done = {tableBytes};
+            // The entries are independent, so each has a reader of its own, inflating and
+            // parsing on its thread; the records of all of them share the transform permits.
+            final AtomicLong finishedBytes = new AtomicLong(tableBytes);
+            final Set<CountingInputStream> reading = ConcurrentHashMap.newKeySet();
+            final Runnable tick = () -> {
+                long read = finishedBytes.get();
+                for (CountingInputStream counting : reading) {
+                    read += counting.getBytesRead();
+                }
+                updateProgress(Math.min(read, total), total);
+            };
+            // The patterns and the stamps first, on their own: small, and what the live index
+            // and the diagnostics of every other record may read. Then the rest in parallel.
+            List<ChangeSetFormat.RecordEntry> first = new ArrayList<>();
+            List<ChangeSetFormat.RecordEntry> rest = new ArrayList<>();
             for (ChangeSetFormat.RecordEntry entry : entries) {
-                CountingInputStream counting = new CountingInputStream(zip.getInputStream(entry.entry()));
-                try (InputStream in = entry.entry().getName().endsWith(ChangeSetFormat.GZIP_SUFFIX)
-                        ? new BufferedInputStream(new GZIPInputStream(counting, 1 << 16), InputStreamBufferSize)
-                        : new BufferedInputStream(counting, InputStreamBufferSize)) {
-                    ScopedValue.where(TinkarSchemaToEntityTransformer.SCOPED_SEQUENCE_NIDS, nids).call(() -> {
-                        importRecords(in, () -> updateProgress(done[0] + counting.getBytesRead(), total));
+                String name = entry.entry().getName();
+                (name.endsWith("-patterns.pb" + ChangeSetFormat.GZIP_SUFFIX) || name.endsWith("-stamps.pb" + ChangeSetFormat.GZIP_SUFFIX)
+                        ? first : rest).add(entry);
+            }
+            for (ChangeSetFormat.RecordEntry entry : first) {
+                importEntry(zip, entry, registration, reading, finishedBytes, tick);
+            }
+            try (StructuredTaskScope<Object, Void, SubtaskFailedException> readers = StructuredScopes.open()) {
+                Semaphore readerPermits = new Semaphore(Math.max(1, Math.min(Math.max(1, rest.size()), Runtime.getRuntime().availableProcessors() / 2)));
+                for (ChangeSetFormat.RecordEntry entry : rest) {
+                    readerPermits.acquire();
+                    readers.fork(() -> {
+                        try {
+                            importEntry(zip, entry, registration, reading, finishedBytes, tick);
+                        } finally {
+                            readerPermits.release();
+                        }
                         return null;
                     });
                 }
-                done[0] += Math.max(0, entry.entry().getCompressedSize());
+                readers.join();
             }
             LOG.info("Imported {} entities", String.format("%,d", importCount.get()));
             verifyManifest(manifestEntryData);
@@ -526,6 +555,26 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             throw e;
         }
         return summarize();
+    }
+
+    /** One record entry, inflated and parsed on the calling thread, its references resolved through the registration. */
+    private void importEntry(ZipFile zip, ChangeSetFormat.RecordEntry entry, ComponentTable.Registration registration,
+                             Set<CountingInputStream> reading, AtomicLong finishedBytes, Runnable tick) throws Exception {
+        CountingInputStream counting = new CountingInputStream(new BufferedInputStream(zip.getInputStream(entry.entry()), InputStreamBufferSize));
+        reading.add(counting);
+        try (InputStream in = entry.entry().getName().endsWith(ChangeSetFormat.GZIP_SUFFIX)
+                ? new BufferedInputStream(new GZIPInputStream(counting, 1 << 16), InputStreamBufferSize)
+                : new BufferedInputStream(counting, InputStreamBufferSize)) {
+            ScopedValue.where(TinkarSchemaToEntityTransformer.SCOPED_SEQUENCE_NIDS, registration.nids())
+                    .where(TinkarSchemaToEntityTransformer.SCOPED_PATTERN_IDS, registration.patternIdsByNid())
+                    .call(() -> {
+                        importRecords(in, tick);
+                        return null;
+                    });
+        } finally {
+            reading.remove(counting);
+            finishedBytes.addAndGet(Math.max(0, entry.entry().getCompressedSize()));
+        }
     }
 
     private static long compressedSize(ZipFile zip, String name) {
