@@ -84,6 +84,22 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
     private static final Logger LOG = LoggerFactory.getLogger(EntityProvider.class);
     private static final Cache<Long, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
     private static final Cache<Long, Entity> ENTITY_CACHE = Caffeine.newBuilder().maximumSize(10240).build();
+    /**
+     * One put of a nid at a time: the merge and the cache entry made from it land in the order
+     * of the merges, so the cache never holds an older union than the store does. Two puts of
+     * one nid from two threads could otherwise cache the earlier merge last.
+     */
+    private static final Object[] PUT_LOCKS = new Object[1024];
+
+    static {
+        for (int i = 0; i < PUT_LOCKS.length; i++) {
+            PUT_LOCKS[i] = new Object();
+        }
+    }
+
+    private static Object putLock(long nid) {
+        return PUT_LOCKS[(int) (Long.hashCode(nid) & (PUT_LOCKS.length - 1))];
+    }
     private static final Cache<Long, StampEntity> STAMP_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
 
 
@@ -289,36 +305,38 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
         invalidateCaches(entity);
         // Only a semantic has a pattern and a referenced component; every other entity passes
         // the not-applicable sentinel, Integer.MAX_VALUE (Nid.NOT_APPLICABLE), for both.
-        byte[] mergedEntityBytes = switch (entity) {
-            case ConceptEntity conceptEntity -> {
-                STRING_CACHE.put(conceptEntity.nid(), conceptEntity.asUuidList().toString());
-                yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
-                        entity.getBytes(), entity, activity);
-            }
-            case PatternEntity patternEntity -> {
-                STRING_CACHE.put(patternEntity.nid(), patternEntity.asUuidList().toString());
-                yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
-                        entity.getBytes(), entity, activity);
-            }
-            case SemanticEntity semanticEntity -> {
-                STRING_CACHE.put(semanticEntity.nid(), semanticEntity.asUuidList().toString());
-                yield EntityStore.current().merge(entity.nid(),
-                        semanticEntity.patternNid(),
-                        semanticEntity.referencedComponentNid(),
-                        entity.getBytes(), entity, activity);
-            }
-            case StampEntity stampEntity -> {
-                if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
-                    PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
+        synchronized (putLock(entity.nid())) {
+            byte[] mergedEntityBytes = switch (entity) {
+                case ConceptEntity conceptEntity -> {
+                    STRING_CACHE.put(conceptEntity.nid(), conceptEntity.asUuidList().toString());
+                    yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                            entity.getBytes(), entity, activity);
                 }
-                yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
-                        entity.getBytes(), entity, activity);
-            }
-            default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
-        };
+                case PatternEntity patternEntity -> {
+                    STRING_CACHE.put(patternEntity.nid(), patternEntity.asUuidList().toString());
+                    yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                            entity.getBytes(), entity, activity);
+                }
+                case SemanticEntity semanticEntity -> {
+                    STRING_CACHE.put(semanticEntity.nid(), semanticEntity.asUuidList().toString());
+                    yield EntityStore.current().merge(entity.nid(),
+                            semanticEntity.patternNid(),
+                            semanticEntity.referencedComponentNid(),
+                            entity.getBytes(), entity, activity);
+                }
+                case StampEntity stampEntity -> {
+                    if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
+                        PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
+                    }
+                    yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                            entity.getBytes(), entity, activity);
+                }
+                default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
+            };
 
-        if (addToCache) {
-            ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
+            if (addToCache) {
+                ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
+            }
         }
         if (dispatch) {
             processor.dispatch(entity.nid());
