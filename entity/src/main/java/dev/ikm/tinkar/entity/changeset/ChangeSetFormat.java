@@ -85,6 +85,8 @@ public final class ChangeSetFormat {
     public static final String ENTRY_ATTRIBUTE_PREFIX = "Ike-Entry-";
     /** The zip entry holding the identity index (formats 1 and 2). */
     public static final String IDENTITY_INDEX = "META-INF/identities.pb";
+    /** The one record entry of a format-1 or format-2 change set, as the incremental writer names it. */
+    public static final String IDENTITY_INDEX_RECORDS = "Entities";
 
     private ChangeSetFormat() {
     }
