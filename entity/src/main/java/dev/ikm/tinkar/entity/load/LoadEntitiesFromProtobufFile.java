@@ -373,6 +373,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 }
                 importRecords(zis, () -> updateProgress(fileLength + countingIn.getBytesRead(), fileLength * 2));
             }
+            updateProgress(fileLength * 2, fileLength * 2);
             StringBuilder stringBuilder = new StringBuilder();
 
             patternIds.forEach(patternId -> {
@@ -397,10 +398,14 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             verifyManifest(manifestEntryData);
 
             reportWatchList();
-        } catch (IOException e) {
+        } catch (Exception e) {
             updateTitle("Import Protobuf Data from " + importFile.getName() + " with error(s)");
-            throw new RuntimeException(e);
+            throw e;
         } finally {
+            // The records are in; what follows has no bar of its own, so the row says what it
+            // waits for: the store ingesting the load phase, then the search index rebuilding.
+            updateMessage(String.format("Imported %,d records; ending the load phase, its records and identities ingested...",
+                    importCount.get()));
             try {
                 EntityService.get().endLoadPhase();
             } catch (Exception e) {
@@ -533,13 +538,18 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 }
                 readers.join();
             }
+            updateProgress(total, total);
             LOG.info("Imported {} entities", String.format("%,d", importCount.get()));
             verifyManifest(manifestEntryData);
             reportWatchList();
-        } catch (IOException e) {
+        } catch (Exception e) {
             updateTitle("Import Protobuf Data from " + importFile.getName() + " with error(s)");
-            throw new RuntimeException(e);
+            throw e;
         } finally {
+            // The records are in; what follows has no bar of its own, so the row says what it
+            // waits for: the store ingesting the load phase, then the search index rebuilding.
+            updateMessage(String.format("Imported %,d records; ending the load phase, its records and identities ingested...",
+                    importCount.get()));
             try {
                 EntityService.get().endLoadPhase();
             } catch (Exception e) {
@@ -641,6 +651,10 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             AlertStreams.dispatchToRoot(e);
             throw new RuntimeException("1-pass failed", e);
         } finally {
+            // The records are in; what follows has no bar of its own, so the row says what it
+            // waits for: the store ingesting the load phase, then the search index rebuilding.
+            updateMessage(String.format("Imported %,d records; ending the load phase, its records and identities ingested...",
+                    importCount.get()));
             try {
                 EntityService.get().endLoadPhase();
             } catch (Exception e) {
@@ -733,7 +747,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         );
     }
 
-    private static void commitSearchIndexIfAvailable() {
+    private void commitSearchIndexIfAvailable() {
         // TODO(temp): two-mode logic (no-op vs. full recreate) is a stand-in
         // for the proper touched-nid catch-up design. See LoadPhaseSearchPolicy
         // for the longer rationale; replace this with the catch-up walk when
@@ -761,6 +775,8 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             policy.markRecreated(); // no index to bring current
             return;
         }
+        updateMessage(String.format("Imported %,d records; rebuilding the search index, which has its own row...",
+                importCount.get()));
         try {
             Object future = searchService.get().recreateIndex();
             if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
