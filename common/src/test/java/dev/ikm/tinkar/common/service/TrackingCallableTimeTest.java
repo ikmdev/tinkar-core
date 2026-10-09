@@ -130,6 +130,67 @@ class TrackingCallableTimeTest {
     }
 
     @Test
+    void workCountedUnitByUnitIsEstimatedToo() {
+        // As the export does: indeterminate until the total is known, then every entity counted.
+        Reported task = new Reported();
+        task.at(0, -1, 1);
+        task.addToTotalWork(12_800);
+        long nanosPerUnit = 1_000_000_000L / 640;  // five percent a second
+        for (int unit = 1; unit <= 6400; unit++) {
+            task.nanos = unit * nanosPerUnit;
+            task.completedUnitOfWork();
+        }
+        long remaining = task.timeRemaining().orElseThrow().getSeconds();
+        assertTrue(remaining >= 9 && remaining <= 11, "about ten seconds, was " + remaining);
+    }
+
+    @Test
+    void samplesAreThrottledSoAFastCounterKeepsItsWindow() {
+        Reported task = new Reported();
+        task.at(0, 0, 100_000);
+        // A thousand updates a second for twenty seconds: without the throttle the ring would
+        // hold a sixth of a second and the window nothing of a pace change.
+        for (int tick = 1; tick <= 25_000; tick++) {
+            task.nanos = tick * 1_000_000L;
+            task.updateProgress(tick <= 10_000 ? tick * 8 : 80_000 + (tick - 10_000), 100_000);
+        }
+        // Ten seconds at 8,000 a second, then fifteen at 1,000, longer than the window: the
+        // recent pace alone says five seconds remain, where the lifetime pace would say one.
+        assertEquals(Duration.ofSeconds(5), task.timeRemaining().orElseThrow());
+    }
+
+    @Test
+    void theCompactTextIsAStopwatchAndAShortEstimateEachNamed() {
+        Reported task = new Reported();
+        task.at(0, 0, 1000);
+        assertEquals("0s elapsed", task.timeTextCompact(), "no estimate yet");
+        for (int second = 1; second <= 10; second++) {
+            task.at(second, second * 50, 1000);
+        }
+        // The elapsed figure is the task's own stopwatch, which call() starts; here it reads zero.
+        assertTrue(task.timeTextCompact().matches("\\d+s elapsed \\(10 s left\\)"), task.timeTextCompact());
+    }
+
+    @Test
+    void durationsReadAsAStopwatch() {
+        assertEquals("0s", DurationUtil.stopwatch(Duration.ZERO));
+        assertEquals("22s", DurationUtil.stopwatch(Duration.ofSeconds(22)));
+        assertEquals("12m 5s", DurationUtil.stopwatch(Duration.ofSeconds(725)));
+        assertEquals("4m 0s", DurationUtil.stopwatch(Duration.ofMinutes(4)));
+        assertEquals("1h 3m", DurationUtil.stopwatch(Duration.ofSeconds(3790)));
+    }
+
+    @Test
+    void durationsAreApproximatedShortly() {
+        assertEquals("<10 s", DurationUtil.approximateShort(Duration.ofSeconds(7)));
+        assertEquals("30 s", DurationUtil.approximateShort(Duration.ofSeconds(37)));
+        assertEquals("6 min", DurationUtil.approximateShort(Duration.ofSeconds(370)));
+        assertEquals("1 h 25 min", DurationUtil.approximateShort(Duration.ofMinutes(84)));
+        assertEquals("2 h", DurationUtil.approximateShort(Duration.ofMinutes(121)));
+        assertEquals(">1 day", DurationUtil.approximateShort(Duration.ofHours(30)));
+    }
+
+    @Test
     void durationsAreApproximatedCoarsely() {
         assertEquals("a few seconds", DurationUtil.approximate(Duration.ofSeconds(7)));
         assertEquals("30 seconds", DurationUtil.approximate(Duration.ofSeconds(37)));

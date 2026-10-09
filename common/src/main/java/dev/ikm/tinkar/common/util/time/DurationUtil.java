@@ -66,6 +66,56 @@ public class DurationUtil {
         return "more than a day";
     }
 
+    /**
+     * A duration as a stopwatch reads it, for the corner of a progress row: "22s", "12m 5s",
+     * "1h 3m". Seconds are whole and are dropped past an hour; a clock reading ("12:05") was
+     * taken for a time of day at a glance (IKE-Network/ike-issues#1271).
+     *
+     * @param d the duration
+     * @return the stopwatch reading
+     */
+    public static String stopwatch(java.time.Duration d) {
+        long seconds = Math.max(0, d.getSeconds());
+        long hours = seconds / SECONDS_PER_HOUR;
+        long minutes = (seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE;
+        long secs = seconds % SECONDS_PER_MINUTE;
+        if (hours > 0) {
+            return hours + "h " + minutes + "m";
+        }
+        if (minutes > 0) {
+            return minutes + "m " + secs + "s";
+        }
+        return secs + "s";
+    }
+
+    /**
+     * {@link #approximate} in the fewest characters, for a label that must not grow: "<10 s",
+     * "30 s", "6 min", "1 h 25 min", ">1 day". The rounding is the hedge; no tilde or "about"
+     * says it again.
+     *
+     * @param d the duration
+     * @return the duration, short
+     */
+    public static String approximateShort(java.time.Duration d) {
+        long seconds = Math.max(0, d.getSeconds());
+        if (seconds < 10) {
+            return "<10 s";
+        }
+        if (seconds < 60) {
+            return (seconds / 10) * 10 + " s";
+        }
+        if (seconds < 3600) {
+            return Math.max(1, Math.round(seconds / 60.0)) + " min";
+        }
+        if (seconds < 86400) {
+            long fiveMinutes = Math.round(seconds / 300.0) * 5;
+            long hours = fiveMinutes / 60;
+            long minutes = fiveMinutes % 60;
+            return minutes == 0 ? hours + " h" : hours + " h " + minutes + " min";
+        }
+        return ">1 day";
+    }
+
     public static String format(java.time.Duration d) {
         final StringBuilder builder = new StringBuilder();
         final long          seconds = d.getSeconds();

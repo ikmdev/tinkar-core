@@ -49,6 +49,8 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     /** No estimate before this much elapsed, or this fraction done: too little to go on. */
     private static final long MIN_ELAPSED_NANOS = 3_000_000_000L;
     private static final double MIN_FRACTION = 0.02;
+    /** Samples are at least this far apart, so a fast counter cannot flood the ring and shrink the window. */
+    private static final long MIN_SAMPLE_INTERVAL_NANOS = 250_000_000L;
     /** The estimate when nothing can be said, kept for callers of the older method. */
     private static final Duration UNKNOWN = Duration.ofDays(365);
     private final long[] sampleNanos = new long[SAMPLE_CAPACITY];
@@ -56,6 +58,7 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     private int sampleCount;
     private int sampleNext;
     private long firstSampleNanos;
+    private long lastSampleNanos;
     private volatile boolean remainingTimeEstimable = true;
     /** The clock the samples are stamped by; a test sets its own. */
     LongSupplier nanoClock = System::nanoTime;
@@ -240,12 +243,29 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         return timeRemaining().map(remaining -> text + ", about " + DurationUtil.approximate(remaining) + " remaining").orElse(text);
     }
 
+    /**
+     * The time in few characters, for the corner of a row: "50s elapsed", with " (7 min left)"
+     * when the task can say. Each figure names itself and the parentheses set them apart,
+     * which a dot and a tilde did not at a squint (IKE-Network/ike-issues#1271).
+     * {@link #timeText()} is the same in full words, for a tooltip or a log.
+     */
+    public String timeTextCompact() {
+        String text = DurationUtil.stopwatch(elapsed()) + " elapsed";
+        return timeRemaining().map(remaining -> text + " (" + DurationUtil.approximateShort(remaining) + " left)").orElse(text);
+    }
+
     private void recordSample(double done) {
+        if (done < 0) {
+            return; // indeterminate, as a task reports before it knows its work
+        }
         long now = nanoClock.getAsLong();
         synchronized (sampleNanos) {
             if (sampleCount == 0) {
                 firstSampleNanos = now;
+            } else if (now - lastSampleNanos < MIN_SAMPLE_INTERVAL_NANOS) {
+                return;
             }
+            lastSampleNanos = now;
             sampleNanos[sampleNext] = now;
             sampleWork[sampleNext] = done;
             sampleNext = (sampleNext + 1) % SAMPLE_CAPACITY;
@@ -265,8 +285,14 @@ public abstract class TrackingCallable<V> implements Callable<V> {
 
     public void completedUnitOfWork() {
         workDone.add(1);
-        if (listener != null && workDone.sum() % 128 == 0) {
-            listener.updateProgress(workDone.sum(), maxWork.sum());
+        double done = workDone.sum();
+        if (done % 128 == 0) {
+            // The same cadence as the listener's: work counted unit by unit is sampled too,
+            // so an export or a commit that counts its entities gets a remaining time.
+            recordSample(done);
+            if (listener != null) {
+                listener.updateProgress(done, maxWork.sum());
+            }
         }
     }
 
