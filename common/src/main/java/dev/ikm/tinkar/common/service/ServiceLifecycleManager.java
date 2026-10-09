@@ -122,6 +122,13 @@ public class ServiceLifecycleManager {
 
     private final Map<Class<?>, ServiceLifecycle> discoveredServices = new ConcurrentHashMap<>();
     private final Map<Class<?>, ServiceLifecycle> activeServices = new ConcurrentHashMap<>();
+    /**
+     * The service found for a type while the manager is running, so that the lookup every
+     * {@code PrimitiveData.get()} makes does not walk the controllers and build their service
+     * class lists again: that walk was 8 percent of an export's Java samples (2026-10-08).
+     * Cleared whenever the state or the active services change.
+     */
+    private final Map<Class<?>, Object> runningServiceCache = new ConcurrentHashMap<>();
     private final Map<Class<?>, ServicePriority> servicePriorities = new ConcurrentHashMap<>();
     private final Map<ServiceExclusionGroup, List<ServiceInfo>> mutualExclusionGroups = new ConcurrentHashMap<>();
     private final Map<ServiceExclusionGroup, Class<?>> groupSelections = new ConcurrentHashMap<>();
@@ -304,6 +311,7 @@ public class ServiceLifecycleManager {
         long duration = System.currentTimeMillis() - startTime;
 
         state = State.DISCOVERED;
+        runningServiceCache.clear();
 
         LOG.info("───────────────────────────────────────────────────────────");
         LOG.info("Discovery Summary:");
@@ -343,6 +351,7 @@ public class ServiceLifecycleManager {
         applyActivationFilters();
         logStartupPlan();
         state = State.PREPARED;
+        runningServiceCache.clear();
     }
 
     /**
@@ -484,6 +493,7 @@ public class ServiceLifecycleManager {
 
             // Service is active
             activeServices.put(serviceClass, service);
+            runningServiceCache.clear();
             activatedCount++;
 
             if (verboseLogging) {
@@ -632,10 +642,12 @@ public class ServiceLifecycleManager {
         if (activeServices.isEmpty()) {
             LOG.warn("No active services to start");
             state = State.RUNNING;
+            runningServiceCache.clear();
             return;
         }
 
         state = State.STARTING;
+        runningServiceCache.clear();
 
         LOG.info("");
         LOG.info("═══════════════════════════════════════════════════════════");
@@ -693,6 +705,7 @@ public class ServiceLifecycleManager {
         long overallDuration = System.currentTimeMillis() - overallStartTime;
 
         state = State.RUNNING;
+        runningServiceCache.clear();
 
         LOG.info("═══════════════════════════════════════════════════════════");
         LOG.info("Service Lifecycle Startup Complete");
@@ -739,8 +752,10 @@ public class ServiceLifecycleManager {
                 // and stop short-circuit any service lookups still in flight.
                 startupFailure = e;
                 state = State.FAILED;
+                runningServiceCache.clear();
             } else {
                 state = State.DISCOVERED; // Reset to allow retry
+                runningServiceCache.clear();
             }
             throw new RuntimeException("Service startup failed: " + fullServiceName, e);
         }
@@ -762,6 +777,7 @@ public class ServiceLifecycleManager {
         }
 
         state = State.SHUTTING_DOWN;
+        runningServiceCache.clear();
 
         LOG.info("");
         LOG.info("═══════════════════════════════════════════════════════════");
@@ -831,6 +847,7 @@ public class ServiceLifecycleManager {
         long overallDuration = System.currentTimeMillis() - overallStartTime;
 
         state = State.SHUTDOWN;
+        runningServiceCache.clear();
 
         LOG.info("═══════════════════════════════════════════════════════════");
         if (failedServices.isEmpty()) {
@@ -1020,6 +1037,20 @@ public class ServiceLifecycleManager {
      * @see ProviderController#provider()
      */
     public <T> Optional<T> getRunningService(Class<T> serviceType) {
+        if (state == State.RUNNING) {
+            Object cached = runningServiceCache.get(serviceType);
+            if (cached != null) {
+                return Optional.of(serviceType.cast(cached));
+            }
+        }
+        Optional<T> found = findRunningService(serviceType);
+        if (found.isPresent() && state == State.RUNNING) {
+            runningServiceCache.put(serviceType, found.get());
+        }
+        return found;
+    }
+
+    private <T> Optional<T> findRunningService(Class<T> serviceType) {
         // Allow service lookup during STARTING phase to support service dependencies
         if (state != State.RUNNING && state != State.STARTING) {
             LOG.warn("getRunningService({}) called in state {} - services may not be available",

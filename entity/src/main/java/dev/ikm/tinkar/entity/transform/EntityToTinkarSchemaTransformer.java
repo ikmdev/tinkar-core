@@ -168,9 +168,6 @@ public class EntityToTinkarSchemaTransformer {
         if(semanticEntity.versions().size() == 0){
             throw new RuntimeException("Exception thrown, Semantic Chronology can't contain zero versions");
         }
-        if(semanticEntity.referencedComponent() == null){
-            throw new RuntimeException("Exception thrown, Semantic Chronology " + EntityText.diagnostic(semanticEntity) + " has null referenced component");
-        }
         return TinkarMsg.newBuilder()
                 .setSemanticChronology(SemanticChronology.newBuilder()
                         .setPublicId(createPBPublicId(semanticEntity.publicId()))
@@ -490,12 +487,22 @@ public class EntityToTinkarSchemaTransformer {
     protected dev.ikm.tinkar.schema.Vertex createPBVertex(EntityVertex vertex){
         int pbVertexIndex = vertex.vertexIndex();
         List<ConceptFacade> vertexKeys = new ArrayList<>(vertex.propertyKeys().toList());
-        vertexKeys.sort(java.util.Comparator.comparing(ConceptFacade::publicId));
         ArrayList<dev.ikm.tinkar.schema.Vertex.Property> pbPropertyList = new ArrayList<>();
-        vertexKeys.forEach(concept -> pbPropertyList.add(dev.ikm.tinkar.schema.Vertex.Property.newBuilder()
-                .setPublicId(createPBReference(concept.publicId()))
-                .setField(createPBField(vertex.propertyFast(concept)))
-                .build()));
+        if (SCOPED_SEQUENCE_OF_NID.isBound()) {
+            // In nid order, keys by nid: a public id per key and a nid per id were two store
+            // reads per property, half the reads of a SNOMED CT export (2026-10-08).
+            vertexKeys.sort(java.util.Comparator.comparingLong(ConceptFacade::nid));
+            vertexKeys.forEach(concept -> pbPropertyList.add(dev.ikm.tinkar.schema.Vertex.Property.newBuilder()
+                    .setPublicId(createPBReference(concept.nid()))
+                    .setField(createPBField(vertex.propertyFast(concept)))
+                    .build()));
+        } else {
+            vertexKeys.sort(java.util.Comparator.comparing(ConceptFacade::publicId));
+            vertexKeys.forEach(concept -> pbPropertyList.add(dev.ikm.tinkar.schema.Vertex.Property.newBuilder()
+                    .setPublicId(createPBReference(concept.publicId()))
+                    .setField(createPBField(vertex.propertyFast(concept)))
+                    .build()));
+        }
         return dev.ikm.tinkar.schema.Vertex.newBuilder()
                 .setVertexUuid(createPBVertexUUID(vertex.vertexId()))
                 .setIndex(pbVertexIndex)

@@ -48,6 +48,23 @@ public final class ChangeSetWriter {
     private ChangeSetWriter() {
     }
 
+    /**
+     * The deflate level of a record entry's gzip stream: 3, where a measured 256 MB of SNOMED CT
+     * records compressed at 149 MB/s to 44.4 percent, against 79 MB/s to 42.3 percent at the
+     * default 6 and 169 MB/s to 45.7 percent at 1 (2026-10-08). Set {@code ike.export.deflateLevel}
+     * to trade size for time.
+     */
+    public static final int DEFLATE_LEVEL = Integer.getInteger("ike.export.deflateLevel", 3);
+
+    /** A gzip stream at {@link #DEFLATE_LEVEL}, which every record entry of a format-3 change set is written with. */
+    public static GZIPOutputStream gzip(OutputStream out) throws IOException {
+        return new GZIPOutputStream(out, 1 << 16) {
+            {
+                def.setLevel(DEFLATE_LEVEL);
+            }
+        };
+    }
+
     /** A record entry as written: its name, its spool, and what the manifest says about it. */
     public record Entry(String name, Path spool, long size, long crc, String sha256, long count) {
     }
@@ -76,7 +93,7 @@ public final class ChangeSetWriter {
             OutputStream file = new BufferedOutputStream(Files.newOutputStream(path), 1 << 20);
             CheckedOutputStream checked = new CheckedOutputStream(file, crc);
             DigestOutputStream digested = new DigestOutputStream(checked, sha256);
-            this.out = new GZIPOutputStream(digested, 1 << 16);
+            this.out = gzip(digested);
         }
 
         public void write(TinkarMsg record) throws IOException {

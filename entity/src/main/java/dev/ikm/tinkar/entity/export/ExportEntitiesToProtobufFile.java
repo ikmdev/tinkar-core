@@ -426,7 +426,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         Path spool = spoolDir.resolve(String.format("%04d-%06d.gz", ordinal, index));
         long count;
         try (OutputStream file = new BufferedOutputStream(Files.newOutputStream(spool), 1 << 20);
-             GZIPOutputStream gzip = new GZIPOutputStream(file, 1 << 16)) {
+             GZIPOutputStream gzip = dev.ikm.tinkar.entity.changeset.ChangeSetWriter.gzip(file)) {
             count = ScopedValue.where(EntityToTinkarSchemaTransformer.SCOPED_SEQUENCE_OF_NID, sequences)
                     .call(() -> writeRecords(nids, gzip));
         }
