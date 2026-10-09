@@ -21,6 +21,8 @@ import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.EntityRecordFormat2;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.Entity;
@@ -67,6 +69,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.BitSet;
+import dev.ikm.tinkar.schema.ComponentEntry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.ArrayDeque;
+import java.io.ByteArrayOutputStream;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -205,10 +216,18 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         return entityCountSummary;
     }
 
-    /** The carried components, in table order, each with the sequence of its pattern. */
+    /**
+     * The carried components, in table order, each with the sequence of its pattern. A
+     * bucket's rows are built in blocks of {@value #TABLE_CHUNK} on their own threads, a
+     * public id lookup per row and one table message per block, and written in order as they
+     * complete, as many blocks in flight as there are processors: the table was one thread's
+     * work, 8.4 s of a 24.6 s SNOMED CT export and near two minutes of DeX's (2026-10-08).
+     */
     private void writeComponentTable(ZipOutputStream zos, Buckets buckets, SequenceAllocator sequences) throws IOException {
         zos.putNextEntry(new ZipEntry(ChangeSetFormat.COMPONENT_TABLE));
-        try (ComponentTable.Writer table = new ComponentTable.Writer(zos)) {
+        int window = Runtime.getRuntime().availableProcessors();
+        try (ComponentTable.Writer table = new ComponentTable.Writer(zos);
+             ExecutorService builders = Executors.newVirtualThreadPerTaskExecutor()) {
             List<Buckets.Bucket> order = buckets.inTableOrder();
             for (int index = 0; index < order.size(); index++) {
                 Buckets.Bucket bucket = order.get(index);
@@ -227,23 +246,80 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     }
                     continue;
                 }
+                table.flush(); // the preludes precede the bucket's blocks on the stream
                 int patternSequence = sequences.sequence(bucket.patternNid());
+                ArrayDeque<Future<TableBlock>> inFlight = new ArrayDeque<>();
                 for (int from = 0; from < nids.length; from += TABLE_CHUNK) {
                     final int start = from;
                     final int to = Math.min(nids.length, from + TABLE_CHUNK);
-                    PublicId[] ids = new PublicId[to - start];
-                    // The public ids of a chunk read in parallel: a store read each.
-                    java.util.stream.IntStream.range(start, to).parallel().forEach(i -> ids[i - start] = PrimitiveData.publicId(nids[i]));
-                    for (int i = start; i < to; i++) {
-                        // The pattern pattern names itself.
-                        int pattern = nids[i] == sequences.patternPatternNid ? sequences.sequence(nids[i]) : patternSequence;
-                        table.add(pattern, ids[i - start], false);
-                        completedUnitOfWork();
+                    inFlight.add(builders.submit(() -> tableBlock(nids, start, to, patternSequence, sequences)));
+                    if (inFlight.size() >= window) {
+                        writeBlock(zos, inFlight.poll());
                     }
+                }
+                while (!inFlight.isEmpty()) {
+                    writeBlock(zos, inFlight.poll());
                 }
             }
         }
         zos.closeEntry();
+    }
+
+    /** A block of the component table, serialized as one table message, and the rows it holds. */
+    private record TableBlock(byte[] message, int rows) {
+    }
+
+    /**
+     * One block of a bucket's rows as a serialized table message. The block's records are
+     * read in one batch and the public ids taken from their bytes; a point read per row was
+     * what kept the table phase from scaling with the threads. A nid without a record, which
+     * the enumeration does not list, would be looked up.
+     */
+    private TableBlock tableBlock(long[] nids, int start, int to, int patternSequence, SequenceAllocator sequences) throws IOException {
+        int rows = to - start;
+        PublicId[] ids = new PublicId[rows];
+        LongIntHashMap position = new LongIntHashMap(rows * 2);
+        for (int i = 0; i < rows; i++) {
+            position.put(nids[start + i], i);
+        }
+        EntityStore.current().forEach(LongLists.immutable.of(Arrays.copyOfRange(nids, start, to)), (bytes, nid) -> {
+            int at = position.getIfAbsent(nid, -1);
+            if (at >= 0) {
+                // A format-2 record names its UUIDs up front; an older record (a legacy store) is decoded for them.
+                ids[at] = EntityRecordFormat2.isFormat2(bytes)
+                        ? PublicIds.of(EntityRecordFormat2.uuids(bytes).toArray(new UUID[0]))
+                        : EntityRecordFactory.make(bytes).publicId();
+            }
+        });
+        dev.ikm.tinkar.schema.ComponentTable.Builder message = dev.ikm.tinkar.schema.ComponentTable.newBuilder();
+        for (int i = start; i < to; i++) {
+            PublicId id = ids[i - start] != null ? ids[i - start] : PrimitiveData.publicId(nids[i]);
+            // The pattern pattern names itself.
+            int pattern = nids[i] == sequences.patternPatternNid ? sequences.sequence(nids[i]) : patternSequence;
+            ComponentEntry.Builder component = ComponentEntry.newBuilder().setPatternSequence(pattern);
+            id.forEach(component::addUuidBits); // the id's UUIDs as longs, most significant first
+            message.addComponents(component);
+        }
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream((to - start) * 40);
+        message.build().writeDelimitedTo(bytes);
+        return new TableBlock(bytes.toByteArray(), to - start);
+    }
+
+    /** Writes the next block once it is built; the blocks are taken in the order they were submitted. */
+    private void writeBlock(OutputStream out, Future<TableBlock> block) throws IOException {
+        TableBlock built;
+        try {
+            built = block.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while writing the component table", e);
+        } catch (ExecutionException e) {
+            throw new IOException("Could not build a block of the component table: " + e.getCause(), e.getCause());
+        }
+        out.write(built.message());
+        for (int i = 0; i < built.rows(); i++) {
+            completedUnitOfWork();
+        }
     }
 
     private static final int TABLE_CHUNK = 100_000;
@@ -467,32 +543,48 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         private long orphans;
         private long canceled;
 
+        /** Nids per enumeration chunk: a chunk's records are read in one batch and classified on their own thread. */
+        private static final int ENUMERATION_CHUNK = 65_536;
+
+        /**
+         * Every entity the aggregator names, filed by kind and, for a semantic, by pattern. The
+         * aggregator delivers nids, on one thread or several; they are gathered into chunks, and
+         * each chunk's records are read in one batch and classified on a thread of their own, as
+         * many chunks in flight as there are processors. Reading and decoding each entity on the
+         * enumerating thread was 54 s of a DeX export (2026-10-08).
+         */
         static Buckets collect(EntityAggregator aggregator) {
             Buckets buckets = new Buckets();
-            // The aggregator may deliver nids on several threads (a Rocks store walks semantics
-            // in parallel); the entity read is outside the lock, the append inside.
-            aggregator.aggregate(nid -> {
-                Entity<?> entity = EntityHandle.get(nid).orNull();
-                synchronized (buckets) {
-                    if (entity != null && entity.versions().isEmpty()) {
-                        // Every version canceled: the record reads with none (EntityCodec2.read
-                        // leaves a canceled version out), so there is nothing to carry. Its
-                        // identity travels only if a record refers to it, as a referenced-only
-                        // entry of the component table (IKE-Network/ike-issues#1276).
-                        buckets.canceled++;
-                        return;
+            Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors());
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            MutableLongList pending = LongLists.mutable.withInitialCapacity(ENUMERATION_CHUNK);
+            Object pendingLock = new Object();
+            try (ExecutorService classifiers = Executors.newVirtualThreadPerTaskExecutor()) {
+                aggregator.aggregate(nid -> {
+                    long[] chunk = null;
+                    synchronized (pendingLock) {
+                        pending.add(nid);
+                        if (pending.size() >= ENUMERATION_CHUNK) {
+                            chunk = pending.toArray();
+                            pending.clear();
+                        }
                     }
-                    switch (entity) {
-                        case null -> buckets.orphans++;
-                        case PatternEntity<?> p -> buckets.patterns.add(nid);
-                        case StampEntity<?> st -> buckets.stamps.add(nid);
-                        case ConceptEntity<?> c -> buckets.concepts.add(nid);
-                        case SemanticEntity<?> sem -> buckets.semanticsByPattern
-                                .getIfAbsentPut(sem.patternNid(), LongLists.mutable::empty).add(nid);
-                        default -> throw new IllegalStateException("Unexpected entity " + entity.getClass() + " for nid " + nid);
+                    if (chunk != null) {
+                        classify(classifiers, permits, chunk, buckets, failure);
                     }
+                });
+                long[] rest;
+                synchronized (pendingLock) {
+                    rest = pending.toArray();
+                    pending.clear();
                 }
-            });
+                if (rest.length > 0) {
+                    classify(classifiers, permits, rest, buckets, failure);
+                }
+            } // closing the executor waits for every chunk
+            if (failure.get() != null) {
+                throw new IllegalStateException("Enumerating the store's entities failed", failure.get());
+            }
             if (buckets.orphans > 0) {
                 LOG.info("Skipped {} orphan nid(s) during aggregation (allocated, no entity bytes)", buckets.orphans);
             }
@@ -511,6 +603,72 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                 buckets.patterns.addAtIndex(0, patternPattern);
             }
             return buckets;
+        }
+
+        /** Reads a chunk's records in one batch, files them in buckets of its own, and merges those into {@code buckets}. */
+        private static void classify(ExecutorService classifiers, Semaphore permits, long[] chunk, Buckets buckets,
+                                     AtomicReference<Throwable> failure) {
+            try {
+                permits.acquire();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while enumerating the store's entities", e);
+            }
+            classifiers.submit(() -> {
+                try {
+                    Buckets partial = new Buckets();
+                    LongIntHashMap position = new LongIntHashMap(chunk.length * 2);
+                    for (int i = 0; i < chunk.length; i++) {
+                        position.put(chunk[i], i);
+                    }
+                    BitSet delivered = new BitSet(chunk.length);
+                    EntityStore.current().forEach(LongLists.immutable.of(chunk), (bytes, nid) -> {
+                        int at = position.getIfAbsent(nid, -1);
+                        if (at < 0) {
+                            return;
+                        }
+                        delivered.set(at);
+                        partial.file(nid, EntityRecordFactory.make(bytes));
+                    });
+                    partial.orphans += chunk.length - delivered.cardinality(); // allocated, no entity bytes
+                    synchronized (buckets) {
+                        buckets.merge(partial);
+                    }
+                } catch (Throwable t) {
+                    failure.compareAndSet(null, t);
+                } finally {
+                    permits.release();
+                }
+            });
+        }
+
+        /** Files one entity: by kind, a semantic by its pattern; one whose every version is canceled carries no record. */
+        private void file(long nid, Entity<?> entity) {
+            if (entity.versions().isEmpty()) {
+                // Every version canceled: the record reads with none (EntityCodec2.read leaves a
+                // canceled version out), so there is nothing to carry. Its identity travels only
+                // if a record refers to it, as a referenced-only entry of the component table
+                // (IKE-Network/ike-issues#1276).
+                canceled++;
+                return;
+            }
+            switch (entity) {
+                case PatternEntity<?> p -> patterns.add(nid);
+                case StampEntity<?> st -> stamps.add(nid);
+                case ConceptEntity<?> c -> concepts.add(nid);
+                case SemanticEntity<?> sem -> semanticsByPattern.getIfAbsentPut(sem.patternNid(), LongLists.mutable::empty).add(nid);
+                default -> throw new IllegalStateException("Unexpected entity " + entity.getClass() + " for nid " + nid);
+            }
+        }
+
+        private void merge(Buckets partial) {
+            patterns.addAll(partial.patterns);
+            stamps.addAll(partial.stamps);
+            concepts.addAll(partial.concepts);
+            partial.semanticsByPattern.forEachKeyValue((pattern, nids) ->
+                    semanticsByPattern.getIfAbsentPut(pattern, LongLists.mutable::empty).addAll(nids));
+            orphans += partial.orphans;
+            canceled += partial.canceled;
         }
 
         EntityCountSummary summary() {
