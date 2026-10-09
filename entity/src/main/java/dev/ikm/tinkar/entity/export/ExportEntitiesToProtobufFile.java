@@ -688,7 +688,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             for (long patternNid : patternNids) {
                 String label;
                 try {
-                    label = PrimitiveData.publicId(patternNid).asUuidArray()[0].toString();
+                    label = PrimitiveData.publicId(patternNid).leastUuid().toString();
                 } catch (RuntimeException e) {
                     label = "pattern-" + Long.toUnsignedString(patternNid);
                 }
