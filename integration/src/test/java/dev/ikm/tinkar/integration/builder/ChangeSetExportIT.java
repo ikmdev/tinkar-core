@@ -6,6 +6,7 @@ import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
+import dev.ikm.tinkar.entity.changeset.ChangeSetVerification;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
@@ -56,5 +57,7 @@ class ChangeSetExportIT {
         assertEquals(1, summary.stampCount());
         assertTrue(summary.semanticCount() >= 6, "FQN + synonym + dialects per concept");
         assertTrue(Files.size(out) > 0);
+        ChangeSetVerification.Verification verification = new ChangeSetVerification(out.toFile()).call();
+        assertTrue(verification.ok(), verification.text());
     }
 }

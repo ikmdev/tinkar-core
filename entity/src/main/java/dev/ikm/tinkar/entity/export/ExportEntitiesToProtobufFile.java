@@ -20,6 +20,7 @@ import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.EntityRecordFormat2;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -236,9 +237,9 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                 }
                 long[] nids = bucket.nids().toArray();
                 if (sequences.danglingBuckets.contains(bucket.patternNid())) {
-                    // The records of a pattern the store has no record for were skipped as
-                    // dangling before too; now the whole entry is, and the table omits them.
-                    LOG.error("DANGLING pattern nid={} — skipping its {} record(s)", bucket.patternNid(), nids.length);
+                    // The records of a pattern the store cannot name were skipped as dangling
+                    // before too; now the whole entry is, and the table omits them.
+                    LOG.error("DANGLING pattern {} — skipping its {} record(s)", DiagnosticText.component(bucket.patternNid()), nids.length);
                     danglingBuckets.add(bucket.patternNid());
                     for (long nid : nids) {
                         EntityHandle.get(nid).entity().ifPresent(this::tallySkip);
@@ -657,7 +658,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                 case StampEntity<?> st -> stamps.add(nid);
                 case ConceptEntity<?> c -> concepts.add(nid);
                 case SemanticEntity<?> sem -> semanticsByPattern.getIfAbsentPut(sem.patternNid(), LongLists.mutable::empty).add(nid);
-                default -> throw new IllegalStateException("Unexpected entity " + entity.getClass() + " for nid " + nid);
+                default -> throw new IllegalStateException("Unexpected entity " + entity.getClass() + " for " + DiagnosticText.component(nid));
             }
         }
 
@@ -745,11 +746,20 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                         publicId = EntityBinding.Stamp.pattern().publicId();
                     } else {
                         Entity<?> entity = EntityHandle.get(patternNid).orNull();
-                        if (entity == null) {
-                            danglingBuckets.add(patternNid);
-                            continue;
+                        if (entity != null) {
+                            publicId = entity.publicId();
+                        } else {
+                            // A pattern the store names but holds no record of, as a set
+                            // seeded without its description patterns leaves them: listed
+                            // referenced only, its semantics carried under its public id, as
+                            // every export wrote them. Only a pattern the store cannot name
+                            // is dangling, and that bucket is skipped whole.
+                            publicId = publicIdWithoutRecord(patternNid);
+                            if (publicId == null) {
+                                danglingBuckets.add(patternNid);
+                                continue;
+                            }
                         }
-                        publicId = entity.publicId();
                     }
                     int own = ++sequence;
                     carried.put(patternNid, own);
@@ -771,6 +781,16 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             }
             carriedCount = sequence;
             next = sequence + 1;
+        }
+
+        /** The public id of a nid the store names but holds no record of; null when it names none. */
+        private static PublicId publicIdWithoutRecord(long nid) {
+            try {
+                PublicId publicId = PrimitiveData.publicId(nid);
+                return publicId == null || publicId.asUuidArray().length == 0 ? null : publicId;
+            } catch (RuntimeException e) {
+                return null;
+            }
         }
 
         /** The referenced-only patterns the table lists before bucket {@code index}'s members. */
@@ -838,7 +858,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     try {
                         publicId = PrimitiveData.publicId(nid);
                     } catch (RuntimeException e) {
-                        throw new IllegalStateException("Dangling reference: no entity and no public id for nid " + nid, e);
+                        throw new IllegalStateException("Dangling reference: the store has no record for " + DiagnosticText.component(nid), e);
                     }
                     patternNid = patternNidWithoutRecord(nid);
                 }
