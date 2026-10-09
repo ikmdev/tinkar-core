@@ -142,14 +142,15 @@
             <artifactId>ike-bindings</artifactId>
             <version>${ike-starter-set.version}</version>
             <scope>test</scope>
-        </dependency>
-        <!-- The knowledge-pipeline provider ike-bindings reaches at runtime, named here so the
-             reactor sorts it first: an edge through an artifact outside the reactor is no edge to
-             the sorter, and versionless it binds to the reactor's current version (ike-issues#1019). -->
-        <dependency>
-            <groupId>network.ike.knowledge</groupId>
-            <artifactId>ike-knowledge-provider</artifactId>
-            <scope>test</scope>
+            <exclusions>
+                <!-- The knowledge-bindings goal's forked runtime, not the bindings' consumers': through
+                     a snapshot outside the reactor it reaches ike-knowledge-provider 7-SNAPSHOT, which the
+                     sorter cannot order before this module (IkeKometWs_ReactorTest #155, #156). -->
+                <exclusion>
+                    <groupId>network.ike.knowledge</groupId>
+                    <artifactId>ike-knowledge-provider</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- Service providers the tests reach only through ServiceLoader. -->
         <dependency>
