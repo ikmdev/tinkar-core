@@ -19,6 +19,7 @@ import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.Entity;
@@ -373,6 +374,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         private final MutableLongList concepts = LongLists.mutable.empty();
         private final MutableLongObjectMap<MutableLongList> semanticsByPattern = LongObjectMaps.mutable.empty();
         private long orphans;
+        private long canceled;
 
         static Buckets collect(EntityAggregator aggregator) {
             Buckets buckets = new Buckets();
@@ -381,6 +383,14 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             aggregator.aggregate(nid -> {
                 Entity<?> entity = EntityHandle.get(nid).orNull();
                 synchronized (buckets) {
+                    if (entity != null && entity.versions().isEmpty()) {
+                        // Every version canceled: the record reads with none (EntityCodec2.read
+                        // leaves a canceled version out), so there is nothing to carry. Its
+                        // identity travels only if a record refers to it, as a referenced-only
+                        // entry of the component table (IKE-Network/ike-issues#1276).
+                        buckets.canceled++;
+                        return;
+                    }
                     switch (entity) {
                         case null -> buckets.orphans++;
                         case PatternEntity<?> p -> buckets.patterns.add(nid);
@@ -394,6 +404,9 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             });
             if (buckets.orphans > 0) {
                 LOG.info("Skipped {} orphan nid(s) during aggregation (allocated, no entity bytes)", buckets.orphans);
+            }
+            if (buckets.canceled > 0) {
+                LOG.info("Left out {} component(s) whose every version is canceled: no record to carry", buckets.canceled);
             }
             buckets.patterns.sortThis();
             buckets.stamps.sortThis();
@@ -563,14 +576,26 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                 patternNid = patternPatternNid;
             } else {
                 Entity<?> entity = EntityHandle.get(nid).orNull();
-                if (entity == null) {
-                    throw new IllegalStateException("Dangling reference: no entity for nid " + nid);
+                if (entity != null) {
+                    publicId = entity.publicId();
+                    patternNid = patternNidOf(entity);
+                } else {
+                    // A nid minted and never written: a component canceled before its record,
+                    // or a reference the store never resolved. The identity map still names
+                    // it, and the nid's layout names its pattern when the layout carries one;
+                    // the table lists it referenced only, under pattern 0 when none is known,
+                    // so the importer mints the same nid and the reference resolves. A nid the
+                    // store cannot name is dangling, and the record referring to it is skipped.
+                    try {
+                        publicId = PrimitiveData.publicId(nid);
+                    } catch (RuntimeException e) {
+                        throw new IllegalStateException("Dangling reference: no entity and no public id for nid " + nid, e);
+                    }
+                    patternNid = patternNidWithoutRecord(nid);
                 }
-                publicId = entity.publicId();
-                patternNid = patternNidOf(entity);
             }
             // The pattern before its member, so that patterns precede members in the table too.
-            int patternSequence = patternNid == nid ? -1 : sequence(patternNid);
+            int patternSequence = patternNid == 0 ? 0 : patternNid == nid ? -1 : sequence(patternNid);
             int sequence = next++;
             if (patternSequence == -1) {
                 patternSequence = sequence;
@@ -578,6 +603,16 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             referenced.put(nid, sequence);
             referencedInOrder.add(new Referenced(sequence, patternSequence, publicId));
             return sequence;
+        }
+
+        /** The pattern a nid was minted under, from its layout; 0 when the layout carries none. */
+        static long patternNidWithoutRecord(long nid) {
+            NidLayout layout = NidLayout.active();
+            int patternSequence = layout.decodePatternSequence(nid);
+            if (patternSequence == 0) {
+                return 0;
+            }
+            return layout.encode(layout.patternPatternSequence(), patternSequence);
         }
 
         static long patternNidOf(Entity<?> entity) {

@@ -57,7 +57,11 @@ public final class ComponentTable {
     private ComponentTable() {
     }
 
-    /** One component of the table, with the sequence its position gives it. */
+    /**
+     * One component of the table, with the sequence its position gives it. A pattern sequence
+     * of 0 means none is known: a component referenced but never written, from a store whose
+     * nids carry no pattern.
+     */
     public record Component(int sequence, int patternSequence, UUID[] uuids, boolean referencedOnly) {
         public PublicId publicId() {
             return PublicIds.of(uuids);
@@ -144,6 +148,15 @@ public final class ComponentTable {
             if (component.isPatternPattern()) {
                 patternPattern[0] = component.sequence();
                 nid = PrimitiveData.getEntityKey(id, id).nid();
+            } else if (component.patternSequence() == 0) {
+                // Referenced but never written, in a store whose nids carried no pattern: a
+                // store that mints without one does; one that cannot refuses, naming it.
+                try {
+                    nid = PrimitiveData.nid(id);
+                } catch (RuntimeException e) {
+                    throw new IllegalStateException("Component " + component.sequence() + " of " + zip.getName()
+                            + " (" + id.idString() + ") names no pattern, and this store cannot mint a nid without one", e);
+                }
             } else {
                 PublicId pattern = patternIds.get(component.patternSequence());
                 if (pattern == null) {
