@@ -19,11 +19,8 @@ import java.util.function.LongConsumer;
 
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityHandle;
-import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -32,10 +29,15 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import java.util.function.IntConsumer;
 
 public class DefaultEntityAggregator extends EntityAggregator {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultEntityAggregator.class);
+
+    /** Cheap: counting only iterates nids, it never reads an entity. */
+    @Override
+    public boolean totalCountIsCheap() {
+        return true;
+    }
 
     @Override
     public EntityCountSummary aggregate(LongConsumer nidConsumer) {
@@ -83,9 +85,13 @@ public class DefaultEntityAggregator extends EntityAggregator {
         AtomicLong orphanCount = new AtomicLong();
 
         EntityStore.current().forEachStampNid(nid -> dispatch(nid, entityConsumer, orphanCount));
+        throwIfCancelled();
         EntityStore.current().forEachConceptNid(nid -> dispatch(nid, entityConsumer, orphanCount));
+        throwIfCancelled();
         EntityStore.current().forEachSemanticNid(nid -> dispatch(nid, entityConsumer, orphanCount));
+        throwIfCancelled();
         EntityStore.current().forEachPatternNid(nid -> dispatch(nid, entityConsumer, orphanCount));
+        throwIfCancelled();
 
         long orphans = orphanCount.get();
         if (orphans > 0) {
@@ -97,7 +103,12 @@ public class DefaultEntityAggregator extends EntityAggregator {
     private void dispatch(long nid,
                           Consumer<Entity<?>> entityConsumer,
                           AtomicLong orphanCount) {
-        Entity<?> entity = EntityHandle.get(nid).orNull();
+        if (isCancelled()) {
+            return;
+        }
+        // Past the entity cache: a full export reads every entity once, and through the cache it
+        // would evict the working set and stall on the eviction lock.
+        Entity<?> entity = readUncached(nid);
         if (entity == null) {
             orphanCount.incrementAndGet();
             return;

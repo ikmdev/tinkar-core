@@ -58,6 +58,7 @@ import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HexFormat;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.zip.CRC32;
@@ -94,6 +95,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -149,6 +151,38 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         updateTitle("Tag-Based Export to Protobuf");
     }
 
+    /** Cancels the export when true, alongside {@link #cancel()}; for a caller that owns its own handle. */
+    private volatile BooleanSupplier externalCancel = () -> false;
+
+    /**
+     * Also stops the export once {@code cancelled} returns true — for a caller tracking
+     * cancellation with a handle of its own, such as a server job, rather than with this task's
+     * {@link #cancel()}.
+     */
+    public void cancelWhen(BooleanSupplier cancelled) {
+        this.externalCancel = cancelled == null ? () -> false : cancelled;
+    }
+
+    private boolean exportCancelled() {
+        return isCancelled() || externalCancel.getAsBoolean();
+    }
+
+    private static boolean causedByCancellation(Throwable e) {
+        for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+            if (cause instanceof CancellationException) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** @throws CancellationException if the export has been cancelled */
+    private void throwIfCancelled() {
+        if (exportCancelled()) {
+            throw new CancellationException("Export cancelled");
+        }
+    }
+
     /**
      * Writes a format-3 changeset (IKE-Network/ike-issues#1275): the component table first,
      * then one gzip entry of records per pattern, in table order, written in parallel; then the
@@ -159,10 +193,13 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
     public EntityCountSummary compute() {
         updateMessage("Analyzing Entities...");
         updateProgress(-1, 1);
+        // Checked by the aggregator while it enumerates, then here between phases and per record.
+        entityAggregator.setCancellationCheck(this::exportCancelled);
         EntityCountSummary entityCountSummary = null;
         try {
             long started = System.nanoTime();
             Buckets buckets = Buckets.collect(entityAggregator);
+            throwIfCancelled();
             EntityCountSummary aggregated = buckets.summary();
             addToTotalWork(aggregated.getTotalCount() * 2L);
             SequenceAllocator sequences = new SequenceAllocator(buckets);
@@ -172,9 +209,11 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                  ZipOutputStream zos = new ZipOutputStream(bos)) {
                 updateMessage("Writing the component table...");
                 writeComponentTable(zos, buckets, sequences);
+                throwIfCancelled();
                 long tabled = System.nanoTime();
                 updateMessage("Exporting Entities...");
                 List<WrittenEntry> written = writeRecordEntries(zos, buckets, sequences);
+                throwIfCancelled();
                 long recorded = System.nanoTime();
                 writeReferenceTable(zos, sequences);
                 LOG.info("Export phases: enumeration {} s, component table {} s, records {} s (chunks {} s, assembly {} s), reference table {} s",
@@ -204,6 +243,11 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                 zos.finish();
             }
         } catch (Throwable e) {
+            if (causedByCancellation(e)) {
+                // A cancel can land inside a chunk's subtask, where the scope reports it wrapped.
+                LOG.info("Export cancelled");
+                throw e instanceof CancellationException cancelled ? cancelled : new CancellationException("Export cancelled");
+            }
             LOG.error("Caught " + e + " while Exporting Entities");
             if (!(e instanceof RuntimeException rx && rx.getCause() instanceof InterruptedException)) {
                 AlertStreams.dispatchToRoot(e);
@@ -393,7 +437,9 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                         final int chunkIndex = c;
                         final long[] slice = Arrays.copyOfRange(nids, Math.min(nids.length, c * CHUNK_RECORDS),
                                 Math.min(nids.length, (c + 1) * CHUNK_RECORDS));
-                        permits.acquire();
+                        if (exportCancelled() || !StructuredScopes.acquireUnlessCancelled(permits, scope)) {
+                            break; // cancelled, or a chunk failed: join() below reports a failure
+                        }
                         scope.fork(() -> {
                             try {
                                 chunks[bucketIndex][chunkIndex] = writeChunk(bucketIndex + 1, chunkIndex, slice, spoolDir, sequences);
@@ -406,6 +452,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                 }
                 scope.join();
             }
+            // A cancelled run stopped forking, so some chunks were never written.
+            throwIfCancelled();
             long chunked = System.nanoTime();
             chunkNanos.set(chunked - forked);
             List<WrittenEntry> result = new ArrayList<>(order.size());
@@ -498,6 +546,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         });
         long count = 0;
         for (int i = 0; i < nids.length; i++) {
+            throwIfCancelled();
             if (records[i] == null) {
                 LOG.warn("No entity for nid {} at export time; its table entry stays, its record is absent", nids[i]);
                 completedUnitOfWork();
@@ -505,16 +554,19 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             }
             Entity<?> entity = EntityRecordFactory.make(records[i]);
             try {
-                if (entity instanceof StampEntity stampEntity) {
-                    moduleNids.add(stampEntity.moduleNid());
-                    authorNids.add(stampEntity.authorNid());
-                }
                 Entity<?> written = entity instanceof StampRecord stampRecord
                         ? stampRecord.withoutSupersededUncommittedVersions()
                         : entity;
                 TinkarMsg pbTinkarMsg = entityTransformer.transform(written);
                 pbTinkarMsg.writeDelimitedTo(out);
                 count++;
+                if (entity instanceof StampEntity stampEntity) {
+                    // Listed for the manifest only once the stamp is written: a skipped one
+                    // (below) can name a module or author with no public id, and the manifest
+                    // would then fail the whole export.
+                    moduleNids.add(stampEntity.moduleNid());
+                    authorNids.add(stampEntity.authorNid());
+                }
             } catch (RuntimeException e) {
                 LOG.error("DANGLING REFERENCE — skipping "
                         + entity.getClass().getSimpleName() + " nid=" + entity.nid()

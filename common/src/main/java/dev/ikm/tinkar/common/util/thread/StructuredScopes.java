@@ -1,7 +1,9 @@
 package dev.ikm.tinkar.common.util.thread;
 
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.concurrent.StructuredTaskScope.Joiner;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Opens {@link StructuredTaskScope}s with the failure behaviour IKE code was
@@ -37,5 +39,30 @@ public final class StructuredScopes {
     public static <T> StructuredTaskScope<T, Void, SubtaskFailedException> open() {
         return StructuredTaskScope.open(Joiner.<T, SubtaskFailedException>awaitAllSuccessfulOrThrow(
                 SubtaskFailedException::new));
+    }
+
+    /** How often a wait for a permit checks whether its scope has been cancelled. */
+    private static final long PERMIT_POLL_MS = 100L;
+
+    /**
+     * Takes a permit for the next subtask, or returns false once {@code scope} has been cancelled.
+     *
+     * <p>A scope from {@link #open()} cancels itself on the first failed subtask, and a cancelled
+     * scope does not run the subtasks forked after that. Each of those would have released its
+     * permit when it finished, so their permits never come back: a plain {@code acquire()} then
+     * blocks for good, and the work hangs instead of reporting the failure. Polling lets the
+     * forking thread notice the cancellation and stop, so that {@code join()} can throw the
+     * subtask's error.
+     *
+     * @return true with a permit taken; false, with none, once the scope is cancelled
+     */
+    public static boolean acquireUnlessCancelled(Semaphore permits, StructuredTaskScope<?, ?, ?> scope)
+            throws InterruptedException {
+        while (!permits.tryAcquire(PERMIT_POLL_MS, TimeUnit.MILLISECONDS)) {
+            if (scope.isCancelled()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

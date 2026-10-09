@@ -103,6 +103,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
     private final TinkarSchemaToEntityTransformer entityTransformer =
             TinkarSchemaToEntityTransformer.getInstance();
+
     private final File importFile;
     private final AtomicLong importCount = new AtomicLong();
     private final AtomicLong importConceptCount = new AtomicLong();
@@ -315,7 +316,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                         while (zis.available() > 0) {
                             // zis.available returns 1 until AFTER EOF has been reached
                             TinkarMsg pbTinkarMsg = TinkarMsg.parseDelimitedFrom(zis);
-                            permits.acquire();
+                            if (!StructuredScopes.acquireUnlessCancelled(permits, scope)) {
+                                break; // a subtask failed; join() below reports it
+                            }
                             scope.fork(() -> {
                                 try {
                                     ScopedValue.where(SCOPED_TINKAR_MSG, pbTinkarMsg).call(() -> {
@@ -438,7 +441,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             TinkarMsg pbTinkarMsg;
             while ((pbTinkarMsg = TinkarMsg.parseDelimitedFrom(in)) != null) {
                 TinkarMsg record = pbTinkarMsg;
-                permits.acquire();
+                if (!StructuredScopes.acquireUnlessCancelled(permits, scope)) {
+                    break; // a subtask failed; join() below reports it
+                }
                 scope.fork(() -> ScopedValue.where(SCOPED_TINKAR_MSG, record).call(() -> {
                     try {
                         entityTransformer.transform(record, entityConsumer, (stampEntity) -> {
@@ -526,7 +531,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             try (StructuredTaskScope<Object, Void, SubtaskFailedException> readers = StructuredScopes.open()) {
                 Semaphore readerPermits = new Semaphore(Math.max(1, Math.min(Math.max(1, rest.size()), Runtime.getRuntime().availableProcessors() / 2)));
                 for (ChangeSetFormat.RecordEntry entry : rest) {
-                    readerPermits.acquire();
+                    if (!StructuredScopes.acquireUnlessCancelled(readerPermits, readers)) {
+                        break; // a reader failed; join() below reports it
+                    }
                     readers.fork(() -> {
                         try {
                             importEntry(zip, entry, registration, reading, finishedBytes, tick);

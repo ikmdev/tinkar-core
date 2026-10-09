@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * does not see an entity, a version, a vertex, or a tree joined into a message with its own
  * {@code toString()}; {@code EntityText} and {@code DiTreeText} are the forms for those.
  *
- * <p>Six messages are about the nid itself and are allowed ({@link #KNOWN}). The gate fails
+ * <p>Seven messages are about the nid itself and are allowed ({@link #KNOWN}). The gate fails
  * when their number changes in either direction, so the list stays true.
  */
 class ExceptionMessageGateIT {

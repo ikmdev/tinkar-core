@@ -17,6 +17,7 @@ package dev.ikm.tinkar.reasoner.elksnomed;
 
 import dev.ikm.tinkar.terms.KernelTerm;
 import java.math.BigDecimal;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.collections.api.list.ImmutableList;
@@ -83,6 +84,10 @@ public class ElkSnomedDataBuilder {
 			progressUpdater.updateProgress(count, total);
 	}
 
+	private boolean isCancelled() {
+		return progressUpdater != null && progressUpdater.isCancelled();
+	}
+
 	private int computeTotalCount() {
 		// Counted without reading them: the build reads them after (IKE-Network/ike-issues#1249).
 		return EntityService.get().countSemanticsOfPattern(statedAxiomPattern.nid());
@@ -99,6 +104,11 @@ public class ElkSnomedDataBuilder {
 		AtomicInteger ex_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(logicCoordinate.statedAxiomsPatternNid(),
 				(semanticEntityVersion, _) -> {
+					// The parallel traversal cannot be stopped from inside, so once cancelled each
+					// remaining axiom is skipped instead — it is processing them that takes the time.
+					if (isCancelled()) {
+						return;
+					}
 					try {
 						if (semanticEntityVersion.active()) {
 							processDefinition(semanticEntityVersion);
@@ -123,6 +133,9 @@ public class ElkSnomedDataBuilder {
 						}
 					}
 				});
+		if (isCancelled()) {
+			throw new CancellationException("Reasoner cancelled while extracting stated axioms");
+		}
 		buildRoleConcepts();
 		data.initializeReasonerConceptSet();
 		LOG.info("Reasoner concept set size: {}, concepts loaded: {}",
