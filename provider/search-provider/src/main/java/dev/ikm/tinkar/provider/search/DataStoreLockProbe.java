@@ -33,7 +33,7 @@ import java.util.Optional;
  * Non-destructive probe for "is this data store already open in another
  * process?".
  *
- * <p>Every persistent Komet data store (SpinedArray, MVStore, RocksDB) embeds
+ * <p>Every persistent Komet data store (SpinedArray, RocksDB) embeds
  * its Lucene search index at {@code <root>/lucene}, and Lucene is the only
  * component that takes a real OS-level exclusive lock on the store — the data
  * providers themselves do not (which is exactly why an already-open store

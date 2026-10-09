@@ -106,7 +106,7 @@ public enum NidLayout {
     /**
      * The nids of the providers that assign them in sequence, from
      * {@code PrimitiveDataService.FIRST_NID} ({@code Integer.MIN_VALUE + 1}) upward: the
-     * spined-array, MVStore, ephemeral, gRPC and websocket providers, which activate it when they
+     * spined-array (persistent or ephemeral) and gRPC providers, which activate it when they
      * open. A sequential nid does not carry its pattern: its pattern sequence is 0, and its
      * element sequence is its offset from {@code Integer.MIN_VALUE}, as in
      * {@link dev.ikm.tinkar.common.id.EntityKey#ofSequentialNid(long)}. There is no

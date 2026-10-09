@@ -127,7 +127,7 @@
  * }
  *
  * @LifecyclePhase(ServiceLifecyclePhase.DATA_STORAGE)
- * public class MVStoreProvider implements PrimitiveDataService, ServiceLifecycle {
+ * public class RocksProvider implements PrimitiveDataService, ServiceLifecycle {
  *
  *     @Override
  *     public String getMutualExclusionGroup() {
@@ -257,7 +257,7 @@
  *
  *   <dt>{@link dev.ikm.tinkar.common.service.PrimitiveDataService}</dt>
  *   <dd>Interface for low-level data storage and retrieval. Implemented by providers like
- *       SpinedArrayProvider, MVStoreProvider.</dd>
+ *       SpinedArrayProvider and RocksProvider.</dd>
  *
  *   <dt>{@link dev.ikm.tinkar.common.service.PrimitiveDataRepair}</dt>
  *   <dd>Interface for data repair operations (merge, erase) - extends PrimitiveDataService.</dd>

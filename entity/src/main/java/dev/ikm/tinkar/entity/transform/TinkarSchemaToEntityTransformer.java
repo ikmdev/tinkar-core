@@ -69,6 +69,7 @@ import org.eclipse.collections.impl.list.mutable.primitive.LongArrayList;
 import org.eclipse.collections.impl.map.mutable.primitive.IntIntHashMap;
 import org.eclipse.collections.impl.map.mutable.primitive.LongObjectHashMap;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
@@ -149,17 +150,18 @@ public class TinkarSchemaToEntityTransformer {
         RecordListBuilder<SemanticVersionRecord> semanticVersions = RecordListBuilder.make();
 
         PublicId semanticPublicId = transformPublicId(pbSemanticChronology.getPublicId());
-        PublicId patternPublicId = transformPublicId(pbSemanticChronology.getPatternForSemanticPublicId());
-        PublicId referencedComponentPublicId = transformPublicId(pbSemanticChronology.getReferencedComponentPublicId());
+        dev.ikm.tinkar.schema.PublicId pbPattern = pbSemanticChronology.getPatternForSemanticPublicId();
 
         SemanticRecord semanticRecord;
-        long patternNid = nidForPattern(patternPublicId);
+        // The pattern by sequence (format 3) or by public id; the semantic's own nid is minted
+        // under it, so its public id is needed either way.
+        final long patternNid = bySequence(pbPattern) ? nidOfSequence(pbPattern) : nidForPattern(transformPublicId(pbPattern));
+        final PublicId patternPublicId = bySequence(pbPattern) ? patternPublicIdOf(patternNid) : transformPublicId(pbPattern);
 
-
-        // For sequential NID providers (single-pass import), we can assign a NID without 
+        // For sequential NID providers (single-pass import), we can assign a NID without
         // requiring the entity to exist in the database. Entity.nid() will create/retrieve
-        // the NID based on PublicId alone.
-        final long referencedComponentNid = Entity.nid(referencedComponentPublicId);
+        // the NID based on PublicId alone; a format-3 reference resolves by sequence.
+        final long referencedComponentNid = nidOf(pbSemanticChronology.getReferencedComponentPublicId());
 
         if (semanticPublicId.uuidCount() > 0) {
             long semanticNid = nidForSemantic(patternPublicId, semanticPublicId);
@@ -358,7 +360,64 @@ public class TinkarSchemaToEntityTransformer {
         }
         return elements;
     }
+    /**
+     * Format 3: the nid of each component of the changeset being imported, by its sequence in
+     * the component table ({@code nids[sequence]}, from 1). Bound by the importer around the
+     * records pass, so a reference by sequence resolves with an array read.
+     */
+    public static final ScopedValue<long[]> SCOPED_SEQUENCE_NIDS = ScopedValue.newInstance();
+
+    /** Format 3: the public id of each pattern by nid, from the table, so a semantic's pattern needs no record yet. */
+    public static final ScopedValue<Map<Long, PublicId>> SCOPED_PATTERN_IDS = ScopedValue.newInstance();
+
+    /** Pattern public ids by nid, for a semantic whose pattern is given by sequence. */
+    private final ConcurrentHashMap<Long, PublicId> patternPublicIds = new ConcurrentHashMap<>();
+
+    /** Whether a schema public id is a format-3 reference by sequence rather than by UUID. */
+    protected static boolean bySequence(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        return pbPublicId.hasSequence() && pbPublicId.getUuidBitsCount() == 0 && pbPublicId.getUuidsCount() == 0;
+    }
+
+    /** The nid a sequence resolves to through the table registered for this import. */
+    protected static long nidOfSequence(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        if (!SCOPED_SEQUENCE_NIDS.isBound()) {
+            throw new IllegalStateException("A record refers to component sequence " + pbPublicId.getSequence()
+                    + " but no component table is registered for this import");
+        }
+        long[] nids = SCOPED_SEQUENCE_NIDS.get();
+        int sequence = pbPublicId.getSequence();
+        if (sequence <= 0 || sequence >= nids.length) {
+            throw new IllegalStateException("Component sequence " + sequence
+                    + " is outside the component table of " + (nids.length - 1) + " component(s)");
+        }
+        return nids[sequence];
+    }
+
+    /** The nid of a referenced component: by sequence, else by its public id as the store knows it. */
+    protected long nidOf(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        return bySequence(pbPublicId) ? nidOfSequence(pbPublicId) : Entity.nid(transformPublicId(pbPublicId));
+    }
+
+    /** The public id of a pattern by nid, read once; a format-3 semantic names its pattern by sequence. */
+    protected PublicId patternPublicIdOf(long patternNid) {
+        if (SCOPED_PATTERN_IDS.isBound()) {
+            PublicId fromTable = SCOPED_PATTERN_IDS.get().get(patternNid);
+            if (fromTable != null) {
+                return fromTable;
+            }
+        }
+        return patternPublicIds.computeIfAbsent(patternNid, nid -> EntityHandle.get(nid).expectEntity().publicId());
+    }
+
+    /**
+     * A schema public id as a public id. A format-3 reference by sequence becomes a proxy by
+     * nid, which the entity codec stores as that nid; a record's own public id always carries
+     * its UUIDs, so this is never asked to name a record by sequence alone.
+     */
     protected PublicId transformPublicId(dev.ikm.tinkar.schema.PublicId pbPublicId){
+        if (bySequence(pbPublicId)) {
+            return EntityProxy.make(nidOfSequence(pbPublicId));
+        }
         if (!SchemaIds.hasUuids(pbPublicId)){
             throw new RuntimeException("Exception thrown, null Public ID is present.");
         }
@@ -370,7 +429,7 @@ public class TinkarSchemaToEntityTransformer {
         }
         long[] nids = new long[pbPublicIdList.getPublicIdsCount()];
         for(int i = 0; i < pbPublicIdList.getPublicIdsCount(); i++) {
-            nids[i] = PrimitiveData.nid(transformPublicId(pbPublicIdList.getPublicIds(i)));
+            nids[i] = nidOf(pbPublicIdList.getPublicIds(i));
         }
         return LongIds.list.of(nids);
     }
@@ -380,7 +439,7 @@ public class TinkarSchemaToEntityTransformer {
         }
         long[] nids = new long[pbPublicIdSet.getPublicIdsCount()];
         for(int i = 0; i < pbPublicIdSet.getPublicIdsCount(); i++) {
-            nids[i] = PrimitiveData.nid(transformPublicId(pbPublicIdSet.getPublicIds(i)));
+            nids[i] = nidOf(pbPublicIdSet.getPublicIds(i));
 
         }
         return LongIds.set.of(nids);
@@ -452,14 +511,17 @@ public class TinkarSchemaToEntityTransformer {
     protected EntityVertex transformVertexEntity(Vertex pbVertex, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer){
         UUID vertexID = transformVertexUUID(pbVertex.getVertexUuid());
         MutableLongObjectMap<Object> properties =  LongObjectMaps.mutable.empty();
-        EntityVertex storedVertex = EntityVertex.make(vertexID, EntityService.get().nidForPublicId(transformPublicId(pbVertex.getMeaningPublicId())));
+        EntityVertex storedVertex = EntityVertex.make(vertexID, nidOf(pbVertex.getMeaningPublicId()));
         storedVertex.setVertexIndex(pbVertex.getIndex());
         pbVertex.getPropertiesList().forEach(property -> {
             Object propertyObject = transformField(property.getField(), stampEntityConsumer);
-            if(propertyObject instanceof PublicId){
-                properties.put(createConceptRecord(property).nid(), EntityProxy.Concept.make((PublicId) propertyObject));
+            long keyNid = bySequence(property.getPublicId()) ? nidOfSequence(property.getPublicId()) : createConceptRecord(property).nid();
+            if (propertyObject instanceof EntityProxy proxy) {
+                properties.put(keyNid, EntityProxy.Concept.make(proxy.nid()));
+            } else if (propertyObject instanceof PublicId) {
+                properties.put(keyNid, EntityProxy.Concept.make((PublicId) propertyObject));
             } else {
-                properties.put(createConceptRecord(property).nid(),propertyObject);
+                properties.put(keyNid, propertyObject);
             }
         });
         storedVertex.setProperties(properties);
@@ -529,6 +591,9 @@ public class TinkarSchemaToEntityTransformer {
      * @return the generated nid
      */
     protected long nidFor(long patternNid, dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        if (bySequence(pbPublicId)) {
+            return nidOfSequence(pbPublicId);
+        }
         PublicId patternPublicId = EntityHandle.get(patternNid).expectEntity().publicId();
         PublicId componentPublicId = transformPublicId(pbPublicId);
         return ScopedValue
@@ -544,6 +609,9 @@ public class TinkarSchemaToEntityTransformer {
      * @return the generated nid
      */
     protected long nidForSemantic(PublicId patternPublicId, dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        if (bySequence(pbPublicId)) {
+            return nidOfSequence(pbPublicId);
+        }
         PublicId componentPublicId = transformPublicId(pbPublicId);
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
@@ -557,6 +625,9 @@ public class TinkarSchemaToEntityTransformer {
     }
 
     protected long nidForPattern(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        if (bySequence(pbPublicId)) {
+            return nidOfSequence(pbPublicId);
+        }
         PublicId componentPublicId = transformPublicId(pbPublicId);
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Pattern.pattern())
@@ -570,6 +641,9 @@ public class TinkarSchemaToEntityTransformer {
     }
 
     protected long nidForStamp(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        if (bySequence(pbPublicId)) {
+            return nidOfSequence(pbPublicId);
+        }
         PublicId componentPublicId = transformPublicId(pbPublicId);
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
@@ -583,6 +657,9 @@ public class TinkarSchemaToEntityTransformer {
     }
 
     protected long nidForConcept(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        if (bySequence(pbPublicId)) {
+            return nidOfSequence(pbPublicId);
+        }
         PublicId componentPublicId = transformPublicId(pbPublicId);
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())

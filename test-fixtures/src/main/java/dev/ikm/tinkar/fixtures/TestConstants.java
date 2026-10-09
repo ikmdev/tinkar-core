@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.fixtures;
 
 import dev.ikm.tinkar.common.service.DataServiceController;
-import dev.ikm.tinkar.provider.ephemeral.ProviderEphemeral;
 import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 
 import java.io.File;
@@ -25,7 +24,7 @@ import java.util.function.Function;
 public class TestConstants {
     // Type-safe controller class references (preferred)
     public static final Class<? extends DataServiceController<?>> LOAD_EPHEMERAL_STORE =
-            ProviderEphemeral.NewController.class;
+            SpinedArrayProvider.LoadController.class;
     public static final Class<? extends DataServiceController<?>> OPEN_SPINED_ARRAY_STORE =
             SpinedArrayProvider.OpenController.class;
     public static final Class<? extends DataServiceController<?>> NEW_SPINED_ARRAY_STORE =

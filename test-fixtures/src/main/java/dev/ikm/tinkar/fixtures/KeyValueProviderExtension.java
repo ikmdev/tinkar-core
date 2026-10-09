@@ -25,7 +25,6 @@ import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.provider.entity.EntityProvider;
 import dev.ikm.tinkar.common.service.DataServiceController;
-import dev.ikm.tinkar.provider.ephemeral.constants.EphemeralStoreControllerName;
 import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -441,7 +440,7 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
     }
 
     private boolean isEphemeralController(String controllerName) {
-        return EphemeralStoreControllerName.NEW_CONTROLLER_NAME.equals(controllerName);
+        return SpinedArrayProvider.LoadController.CONTROLLER_NAME.equals(controllerName);
     }
 
     private void cleanDirectory(String pathStr) {

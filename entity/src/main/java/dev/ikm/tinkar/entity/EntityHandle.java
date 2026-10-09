@@ -390,6 +390,14 @@ public interface EntityHandle {
         if (entityFacade == null) {
             return absent();
         }
+        // A lookup allocates nothing. A proxy none of whose UUIDs the store knows is absent;
+        // asking it for its nid would mint one for a concept, and fail for a pattern on a
+        // pattern-keyed store, which cannot mint a nid without a pattern in scope (the
+        // complex-clause bootstrap on a Rocks store, 2026-10-08).
+        if (entityFacade instanceof EntityProxy proxy && !proxy.isNidResolved()
+                && !PrimitiveData.get().hasPublicId(proxy)) {
+            return new AbsentHandle(() -> DiagnosticText.component(proxy));
+        }
         long nid = entityFacade.nid();
         EntityHandle handle = get(nid);
         if (handle instanceof AbsentHandle absent && absent != AbsentHandle.INSTANCE) {

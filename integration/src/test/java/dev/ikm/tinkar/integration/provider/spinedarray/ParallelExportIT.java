@@ -75,33 +75,37 @@ class ParallelExportIT {
     }
 
     @Test
-    void concurrentlyDeliveredExport_parsesBackCompletely() throws IOException {
+    void concurrentlyDeliveredExport_parsesBackCompletely() throws Exception {
         EXPORT_FILE.delete();
         EntityCountSummary exported =
                 new ExportEntitiesToProtobufFile(EXPORT_FILE, new ParallelDeliveryAggregator()).compute();
         assertTrue(exported.getTotalCount() > 1_000, "the starter data exports thousands of entities");
 
         long parsed = 0;
-        String manifest = null;
-        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(EXPORT_FILE))) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                if (entry.getName().equals("META-INF/MANIFEST.MF")) {
-                    manifest = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
-                    continue;
+        String totalCount;
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(EXPORT_FILE)) {
+            java.util.jar.Manifest manifest = ChangeSetFormat.manifest(zip).orElseThrow();
+            totalCount = manifest.getMainAttributes().getValue("Total-Count");
+            for (ChangeSetFormat.RecordEntry record : ChangeSetFormat.recordEntries(zip, manifest)) {
+                long inEntry = 0;
+                try (java.io.InputStream in = ChangeSetFormat.openRecords(zip, record.entry())) {
+                    // Throws InvalidProtocolBufferException on an interleaved stream.
+                    while (TinkarMsg.parseDelimitedFrom(in) != null) {
+                        inEntry++;
+                    }
                 }
-                if (ChangeSetFormat.isMetadata(entry.getName())) {
-                    continue; // the identity index, or other metadata: not records
+                if (record.count() >= 0) {
+                    assertEquals(record.count(), inEntry, "the manifest's count for " + record.entry().getName());
                 }
-                // Throws InvalidProtocolBufferException on an interleaved stream.
-                while (TinkarMsg.parseDelimitedFrom(zis) != null) {
-                    parsed++;
-                }
+                parsed += inEntry;
             }
         }
-
         assertEquals(exported.getTotalCount(), parsed, "every exported record parses back");
-        assertTrue(manifest != null && manifest.contains("Total-Count: " + parsed),
-                "the manifest count matches the records in the stream");
+        assertEquals(String.valueOf(parsed), totalCount, "the manifest count matches the records in the stream");
+        // The file conforms to its format: the table, every entry's count and the SHA-256 of its
+        // stored bytes, the ids and references of every record, the carried listing in order.
+        dev.ikm.tinkar.entity.changeset.ChangeSetVerification.Verification verified =
+                new dev.ikm.tinkar.entity.changeset.ChangeSetVerification(EXPORT_FILE).call();
+        assertTrue(verified.ok(), verified.text());
     }
 }

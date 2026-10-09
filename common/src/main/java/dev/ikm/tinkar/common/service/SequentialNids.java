@@ -25,8 +25,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.IntSupplier;
 
 /**
- * Nid assignment for the sequential providers (spined array, MVStore, ephemeral, and the gRPC
- * and websocket clients), which assign {@code int} nids in sequence from {@link #FIRST_NID} and
+ * Nid assignment for the sequential providers (the spined array, persistent or ephemeral, and
+ * the gRPC client), which assign {@code int} nids in sequence from {@link #FIRST_NID} and
  * keep them as {@code int}, on disk and in memory. Their nids are widened at the provider's edge;
  * nothing here is part of the provider contract.
  */

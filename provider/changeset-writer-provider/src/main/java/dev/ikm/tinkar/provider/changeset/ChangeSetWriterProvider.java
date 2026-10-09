@@ -19,6 +19,7 @@ import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.changeset.ChangeSetCompaction;
 import dev.ikm.tinkar.entity.changeset.IdentityIndex;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
@@ -33,6 +34,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -64,6 +66,8 @@ import java.util.zip.ZipOutputStream;
 public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveState {
     private static final Logger LOG = LoggerFactory.getLogger(ChangeSetWriterProvider.class);
     private static final long INACTIVITY_THRESHOLD_MILLIS = TimeUnit.MINUTES.toMillis(5);
+    /** The suffix of a session's journal while it is being written; the sync layer matches only the finished name. */
+    static final String SPOOL_SUFFIX = ".spool";
 
     /**
      * Represents the various states of the ChangeSetWriterProvider during its lifecycle.
@@ -149,6 +153,37 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Closes out a session's journal. Nothing written: the spool goes. Otherwise the spool is
+     * compacted into the change set in format 3, one record per component with references by
+     * sequence; should the compaction fail, the spool is kept under the change set's name in
+     * its format-2 layout, which every reader still accepts.
+     */
+    static void finishSpool(File spool, File changeSet, long entityCount) {
+        if (!spool.exists()) {
+            return;
+        }
+        if (entityCount == 0) {
+            if (!spool.delete()) {
+                LOG.warn("Could not delete the empty change set spool {}", spool);
+            }
+            return;
+        }
+        try {
+            ChangeSetCompaction.Result result = new ChangeSetCompaction(spool, changeSet).call();
+            LOG.debug("Compacted change set {}: {}", changeSet.getName(), result.text());
+            Files.delete(spool.toPath());
+        } catch (Exception e) {
+            LOG.error("Could not compact {} into format 3; keeping its format-2 journal as {}", spool.getName(), changeSet.getName(), e);
+            try {
+                Files.deleteIfExists(changeSet.toPath());
+                Files.move(spool.toPath(), changeSet.toPath());
+            } catch (IOException moveFailure) {
+                LOG.error("Could not keep the journal {} as {}", spool, changeSet, moveFailure);
+            }
         }
     }
 
@@ -248,8 +283,11 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                         EntityToTinkarSchemaTransformer.getInstance();
 
                 final File zipfile = newZipFile();
+                // The journal is spooled in the format-2 layout as entities arrive, under a name
+                // the sync layer does not match, and compacted into the change set at close.
+                final File spool = new File(zipfile.getParentFile(), zipfile.getName() + SPOOL_SUFFIX);
                 LOG.trace("ChangeSetWriterProvider starting new zip file: {}", zipfile.getAbsolutePath());
-                try (FileOutputStream fos = new FileOutputStream(zipfile);
+                try (FileOutputStream fos = new FileOutputStream(spool);
                      BufferedOutputStream bos = new BufferedOutputStream(fos);
                      ZipOutputStream zos = new ZipOutputStream(bos);
                      // A component is written at each commit; the index lists it once.
@@ -359,11 +397,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     threadStateMap.put(Thread.currentThread(), STATE.FAILED);
                     throw new RuntimeException(e);
                 } finally {
-                    if (zipfile.exists()) {
-                        if (entityCount.sum() == 0) {
-                            zipfile.delete();
-                        }
-                    }
+                    finishSpool(spool, zipfile, entityCount.sum());
                 }
             } finally {
                 changeSetWriter.release();

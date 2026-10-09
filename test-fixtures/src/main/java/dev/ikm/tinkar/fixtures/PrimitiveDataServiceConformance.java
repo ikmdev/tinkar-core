@@ -26,6 +26,7 @@ import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.FieldDefinitionRecord;
@@ -66,8 +67,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>A provider runs the suite with a subclass that opens an empty store of its kind for the class,
  * for example:
  * <pre>{@code
- * @WithKeyValueProvider(controllerClass = ProviderEphemeral.NewController.class)
- * class EphemeralConformanceTest extends PrimitiveDataServiceConformance {
+ * @WithKeyValueProvider(controllerClass = SpinedArrayProvider.LoadController.class)
+ * class SpinedArrayEphemeralConformanceTest extends PrimitiveDataServiceConformance {
  * }
  * }</pre>
  * Each test makes its own components, with fresh UUIDs, so the tests do not depend on one another
@@ -300,6 +301,25 @@ public abstract class PrimitiveDataServiceConformance {
      * keys concepts, stamps and patterns under them, so their index lists those; the entity layer
      * must not give them out as semantics (IKE-Network/ike-issues#1248).
      */
+    /**
+     * A lookup by proxy allocates nothing: a proxy none of whose UUIDs the store knows comes
+     * back absent, whatever kind of entity it names, and the UUIDs stay unknown. A
+     * pattern-keyed store cannot mint a nid for an unknown pattern without a pattern in scope,
+     * and used to fail such a lookup instead (the complex-clause bootstrap, 2026-10-08).
+     */
+    @Test
+    void anUnknownProxyIsAbsentAndAllocatesNothing() {
+        UUID patternUuid = UUID.randomUUID();
+        UUID conceptUuid = UUID.randomUUID();
+        UUID semanticUuid = UUID.randomUUID();
+        assertTrue(EntityHandle.get(EntityProxy.Pattern.make("absent pattern", patternUuid)).isAbsent());
+        assertTrue(EntityHandle.get(EntityProxy.Concept.make("absent concept", conceptUuid)).isAbsent());
+        assertTrue(EntityHandle.get(EntityProxy.Semantic.make("absent semantic", semanticUuid)).isAbsent());
+        assertFalse(PrimitiveData.get().hasUuid(patternUuid), "a lookup minted no pattern nid");
+        assertFalse(PrimitiveData.get().hasUuid(conceptUuid), "a lookup minted no concept nid");
+        assertFalse(PrimitiveData.get().hasUuid(semanticUuid));
+    }
+
     @Test
     void theBindingPatternsHaveNoSemantics() {
         makeWorld();

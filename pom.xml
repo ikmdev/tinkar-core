@@ -73,6 +73,19 @@
         </site>
     </distributionManagement>
 
+    <!-- Snapshots of the IKE starter set resolve through here on a machine whose settings
+         enable no snapshot repository, such as the test agent: a mirror's policy is the
+         merge of the repositories a build declares (IkeKometWs_ReactorTest #157). The same
+         block as rocks-kb, tinkar-service and komet carry; ike-parent is its durable home. -->
+    <repositories>
+        <repository>
+            <id>tinkar-nexus</id>
+            <url>https://nexus.tinkar.org/repository/ike-public/</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+    </repositories>
+
     <scm>
         <url>http://www.github.com/ikmdev/tinkar-core</url>
     </scm>

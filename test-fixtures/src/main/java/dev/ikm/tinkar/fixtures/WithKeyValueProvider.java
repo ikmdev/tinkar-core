@@ -61,7 +61,7 @@ public @interface WithKeyValueProvider {
      *
      * Example:
      * <pre>{@code
-     * @WithKeyValueProvider(controllerClass = ProviderEphemeral.NewController.class)
+     * @WithKeyValueProvider(controllerClass = SpinedArrayProvider.LoadController.class)
      * }</pre>
      */
     @SuppressWarnings("rawtypes")

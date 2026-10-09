@@ -26,8 +26,11 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.SpinedByteArrayMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
+import dev.ikm.tinkar.collection.store.ByteArrayNoStore;
+import dev.ikm.tinkar.collection.store.IntLongArrayNoStore;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
@@ -67,22 +70,22 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 /**
- * Maybe a hybrid of SpinedArrayProvider and MVStoreProvider is worth considering.
- * <p>SpinedArrayProvider is performing horribly because of dependency on ConcurrentUuidIntHashMap serialization.
- * TODO: consider if we remove ConcurrentUuidIntHashMap, or improve.
- * <p>MVStore performs worse when iterating over entities.
+ * The default store: spined arrays of entity bytes, indexed by nid, held in memory and written to
+ * disk by spine, or held in memory only in the ephemeral mode. The fastest store on every
+ * retrieval path and the one with no native dependency; the Rocks plugin provider takes over
+ * at the scale that outgrows it (IKE-Network/ike-issues#1267).
  */
 public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, NidGenerator, PrimitiveDataRepair {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
@@ -145,35 +148,63 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     final SetOnce<SearchService> searchService = new SetOnce<>();
     private volatile boolean loadPhase = false;
     final String name;
+    /** Whether the store lives in memory only: nothing read from or written to disk. */
+    final boolean ephemeral;
+    /** The {@link #name()} of an ephemeral store, the same text the retired ephemeral provider showed. */
+    static final String EPHEMERAL_NAME = "Ephemeral data";
     final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
 
     private SpinedArrayProvider() throws IOException, ExecutionException, InterruptedException {
+        this(false);
+    }
+
+    /**
+     * Opens the store. Ephemeral, it lives in memory only: the spines are backed by stores that
+     * keep nothing, the data-store root is not touched, no next-nid file is kept, no change set
+     * is written, and the store ends with its JVM ({@link LoadController}). Otherwise it is the
+     * persistent store under {@code ServiceKeys.DATA_STORE_ROOT}. Everything above the spines,
+     * the UUID map, the type sets, the pattern index and the citation index, is the same either
+     * way, so the two modes answer every question alike.
+     */
+    private SpinedArrayProvider(boolean ephemeral) throws IOException, ExecutionException, InterruptedException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening SpinedArrayProvider on thread: {}", Thread.currentThread().getName());
         NidLayout.activate(NidLayout.SEQUENTIAL);
-        File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
-        boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
-        if (expectEmpty) {
-            assertEmptyDataRoot(configuredRoot);
-            ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
-        }
-        name = configuredRoot.getName();
-        configuredRoot.mkdirs();
-        LOG.info("Datastore root: " + configuredRoot.getAbsolutePath());
+        this.ephemeral = ephemeral;
+        if (ephemeral) {
+            name = EPHEMERAL_NAME;
+            this.nidToByteArrayMapDirectory = null;
+            this.nidToCitingComponentNidMapDirectory = null;
+            this.nextNidKeyFile = null;
+            this.absentIdentitiesFile = null;
+            this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayNoStore());
+            this.nidToCitingComponentsNidMap = new SpinedIntLongArrayMap(new IntLongArrayNoStore());
+            LOG.info("Datastore: ephemeral, held in memory, nothing on disk");
+        } else {
+            File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
+            boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+            if (expectEmpty) {
+                assertEmptyDataRoot(configuredRoot);
+                ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+            }
+            name = configuredRoot.getName();
+            configuredRoot.mkdirs();
+            LOG.info("Datastore root: " + configuredRoot.getAbsolutePath());
 
-        this.nidToByteArrayMapDirectory = new File(configuredRoot, "nidToByteArrayMap");
-        this.nidToByteArrayMapDirectory.mkdirs();
-        this.nidToCitingComponentNidMapDirectory = new File(configuredRoot, "nidToCitingComponentNidMap");
-        this.nidToCitingComponentNidMapDirectory.mkdirs();
-        this.nextNidKeyFile = new File(configuredRoot, "nextNidKeyFile");
-        this.absentIdentitiesFile = new File(configuredRoot, "absentIdentities.txt");
+            this.nidToByteArrayMapDirectory = new File(configuredRoot, "nidToByteArrayMap");
+            this.nidToByteArrayMapDirectory.mkdirs();
+            this.nidToCitingComponentNidMapDirectory = new File(configuredRoot, "nidToCitingComponentNidMap");
+            this.nidToCitingComponentNidMapDirectory.mkdirs();
+            this.nextNidKeyFile = new File(configuredRoot, "nextNidKeyFile");
+            this.absentIdentitiesFile = new File(configuredRoot, "absentIdentities.txt");
 
-        this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayFileStore(nidToByteArrayMapDirectory));
-        this.nidToCitingComponentsNidMap = new SpinedIntLongArrayMap(new IntLongArrayFileStore(nidToCitingComponentNidMapDirectory));
+            this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayFileStore(nidToByteArrayMapDirectory));
+            this.nidToCitingComponentsNidMap = new SpinedIntLongArrayMap(new IntLongArrayFileStore(nidToCitingComponentNidMapDirectory));
 
-        if (nextNidKeyFile.exists()) {
-            String nextNidString = Files.readString(this.nextNidKeyFile.toPath());
-            nextNid.set(Integer.valueOf(nextNidString));
+            if (nextNidKeyFile.exists()) {
+                String nextNidString = Files.readString(this.nextNidKeyFile.toPath());
+                nextNid.set(Integer.valueOf(nextNidString));
+            }
         }
         // Nids minted before this opening were either given entities or recorded in
         // absentIdentitiesFile by an earlier save; only newer ones need checking.
@@ -206,15 +237,20 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             throw e;
         }
 
-        ServiceLoader<ChangeSetWriterService> changeSetServiceLoader = PluggableService.load(ChangeSetWriterService.class);
-        MutableList<ChangeSetWriterService> changeSetWriters = Lists.mutable.empty();
-        changeSetServiceLoader.stream().forEach(changeSetProvider -> {
-            changeSetWriters.add(changeSetProvider.get());
-        });
-        this.changeSetWriterServices = changeSetWriters.toImmutable();
-        LOG.info("\n\nLoaded {} ChangeSetWriterService(s)\n\n", changeSetWriters.size());
-        if (this.changeSetWriterServices.notEmpty()) {
-            LOG.info("ChangeSetWriterService(s): ", changeSetWriters);
+        if (ephemeral) {
+            // A change set is a record on disk of what was edited; an ephemeral store keeps none.
+            this.changeSetWriterServices = Lists.immutable.empty();
+        } else {
+            ServiceLoader<ChangeSetWriterService> changeSetServiceLoader = PluggableService.load(ChangeSetWriterService.class);
+            MutableList<ChangeSetWriterService> changeSetWriters = Lists.mutable.empty();
+            changeSetServiceLoader.stream().forEach(changeSetProvider -> {
+                changeSetWriters.add(changeSetProvider.get());
+            });
+            this.changeSetWriterServices = changeSetWriters.toImmutable();
+            LOG.info("\n\nLoaded {} ChangeSetWriterService(s)\n\n", changeSetWriters.size());
+            if (this.changeSetWriterServices.notEmpty()) {
+                LOG.info("ChangeSetWriterService(s): ", changeSetWriters);
+            }
         }
 
         // Index recreation is now handled by SearchProvider in INDEXING phase
@@ -278,6 +314,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     public void save() {
+        if (ephemeral) {
+            LOG.debug("Ephemeral SpinedArrayProvider: nothing to save");
+            return;
+        }
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Saving SpinedArrayProvider");
         try {
@@ -303,39 +343,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     /** Nids below this have been checked for missing entities by a save. Set when the store opens. */
     private volatile int checkedBelowNid = Integer.MIN_VALUE;
 
-    /**
-     * The public id {@code nid} was minted from — for a component that is referenced but has no
-     * entity in this store.
-     *
-     * <p>Happens when a changeset refers to a component it does not carry: a time-range export
-     * includes the whole history of each changed component, and a navigation semantic in it can
-     * list a child created outside the range. Importing it mints the child a nid from its UUID with
-     * no entity behind it. Without this the store could not say which component that nid is, and
-     * anything that converts the referring semantic back to public ids — the gRPC service, an
-     * export — failed.
-     */
-    @Override
-    public PublicId publicIdForNid(long longNid) {
-        int nid = Nid.narrowChecked(longNid);
-        List<UUID> known = absentUuids.get(nid);
-        if (known != null && !known.isEmpty()) {
-            return PublicIds.of(known);
-        }
-        // Not yet saved as absent — a scan of the identity map, as the ephemeral store does.
-        List<UUID> uuids = new ArrayList<>();
-        uuidToNidMap.forEach((uuid, mappedNid) -> {
-            if (mappedNid.intValue() == nid) { // ints, not two Integer references
-                uuids.add(uuid);
-            }
-        });
-        if (uuids.isEmpty()) {
-            throw new IllegalStateException("No public id minted for nid " + nid + " in this store");
-        }
-        return PublicIds.of(uuids);
-    }
-
     private void loadAbsentIdentities() throws IOException {
-        if (!absentIdentitiesFile.exists()) {
+        if (absentIdentitiesFile == null || !absentIdentitiesFile.exists()) {
             return;
         }
         int loaded = 0;
@@ -392,44 +401,16 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         Files.writeString(absentIdentitiesFile.toPath(), lines);
     }
 
+    /**
+     * The nid of a public id, through the sequential providers' shared resolution
+     * ({@link SequentialNids}): one UUID is looked up or minted; several resolve by the least
+     * UUID the store knows, and UUIDs known for different components are advised, never
+     * reconciled, so a UUID another component holds keeps its nid (IKE-Network/ike-issues#1227).
+     */
     @Override
     public long nidForUuids(UUID... uuids) {
-        try {
-            this.uuidsLoadedLatch.await();
-            if (uuids.length == 1) {
-                return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> Nid.narrowChecked(newNid()));
-            }
-
-            OptionalInt optionalNid = optionalNid(uuids);
-
-            // Integer.MAX_VALUE, which is never a nid, marks "no nid yet" until one of the UUIDs
-            // has one or the first is given a new one.
-            int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
-
-            for (UUID uuid : uuids) {
-                if (Nid.isNotApplicable(nid)) {
-                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> Nid.narrowChecked(newNid()));
-                } else {
-                    uuidToNidMap.put(uuid, nid);
-                }
-            }
-            if (nid == Integer.MIN_VALUE) {
-                throw new IllegalStateException("nid cannot be Integer.MIN_VALUE");
-            }
-            return nid;
-        } catch (InterruptedException e) {
-            LOG.error(e.getLocalizedMessage(), e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    private OptionalInt optionalNid(UUID... uuids) {
-        for (UUID uuid : uuids) {
-            if (uuidToNidMap.containsKey(uuid)) {
-                return OptionalInt.of(uuidToNidMap.get(uuid));
-            }
-        }
-        return OptionalInt.empty();
+        awaitUuids();
+        return SequentialNids.nidForUuids(uuidToNidMap, () -> Nid.narrowChecked(newNid()), uuids);
     }
 
     @Override
@@ -439,31 +420,16 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
 
     @Override
     public long nidForUuids(ImmutableList<UUID> uuidList) {
+        awaitUuids();
+        return SequentialNids.nidForUuids(uuidToNidMap, () -> Nid.narrowChecked(newNid()), uuidList);
+    }
+
+    /** Waits for the identity map, which open rebuilds from the entities on another thread. */
+    private void awaitUuids() {
         try {
             this.uuidsLoadedLatch.await();
-            if (uuidList.size() == 1) {
-                return uuidToNidMap.computeIfAbsent(uuidList.get(0), uuidKey -> Nid.narrowChecked(newNid()));
-            }
-
-            OptionalInt optionalNid = optionalNid(uuidList.toArray(new UUID[uuidList.size()]));
-
-            // Integer.MAX_VALUE, which is never a nid, marks "no nid yet" until one of the UUIDs
-            // has one or the first is given a new one.
-            int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
-
-            for (UUID uuid : uuidList) {
-                if (Nid.isNotApplicable(nid)) {
-                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> Nid.narrowChecked(newNid()));
-                } else {
-                    uuidToNidMap.put(uuid, nid);
-                }
-            }
-            if (nid == Integer.MIN_VALUE) {
-                throw new IllegalStateException("nid cannot be Integer.MIN_VALUE");
-            }
-            return nid;
         } catch (InterruptedException e) {
-            LOG.error(e.getLocalizedMessage(), e);
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }
@@ -476,6 +442,39 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             throw new RuntimeException(e);
         }
         return publicId.asUuidList().stream().anyMatch(uuidToNidMap::containsKey);
+    }
+
+    /**
+     * The reverse of {@link #nidForUuids}, read from the identity map, which is kept one way:
+     * a scan of it, correctness over speed, for a referenced component no entity was written
+     * for. The entity layer asks only after it found no entity for the nid.
+     *
+     * <p>The identity map is rebuilt from entities when the store opens, so a referenced
+     * component with no entity would lose its identity on restart. Such identities are saved to
+     * {@link #absentIdentitiesFile} and read here first.
+     */
+    @Override
+    public PublicId publicIdForNid(long nid) {
+        try {
+            this.uuidsLoadedLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        int narrowed = Nid.narrowChecked(nid);
+        List<UUID> known = absentUuids.get(narrowed);
+        if (known != null && !known.isEmpty()) {
+            return PublicIds.of(known);
+        }
+        List<UUID> uuids = new ArrayList<>();
+        uuidToNidMap.forEach((uuid, mappedNid) -> {
+            if (mappedNid == narrowed) {
+                uuids.add(uuid);
+            }
+        });
+        if (uuids.isEmpty()) {
+            throw new IllegalStateException("No public id minted for nid " + nid + " in this store");
+        }
+        return PublicIds.of(uuids);
     }
 
     @Override
@@ -1143,6 +1142,102 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         private static boolean isEmptyDirectory(File dir) {
             String[] entries = dir.list();
             return entries == null || entries.length == 0;
+        }
+    }
+
+    /**
+     * Loads a knowledge base into a store held in memory only. Nothing is read from or written
+     * to disk: the data-store root is not touched, no change set is written, and the store ends
+     * with its JVM. The data URI option names the protobuf export to load at start; with none,
+     * the store starts empty. This is the role the retired ephemeral provider filled, under
+     * the name it had, on the spined array's own structures (IKE-Network/ike-issues#1264).
+     */
+    public static class LoadController extends Controller {
+        public static final String CONTROLLER_NAME = "Load Ephemeral Store";
+        private String importDataFileString;
+        private final AtomicBoolean loading = new AtomicBoolean(false);
+
+        @Override
+        public void setDataUriOption(DataUriOption option) {
+            // Not the base class's: the option is the file to load, not a data-store root.
+            dataUriOptionRef.set(option);
+            if (option != null) {
+                // toFile() decodes the URI; URL.getFile() would keep %20 for a space (ike-issues#1156).
+                importDataFileString = option.toFile().getAbsolutePath();
+            }
+        }
+
+        @Override
+        public Optional<String> openConflict(DataUriOption option) {
+            // Nothing on disk, so nothing another process could hold open.
+            return Optional.empty();
+        }
+
+        @Override
+        protected SpinedArrayProvider createProvider() throws Exception {
+            return new SpinedArrayProvider(true);
+        }
+
+        @Override
+        protected void initializeProvider(SpinedArrayProvider provider) {
+            if (importDataFileString != null) {
+                try {
+                    loading.set(true);
+                    File importFile = new File(importDataFileString);
+                    LOG.info("Queueing starter data for deferred import: {}", importFile.getName());
+                    dev.ikm.tinkar.entity.load.DataLoadProvider dataLoadService =
+                            dev.ikm.tinkar.entity.load.DataLoadProvider.get();
+                    dataLoadService.addFile(importFile);
+                } finally {
+                    loading.set(false);
+                }
+            } else {
+                LOG.info("No import file specified: the ephemeral store starts empty");
+            }
+        }
+
+        @Override
+        public List<DataUriOption> providerOptions() {
+            List<DataUriOption> dataUriOptions = new ArrayList<>();
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            if (!rootFolder.exists()) {
+                rootFolder.mkdirs();
+            }
+            File[] files = rootFolder.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (isValidDataLocation(f.getName())) {
+                        dataUriOptions.add(new DataUriOption(f.getName(), f.toURI()));
+                    }
+                }
+            }
+            return dataUriOptions;
+        }
+
+        @Override
+        public boolean isValidDataLocation(String name) {
+            return name.toLowerCase().endsWith("pb.zip") ||
+                    (name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink"));
+        }
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 40; // After the persistent stores, where the ephemeral provider sat.
+        }
+
+        @Override
+        public boolean loading() {
+            return loading.get();
+        }
+
+        @Override
+        public void reload() {
+            throw new UnsupportedOperationException("An ephemeral store cannot be reloaded");
         }
     }
 }

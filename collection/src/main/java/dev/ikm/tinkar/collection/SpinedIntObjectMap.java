@@ -265,7 +265,18 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
      */
     @Override
     public final E get(int index) {
-        return getSpine(toSpineIndex(index)).get(toIndexInSpine(index));
+        int spineIndex = toSpineIndex(index);
+        if (spineIndex >= maxSpineCount) {
+            // Beyond what this map can ever hold: absent. A read never allocates, and never
+            // throws for an index the map has no spine for, such as a nid this store never minted.
+            return null;
+        }
+        if (spineIndex >= spineCount.get()) {
+            // No spine has been read or created there, unless one was created out of order.
+            AtomicReferenceArray<E> spine = spines.get(spineIndex);
+            return spine == null ? null : spine.get(toIndexInSpine(index));
+        }
+        return getSpine(spineIndex).get(toIndexInSpine(index));
     }
 
     /**

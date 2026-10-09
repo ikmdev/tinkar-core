@@ -76,8 +76,8 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
                 })
                 .orElseGet(() -> {
                     LOG.warn("DATA_STORE_ROOT not set in ServiceProperties");
-                    LOG.warn("This is expected for ephemeral/in-memory stores (ProviderEphemeral)");
-                    LOG.warn("For persistent stores (RocksProvider, MVStoreProvider, SpinedArrayProvider), ensure DATA_STORE_ROOT is set during DATA_STORAGE phase");
+                    LOG.warn("This is expected for an in-memory store (the spined array's ephemeral mode)");
+                    LOG.warn("For persistent stores (RocksProvider, SpinedArrayProvider), ensure DATA_STORE_ROOT is set during DATA_STORAGE phase");
                     // Use a unique directory based on JVM UUID to avoid lock conflicts in tests
                     String jvmUuid = ServiceProperties.jvmUuid();
                     // defaultDataDirectory is RELATIVE ("target/lucene/"), so it resolves against
@@ -165,7 +165,7 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
         }
 
         // Check if we need to recreate the index (data exists but index doesn't)
-        // Look for any data provider directories (rocks, spinedarrays, mvstore.dat, etc.)
+        // Look for any data provider directories (rocks, spinedarrays, etc.)
         boolean dataExists = checkDataExists(datastoreRoot);
 
         if (dataExists && !indexExists) {
@@ -321,7 +321,7 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
 
     /**
      * Checks if data exists in the datastore root by looking for known data provider directories/files.
-     * This is provider-agnostic and works with RocksDB, MVStore, SpinedArray, etc.
+     * This is provider-agnostic and works with RocksDB, SpinedArray, etc.
      *
      * @param datastoreRoot the root directory to check
      * @return true if data exists, false otherwise
@@ -334,7 +334,6 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
         // Check for common data provider indicators
         File[] indicators = {
             new File(datastoreRoot, "rocks"),           // RocksDB
-            new File(datastoreRoot, "mvstore.dat"),     // MVStore
             new File(datastoreRoot, "nidToByteArrayMap"), // SpinedArray
             new File(datastoreRoot, "nidToPatternNidMap") // SpinedArray
         };

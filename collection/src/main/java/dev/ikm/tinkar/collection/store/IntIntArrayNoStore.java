@@ -18,29 +18,32 @@ package dev.ikm.tinkar.collection.store;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
+/**
+ * A int-to-int-array store that keeps nothing, for a spined map held in memory only: it reports no spines,
+ * reads none and writes none, so the map starts empty and nothing reaches disk. The
+ * ephemeral spined-array store runs on these.
+ */
 public class IntIntArrayNoStore implements IntIntArrayStore {
     @Override
     public Optional<AtomicReferenceArray<int[]>> get(int spineIndex) {
-        throw new UnsupportedOperationException("Persistence is not supported");
+        return Optional.empty();
     }
 
     @Override
     public void put(int spineIndex, AtomicReferenceArray<int[]> spine) {
-        throw new UnsupportedOperationException("Persistence is not supported");
     }
 
     @Override
     public int sizeOnDisk() {
-        throw new UnsupportedOperationException("Persistence is not supported");
+        return 0;
     }
 
     @Override
     public int getSpineCount() {
-        throw new UnsupportedOperationException("Persistence is not supported");
+        return 0;
     }
 
     @Override
     public void writeSpineCount(int spineCount) {
-        throw new UnsupportedOperationException("Persistence is not supported");
     }
 }

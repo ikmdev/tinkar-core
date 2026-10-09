@@ -19,23 +19,39 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.EntityBinding;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Optional;
 import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
  * The changeset format: a zip whose record entries hold length-delimited {@link TinkarMsg}
  * records, beside metadata under {@code META-INF/}.
  *
- * <p>Two format versions exist, and this release writes only the second:
+ * <p>Three format versions exist, and this release writes only the third:
  * <ul>
  *   <li>Version 1, written by every release before format version 2: UUIDs as text, no
  *       format version in the manifest, no identity index. Still read.
  *   <li>Version 2: the manifest names it ({@value #VERSION_ATTRIBUTE}: 2); every UUID is
  *       two longs ({@link SchemaIds}); and the {@link IdentityIndex} lists every component's
- *       pattern, so a store whose nids encode the pattern loads it in one pass.
+ *       pattern, so a store whose nids encode the pattern loads it in one pass. Still read,
+ *       and still written by the incremental change-set writer.
+ *   <li>Version 3 ({@value #VERSION_ATTRIBUTE}: 3): the {@link ComponentTable} comes first
+ *       and numbers every component by its position; the records follow in one gzip entry
+ *       per pattern, in table order, under {@value #RECORDS_PREFIX}; a reference is a
+ *       sequence into the table rather than a public id; and the manifest, last, lists the
+ *       record entries with their counts and hashes. See
+ *       {@code notes/design-2026-10-08-changeset-format-3.adoc} in ike-dev.
  * </ul>
  * New software reads old changesets; old software cannot read new ones, by design. A reader
  * refuses a version newer than it knows rather than misread it.
@@ -46,13 +62,31 @@ public final class ChangeSetFormat {
     public static final String VERSION_ATTRIBUTE = "Ike-Format-Version";
 
     /** The format version this release writes, and the newest it reads. */
-    public static final int CURRENT_VERSION = 2;
+    public static final int CURRENT_VERSION = 3;
+    /** The newest version whose components are listed by an identity index rather than a table. */
+    public static final int IDENTITY_INDEX_VERSION = 2;
 
     /** The zip entry holding the manifest. */
     public static final String MANIFEST = "META-INF/MANIFEST.MF";
 
-    /** The zip entry holding the identity index. */
+    /** Format 3: the zip entry holding the component table, first in the zip. */
+    public static final String COMPONENT_TABLE = "META-INF/components.pb";
+    /** Format 3: the entry listing components referenced but not carried, after the records. */
+    public static final String REFERENCE_TABLE = "META-INF/references.pb";
+    /** Format 3: the prefix of every record entry. */
+    public static final String RECORDS_PREFIX = "records/";
+    /** Format 3: a record entry is a gzip stream stored, not deflated, by the zip. */
+    public static final String GZIP_SUFFIX = ".gz";
+    /** Format 3: the manifest attribute counting the record entries. */
+    public static final String RECORD_ENTRIES_ATTRIBUTE = "Ike-Record-Entries";
+    /** Format 3: the manifest attribute counting the components, carried and referenced. */
+    public static final String COMPONENT_COUNT_ATTRIBUTE = "Ike-Component-Count";
+    /** Format 3: the prefix of the manifest attribute describing record entry N: name, count, SHA-256. */
+    public static final String ENTRY_ATTRIBUTE_PREFIX = "Ike-Entry-";
+    /** The zip entry holding the identity index (formats 1 and 2). */
     public static final String IDENTITY_INDEX = "META-INF/identities.pb";
+    /** The one record entry of a format-1 or format-2 change set, as the incremental writer names it. */
+    public static final String IDENTITY_INDEX_RECORDS = "Entities";
 
     private ChangeSetFormat() {
     }
@@ -70,6 +104,100 @@ public final class ChangeSetFormat {
     public static boolean hasIdentityIndex(File changeSet) throws IOException {
         try (ZipFile zip = new ZipFile(changeSet)) {
             return zip.getEntry(IDENTITY_INDEX) != null;
+        }
+    }
+
+    /** Whether a changeset carries a component table (format 3). */
+    public static boolean hasComponentTable(ZipFile zip) {
+        return zip.getEntry(COMPONENT_TABLE) != null;
+    }
+
+    /** The name of record entry {@code ordinal}, counted from 1: {@code records/0003-concepts.pb.gz}. */
+    public static String recordEntryName(int ordinal, String label) {
+        return RECORDS_PREFIX + String.format("%04d-%s.pb", ordinal, label) + GZIP_SUFFIX;
+    }
+
+    /** The manifest attribute describing record entry {@code ordinal}, counted from 1. */
+    public static String entryAttribute(int ordinal) {
+        return ENTRY_ATTRIBUTE_PREFIX + String.format("%04d", ordinal);
+    }
+
+    /**
+     * A record entry as the manifest describes it: its zip entry, the records it holds, and
+     * the SHA-256 of its stored bytes, the gzip stream as the zip holds it. A format-1 or
+     * format-2 changeset describes nothing, so its entries carry {@code -1} and {@code null}.
+     */
+    public record RecordEntry(ZipEntry entry, long count, String sha256) {
+    }
+
+    /**
+     * The record entries of a changeset in the order they are read: for format 3, the order
+     * the manifest lists; before it, every entry that is not metadata, in zip order.
+     *
+     * @throws IllegalStateException if the manifest names an entry the zip does not hold
+     */
+    public static List<RecordEntry> recordEntries(ZipFile zip, Manifest manifest) {
+        Attributes main = manifest.getMainAttributes();
+        String listed = main.getValue(RECORD_ENTRIES_ATTRIBUTE);
+        List<RecordEntry> entries = new ArrayList<>();
+        if (listed != null) {
+            int count = Integer.parseInt(listed.strip());
+            for (int ordinal = 1; ordinal <= count; ordinal++) {
+                String value = main.getValue(entryAttribute(ordinal));
+                if (value == null) {
+                    throw new IllegalStateException(zip.getName() + " lists " + count + " record entries but "
+                            + entryAttribute(ordinal) + " is missing from its manifest");
+                }
+                String[] parts = value.strip().split("\\s+");
+                ZipEntry entry = zip.getEntry(parts[0]);
+                if (entry == null) {
+                    throw new IllegalStateException(zip.getName() + " has no entry " + parts[0] + " named by its manifest");
+                }
+                entries.add(new RecordEntry(entry, parts.length > 1 ? Long.parseLong(parts[1]) : -1,
+                        parts.length > 2 ? parts[2] : null));
+            }
+            return entries;
+        }
+        for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements(); ) {
+            ZipEntry entry = e.nextElement();
+            if (!isMetadata(entry.getName()) && !entry.isDirectory()) {
+                entries.add(new RecordEntry(entry, -1, null));
+            }
+        }
+        return entries;
+    }
+
+    /**
+     * The records of an entry as a stream of length-delimited {@code TinkarMsg}: a format-3
+     * entry is a gzip stream the zip stores, inflated here; an older entry is deflated by the
+     * zip itself. Buffered; the caller closes it.
+     */
+    public static InputStream openRecords(ZipFile zip, ZipEntry entry) throws IOException {
+        return openRecords(entry.getName(), zip.getInputStream(entry));
+    }
+
+    /** As {@link #openRecords(ZipFile, ZipEntry)}, over an entry's stored bytes already opened, named to tell a gzip entry. */
+    public static InputStream openRecords(String entryName, InputStream stored) throws IOException {
+        if (entryName.endsWith(GZIP_SUFFIX)) {
+            return new BufferedInputStream(new GZIPInputStream(stored, 1 << 16), 1 << 20);
+        }
+        return new BufferedInputStream(stored, 1 << 20);
+    }
+
+    /**
+     * The manifest of a changeset, read through the zip's central directory. The exporter
+     * writes the manifest last, after the records and the identity index, and a streaming
+     * reader has to inflate every entry before it to reach it: 47 seconds of a DeX import
+     * went to reading a 2.4 KB manifest (IKE-Network/ike-issues#1269). Empty when the zip
+     * carries no manifest.
+     */
+    public static Optional<Manifest> manifest(ZipFile zip) throws IOException {
+        ZipEntry entry = zip.getEntry(MANIFEST);
+        if (entry == null) {
+            return Optional.empty();
+        }
+        try (InputStream in = zip.getInputStream(entry)) {
+            return Optional.of(new Manifest(in));
         }
     }
 
