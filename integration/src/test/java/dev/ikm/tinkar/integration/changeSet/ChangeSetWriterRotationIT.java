@@ -3,14 +3,13 @@ package dev.ikm.tinkar.integration.changeSet;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.changeset.ChangeSetWriterProvider;
 import dev.ikm.tinkar.schema.TinkarMsg;
-import dev.ikm.tinkar.terms.KernelTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -20,12 +19,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.Manifest;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,9 +66,16 @@ class ChangeSetWriterRotationIT {
                 .get(1, TimeUnit.MINUTES);
 
         // A service thread left over would take some of these into a file no save closes.
-        Entity<?> activeState = EntityHandle.get(KernelTerm.ACTIVE_STATE).expectEntity();
-        for (int i = 0; i < WRITES; i++) {
-            writer.writeToChangeSet(activeState, DataActivity.SYNCHRONIZABLE_EDIT);
+        // Distinct concepts: a component written twice is carried once at close.
+        List<Entity<?>> concepts = new ArrayList<>();
+        EntityService.get().forEachConceptEntity(concept -> {
+            if (concepts.size() < WRITES) {
+                concepts.add(concept);
+            }
+        });
+        assertEquals(WRITES, concepts.size(), "distinct concepts to write");
+        for (Entity<?> concept : concepts) {
+            writer.writeToChangeSet(concept, DataActivity.SYNCHRONIZABLE_EDIT);
         }
         writer.save().get(1, TimeUnit.MINUTES);
 
@@ -82,26 +89,22 @@ class ChangeSetWriterRotationIT {
         assertEquals(WRITES, recordsInClosedFiles, "Records in closed changesets in " + folder);
     }
 
-    /** The records in a finished changeset; none in one still open. */
+    /** The records in a finished change set; none in one still open. */
     private static int recordsIfFinished(File file) throws IOException {
         try (ZipFile zip = new ZipFile(file)) {
-            if (zip.getEntry(ChangeSetFormat.MANIFEST) == null) {
+            Manifest manifest = ChangeSetFormat.manifest(zip).orElse(null);
+            if (manifest == null) {
                 return 0;
             }
             int records = 0;
-            for (ZipEntry entry : zip.stream().toList()) {
-                if (ChangeSetFormat.isMetadata(entry.getName())) {
-                    continue;
-                }
-                try (InputStream in = zip.getInputStream(entry)) {
+            for (ChangeSetFormat.RecordEntry entry : ChangeSetFormat.recordEntries(zip, manifest)) {
+                try (InputStream in = ChangeSetFormat.openRecords(zip, entry.entry())) {
                     while (TinkarMsg.parseDelimitedFrom(in) != null) {
                         records++;
                     }
                 }
             }
             return records;
-        } catch (IOException notYetAZip) {
-            return 0;
         }
     }
 }
