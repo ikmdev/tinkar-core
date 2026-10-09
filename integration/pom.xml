@@ -143,6 +143,14 @@
             <version>${ike-starter-set.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- The knowledge-pipeline provider ike-bindings reaches at runtime, named here so the
+             reactor sorts it first: an edge through an artifact outside the reactor is no edge to
+             the sorter, and versionless it binds to the reactor's current version (ike-issues#1019). -->
+        <dependency>
+            <groupId>network.ike.knowledge</groupId>
+            <artifactId>ike-knowledge-provider</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!-- Service providers the tests reach only through ServiceLoader. -->
         <dependency>
             <groupId>${project.groupId}</groupId>
