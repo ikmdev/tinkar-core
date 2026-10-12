@@ -325,12 +325,30 @@ public class Transaction implements Comparable<Transaction>, Encodable {
                 : Stamp.stampUuidOf(state, time, authorId, moduleId, pathId);
         stampsInTransaction.add(stampUuid);
         if (PrimitiveData.get().hasUuid(stampUuid)) {
-            return Entity.getStamp(PrimitiveData.nid(stampUuid));
+            StampEntity existing = Entity.getStamp(PrimitiveData.nid(stampUuid));
+            if (existing != null) {
+                return existing;
+            }
         }
-        StampEntity stamp = StampRecord.make(stampUuid, state, time, authorId, moduleId, pathId);
-        Entity.provider().putEntity(stamp);
-        return stamp;
+        // Making a stamp assigns its nid before the stamp is stored, so a thread that finds the
+        // UUID known can still find no stamp: another thread is between the two. Creation is
+        // serialized, and the check repeated inside, so that thread waits for the stored stamp
+        // instead of returning none (parallel OWL-to-logic batches met it; IKE-Network/ike-issues#1293).
+        synchronized (STAMP_CREATION) {
+            if (PrimitiveData.get().hasUuid(stampUuid)) {
+                StampEntity existing = Entity.getStamp(PrimitiveData.nid(stampUuid));
+                if (existing != null) {
+                    return existing;
+                }
+            }
+            StampEntity stamp = StampRecord.make(stampUuid, state, time, authorId, moduleId, pathId);
+            Entity.provider().putEntity(stamp);
+            return stamp;
+        }
     }
+
+    /** Serializes stamp creation across transactions and threads; see {@link #getStamp(State, long, PublicId, PublicId, PublicId)}. */
+    private static final Object STAMP_CREATION = new Object();
 
     /**
      * Retrieves a StampEntity based on the provided state, author, module, and path.
