@@ -227,6 +227,39 @@ class DiTreeTextIT {
     }
 
     @Test
+    void theStructureIsNamedByOneFunctionAndTheComponentsItHoldsByTheOther() {
+        // Meanings and property keys are the words of the structure; a component held as a value,
+        // under the vertex's own meaning or another key, and each element of an id list, is what
+        // the tree is about. The second function is the only one that sees those (#1291).
+        LongFunction<String> value = nid -> "<" + byDescription.apply(nid) + ">";
+        List<String> roleProperties = new ArrayList<>(List.of(
+                name(KernelTerm.ROLE_TYPE) + ": <" + name(IkeTerms.PART_OF) + ">",
+                name(KernelTerm.ROLE_OPERATOR) + ": <" + name(KernelTerm.EXISTENTIAL_RESTRICTION) + ">"));
+        roleProperties.sort(null);
+
+        String expected = "   [0]➞[1] " + name(KernelTerm.DEFINITION_ROOT) + "\n"
+                + "     [1]➞[2] " + name(KernelTerm.NECESSARY_SET) + "\n"
+                + "       [2]➞[3,4,5] " + name(KernelTerm.AND) + "\n"
+                + "         [3] " + name(KernelTerm.CONCEPT_REFERENCE) + ": <" + name(KernelTerm.LANGUAGE) + ">\n"
+                + "         [4] " + name(KernelTerm.ROLE) + "\n"
+                + "            •" + roleProperties.get(0) + "\n"
+                + "            •" + roleProperties.get(1) + "\n"
+                + "         [5] " + name(KernelTerm.PROPERTY_SET) + "\n"
+                + "            •" + name(KernelTerm.PROPERTY_SEQUENCE) + ": [<"
+                + name(IkeTerms.PART_OF) + ">, <" + name(KernelTerm.ROLE_TYPE) + ">]\n";
+        assertEquals(expected, DiTreeText.tree(aTreeWithEveryKindOfPropertyValue(), byDescription, value));
+
+        EntityVertex held = EntityVertex.make(KernelTerm.CONCEPT_REFERENCE);
+        setProperty(held, KernelTerm.CONCEPT_REFERENCE, KernelTerm.LANGUAGE);
+        EntityVertex holder = EntityVertex.make(KernelTerm.ROLE);
+        setProperty(holder, KernelTerm.ROLE_TYPE, held);
+        assertEquals(name(KernelTerm.ROLE) + " {" + name(KernelTerm.ROLE_TYPE) + "="
+                        + name(KernelTerm.CONCEPT_REFERENCE) + ": <" + name(KernelTerm.LANGUAGE) + ">}",
+                DiTreeText.vertex(holder, byDescription, value),
+                "a vertex held as a value keeps the two functions apart");
+    }
+
+    @Test
     void aVertexOrATreeHeldAsAPropertyValueIsWrittenTheSameWay() {
         EntityVertex held = EntityVertex.make(KernelTerm.CONCEPT_REFERENCE);
         setProperty(held, KernelTerm.CONCEPT_REFERENCE, KernelTerm.LANGUAGE);

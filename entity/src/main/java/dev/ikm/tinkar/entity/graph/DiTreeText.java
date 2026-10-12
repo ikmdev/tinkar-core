@@ -49,6 +49,14 @@ import java.util.function.LongFunction;
  * property value that is none of these — a string, a number, a boolean — is written as its own
  * text.
  *
+ * <p>A caller may instead give two functions: one for the words of the tree's structure — the
+ * meaning of a vertex and the key of a property, such as {@code Necessary set}, {@code And} or
+ * {@code Role type} — and one for the components the tree is about — a component held as a
+ * property value, including the one a concept reference vertex holds under its own meaning, and
+ * each element of an id list or set. The second may then identify each component beside its
+ * name, so a reader can act on the components a definition refers to without a lookup for each,
+ * while the structural words stay bare ({@code IKE-Network/ike-issues#1291}).
+ *
  * <p>The {@code diagnostic} methods are the form for the message of an exception
  * ({@code IKE-Network/ike-issues#1189}). They name each component as {@link DiagnosticText#name(int)}
  * does: by its description, else its UUID, and by its nid only when the store has no public id
@@ -75,8 +83,24 @@ public final class DiTreeText {
      * @return the tree, one vertex per line with its properties beneath it
      */
     public static String tree(DiTreeAbstract<? extends EntityVertex> tree, LongFunction<String> nameOf) {
+        return tree(tree, nameOf, nameOf);
+    }
+
+    /**
+     * The text of a whole tree, from its root, naming the words of its structure and the
+     * components it holds as values by separate functions.
+     *
+     * @param tree    the tree
+     * @param nameOf  gives the name to write for the meaning of a vertex or the key of a
+     *                property, from its nid in the open store
+     * @param valueOf gives the text to write for a component held as a value, from its nid in
+     *                the open store
+     * @return the tree, one vertex per line with its properties beneath it
+     */
+    public static String tree(DiTreeAbstract<? extends EntityVertex> tree, LongFunction<String> nameOf,
+                              LongFunction<String> valueOf) {
         StringBuilder text = new StringBuilder();
-        appendVertex(text, tree, tree.root().vertexIndex(), 1, nameOf);
+        appendVertex(text, tree, tree.root().vertexIndex(), 1, nameOf, valueOf);
         return text.toString();
     }
 
@@ -148,9 +172,25 @@ public final class DiTreeText {
      *         {@code {Property=value, …}}
      */
     public static String vertex(EntityVertex vertex, LongFunction<String> nameOf) {
+        return vertex(vertex, nameOf, nameOf);
+    }
+
+    /**
+     * The text of one vertex on its own, on one line, naming the words of its structure and the
+     * components it holds as values by separate functions.
+     *
+     * @param vertex  the vertex
+     * @param nameOf  gives the name to write for the meaning of a vertex or the key of a
+     *                property, from its nid in the open store
+     * @param valueOf gives the text to write for a component held as a value, from its nid in
+     *                the open store
+     * @return the vertex as {@code Meaning}, {@code Meaning: value}, or either followed by
+     *         {@code {Property=value, …}}
+     */
+    public static String vertex(EntityVertex vertex, LongFunction<String> nameOf, LongFunction<String> valueOf) {
         StringBuilder text = new StringBuilder();
-        appendMeaning(text, vertex, nameOf);
-        List<Property> properties = properties(vertex, nameOf);
+        appendMeaning(text, vertex, nameOf, valueOf);
+        List<Property> properties = properties(vertex, nameOf, valueOf);
         if (properties.isEmpty()) {
             return text.toString();
         }
@@ -166,7 +206,7 @@ public final class DiTreeText {
 
     /** Appends a vertex's line, its property lines, and then its successors, depth first. */
     private static void appendVertex(StringBuilder text, DiTreeAbstract<? extends EntityVertex> tree, int index,
-                                     int depth, LongFunction<String> nameOf) {
+                                     int depth, LongFunction<String> nameOf, LongFunction<String> valueOf) {
         EntityVertex vertex = tree.vertex(index);
         String indent = INDENT.repeat(depth);
         ImmutableIntList successors = tree.successors(index);
@@ -183,16 +223,16 @@ public final class DiTreeText {
             text.append(']');
         }
         text.append(' ');
-        appendMeaning(text, vertex, nameOf);
+        appendMeaning(text, vertex, nameOf, valueOf);
         text.append('\n');
 
-        for (Property property : properties(vertex, nameOf)) {
+        for (Property property : properties(vertex, nameOf, valueOf)) {
             text.append(indent).append("    •").append(property.name())
                     .append(": ").append(property.value()).append('\n');
         }
 
         for (int i = 0; i < successors.size(); i++) {
-            appendVertex(text, tree, successors.get(i), depth + 1, nameOf);
+            appendVertex(text, tree, successors.get(i), depth + 1, nameOf, valueOf);
         }
     }
 
@@ -201,12 +241,13 @@ public final class DiTreeText {
      * meaning when it has one — a concept reference vertex holds the referenced concept this
      * way.
      */
-    private static void appendMeaning(StringBuilder text, EntityVertex vertex, LongFunction<String> nameOf) {
+    private static void appendMeaning(StringBuilder text, EntityVertex vertex, LongFunction<String> nameOf,
+                                      LongFunction<String> valueOf) {
         long meaningNid = vertex.getMeaningNid();
         text.append(nameOf.apply(meaningNid));
         ImmutableLongObjectMap<Object> properties = vertex.properties();
         if (properties.containsKey(meaningNid)) {
-            text.append(": ").append(value(properties.get(meaningNid), nameOf));
+            text.append(": ").append(value(properties.get(meaningNid), nameOf, valueOf));
         }
     }
 
@@ -214,13 +255,14 @@ public final class DiTreeText {
      * A vertex's properties other than the one keyed by its own meaning, ordered by name and
      * then by value.
      */
-    private static List<Property> properties(EntityVertex vertex, LongFunction<String> nameOf) {
+    private static List<Property> properties(EntityVertex vertex, LongFunction<String> nameOf,
+                                             LongFunction<String> valueOf) {
         long meaningNid = vertex.getMeaningNid();
         ImmutableLongObjectMap<Object> properties = vertex.properties();
         List<Property> named = new ArrayList<>(properties.size());
         properties.forEachKeyValue((keyNid, value) -> {
             if (keyNid != meaningNid) {
-                named.add(new Property(nameOf.apply(keyNid), value(value, nameOf)));
+                named.add(new Property(nameOf.apply(keyNid), value(value, nameOf, valueOf)));
             }
         });
         named.sort(Comparator.comparing(Property::name).thenComparing(Property::value));
@@ -228,17 +270,17 @@ public final class DiTreeText {
     }
 
     /**
-     * The text of a property value. A component is its name; a list or set of components is the
-     * list of their names; a vertex or a tree held as a value is written as this class writes
+     * The text of a property value. A component is its text as {@code valueOf} writes it; a list
+     * or set of components is the list of those texts; a vertex or a tree held as a value is written as this class writes
      * one; anything else — a string, a number, a boolean — is its own text.
      */
-    private static String value(Object value, LongFunction<String> nameOf) {
+    private static String value(Object value, LongFunction<String> nameOf, LongFunction<String> valueOf) {
         return switch (value) {
             case null -> "";
-            case EntityFacade facade -> nameOf.apply(facade.nid());
-            case LongIdCollection ids -> names(ids, nameOf);
-            case EntityVertex held -> vertex(held, nameOf);
-            case DiTreeEntity held -> "\n" + tree(held, nameOf);
+            case EntityFacade facade -> valueOf.apply(facade.nid());
+            case LongIdCollection ids -> names(ids, valueOf);
+            case EntityVertex held -> vertex(held, nameOf, valueOf);
+            case DiTreeEntity held -> "\n" + tree(held, nameOf, valueOf);
             default -> value.toString();
         };
     }
