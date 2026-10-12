@@ -130,11 +130,28 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp, PrimordialStam
      * @return the tuple-derived UUID
      */
     static UUID stampUuid(State state, long time, ConceptFacade author, ConceptFacade module, ConceptFacade path) {
+        return stampUuidOf(state, time, author.publicId(), module.publicId(), path.publicId());
+    }
+
+    /**
+     * {@link #stampUuid(State, long, ConceptFacade, ConceptFacade, ConceptFacade)} over public ids,
+     * for callers that hold the dimensions as ids — the transaction minting a stamp whose time is
+     * given up front uses it, so a tuple declared by a builder and a tuple written at runtime
+     * resolve to the same stamp entity.
+     *
+     * @param state    the status dimension
+     * @param time     the time dimension, in epoch milliseconds
+     * @param authorId the author dimension
+     * @param moduleId the module dimension
+     * @param pathId   the path dimension
+     * @return the tuple-derived UUID
+     */
+    static UUID stampUuidOf(State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         String canonical = state.publicId().leastUuid()
                 + "|" + time
-                + "|" + author.publicId().leastUuid()
-                + "|" + module.publicId().leastUuid()
-                + "|" + path.publicId().leastUuid();
+                + "|" + authorId.leastUuid()
+                + "|" + moduleId.leastUuid()
+                + "|" + pathId.leastUuid();
         return UuidT5Generator.get(UuidT5Generator.STAMP_NAMESPACE, canonical);
     }
 

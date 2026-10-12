@@ -36,6 +36,7 @@ import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
@@ -301,8 +302,17 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * Retrieves or creates a StampEntity using the provided state, timestamp, author, module, and path identifiers.
      * If a StampEntity corresponding to the given parameters does not exist, it creates and stores one.
      *
+     * <p>A stamp whose time is given up front is a complete tuple, and a complete tuple is a value:
+     * its identity is derived from the tuple alone, through the same canonical form the entity
+     * builder uses ({@link Stamp#stampUuidOf}), so two transactions that declare the same tuple
+     * share one stamp entity and versions written twice under it merge to one. Such a stamp is
+     * committed at birth, with its single version, and {@link #cancel()} leaves it alone; writes
+     * under it are final at the put, which is import semantics. A stamp whose time is
+     * {@link Long#MAX_VALUE} belongs to this transaction alone until commit assigns its time,
+     * so its identity includes the transaction's.
+     *
      * @param state The state associated with the stamp.
-     * @param time The timestamp for the stamp in milliseconds since epoch.
+     * @param time The timestamp for the stamp in milliseconds since epoch, or Long.MAX_VALUE for the commit time.
      * @param authorId The public identifier of the author for the stamp.
      * @param moduleId The public identifier of the module for the stamp.
      * @param pathId The public identifier of the path for the stamp.
@@ -310,7 +320,9 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      */
     public StampEntity getStamp(State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         checkState(state, time, authorId == null, moduleId == null, pathId == null);
-        UUID stampUuid = UuidT5Generator.forTransaction(transactionUuid, state.publicId(), time, authorId, moduleId, pathId);
+        UUID stampUuid = time == Long.MAX_VALUE
+                ? UuidT5Generator.forTransaction(transactionUuid, state.publicId(), time, authorId, moduleId, pathId)
+                : Stamp.stampUuidOf(state, time, authorId, moduleId, pathId);
         stampsInTransaction.add(stampUuid);
         if (PrimitiveData.get().hasUuid(stampUuid)) {
             return Entity.getStamp(PrimitiveData.nid(stampUuid));
@@ -599,6 +611,11 @@ public class Transaction implements Comparable<Transaction>, Encodable {
             StampEntityVersion stampVersion = stampEntity.lastVersion();
             if (stampVersion.time() == Long.MIN_VALUE) {
                 // Already canceled: Long.MIN_VALUE is the time of a canceled stamp.
+            } else if (stampVersion.time() != Long.MAX_VALUE) {
+                // Committed: a stamp has at most two versions, uncommitted then committed or
+                // canceled, and a committed time is final. A stamp minted with its time is committed
+                // at birth and may be shared with other transactions, so cancel must not touch it.
+                return;
             } else {
                 StampAnalogueBuilder newStampBuilder = stampEntity.analogueBuilder();
                 newStampBuilder.add(new StampVersionRecord(newStampBuilder.analogue(),

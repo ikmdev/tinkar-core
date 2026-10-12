@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
@@ -139,6 +140,89 @@ class StampedWriterIT {
                 .map(version -> version.fieldValues().getFirst())
                 .collect(Collectors.toSet());
         assertEquals(Set.of("first", "second"), values);
+    }
+
+    @Test
+    void aGivenTimeMakesTheStampATupleSharedAcrossTransactions() {
+        EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.newRandom());
+        EntityProxy.Semantic semantic = EntityProxy.Semantic.make(PublicIds.newRandom());
+        long time = TIME + 1_000;
+        try (StampedWriter writer = open("first declaration", time)) {
+            writer.concept(concept);
+            writer.semantic(semantic, KernelTerm.COMMENT_PATTERN, concept, "same");
+            writer.commit();
+        }
+        try (StampedWriter writer = open("second declaration", time)) {
+            writer.semantic(semantic, KernelTerm.COMMENT_PATTERN, concept, "same");
+            writer.commit();
+        }
+
+        SemanticEntity<SemanticEntityVersion> entity = EntityHandle.get(semantic).expectSemantic();
+        SemanticEntityVersion only = entity.versions().getOnly();
+        assertEquals("same", only.fieldValues().getFirst(), "an identical version written twice under one tuple is one version");
+        StampEntity<?> stamp = Entity.getStamp(only.stampNid());
+        assertEquals(1, stamp.versions().size(), "a stamp minted with its time has its single, committed version");
+        assertEquals(time, stamp.lastVersion().time());
+    }
+
+    @Test
+    void aDifferentVersionUnderOneTupleIsTheNewerOne() {
+        EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.newRandom());
+        EntityProxy.Semantic semantic = EntityProxy.Semantic.make(PublicIds.newRandom());
+        long time = TIME + 2_000;
+        try (StampedWriter writer = open("first", time)) {
+            writer.concept(concept);
+            writer.semantic(semantic, KernelTerm.COMMENT_PATTERN, concept, "first");
+            writer.commit();
+        }
+        try (StampedWriter writer = open("second", time)) {
+            writer.semantic(semantic, KernelTerm.COMMENT_PATTERN, concept, "second");
+            writer.commit();
+        }
+
+        SemanticEntity<SemanticEntityVersion> entity = EntityHandle.get(semantic).expectSemantic();
+        assertEquals("second", entity.versions().getOnly().fieldValues().getFirst(),
+                "one tuple is one STAMP, so the version under it is the one written last");
+    }
+
+    @Test
+    void cancellingAWriterWithAGivenTimeLeavesItsStampAndWritesFinal() {
+        EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.newRandom());
+        EntityProxy.Semantic semantic = EntityProxy.Semantic.make(PublicIds.newRandom());
+        long time = TIME + 3_000;
+        StampEntity<?> stamp;
+        try (StampedWriter writer = open("final at the put", time)) {
+            writer.concept(concept);
+            writer.semantic(semantic, KernelTerm.COMMENT_PATTERN, concept, "written");
+            stamp = writer.stamp();
+            writer.cancel();
+        }
+
+        StampEntity<?> after = EntityHandle.get(stamp.nid()).expectStamp();
+        assertEquals(1, after.versions().size(), "cancel never adds a version to a committed stamp");
+        assertEquals(time, after.lastVersion().time(), "the stamp keeps its committed time");
+        SemanticEntity<SemanticEntityVersion> entity = EntityHandle.get(semantic).expectSemantic();
+        assertTrue(!entity.canceled(), "a write under a committed stamp is final at the put");
+        assertEquals("written", entity.versions().getOnly().fieldValues().getFirst());
+    }
+
+    @Test
+    void cancellingAnUncommittedWriterCancelsItsStamp() {
+        EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.newRandom());
+        EntityProxy.Semantic semantic = EntityProxy.Semantic.make(PublicIds.newRandom());
+        StampEntity<?> stamp;
+        try (StampedWriter writer = StampedWriter.open("uncommitted", State.ACTIVE,
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH)) {
+            writer.concept(concept);
+            writer.semantic(semantic, KernelTerm.COMMENT_PATTERN, concept, "draft");
+            stamp = writer.stamp();
+            writer.cancel();
+        }
+
+        StampEntity<?> after = EntityHandle.get(stamp.nid()).expectStamp();
+        assertEquals(2, after.versions().size(), "uncommitted, then canceled");
+        assertEquals(Long.MIN_VALUE, after.lastVersion().time());
+        assertTrue(EntityHandle.get(semantic).expectSemantic().canceled());
     }
 
     @Test
