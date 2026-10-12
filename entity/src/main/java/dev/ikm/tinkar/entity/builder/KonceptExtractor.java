@@ -100,7 +100,7 @@ import java.util.UUID;
  * "Prose element pattern (RichSurfaceTerms)") is an IKE-ecosystem convention minted outside
  * tinkar-core, not part of upstream Tinkar, so this class stays agnostic about it by default.
  * A caller that knows which pattern its store uses for narrative content passes its nid to
- * {@link #extractYaml(Integer)}.
+ * {@link #extractYaml(Long)}.
  * <p>
  * A component is in the set when it has a fully qualified name description in this store —
  * referenced-but-unwritten externals (for example kernel parents) carry a nid
@@ -124,7 +124,7 @@ public final class KonceptExtractor {
 
     /**
      * Extracts the koncepts YAML for every concept and pattern in the open store, with no
-     * {@code narrative:} field on any entry. See {@link #extractYaml(Integer)} to include it.
+     * {@code narrative:} field on any entry. See {@link #extractYaml(Long)} to include it.
      *
      * @return the koncepts YAML text
      */

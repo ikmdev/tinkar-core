@@ -175,7 +175,7 @@ public class PathProvider implements PathService {
      * <p>A latest version that is not {@link State#ACTIVE} yields an empty result: a
      * retired origin definition no longer contributes to the path topology. An empty
      * result is also returned when no version is committed; callers skip the semantic
-     * and the bootstrap fallbacks in {@link #getPathOrigins(int)} apply.
+     * and the bootstrap fallbacks in {@link #getPathOrigins(long)} apply.
      *
      * @param semanticEntity a semantic of {@link KernelTerm#PATH_ORIGINS_PATTERN}
      * @return the version whose fields define current topology, or empty if the

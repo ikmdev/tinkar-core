@@ -356,7 +356,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * are excluded (IKE-Network/ike-issues#886), so defaults/template chronologies
      * yield an empty {@link Latest}. Uncached — the shared latest cache holds the
      * inclusive results the single-component surfaces return, and iteration workloads
-     * would thrash it anyway (see {@link #latestNoCache(int)}).
+     * would thrash it anyway (see {@link #latestNoCache(long)}).
      *
      * @param nid the nid of the component to calculate the latest version for
      * @param <V> the type of EntityVersion
@@ -393,7 +393,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * (IKE-Network/ike-issues#886). Because every version of a defaults/template
      * chronology is in that module (the category's live-and-die invariant), exclusion
      * makes such a chronology yield an empty {@link Latest} under iteration, while
-     * single-component surfaces ({@link #latest(int)}, {@link #latest(Entity)}) still
+     * single-component surfaces ({@link #latest(long)}, {@link #latest(Entity)}) still
      * resolve it — which is what the {@code getDefault}/{@code getTemplate} accessors
      * rely on.
      *

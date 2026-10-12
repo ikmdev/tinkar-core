@@ -415,7 +415,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Long> {
     /**
      * How many semantics of a pattern the store holds, counted without reading them: the length
      * of the pattern's index. A view that shows the first few semantics of a pattern and the
-     * number of the rest uses this, with {@link #semanticsOfPattern(int)} limited, so it reads
+     * number of the rest uses this, with {@link #semanticsOfPattern(long)} limited, so it reads
      * only what it shows; counting with {@link #forEachSemanticOfPattern} reads every semantic.
      *
      * @param patternNid the pattern

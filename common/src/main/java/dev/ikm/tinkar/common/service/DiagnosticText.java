@@ -32,7 +32,7 @@ import java.util.UUID;
  * response, and a person reads it beside another store.
  *
  * <table>
- *   <caption>What {@link #component(int)} writes</caption>
+ *   <caption>What {@link #component(long)} writes</caption>
  *   <tr><th>The store has</th><th>The text</th></tr>
  *   <tr><td>a description and a public id</td>
  *       <td>{@code Chronic lung disease (UUID 0b6f…)}</td></tr>

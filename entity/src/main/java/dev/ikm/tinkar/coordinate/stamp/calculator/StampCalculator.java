@@ -70,7 +70,7 @@ import java.util.stream.Stream;
  * exclude versions stamped in that module, so defaults and templates never surface as
  * ordinary pattern or component content. Chronology-level and nid-level surfaces are
  * unchanged (store truth): chronology enumeration still returns defaults/template nids,
- * and {@link #latest(int)} on such a nid still resolves. The dedicated accessors —
+ * and {@link #latest(long)} on such a nid still resolves. The dedicated accessors —
  * {@link #getDefault(PatternFacade)},
  * {@link #getTemplate(PatternFacade, ConceptFacade)} — include the module and resolve
  * by computed identity.
@@ -318,7 +318,7 @@ public interface StampCalculator {
     void forEachSemanticVersionOfPattern(long patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
 
     /**
-     * Parallel form of {@link #forEachSemanticVersionOfPattern(int, BiConsumer)} — the
+     * Parallel form of {@link #forEachSemanticVersionOfPattern(long, BiConsumer)} — the
      * same version-iteration contract, including the exclusion of versions stamped in
      * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE}.
      *
@@ -328,7 +328,7 @@ public interface StampCalculator {
     void forEachSemanticVersionOfPatternParallel(long patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
 
     /**
-     * Parallel form of {@link #forEachSemanticVersionOfPattern(int, BiConsumer)}
+     * Parallel form of {@link #forEachSemanticVersionOfPattern(long, BiConsumer)}
      * restricted to the given semantic nids — the same version-iteration contract,
      * including the exclusion of versions stamped in
      * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE}.

@@ -200,7 +200,7 @@ public final class TaxonomySectioner {
 
     /**
      * Convenience for callers that need FULL store coverage, not just the
-     * taxonomy-reachable subset: {@link #sectionsUnder(int, int, int)}, first-section-wins
+     * taxonomy-reachable subset: {@link #sectionsUnder(long, int, int)}, first-section-wins
      * deduplicated across sections (this class's own documented "dedup is the caller's
      * job" contract, applied once here so every caller doesn't reimplement it), plus a
      * residual catch-all covering every concept and pattern NOT reachable via stated

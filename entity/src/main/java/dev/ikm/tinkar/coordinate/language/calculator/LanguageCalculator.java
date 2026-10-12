@@ -314,7 +314,7 @@ public interface LanguageCalculator {
     /**
      * @param entity
      * @return Return the latestDescription according to the type and dialect preferences of this {@code LanguageCoordinate}.
-     * @see #getDescriptionText(int)
+     * @see #getDescriptionText(long)
      */
     default Optional<String> getDescriptionText(EntityFacade entity) {
         return this.getDescriptionText(entity.nid());
