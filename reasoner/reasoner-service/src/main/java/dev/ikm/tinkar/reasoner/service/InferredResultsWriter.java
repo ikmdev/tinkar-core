@@ -147,8 +147,9 @@ public class InferredResultsWriter {
 						new StructuredTaskScope.CancelledByTimeoutException());
 			}
 
+			// Called from each subtask's thread, concurrently; the accumulator is unsynchronized.
 			@Override
-			public boolean onComplete(StructuredTaskScope.Subtask<MutableLongList> subtask) {
+			public synchronized boolean onComplete(StructuredTaskScope.Subtask<MutableLongList> subtask) {
 				if (subtask.state() == StructuredTaskScope.Subtask.State.SUCCESS) {
 					accumulator.addAll(subtask.get());
 				}
@@ -259,8 +260,12 @@ public class InferredResultsWriter {
 							new StructuredTaskScope.CancelledByTimeoutException());
 				}
 
+				// The scope calls onComplete from each subtask's own thread, concurrently, and the
+				// master lists are unsynchronized: unserialized, concurrent addAll calls corrupted them,
+				// losing chunks of results or failing with ArrayIndexOutOfBoundsException on a
+				// knowledge base of SNOMED CT's size (IKE-Network/ike-issues#1293).
 				@Override
-				public boolean onComplete(StructuredTaskScope.Subtask<ChunkResults> subtask) {
+				public synchronized boolean onComplete(StructuredTaskScope.Subtask<ChunkResults> subtask) {
 					if (subtask.state() == StructuredTaskScope.Subtask.State.SUCCESS) {
 						ChunkResults results = subtask.get();
 						// Add to master lists immediately as each task completes
