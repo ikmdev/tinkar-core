@@ -256,6 +256,72 @@ public final class EntityRecordFormat2 {
         return readNid(buf);
     }
 
+    /**
+     * The time of a stamp entity's version part: after its type token and its stamp nid come the
+     * state nid and then the time, as {@code EntityCodec2} writes a stamp version.
+     *
+     * @param version a version part of a stamp entity
+     * @return its time: epoch milliseconds, {@link Long#MAX_VALUE} uncommitted, {@link Long#MIN_VALUE} canceled
+     */
+    public static long stampVersionTime(byte[] version) {
+        ByteBuf buf = ByteBuf.wrapForReading(version);
+        buf.readByte();                                   // type token
+        readNid(buf);                                     // the stamp's own nid
+        readNid(buf);                                     // state nid
+        return buf.readLong();
+    }
+
+    /**
+     * A stamp has at most two versions: the uncommitted placeholder ({@link Long#MAX_VALUE}) and
+     * one terminal version, committed or canceled. The merge is total and order-free, so where
+     * two records disagree it heals rather than fails: a committed version beats a canceled one
+     * (content may sit under a committed stamp, never under a canceled one), the earliest of
+     * several committed times wins (the same whichever record arrived first), and one placeholder
+     * is kept. Anything dropped is reported through {@link IdentityAdvisories#stampVersionsDropped}.
+     *
+     * @param chronology the stamp's chronology bytes, for the advisory
+     * @param versions   the merged version parts, in their stored order
+     * @return the versions to keep, in the same order
+     */
+    static List<byte[]> canonicalStampVersions(byte[] chronology, List<byte[]> versions) {
+        if (versions.size() <= 1) {
+            return versions;
+        }
+        byte[] placeholder = null;
+        byte[] terminal = null;
+        long terminalTime = Long.MIN_VALUE;
+        for (byte[] version : versions) {
+            long time = stampVersionTime(version);
+            if (time == Long.MAX_VALUE) {
+                if (placeholder == null) {
+                    placeholder = version;
+                }
+            } else if (terminal == null
+                    || (terminalTime == Long.MIN_VALUE && time != Long.MIN_VALUE)
+                    || (time != Long.MIN_VALUE && time < terminalTime)) {
+                terminal = version;
+                terminalTime = time;
+            }
+        }
+        List<byte[]> kept = new ArrayList<>(2);
+        List<Long> dropped = new ArrayList<>();
+        for (byte[] version : versions) {
+            if (version == placeholder || version == terminal) {
+                kept.add(version);
+            } else {
+                dropped.add(stampVersionTime(version));
+            }
+        }
+        if (!dropped.isEmpty()) {
+            List<Long> keptTimes = new ArrayList<>(kept.size());
+            for (byte[] version : kept) {
+                keptTimes.add(stampVersionTime(version));
+            }
+            IdentityAdvisories.stampVersionsDropped(readIdentity(chronology).nid(), keptTimes, dropped);
+        }
+        return kept;
+    }
+
     // ---------------------------------------------------------------- merge
 
     /**
@@ -263,8 +329,9 @@ public final class EntityRecordFormat2 {
      * the union of their versions, a version under a stamp already present in the newer record
      * yielding to the newer one, the versions of canceled stamps dropped when more than one
      * version remains (never for a stamp entity, whose canceled version is what records the
-     * cancellation), and the chronology's UUIDs unioned, with an advisory when the entity gains
-     * UUIDs it did not hold. The versions are stored in their unsigned byte order, so the result
+     * cancellation), a stamp entity held to its two-version shape by
+     * {@link #canonicalStampVersions}, and the chronology's UUIDs unioned, with an advisory when
+     * the entity gains UUIDs it did not hold. The versions are stored in their unsigned byte order, so the result
      * does not depend on the order the records were merged in, and a merge of equal records is
      * the record itself.
      *
@@ -316,6 +383,9 @@ public final class EntityRecordFormat2 {
         List<byte[]> kept = new ArrayList<>(versions);
         if (!stampEntity && kept.size() > 1) {
             kept.removeIf(version -> canceledStamp.test(stampNid(version)));
+        }
+        if (stampEntity) {
+            kept = canonicalStampVersions(chronology, kept);
         }
         return assemble(chronology, kept);
     }

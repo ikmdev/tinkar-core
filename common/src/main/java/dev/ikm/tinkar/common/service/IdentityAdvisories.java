@@ -39,6 +39,7 @@ public final class IdentityAdvisories {
 
     private static final LongAdder UUIDS_ADDED = new LongAdder();
     private static final LongAdder COMPONENTS_SHARING_UUIDS = new LongAdder();
+    private static final LongAdder STAMP_VERSIONS_DROPPED = new LongAdder();
 
     private IdentityAdvisories() {
     }
@@ -72,6 +73,29 @@ public final class IdentityAdvisories {
                 + " and the store has not reconciled them.";
         LOG.warn(description);
         AlertStreams.getRoot().dispatch(AlertObject.makeWarning("Components share UUIDs", description));
+    }
+
+    /**
+     * A stamp's records disagreed on its versions beyond the two a stamp may hold — an
+     * uncommitted placeholder and one terminal version — and the merge kept the canonical pair.
+     *
+     * @param nid     the stamp
+     * @param kept    the times of the versions kept
+     * @param dropped the times of the versions dropped
+     */
+    public static void stampVersionsDropped(long nid, Collection<Long> kept, Collection<Long> dropped) {
+        STAMP_VERSIONS_DROPPED.increment();
+        String description = "Stamp " + nid + " held versions at times " + dropped + " beyond the two a stamp may hold;"
+                + " the merge kept " + kept + " (a committed version over a canceled one, the earliest commit over later ones).";
+        LOG.warn(description);
+        AlertStreams.getRoot().dispatch(AlertObject.makeWarning("Stamp versions dropped", description));
+    }
+
+    /**
+     * @return how many merges have dropped stamp versions beyond the two-version shape, since this JVM started
+     */
+    public static long stampVersionsDroppedCount() {
+        return STAMP_VERSIONS_DROPPED.sum();
     }
 
     /**

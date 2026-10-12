@@ -17,8 +17,32 @@ package dev.ikm.tinkar.entity;
 
 public record StampAnalogueBuilder(StampRecord analogue,
                                    RecordListBuilder<StampVersionRecord> analogVersions) {
+    /**
+     * Builds the stamp, refusing a shape a stamp may not have: more than two versions, two
+     * uncommitted placeholders, or two terminal versions. A stamp is born uncommitted and ends
+     * committed or canceled, one more version; born with its time, it is committed with one
+     * version and never changes. Anything else is a programming error caught here, at the one
+     * place a version joins a stamp on the write path.
+     *
+     * @return the stamp
+     * @throws IllegalStateException if the versions do not form a legal stamp
+     */
     public StampRecord build() {
         analogVersions.build();
+        int placeholders = 0;
+        int terminals = 0;
+        for (StampVersionRecord version : analogue.versions()) {
+            if (version.time() == Long.MAX_VALUE) {
+                placeholders++;
+            } else {
+                terminals++;
+            }
+        }
+        if (placeholders > 1 || terminals > 1) {
+            throw new IllegalStateException("Stamp " + analogue.publicId() + " would hold " + analogue.versions().size()
+                    + " versions at times " + analogue.versions().collect(StampVersionRecord::time)
+                    + ": a stamp has at most two, the uncommitted placeholder and one committed or canceled version");
+        }
         return analogue;
     }
 

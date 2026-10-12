@@ -112,6 +112,87 @@ class EntityRecordFormat2Test {
         assertSame(stored, EntityRecordFormat2.merge(stored, null, stamp -> false));
     }
 
+    private static final long STAMP_NID = Nid.compose64(4, 9);
+    private static final long STATE = Nid.compose64(2, 5);
+
+    /** A stamp entity's version part as the codec writes it: token, own nid, state, time, author, module, path. */
+    private static byte[] stampVersion(long time) {
+        return stampVersion(STAMP_NID, time);
+    }
+
+    private static byte[] stampVersion(long stampNid, long time) {
+        ByteBuf buf = ByteBuf.wrapForWriting(new byte[64]);
+        buf.writeByte(PrimitiveDataService.STAMP_DATA_TYPE);
+        EntityRecordFormat2.writeNid(buf, stampNid);
+        EntityRecordFormat2.writeNid(buf, STATE);
+        buf.writeLong(time);
+        EntityRecordFormat2.writeNid(buf, CONCEPT);
+        EntityRecordFormat2.writeNid(buf, CONCEPT);
+        EntityRecordFormat2.writeNid(buf, CONCEPT);
+        return Arrays.copyOf(buf.array(), buf.tail());
+    }
+
+    private static List<Long> stampTimes(byte[] record) {
+        return EntityRecordFormat2.parts(record).versions().collect(EntityRecordFormat2::stampVersionTime).castToList();
+    }
+
+    @Test
+    void stampVersionTimeReadsPastTheTokenAndTwoNids() {
+        assertEquals(1_700_000_000_000L, EntityRecordFormat2.stampVersionTime(stampVersion(1_700_000_000_000L)));
+        assertEquals(Long.MAX_VALUE, EntityRecordFormat2.stampVersionTime(stampVersion(Long.MAX_VALUE)));
+    }
+
+    @Test
+    void mergeHoldsAStampToItsTwoVersionsWithCommitBeatingCancel() {
+        byte[] chronology = chronology(PrimitiveDataService.STAMP_DATA_TYPE, STAMP_NID, UUID_1);
+        byte[] placeholder = stampVersion(Long.MAX_VALUE);
+        byte[] committed = stampVersion(1_700_000_000_000L);
+        byte[] canceled = stampVersion(Long.MIN_VALUE);
+        byte[] committedRecord = EntityRecordFormat2.assemble(chronology, List.of(placeholder, committed));
+        byte[] canceledRecord = EntityRecordFormat2.assemble(chronology, List.of(placeholder, canceled));
+        long before = IdentityAdvisories.stampVersionsDroppedCount();
+
+        byte[] merged = EntityRecordFormat2.merge(committedRecord, canceledRecord, stamp -> false);
+
+        assertEquals(List.of(1_700_000_000_000L, Long.MAX_VALUE), sorted(stampTimes(merged)), "the placeholder and the committed version");
+        assertArrayEquals(merged, EntityRecordFormat2.merge(canceledRecord, committedRecord, stamp -> false), "order-free");
+        assertEquals(before + 2, IdentityAdvisories.stampVersionsDroppedCount(), "each heal is advised");
+        assertArrayEquals(merged, EntityRecordFormat2.merge(merged, committedRecord, stamp -> false), "idempotent, and silent once healed");
+        assertEquals(before + 2, IdentityAdvisories.stampVersionsDroppedCount());
+    }
+
+    @Test
+    void mergeKeepsTheEarliestOfTwoCommits() {
+        byte[] chronology = chronology(PrimitiveDataService.STAMP_DATA_TYPE, STAMP_NID, UUID_1);
+        byte[] placeholder = stampVersion(Long.MAX_VALUE);
+        byte[] first = EntityRecordFormat2.assemble(chronology, List.of(placeholder, stampVersion(1_700_000_000_000L)));
+        byte[] second = EntityRecordFormat2.assemble(chronology, List.of(placeholder, stampVersion(1_700_000_000_500L)));
+
+        byte[] merged = EntityRecordFormat2.merge(first, second, stamp -> false);
+
+        assertEquals(List.of(1_700_000_000_000L, Long.MAX_VALUE), sorted(stampTimes(merged)));
+        assertArrayEquals(merged, EntityRecordFormat2.merge(second, first, stamp -> false));
+    }
+
+    @Test
+    void mergeLeavesALegalStampAlone() {
+        byte[] chronology = chronology(PrimitiveDataService.STAMP_DATA_TYPE, STAMP_NID, UUID_1);
+        byte[] uncommitted = EntityRecordFormat2.assemble(chronology, List.of(stampVersion(Long.MAX_VALUE)));
+        byte[] committed = EntityRecordFormat2.assemble(chronology, List.of(stampVersion(Long.MAX_VALUE), stampVersion(1_700_000_000_000L)));
+        long before = IdentityAdvisories.stampVersionsDroppedCount();
+
+        byte[] merged = EntityRecordFormat2.merge(uncommitted, committed, stamp -> false);
+
+        assertEquals(List.of(1_700_000_000_000L, Long.MAX_VALUE), sorted(stampTimes(merged)), "commit adds the committed version beside the placeholder");
+        assertEquals(before, IdentityAdvisories.stampVersionsDroppedCount(), "nothing to advise");
+    }
+
+    private static List<Long> sorted(List<Long> times) {
+        List<Long> copy = new java.util.ArrayList<>(times);
+        copy.sort(null);
+        return copy;
+    }
+
     @Test
     void mergeDropsTheVersionsOfCanceledStampsWhenOthersRemain() {
         byte[] chronology = chronology((byte) 1, CONCEPT, UUID_1);
@@ -125,10 +206,10 @@ class EntityRecordFormat2Test {
         assertEquals(1, versions.size());
         assertArrayEquals(b, versions.get(0));
 
-        // A stamp entity keeps every version, canceled or not: the canceled version is the record of it.
+        // A stamp entity keeps its canceled version: it is the record of the cancellation, beside the placeholder.
         byte[] stampChronology = chronology(PrimitiveDataService.STAMP_DATA_TYPE, STAMP_A, UUID_2);
-        byte[] s1 = version((byte) 25, STAMP_A, 1);
-        byte[] s2 = version((byte) 25, STAMP_A, 2);
+        byte[] s1 = stampVersion(STAMP_A, Long.MAX_VALUE);
+        byte[] s2 = stampVersion(STAMP_A, Long.MIN_VALUE);
         byte[] stampMerged = EntityRecordFormat2.merge(
                 EntityRecordFormat2.assemble(stampChronology, List.of(s1)),
                 EntityRecordFormat2.assemble(stampChronology, List.of(s2)),

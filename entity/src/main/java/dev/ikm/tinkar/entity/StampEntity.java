@@ -78,28 +78,41 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
         return KernelTerm.CANCELED_STATE.nid();
     }
 
+    /**
+     * The version that says what the stamp is: its committed version when it has one, else its
+     * canceled version, else the uncommitted placeholder. A stamp has at most two versions and
+     * never a committed one beside a canceled one; should a record from before that rule hold
+     * both, the committed version wins (content may sit under it) and the earliest of several
+     * commits wins, the same choices the store's merge makes when it heals such a record.
+     *
+     * @return the stamp's effective version
+     */
     default StampEntityVersion lastVersion() {
         if (versions().size() == 1) {
             return versions().get(0);
         }
-        StampEntityVersion latest = null;
+        StampEntityVersion committed = null;
+        StampEntityVersion canceled = null;
+        StampEntityVersion uncommitted = null;
         // Stamp times carry the sentinels: Long.MIN_VALUE is canceled and Long.MAX_VALUE is
         // uncommitted, which commit replaces with the commit time.
         for (StampEntityVersion version : versions()) {
             if (version.time() == Long.MIN_VALUE) {
-                // if canceled (Long.MIN_VALUE), latest is canceled.
-                return version;
-            } else if (latest == null) {
-                latest = version;
-            } else if (latest.time() == Long.MAX_VALUE) {
-                latest = version;
+                if (canceled == null) {
+                    canceled = version;
+                }
             } else if (version.time() == Long.MAX_VALUE) {
-                // ignore uncommitted version;
-            } else if (latest.time() < version.time()) {
-                latest = version;
+                if (uncommitted == null) {
+                    uncommitted = version;
+                }
+            } else if (committed == null || version.time() < committed.time()) {
+                committed = version;
             }
         }
-        return latest;
+        if (committed != null) {
+            return committed;
+        }
+        return canceled != null ? canceled : uncommitted;
     }
 
     @Override
