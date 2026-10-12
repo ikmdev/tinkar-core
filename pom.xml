@@ -56,6 +56,7 @@
         <subproject>test-fixtures</subproject>
         <subproject>provider</subproject>
         <subproject>reasoner</subproject>
+        <subproject>importer</subproject>
         <subproject>integration</subproject>
         <subproject>aggregator</subproject>
         <subproject>events</subproject>

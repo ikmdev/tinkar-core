@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd">
+	<modelVersion>4.1.0</modelVersion>
+	<parent/>
+	<artifactId>importer-rxnorm-owl</artifactId>
+	<name>Importer: RxNorm OWL</name>
+	<description>Imports RxNorm in OWL functional syntax (NLM's pilot "Defined RxNorm with SNOMED CT
+		classes"), after SNOMED CT. Ported from IKM's rxnorm-data transformation plugin onto the
+		store writer; carries IKM's RxNorm starter data (its patterns and identifier sources).</description>
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>importer-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>dev.ikm.tinkar.ext.owl</groupId>
+			<artifactId>owl-extension</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.collections</groupId>
+			<artifactId>eclipse-collections-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+	</dependencies>
+</project>

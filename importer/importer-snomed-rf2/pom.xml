@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd">
+	<modelVersion>4.1.0</modelVersion>
+	<parent/>
+	<artifactId>importer-snomed-rf2</artifactId>
+	<name>Importer: SNOMED CT RF2</name>
+	<description>Imports a SNOMED CT RF2 release, the International edition or an extension (the
+		LOINC Ontology, a national edition), full or snapshot, as distributed. Ported from IKM's
+		snomed-ct-data and snomed-ct-loinc-data transformation plugins onto the store writer.</description>
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>importer-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>dev.ikm.tinkar.ext.owl</groupId>
+			<artifactId>owl-extension</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.collections</groupId>
+			<artifactId>eclipse-collections-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>
