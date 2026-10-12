@@ -89,9 +89,9 @@ public class DurationUtil {
     }
 
     /**
-     * {@link #approximate} in the fewest characters, for a label that must not grow: "<10 s",
-     * "30 s", "6 min", "1 h 25 min", ">1 day". The rounding is the hedge; no tilde or "about"
-     * says it again.
+     * {@link #approximate} in the fewest characters, for a label that must not grow:
+     * {@code "<10 s"}, {@code "30 s"}, {@code "6 min"}, {@code "1 h 25 min"}, {@code ">1 day"}.
+     * The rounding is the hedge; no tilde or "about" says it again.
      *
      * @param d the duration
      * @return the duration, short
