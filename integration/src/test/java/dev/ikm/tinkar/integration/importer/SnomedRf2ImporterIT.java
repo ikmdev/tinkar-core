@@ -171,6 +171,19 @@ class SnomedRf2ImporterIT {
         assertTrue(identifiers.contains("1191"), "the RxCUI is an identifier: " + identifiers);
         assertTrue(EntityService.get().semanticsForComponentOfPattern(aspirin, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
                 .findAny().isPresent(), "the RxNorm axiom becomes an EL++ stated axiom");
+
+        List<SemanticEntityVersion> names = EntityService.get()
+                .semanticsForComponentOfPattern(aspirin, KernelTerm.DESCRIPTION_PATTERN.nid())
+                .map(s -> stamps.latest(s).get()).toList();
+        SemanticEntityVersion rxnormName = names.stream().filter(d -> "aspirin".equals(d.fieldValues().get(1))).findFirst().orElseThrow();
+        assertEquals(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(), ((EntityFacade) rxnormName.fieldValues().get(3)).nid(),
+                "on a concept merged with SNOMED CT, RxNorm's name is a regular name, SNOMED CT's FSN the only one");
+
+        long drug = PrimitiveData.nid(PublicIds.of(dev.ikm.tinkar.common.util.uuid.UuidT5Generator.get(
+                UuidUtil.SNOMED_NAMESPACE, "999rxnorm")));
+        List<Object> drugIdentifiers = EntityService.get().semanticsForComponentOfPattern(drug, KernelTerm.IDENTIFIER_PATTERN.nid())
+                .map(s -> stamps.latest(s).get().fieldValues().get(1)).map(Object.class::cast).toList();
+        assertTrue(drugIdentifiers.contains("999"), "a class with only a label carries its IRI's RxCUI: " + drugIdentifiers);
     }
 
     private ImportReport importRelease() {

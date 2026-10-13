@@ -70,9 +70,12 @@ import java.util.zip.ZipFile;
  * <ul>
  *   <li>the concept, merged with the SNOMED CT concept it cross-references, if any;</li>
  *   <li>descriptions: RxNorm name (fully qualified), RxNorm and prescribable synonyms, Tall Man
- *   synonyms, or for a class with only a label, the label; each US-English preferred or acceptable;</li>
- *   <li>identifiers: RxCUI, VUID, SNOMED CT id, and NDC codes, an NDC inactive once its end date
- *   precedes the release;</li>
+ *   synonyms, or for a class with only a label, the label; each US-English preferred or acceptable.
+ *   On a concept merged with SNOMED CT, RxNorm's names are acceptable regular names, SNOMED CT's
+ *   fully qualified name and preferred synonym kept;</li>
+ *   <li>identifiers: the RxCUI of every RxNorm class (an ingredient with only a label takes its
+ *   IRI's), VUID, SNOMED CT id, and NDC codes, an NDC inactive once its end date precedes the
+ *   release;</li>
  *   <li>its annotations, in their patterns;</li>
  *   <li>its axiom, as OWL axiom syntax, transformed into an EL++ stated axiom.</li>
  * </ul>
@@ -269,15 +272,21 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
             if (rxClass.labelOnly()) {
                 describe(conceptNid, rxnormUuid, rxClass.rdfsLabel, "LDESC", KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
                         KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, KernelTerm.PREFERRED);
+                identifier(conceptNid, rxnormUuid, RXCUI_IDENTIFIER, rxClass.rxCuiOrIri(), "RXID", stamp);
                 if (!rxClass.equivalentClasses.isEmpty()) {
                     return axiom(conceptNid, rxnormUuid, rxClass.equivalentClasses, "AXIOM");
                 }
                 return rxClass.subClassOf.isEmpty() ? 0 : axiom(conceptNid, rxnormUuid, rxClass.subClassOf, "SUBAXIOM");
             }
+            // A class merged with a SNOMED CT concept keeps SNOMED CT's fully qualified name and
+            // preferred synonym; RxNorm's names join it as acceptable regular names, so one concept
+            // never carries two fully qualified names or two preferred synonyms.
+            boolean merged = conceptId.uuidCount() > 1;
             describe(conceptNid, rxnormUuid, rxClass.rxnormName, "DESC", KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
-                    KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, KernelTerm.PREFERRED);
+                    merged ? KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE : KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE,
+                    merged ? ACCEPTABLE : KernelTerm.PREFERRED);
             describe(conceptNid, rxnormUuid, rxClass.rxnormSynonym, "SDESC", KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
-                    KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, KernelTerm.PREFERRED);
+                    KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, merged ? ACCEPTABLE : KernelTerm.PREFERRED);
             describe(conceptNid, rxnormUuid, rxClass.prescribableSynonym, "PSDESC", KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
                     KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, ACCEPTABLE);
             identifiers(conceptNid, rxnormUuid, rxClass);
@@ -310,7 +319,7 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
                 writer.semantic(stamp, PublicIds.of(UuidT5Generator.get(UuidUtil.SNOMED_NAMESPACE, rxClass.snomedCtId + "snomed")),
                         KernelTerm.IDENTIFIER_PATTERN, conceptNid, Lists.immutable.of(SNOMED_IDENTIFIER, rxClass.snomedCtId));
             }
-            identifier(conceptNid, conceptUuid, RXCUI_IDENTIFIER, rxClass.rxCui, "RXID", stamp);
+            identifier(conceptNid, conceptUuid, RXCUI_IDENTIFIER, rxClass.rxCuiOrIri(), "RXID", stamp);
             identifier(conceptNid, conceptUuid, VUID_IDENTIFIER, rxClass.vuid, "VUID", stamp);
             rxClass.ndcEndDates.forEach((ndc, endDate) -> identifier(conceptNid, conceptUuid, NDC_IDENTIFIER, ndc, "NDCID",
                     endDate.compareTo(releaseMonth) < 0 ? retired : stamp));

@@ -41,6 +41,8 @@ final class RxnormClass {
             "DataHasValue\\(:[\\[](.*?)[\\]]\\s+\"([^\"]*)\"\\^\\^xsd:([^\\)]+)\\)|DataHasValue\\(<(http://[^>]+)>\\s+\"([^\"]*)\"\\^\\^xsd:([^\\)]+)\\)");
 
     final String id;
+    /** Whether the class is RxNorm's own, its IRI's local name its RxCUI; not a SNOMED CT class RxNorm restates. */
+    final boolean rxnormIri;
     String rdfsLabel = "";
     String rxnormName = "";
     String rxnormSynonym = "";
@@ -59,7 +61,8 @@ final class RxnormClass {
     String subClassOf = "";
 
     private RxnormClass(String iri) {
-        this.id = iri.startsWith(RXNORM_IRI) ? iri.substring(RXNORM_IRI.length()) : iri.substring(SNOMED_IRI.length());
+        this.rxnormIri = iri.startsWith(RXNORM_IRI);
+        this.id = rxnormIri ? iri.substring(RXNORM_IRI.length()) : iri.substring(SNOMED_IRI.length());
     }
 
     /**
@@ -83,6 +86,14 @@ final class RxnormClass {
             }
         }
         return classes;
+    }
+
+    /**
+     * The class's RxCUI: the one its annotations give, or for an RxNorm class that gives none
+     * (an ingredient with only a label), its IRI's local name, which is its RxCUI.
+     */
+    String rxCuiOrIri() {
+        return !rxCui.isEmpty() ? rxCui : rxnormIri ? id : "";
     }
 
     /** Only a label: a class RxNorm names but says nothing else of. */
