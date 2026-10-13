@@ -76,6 +76,7 @@ class SnomedRf2ImporterIT {
     private static final String US = "900000000000509007";
     private static final String PREFERRED = "900000000000548007";
     private static final String LOINC_CODE_SCHEME = "705114005";
+    private static final String FINDING_SITE = "363698007";
 
     @TempDir
     Path temp;
@@ -134,6 +135,19 @@ class SnomedRf2ImporterIT {
 
     @Test
     @Order(2)
+    void konceptsNameParentsNotRoleFillers() {
+        long heart = nid(HEART);
+        String yaml = dev.ikm.tinkar.entity.builder.KonceptExtractor.extractYaml(null, candidate -> candidate == heart);
+        String broader = yaml.lines().filter(line -> line.strip().startsWith("broader:")).findFirst().orElseThrow();
+        // The SNOMED CT root is the kernel's Health concept, which carries its UUID.
+        assertEquals("broader: [HealthConcept]", broader.strip(),
+                "only the stated parent, not the finding site's filler, is broader");
+        String axiom = yaml.lines().filter(line -> line.strip().startsWith("axiom:")).findFirst().orElseThrow();
+        assertTrue(axiom.contains("∃"), "the role is rendered as a restriction: " + axiom);
+    }
+
+    @Test
+    @Order(3)
     void replayingWritesNothing() {
         ImportReport again = importRelease();
         assertEquals(0, again.written(), again.toString());
@@ -142,7 +156,7 @@ class SnomedRf2ImporterIT {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     void importsRxnormOverSnomed() throws IOException {
         Path owl = rxnormDir.resolve("Pilot-Defined-RxNorm-with-SNCT-classes-2024-04-10-test.owl");
         Files.writeString(owl, String.join("\n",
@@ -219,6 +233,7 @@ class SnomedRf2ImporterIT {
                 "id\teffectiveTime\tactive\tmoduleId\tdefinitionStatusId",
                 ROOT + "\t20240101\t1\t" + CORE + "\t900000000000074008",
                 HEART + "\t20240101\t1\t" + CORE + "\t900000000000074008",
+                FINDING_SITE + "\t20240101\t1\t" + CORE + "\t900000000000074008",
                 OLD_HEART + "\t20240101\t1\t" + CORE + "\t900000000000074008",
                 OLD_HEART + "\t20250101\t0\t" + CORE + "\t900000000000074008");
         write(terminology.resolve("sct2_Description_Full-en_INT_20250101.txt"),
@@ -236,7 +251,8 @@ class SnomedRf2ImporterIT {
         write(terminology.resolve("sct2_sRefset_OWLExpressionFull_INT_20250101.txt"),
                 "id\teffectiveTime\tactive\tmoduleId\trefsetId\treferencedComponentId\towlExpression",
                 "00000000-0000-4000-8000-000000000002\t20240101\t1\t" + CORE + "\t733073007\t" + HEART
-                        + "\tSubClassOf(:" + HEART + " :" + ROOT + ")",
+                        + "\tSubClassOf(:" + HEART + " ObjectIntersectionOf(:" + ROOT + " ObjectSomeValuesFrom(:609096000"
+                        + " ObjectSomeValuesFrom(:" + FINDING_SITE + " :" + OLD_HEART + "))))",
                 "00000000-0000-4000-8000-000000000003\t20240101\t1\t" + CORE + "\t733073007\t" + OLD_HEART
                         + "\tSubClassOf(:" + OLD_HEART + " :" + ROOT + ")",
                 "00000000-0000-4000-8000-000000000004\t20240101\t1\t" + CORE + "\t762103008\t734147008"

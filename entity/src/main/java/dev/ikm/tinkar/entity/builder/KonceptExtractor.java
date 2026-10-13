@@ -281,9 +281,19 @@ public final class KonceptExtractor {
                 }
             }
             if (!parentLabels.isEmpty()) {
-                String copula = stated.sufficient() ? "≡" : "⊑";
-                sb.append("  axiom: ").append(yaml(copula + " " + String.join(" ⊓ ", parentLabels)))
-                        .append('\n');
+                java.util.function.LongFunction<String> labelOf = refNid -> {
+                    String known = labelByNid.get(refNid);
+                    if (known != null) {
+                        return known;
+                    }
+                    String fqn = descriptionText(refNid, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
+                    return fqn != null ? label(fqn) : dev.ikm.tinkar.common.service.PrimitiveData.text(refNid);
+                };
+                String axiom = stated.sets().stream()
+                        .map(set -> (set instanceof LogicalAxiom.LogicalSet.SufficientSet ? "≡ " : "⊑ ")
+                                + renderSet(set, labelOf, nid))
+                        .collect(java.util.stream.Collectors.joining("; "));
+                sb.append("  axiom: ").append(yaml(axiom)).append('\n');
                 sb.append("  broader: [").append(String.join(", ", parentIds)).append("]\n");
             }
             if (!isPattern && stated.present()) {
@@ -526,11 +536,65 @@ public final class KonceptExtractor {
      *                   A self-reference is excluded: the taxonomy root's stated definition
      *                   names the concept itself (a vacuous {@code C ⊑ C}), which is the
      *                   root encoding, not a parent — with it excluded the root classifies
-     *                   as {@code root}, not {@code primitive}. For authored taxonomy
-     *                   content the rest are the is-a parents; role fillers would also
-     *                   appear and are a future refinement
+     *                   as {@code root}, not {@code primitive}. Only the concepts a necessary
+     *                   or sufficient set's conjunction names directly are parents: a role's
+     *                   filler (a finding site, a morphology) is not, wherever it is nested
+     * @param sets       the necessary and sufficient sets, for rendering the axiom
      */
-    private record StatedDefinition(boolean present, boolean sufficient, List<Long> parents) {
+    private record StatedDefinition(boolean present, boolean sufficient, List<Long> parents,
+                                    List<LogicalAxiom.LogicalSet> sets) {
+    }
+
+    /**
+     * A necessary or sufficient set in description-logic notation: its concepts, then its role
+     * restrictions as {@code ∃ role.(filler)}, each sorted by text so the YAML is stable.
+     */
+    private static String renderSet(LogicalAxiom.LogicalSet set, java.util.function.LongFunction<String> labelOf,
+                                    long selfNid) {
+        List<String> parts = new ArrayList<>();
+        for (LogicalAxiom.Atom.Connective connective : set.elements()) {
+            parts.add(renderConjunction(connective.elements(), labelOf, selfNid));
+        }
+        return String.join(" ⊓ ", parts);
+    }
+
+    private static String renderConjunction(Iterable<LogicalAxiom.Atom> atoms,
+                                            java.util.function.LongFunction<String> labelOf, long selfNid) {
+        List<String> concepts = new ArrayList<>();
+        List<String> restrictions = new ArrayList<>();
+        for (LogicalAxiom.Atom atom : atoms) {
+            if (atom instanceof LogicalAxiom.Atom.ConceptAxiom concept) {
+                if (concept.concept().nid() != selfNid) {
+                    concepts.add(labelOf.apply(concept.concept().nid()));
+                }
+            } else {
+                restrictions.add(renderAtom(atom, labelOf, selfNid));
+            }
+        }
+        java.util.Collections.sort(concepts);
+        java.util.Collections.sort(restrictions);
+        concepts.addAll(restrictions);
+        return String.join(" ⊓ ", concepts);
+    }
+
+    private static String renderAtom(LogicalAxiom.Atom atom, java.util.function.LongFunction<String> labelOf,
+                                     long selfNid) {
+        return switch (atom) {
+            case LogicalAxiom.Atom.ConceptAxiom concept -> labelOf.apply(concept.concept().nid());
+            case LogicalAxiom.Atom.Connective.And and -> renderConjunction(and.elements(), labelOf, selfNid);
+            case LogicalAxiom.Atom.Connective.Or or -> "(" + or.elements().collect(a -> renderAtom(a, labelOf, selfNid))
+                    .toSortedList().makeString(" ⊔ ") + ")";
+            case LogicalAxiom.Atom.TypedAtom.Role role -> {
+                String filler = renderAtom(role.restriction(), labelOf, selfNid);
+                boolean simple = role.restriction() instanceof LogicalAxiom.Atom.ConceptAxiom;
+                yield "∃ " + labelOf.apply(role.type().nid()) + "." + (simple ? filler : "(" + filler + ")");
+            }
+            case LogicalAxiom.Atom.TypedAtom.Feature feature -> labelOf.apply(feature.type().nid()) + " "
+                    + labelOf.apply(feature.concreteDomainOperator().nid()) + " " + feature.literal();
+            case LogicalAxiom.Atom.TypedAtom.IntervalRole interval ->
+                    labelOf.apply(interval.type().nid()) + " " + interval.interval();
+            default -> atom.toString();
+        };
     }
 
     /**
@@ -547,7 +611,8 @@ public final class KonceptExtractor {
                 componentNid, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
         boolean present = false;
         boolean sufficient = false;
-        List<Long> parents = new ArrayList<>();
+        java.util.LinkedHashSet<Long> parents = new java.util.LinkedHashSet<>();
+        List<LogicalAxiom.LogicalSet> sets = new ArrayList<>();
         for (long semanticNid : axiomNids) {
             SemanticEntityVersion version = latestVersion(EntityHandle.get(semanticNid).expectSemantic());
             if (version == null || version.fieldValues().isEmpty()) {
@@ -559,15 +624,23 @@ public final class KonceptExtractor {
                 if (!expression.nodesOfType(LogicalAxiom.LogicalSet.SufficientSet.class).isEmpty()) {
                     sufficient = true;
                 }
-                for (LogicalAxiom.Atom.ConceptAxiom axiom
-                        : expression.nodesOfType(LogicalAxiom.Atom.ConceptAxiom.class)) {
-                    if (axiom.concept().nid() != componentNid) {
-                        parents.add(axiom.concept().nid());
+                sets.addAll(expression.nodesOfType(LogicalAxiom.LogicalSet.NecessarySet.class).castToList());
+                sets.addAll(expression.nodesOfType(LogicalAxiom.LogicalSet.SufficientSet.class).castToList());
+            }
+        }
+        // A parent is a concept the set's conjunction names directly; a concept inside a role is
+        // that role's filler.
+        for (LogicalAxiom.LogicalSet set : sets) {
+            for (LogicalAxiom.Atom.Connective connective : set.elements()) {
+                for (LogicalAxiom.Atom atom : connective.elements()) {
+                    if (atom instanceof LogicalAxiom.Atom.ConceptAxiom concept
+                            && concept.concept().nid() != componentNid) {
+                        parents.add(concept.concept().nid());
                     }
                 }
             }
         }
-        return new StatedDefinition(present, sufficient, parents);
+        return new StatedDefinition(present, sufficient, List.copyOf(parents), List.copyOf(sets));
     }
 
     /**
