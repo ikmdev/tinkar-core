@@ -58,8 +58,6 @@ class EntityServiceIT {
 
         // Verify the summary
         assertNotNull(summary);
-        // Add your assertions here based on the expected summary values
-        // For example:
         // The whole set is authored in the range, so every concept and pattern exports; their
         // counts come from the store as loaded, not hard-coded, since the set grows as it gains
         // content.
@@ -69,9 +67,19 @@ class EntityServiceIT {
         EntityService.get().forEachPatternEntity(pattern -> patterns[0]++);
         assertEquals(concepts[0], summary.conceptCount(), summary.toString());
         assertEquals(patterns[0], summary.patternCount(), summary.toString());
+        // Not every semantic exports: the classifier's, written later, fall outside the range.
+        // A semantic exports when any of its versions was written in the range, counted here
+        // from the store through the entity service, independently of the export's own scan.
+        int[] semanticsInRange = {0};
+        EntityService.get().forEachSemanticEntity(semantic -> {
+            if (semantic.versions().anySatisfy(
+                    version -> fromEpoch <= version.time() && version.time() <= toEpoch)) {
+                semanticsInRange[0]++;
+            }
+        });
+        assertEquals(semanticsInRange[0], summary.semanticCount(), summary.toString());
         // Pinned from the starter set carrying the AsciiDoc document model
         // (IKE-Network/ike-issues#1295).
-        assertEquals(11478, summary.semanticCount(), summary.toString());
         assertEquals(3, summary.stampCount(), summary.toString());
         // To ensure exports are self-contained, when a Component has a version in the specified time range, all its versions
         // are exported with the specified stamp. Therefore, many stamps are expected to be exported here.
