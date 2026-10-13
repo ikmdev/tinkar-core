@@ -18,12 +18,12 @@ package dev.ikm.tinkar.integration.builder;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
-import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler;
 import dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler.Result;
 import dev.ikm.tinkar.entity.builder.generator.BindingReferenceResolver;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.fixtures.TestConstants;
+import dev.ikm.tinkar.integration.helper.ChangeSetManifest;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -138,14 +138,14 @@ class AxiomDecompilerIT {
         fullExpressions.forEach(expression -> LOG.info("Full expression: {}", expression));
         notDecompiledDumps.forEach(dump -> LOG.info("Needs hand authoring:\n{}", dump));
 
-        // Every concept in the IKE starter set carries one stated definition, counted from the
-        // store as loaded rather than hard-coded, since the set grows as it gains content. Those
-        // that are not the simple isA shape — existential roles, a property set, an empty And —
+        // Every stated definition the changeset says it holds — its manifest is the oracle, not
+        // a number pinned here, since the set grows as it gains content — decompiles. Those that
+        // are not the simple isA shape — existential roles, a property set, an empty And —
         // decompile to their full builder expressions; none needs hand authoring.
-        int[] conceptCount = {0};
-        EntityService.get().forEachConceptEntity(concept -> conceptCount[0]++);
-        assertEquals(conceptCount[0], simpleIsACount[0] + fullExpressionCount[0],
-                "every one of the set's " + conceptCount[0] + " stated definitions decompiles");
+        long statedDefinitions = ChangeSetManifest.of(TestConstants.PB_STARTER_DATA)
+                .semanticsOf(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN);
+        assertEquals(statedDefinitions, simpleIsACount[0] + fullExpressionCount[0],
+                "every one of the set's " + statedDefinitions + " stated definitions decompiles");
         assertTrue(fullExpressionCount[0] > 0,
                 "the set exercises definitions beyond the simple isA shape");
         assertEquals(0, notDecompiledCount[0], "definitions needing hand authoring: " + notDecompiledDumps);

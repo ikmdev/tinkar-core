@@ -22,9 +22,11 @@ import dev.ikm.tinkar.entity.builder.generator.ComponentDecompiler;
 import dev.ikm.tinkar.entity.builder.generator.ComponentDecompiler.ComponentSource;
 import dev.ikm.tinkar.entity.builder.generator.BindingReferenceResolver;
 import dev.ikm.tinkar.fixtures.TestConstants;
+import dev.ikm.tinkar.integration.helper.ChangeSetManifest;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.KernelTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -106,17 +108,20 @@ class ComponentDecompilerIT {
         LOG.info("Verb kinds: {}", verbKindCounts);
         allNotes.forEach(note -> LOG.info("Manifest note: {}", note));
 
-        // Counts come from the store as loaded, not hard-coded: the starter set grows as it
-        // gains content.
-        assertTrue(!conceptNids.isEmpty() && !patternNids.isEmpty(), "the starter set holds concepts and patterns");
+        // The changeset's manifest is the oracle for the counts, not numbers pinned here: the
+        // starter set grows as it gains content.
+        ChangeSetManifest manifest = ChangeSetManifest.of(TestConstants.PB_STARTER_DATA);
+        assertEquals(manifest.concepts(), conceptNids.size(), "every concept the changeset holds decompiles");
+        assertEquals(manifest.patterns(), patternNids.size(), "every pattern the changeset holds decompiles");
         assertTrue(totalVerbLines > 2000, "expected thousands of verb lines across the full set");
         // Every stated definition — those beyond the simple isA shape included — decompiles to a
         // declared-identity statedAxioms call carrying its full builder expression.
         assertEquals(0, verbKindCounts.getOrDefault("TODO", 0),
                 "every axiom decompiles to a declared-identity statedAxioms call — no hand-authoring TODOs");
-        assertEquals(conceptNids.size(), verbKindCounts.getOrDefault("statedAxioms", 0),
-                "every one of the set's " + conceptNids.size() + " stated definitions is one statedAxioms line");
-        assertEquals(patternNids.size(), verbKindCounts.getOrDefault("patternDefinition", 0),
+        long statedDefinitions = manifest.semanticsOf(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN);
+        assertEquals(statedDefinitions, (long) verbKindCounts.getOrDefault("statedAxioms", 0),
+                "every one of the set's " + statedDefinitions + " stated definitions is one statedAxioms line");
+        assertEquals(manifest.patterns(), (long) verbKindCounts.getOrDefault("patternDefinition", 0),
                 "every pattern declares exactly one meaning/purpose/field definition line");
         assertTrue(allNotes.isEmpty(), "expected zero manifest notes for this starter set: " + allNotes);
     }

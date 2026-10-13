@@ -32,6 +32,7 @@ import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
 import dev.ikm.tinkar.entity.builder.generator.BindingReferenceResolver;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.fixtures.TestConstants;
+import dev.ikm.tinkar.integration.helper.ChangeSetManifest;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.AfterAll;
@@ -105,8 +106,13 @@ class GeneratorEndToEndIT {
         // sections come from its stated axioms, as KonceptExtractor's do.
         TaxonomySectioner sectioner = TaxonomySectioner.fromStatedAxioms(calculator);
 
+        // What the changeset says it holds is the oracle for the counts below, not numbers
+        // pinned here: the starter set grows as it gains content (IKE-Network/ike-issues#1295).
+        ChangeSetManifest manifest = ChangeSetManifest.of(TestConstants.PB_STARTER_DATA);
         int conceptsBefore = countConcepts();
         int patternsBefore = countPatterns();
+        assertEquals(manifest.concepts(), conceptsBefore, "the store holds every concept the changeset does");
+        assertEquals(manifest.patterns(), patternsBefore, "the store holds every pattern the changeset does");
         int modelConceptVersionsBefore = EntityHandle.get(IkeTerms.MODEL_CONCEPT.nid()).expectConcept()
                 .versions().size();
         int userModuleVersionsBefore = EntityHandle.get(findByName("User module")).expectConcept()
@@ -222,11 +228,9 @@ class GeneratorEndToEndIT {
         assertEquals(descriptionPatternVersionsBefore + 1, descriptionPatternVersionsAfter,
                 "a pattern from the residual catch-all also merges cleanly, meaning and purpose intact");
 
-        // Counted from the store as loaded, not hard-coded: the starter set grows as it
-        // gains content, and the claim is full coverage of whatever it holds.
-        assertEquals(conceptsBefore + patternsBefore, distinctMembers,
-                "the residual catch-all closes the gap to full-store coverage: " + conceptsBefore
-                        + " concepts and " + patternsBefore + " patterns");
+        assertEquals(manifest.concepts() + manifest.patterns(), distinctMembers,
+                "the residual catch-all closes the gap to full-store coverage: " + manifest.concepts()
+                        + " concepts and " + manifest.patterns() + " patterns");
 
         // Content checks: the calculator-resolved latest-active state after the round
         // trip must carry the SAME FQN text and the SAME isA parents as before — not
@@ -278,8 +282,9 @@ class GeneratorEndToEndIT {
         assertEquals(List.of(), roundTripFailures, "every stated definition must round-trip exactly");
         LOG.info("{} stated definitions round-tripped exactly, {} of them beyond the simple isA shape",
                 restated, nonSimpleRestated);
-        assertEquals(statedExpressionsBefore.size(), restated,
-                "every one of the set's " + statedExpressionsBefore.size() + " stated definitions round-trips");
+        long statedDefinitions = manifest.semanticsOf(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN);
+        assertEquals(statedDefinitions, restated,
+                "every one of the set's " + statedDefinitions + " stated definitions round-trips");
         assertTrue(!beyondSimpleIsA.isEmpty(),
                 "the set exercises definitions beyond the simple isA shape — existential roles, a property set,"
                         + " an empty And");

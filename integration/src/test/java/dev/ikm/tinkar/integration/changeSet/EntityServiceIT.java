@@ -18,6 +18,7 @@ package dev.ikm.tinkar.integration.changeSet;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.fixtures.TestConstants;
+import dev.ikm.tinkar.integration.helper.ChangeSetManifest;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,26 +59,15 @@ class EntityServiceIT {
 
         // Verify the summary
         assertNotNull(summary);
-        // The whole set is authored in the range, so every concept and pattern exports; their
-        // counts come from the store as loaded, not hard-coded, since the set grows as it gains
-        // content.
-        int[] concepts = {0};
-        EntityService.get().forEachConceptEntity(concept -> concepts[0]++);
-        int[] patterns = {0};
-        EntityService.get().forEachPatternEntity(pattern -> patterns[0]++);
-        assertEquals(concepts[0], summary.conceptCount(), summary.toString());
-        assertEquals(patterns[0], summary.patternCount(), summary.toString());
-        // Not every semantic exports: the classifier's, written later, fall outside the range.
-        // A semantic exports when any of its versions was written in the range, counted here
-        // from the store through the entity service, independently of the export's own scan.
-        int[] semanticsInRange = {0};
-        EntityService.get().forEachSemanticEntity(semantic -> {
-            if (semantic.versions().anySatisfy(
-                    version -> fromEpoch <= version.time() && version.time() <= toEpoch)) {
-                semanticsInRange[0]++;
-            }
-        });
-        assertEquals(semanticsInRange[0], summary.semanticCount(), summary.toString());
+        // The changesets' manifests are the oracle, not numbers pinned here: the set grows as it
+        // gains content. The whole set is authored in the range, so every concept and pattern of
+        // the reasoned changeset exports; of its semantics, only the authored ones do — the
+        // unreasoned changeset's — since the classifier's are written later, outside the range.
+        ChangeSetManifest reasoned = ChangeSetManifest.of(TestConstants.PB_STARTER_DATA_REASONED);
+        ChangeSetManifest authored = ChangeSetManifest.of(TestConstants.PB_STARTER_DATA);
+        assertEquals(reasoned.concepts(), summary.conceptCount(), summary.toString());
+        assertEquals(reasoned.patterns(), summary.patternCount(), summary.toString());
+        assertEquals(authored.semantics(), summary.semanticCount(), summary.toString());
         // Pinned from the starter set carrying the AsciiDoc document model
         // (IKE-Network/ike-issues#1295).
         assertEquals(3, summary.stampCount(), summary.toString());

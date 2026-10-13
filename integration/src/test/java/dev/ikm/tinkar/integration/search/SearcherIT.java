@@ -25,9 +25,9 @@ import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
-import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.transaction.StampedWriter;
 import dev.ikm.tinkar.fixtures.TestConstants;
+import dev.ikm.tinkar.integration.helper.ChangeSetManifest;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
@@ -162,13 +162,13 @@ public class SearcherIT {
         // test memberPatternId with tagged concepts
         List<PublicId> conceptIds = Searcher.membersOf(KernelTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN);
         assertEquals(1, conceptIds.size(), "there should be 1 tagged concept associated with this pattern");
-        // Every concept in the reasoned set carries one inferred definition; the count comes
-        // from the store as loaded, since the set grows as it gains content.
-        int[] concepts = {0};
-        EntityService.get().forEachConceptEntity(concept -> concepts[0]++);
+        // One member per inferred definition the changeset says it holds — its manifest is the
+        // oracle, not a number pinned here, since the set grows as it gains content.
+        long inferredDefinitions = ChangeSetManifest.of(TestConstants.PB_STARTER_DATA_REASONED)
+                .semanticsOf(KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
         conceptIds = Searcher.membersOf(KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-        assertEquals(concepts[0], conceptIds.size(),
-                "there should be " + concepts[0] + " tagged concepts associated with this pattern");
+        assertEquals(inferredDefinitions, conceptIds.size(),
+                "there should be " + inferredDefinitions + " tagged concepts associated with this pattern");
     }
 
     @Test
