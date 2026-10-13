@@ -52,7 +52,8 @@ public class SearchProviderIT {
                 KernelTerm.KOMET_USER.publicId(),
                 IkeTerms.IKE_COMMUNITY.publicId(),
                 IkeTerms.BASELINE_STARTER_DATA_AUTHOR.publicId(),
-                IkeTerms.GRETEL.publicId()
+                IkeTerms.GRETEL.publicId(),
+                IkeTerms.GIT_AUTHOR.publicId()
         );
 
         List<PublicId> actualUserChildren = Searcher.childrenOf(KernelTerm.USER.publicId());

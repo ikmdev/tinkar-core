@@ -106,15 +106,17 @@ class ComponentDecompilerIT {
         LOG.info("Verb kinds: {}", verbKindCounts);
         allNotes.forEach(note -> LOG.info("Manifest note: {}", note));
 
-        assertEquals(1295 + 64, totalComponents, "1295 concepts + 64 patterns");
+        // Counts come from the store as loaded, not hard-coded: the starter set grows as it
+        // gains content.
+        assertTrue(!conceptNids.isEmpty() && !patternNids.isEmpty(), "the starter set holds concepts and patterns");
         assertTrue(totalVerbLines > 2000, "expected thousands of verb lines across the full set");
-        // Every stated definition — the 43 beyond the simple isA shape included — decompiles to a
+        // Every stated definition — those beyond the simple isA shape included — decompiles to a
         // declared-identity statedAxioms call carrying its full builder expression.
         assertEquals(0, verbKindCounts.getOrDefault("TODO", 0),
                 "every axiom decompiles to a declared-identity statedAxioms call — no hand-authoring TODOs");
-        assertEquals(1295, verbKindCounts.getOrDefault("statedAxioms", 0),
-                "every one of the set's 1295 stated definitions is one statedAxioms line");
-        assertEquals(64, verbKindCounts.getOrDefault("patternDefinition", 0),
+        assertEquals(conceptNids.size(), verbKindCounts.getOrDefault("statedAxioms", 0),
+                "every one of the set's " + conceptNids.size() + " stated definitions is one statedAxioms line");
+        assertEquals(patternNids.size(), verbKindCounts.getOrDefault("patternDefinition", 0),
                 "every pattern declares exactly one meaning/purpose/field definition line");
         assertTrue(allNotes.isEmpty(), "expected zero manifest notes for this starter set: " + allNotes);
     }

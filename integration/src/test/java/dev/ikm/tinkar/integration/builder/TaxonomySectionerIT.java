@@ -73,8 +73,9 @@ class TaxonomySectionerIT {
         sections.forEach(section -> sizes.put(section.name(), section.members().size()));
         LOG.info("Depth-1 sections: {}", sizes);
 
-        // Sizes pinned from the IKE starter set's stated navigation.
-        assertEquals(1289, sizes.get("Model concept"));
+        // Sizes pinned from the IKE starter set's stated navigation (re-pinned for the
+        // AsciiDoc document model, IKE-Network/ike-issues#1295).
+        assertEquals(1359, sizes.get("Model concept"));
         assertEquals(4, sizes.get("Phenomenon"));
         assertEquals(2, sizes.size(), "the platform root has exactly two depth-1 sections");
     }
@@ -92,11 +93,11 @@ class TaxonomySectionerIT {
 
         // "Model concept" splits into its children; the largest exceed the threshold, but
         // maxDepth=2 stops further splitting.
-        assertEquals(293, sizes.get("IKE base model concept"));
+        assertEquals(362, sizes.get("IKE base model concept"));
         assertEquals(298, sizes.get("Expression language model"));
         assertEquals(466, sizes.get("ELM node catalog"));
         // Sections at or under the threshold are not split further.
-        assertEquals(5, sizes.get("Author"));
+        assertEquals(6, sizes.get("Author"));
         assertEquals(6, sizes.get("Status"));
         assertEquals(4, sizes.get("Phenomenon"));
         // Regression guard: a splitting node must still get its own singleton section

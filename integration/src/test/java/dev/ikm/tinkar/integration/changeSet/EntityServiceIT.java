@@ -60,13 +60,19 @@ class EntityServiceIT {
         assertNotNull(summary);
         // Add your assertions here based on the expected summary values
         // For example:
-        assertEquals(1295, summary.conceptCount(), summary.toString());
-        // 10916 since the 63 expression-language concepts regained their FQN description and its
-        // US-dialect acceptability (126 semantics), which a generic keyword description had
-        // suppressed.
-        assertEquals(10916, summary.semanticCount(), summary.toString());
-        assertEquals(64, summary.patternCount(), summary.toString());
-        assertEquals(2, summary.stampCount(), summary.toString());
+        // The whole set is authored in the range, so every concept and pattern exports; their
+        // counts come from the store as loaded, not hard-coded, since the set grows as it gains
+        // content.
+        int[] concepts = {0};
+        EntityService.get().forEachConceptEntity(concept -> concepts[0]++);
+        int[] patterns = {0};
+        EntityService.get().forEachPatternEntity(pattern -> patterns[0]++);
+        assertEquals(concepts[0], summary.conceptCount(), summary.toString());
+        assertEquals(patterns[0], summary.patternCount(), summary.toString());
+        // Pinned from the starter set carrying the AsciiDoc document model
+        // (IKE-Network/ike-issues#1295).
+        assertEquals(11478, summary.semanticCount(), summary.toString());
+        assertEquals(3, summary.stampCount(), summary.toString());
         // To ensure exports are self-contained, when a Component has a version in the specified time range, all its versions
         // are exported with the specified stamp. Therefore, many stamps are expected to be exported here.
     }
