@@ -150,7 +150,7 @@ class GeneratorEndToEndIT {
         // Sections are not disjoint by design (TaxonomySectioner's own contract) — a
         // dual-parented concept is a member of every section whose root reaches it.
         // TaxonomySectioner only walks concepts reachable from the root, too —
-        // unanchored concepts, and all 64 patterns (an entirely separate taxonomy),
+        // unanchored concepts, and every pattern (an entirely separate taxonomy),
         // need a residual catch-all so the
         // round trip actually covers the full store, not just the navigable subset.
         // sectionsCoveringFullStore does both (first-section-wins dedup + residual
@@ -182,7 +182,7 @@ class GeneratorEndToEndIT {
             emissionNotes.addAll(emitted.manifestNotes());
             writeSourceFile(sourceDir, packageName, className, emitted.source());
         }
-        // Every stated definition decompiles — the 43 beyond the simple isA shape included —
+        // Every stated definition decompiles — those beyond the simple isA shape included —
         // and every component carries the fully qualified name a declaration requires, so
         // nothing is reported for hand authoring and nothing is skipped.
         assertEquals(List.of(), emissionNotes, "expected zero manifest notes for this starter set");
@@ -222,8 +222,11 @@ class GeneratorEndToEndIT {
         assertEquals(descriptionPatternVersionsBefore + 1, descriptionPatternVersionsAfter,
                 "a pattern from the residual catch-all also merges cleanly, meaning and purpose intact");
 
-        assertEquals(1295 + 64, distinctMembers,
-                "the residual catch-all closes the gap to full-store coverage: 1295 concepts and 64 patterns");
+        // Counted from the store as loaded, not hard-coded: the starter set grows as it
+        // gains content, and the claim is full coverage of whatever it holds.
+        assertEquals(conceptsBefore + patternsBefore, distinctMembers,
+                "the residual catch-all closes the gap to full-store coverage: " + conceptsBefore
+                        + " concepts and " + patternsBefore + " patterns");
 
         // Content checks: the calculator-resolved latest-active state after the round
         // trip must carry the SAME FQN text and the SAME isA parents as before — not
@@ -275,10 +278,13 @@ class GeneratorEndToEndIT {
         assertEquals(List.of(), roundTripFailures, "every stated definition must round-trip exactly");
         LOG.info("{} stated definitions round-tripped exactly, {} of them beyond the simple isA shape",
                 restated, nonSimpleRestated);
-        assertEquals(1295, restated, "every one of the set's 1295 stated definitions round-trips");
-        assertEquals(43, nonSimpleRestated,
-                "the 43 definitions beyond the simple isA shape — existential roles, a property set, an empty And"
-                        + " — round-trip with the rest");
+        assertEquals(statedExpressionsBefore.size(), restated,
+                "every one of the set's " + statedExpressionsBefore.size() + " stated definitions round-trips");
+        assertTrue(!beyondSimpleIsA.isEmpty(),
+                "the set exercises definitions beyond the simple isA shape — existential roles, a property set,"
+                        + " an empty And");
+        assertEquals(beyondSimpleIsA.size(), nonSimpleRestated,
+                "the " + beyondSimpleIsA.size() + " definitions beyond the simple isA shape round-trip with the rest");
 
         LOG.info("Round trip verified: {} concepts, {} patterns unchanged; sampled concepts and one pattern"
                 + " each gained exactly one inception version; FQN text and isA parents unchanged for"
