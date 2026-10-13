@@ -64,6 +64,24 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
         this.pathNid = pathNid;
     }
 
+    /**
+     * Transforms only the concepts a predicate accepts: those an import wrote OWL axioms for.
+     * Transforming every concept after a layered import rewrites the stated axioms of the
+     * layers beneath it under the import's author, a new version on each.
+     *
+     * @param concepts which concepts to transform, by nid
+     */
+    public Rf2OwlToLogicAxiomTransformer(Transaction transaction,
+                                         PatternFacade rf2OwlPattern,
+                                         PatternFacade logicalAxiomPattern,
+                                         long authorNid, long moduleNid, long pathNid,
+                                         java.util.function.LongPredicate concepts) {
+        this(transaction, rf2OwlPattern, logicalAxiomPattern, authorNid, moduleNid, pathNid);
+        this.concepts = concepts;
+    }
+
+    private java.util.function.LongPredicate concepts = nid -> true;
+
     @Override
     protected Void compute() throws Exception {
         Stopwatch stopwatch = new Stopwatch();
@@ -82,6 +100,9 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
 
             EntityService.get().forEachConceptEntity(concept -> {
                 long conceptNid = concept.nid();
+                if (!concepts.test(conceptNid)) {
+                    return;
+                }
                 long[] semanticNids = EntityService.get().semanticsForComponentOfPattern(conceptNid, rf2OwlPatternNid)
                         .mapToLong(SemanticEntity::nid).toArray();
                 if (semanticNids != null) {

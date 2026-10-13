@@ -148,8 +148,9 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
                 details.put(file.name(), release.rows(file, row -> identifier(writer, stamps, ids, row)));
             }
             LongAdder axioms = new LongAdder();
+            java.util.Set<Long> axiomConcepts = java.util.concurrent.ConcurrentHashMap.newKeySet();
             for (Rf2Release.File file : release.files(Rf2Release.Kind.OWL_EXPRESSION)) {
-                details.put(file.name(), release.rows(file, row -> owlAxiom(writer, stamps, ids, row, axioms)));
+                details.put(file.name(), release.rows(file, row -> owlAxiom(writer, stamps, ids, row, axioms, axiomConcepts)));
             }
             details.put("language rows skipped (no kernel dialect pattern)", skippedLanguage.sum());
             details.put("OWL axioms", axioms.sum());
@@ -160,7 +161,7 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
             });
 
             if (source.option("owlTransform").map(Boolean::parseBoolean).orElse(true) && axioms.sum() > 0) {
-                transformOwl(stamps, ids);
+                transformOwl(stamps, ids, axiomConcepts);
             }
             return ImportReport.of(name(), version, writer.counts().tally().minus(before), details,
                     Duration.between(start, Instant.now()));
@@ -220,22 +221,26 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
                 Lists.immutable.of(ids.concept(scheme), row[ID]));
     }
 
-    private static void owlAxiom(StoreWriter writer, Stamps stamps, SnomedIds ids, String[] row, LongAdder axioms) {
+    private static void owlAxiom(StoreWriter writer, Stamps stamps, SnomedIds ids, String[] row, LongAdder axioms,
+                                 java.util.Set<Long> axiomConcepts) {
         if (!SnomedIds.OWL_AXIOM_REFSET.equals(row[REFSET_ID])) {
             return; // the OWL ontology reference set: the ontology's header, not an axiom
         }
+        long conceptNid = PrimitiveData.nid(ids.publicId(row[REFERENCED_COMPONENT_ID]));
         writer.recordSemantic(stamps.of(row), PublicIds.of(UUID.fromString(row[ID])), KernelTerm.OWL_AXIOM_SYNTAX_PATTERN,
-                PrimitiveData.nid(ids.publicId(row[REFERENCED_COMPONENT_ID])),
-                Lists.immutable.of(ids.owlWithPublicIds(row[OWL_EXPRESSION])));
+                conceptNid, Lists.immutable.of(ids.owlWithPublicIds(row[OWL_EXPRESSION])));
+        axiomConcepts.add(conceptNid);
         axioms.increment();
     }
 
-    private static void transformOwl(Stamps stamps, SnomedIds ids) {
-        LOG.info("Transforming OWL axioms into EL++ stated axioms");
+    /** Transforms the axioms of the concepts this import wrote axioms for, and no others. */
+    private static void transformOwl(Stamps stamps, SnomedIds ids, java.util.Set<Long> axiomConcepts) {
+        LOG.info("Transforming OWL axioms of {} concepts into EL++ stated axioms", axiomConcepts.size());
         try {
             new Rf2OwlToLogicAxiomTransformer(new Transaction("SNOMED CT OWL to logic"),
                     KernelTerm.OWL_AXIOM_SYNTAX_PATTERN, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-                    stamps.author().nid(), PrimitiveData.nid(ids.publicId(CORE_MODULE)), stamps.path().nid()).call();
+                    stamps.author().nid(), PrimitiveData.nid(ids.publicId(CORE_MODULE)), stamps.path().nid(),
+                    axiomConcepts::contains).call();
         } catch (Exception e) {
             throw new ImportException("Transforming SNOMED CT OWL axioms failed", e);
         }

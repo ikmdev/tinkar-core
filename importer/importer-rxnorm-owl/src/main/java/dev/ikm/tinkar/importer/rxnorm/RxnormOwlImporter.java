@@ -154,9 +154,10 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
         if (source.option("owlTransform").map(Boolean::parseBoolean).orElse(true) && axioms > 0) {
             LOG.info("Transforming OWL axioms into EL++ stated axioms");
             try {
+                // Only the concepts this import wrote axioms for: SNOMED CT's beneath are left alone.
                 new Rf2OwlToLogicAxiomTransformer(new Transaction("RxNorm OWL to logic"),
                         KernelTerm.OWL_AXIOM_SYNTAX_PATTERN, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-                        author.nid(), RXNORM_MODULE.nid(), path.nid()).call();
+                        author.nid(), RXNORM_MODULE.nid(), path.nid(), classWriter.axiomConcepts::contains).call();
             } catch (Exception e) {
                 throw new ImportException("Transforming RxNorm OWL axioms failed", e);
             }
@@ -368,9 +369,13 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
                     Lists.immutable.of(EntityProxy.Concept.make(PublicIds.of(valueUuid))));
         }
 
+        /** The concepts this import wrote OWL axioms for: the ones to transform. */
+        final java.util.Set<Long> axiomConcepts = new java.util.HashSet<>();
+
         private long axiom(long conceptNid, UUID conceptUuid, String axiom, String suffix) {
             writer.semantic(stamp, id(conceptUuid, axiom, suffix), KernelTerm.OWL_AXIOM_SYNTAX_PATTERN, conceptNid,
                     Lists.immutable.of(RxnormClass.withPublicIds(namespace, axiom)));
+            axiomConcepts.add(conceptNid);
             return 1;
         }
     }
