@@ -142,36 +142,78 @@ public final class KonceptExtractor {
      * @return the koncepts YAML text
      */
     public static String extractYaml(Long narrativePatternNid) {
+        return extractYaml(narrativePatternNid, null);
+    }
+
+    /**
+     * Extracts the koncepts YAML for the concepts and patterns of the open store a predicate
+     * accepts: a knowledge base's extension, say, out of a store that also holds the releases it
+     * extends. The parents of an extracted concept are named whether or not they are extracted,
+     * so an extension concept under SNOMED CT keeps its {@code axiom} and {@code broader}; and a
+     * label two named components share is told apart by nid rather than failing, as the store
+     * as a whole would.
+     *
+     * @param narrativePatternNid the narrative pattern's nid, or {@code null} to omit {@code narrative:}
+     * @param include             which concepts and patterns to extract, by nid; {@code null} for all
+     * @return the koncepts YAML text
+     */
+    public static String extractYaml(Long narrativePatternNid, java.util.function.LongPredicate include) {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
 
         List<Long> conceptNids = new ArrayList<>();
-        EntityStore.current().forEachConceptNid(conceptNids::add);
+        EntityStore.current().forEachConceptNid(nid -> {
+            if (include == null || include.test(nid)) {
+                conceptNids.add(nid);
+            }
+        });
         List<Long> patternNids = new ArrayList<>();
-        EntityStore.current().forEachPatternNid(patternNids::add);
+        EntityStore.current().forEachPatternNid(nid -> {
+            if (include == null || include.test(nid)) {
+                patternNids.add(nid);
+            }
+        });
+        List<Long> named = new ArrayList<>(concat(conceptNids, patternNids));
+        if (include != null) {
+            java.util.Set<Long> seen = new java.util.HashSet<>(named);
+            for (long nid : conceptNids) {
+                for (long parentNid : statedDefinition(nid).parents()) {
+                    if (seen.add(parentNid)) {
+                        named.add(parentNid);
+                    }
+                }
+            }
+        }
 
         Map<Long, String> identifierByNid = new LinkedHashMap<>();
         Map<Long, String> labelByNid = new LinkedHashMap<>();
         Map<String, Long> identifierToNid = new LinkedHashMap<>();
-        for (long nid : concat(conceptNids, patternNids)) {
+        for (long nid : named) {
             String fqn = descriptionText(nid, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
             if (fqn == null) {
                 continue;
             }
             String label = label(fqn);
             String identifier = identifier(label);
-            if (identifierToNid.putIfAbsent(identifier, nid) != null) {
-                throw new IllegalStateException("Koncept identifier collision on " + identifier
-                        + " (" + fqn + ")");
+            if (identifierToNid.containsKey(identifier)) {
+                if (include == null) {
+                    throw new IllegalStateException("Koncept identifier collision on " + identifier
+                            + " (" + fqn + ")");
+                }
+                identifier = identifier + "_" + Math.abs(nid);
             }
+            identifierToNid.put(identifier, nid);
             identifierByNid.put(nid, identifier);
             labelByNid.put(nid, label);
         }
 
         Map<Long, String> sectionByNid = sectionsByNid(calculator, identifierByNid);
 
+        java.util.Set<Long> extracted = new java.util.HashSet<>(concat(conceptNids, patternNids));
         Map<String, Long> byLabel = new TreeMap<>();
         for (Map.Entry<Long, String> e : labelByNid.entrySet()) {
-            byLabel.put(e.getValue() + " " + e.getKey(), e.getKey());
+            if (extracted.contains(e.getKey())) {
+                byLabel.put(e.getValue() + " " + e.getKey(), e.getKey());
+            }
         }
 
         StringBuilder sb = new StringBuilder();

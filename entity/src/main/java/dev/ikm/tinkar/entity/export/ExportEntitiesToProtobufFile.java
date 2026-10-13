@@ -124,13 +124,32 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
     private long skippedPatterns;
     private long skippedStamps;
     private final EntityAggregator entityAggregator;
+    /** What of each entity is exported: the entity, only some of its versions, or nothing (null). */
+    private final java.util.function.UnaryOperator<Entity<?>> selection;
 
 
     public ExportEntitiesToProtobufFile(File file, EntityAggregator entityAggregator) {
+        this(file, entityAggregator, null);
+    }
+
+    /**
+     * Exports only the versions written under the stamps a predicate accepts: a delta, such as
+     * what one source import wrote over the base it was layered on. An entity keeps the versions
+     * under accepted stamps and is left out when it has none; a stamp is exported when accepted.
+     * References to what the delta does not carry are written by public id, as any change set's.
+     *
+     * @param file             the export file
+     * @param entityAggregator which entities to consider
+     * @param keepStamp        which stamps' versions to export, by stamp nid; null for every version
+     */
+    public ExportEntitiesToProtobufFile(File file, EntityAggregator entityAggregator,
+                                        java.util.function.LongPredicate keepStamp) {
         super(false, true);
         this.protobufFile = file;
         LOG.info("Exporting entities to: " + file);
         this.entityAggregator = entityAggregator;
+        this.selection = keepStamp == null ? java.util.function.UnaryOperator.identity()
+                : entity -> keepVersions(entity, keepStamp);
         if (getTitle()==null || getTitle().isBlank()) {
             updateTitle("Export to Protobuf");
         }
@@ -198,7 +217,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         EntityCountSummary entityCountSummary = null;
         try {
             long started = System.nanoTime();
-            Buckets buckets = Buckets.collect(entityAggregator);
+            Buckets buckets = Buckets.collect(entityAggregator, selection);
             throwIfCancelled();
             EntityCountSummary aggregated = buckets.summary();
             addToTotalWork(aggregated.getTotalCount() * 2L);
@@ -552,7 +571,11 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                 completedUnitOfWork();
                 continue;
             }
-            Entity<?> entity = EntityRecordFactory.make(records[i]);
+            Entity<?> entity = selection.apply(EntityRecordFactory.make(records[i]));
+            if (entity == null) {
+                completedUnitOfWork();
+                continue;
+            }
             try {
                 Entity<?> written = entity instanceof StampRecord stampRecord
                         ? stampRecord.withoutSupersededUncommittedVersions()
@@ -607,6 +630,13 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
          * enumerating thread was 54 s of a DeX export (2026-10-08).
          */
         static Buckets collect(EntityAggregator aggregator) {
+            return collect(aggregator, java.util.function.UnaryOperator.identity());
+        }
+
+        /**
+         * Every entity the aggregator names, as the selection keeps it (null leaves it out).
+         */
+        static Buckets collect(EntityAggregator aggregator, java.util.function.UnaryOperator<Entity<?>> selection) {
             Buckets buckets = new Buckets();
             Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors());
             AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -623,7 +653,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                         }
                     }
                     if (chunk != null) {
-                        classify(classifiers, permits, chunk, buckets, failure);
+                        classify(classifiers, permits, chunk, buckets, failure, selection);
                     }
                 });
                 long[] rest;
@@ -632,7 +662,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     pending.clear();
                 }
                 if (rest.length > 0) {
-                    classify(classifiers, permits, rest, buckets, failure);
+                    classify(classifiers, permits, rest, buckets, failure, selection);
                 }
             } // closing the executor waits for every chunk
             if (failure.get() != null) {
@@ -660,7 +690,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
 
         /** Reads a chunk's records in one batch, files them in buckets of its own, and merges those into {@code buckets}. */
         private static void classify(ExecutorService classifiers, Semaphore permits, long[] chunk, Buckets buckets,
-                                     AtomicReference<Throwable> failure) {
+                                     AtomicReference<Throwable> failure,
+                                     java.util.function.UnaryOperator<Entity<?>> selection) {
             try {
                 permits.acquire();
             } catch (InterruptedException e) {
@@ -681,7 +712,10 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                             return;
                         }
                         delivered.set(at);
-                        partial.file(nid, EntityRecordFactory.make(bytes));
+                        Entity<?> selected = selection.apply(EntityRecordFactory.make(bytes));
+                        if (selected != null) {
+                            partial.file(nid, selected);
+                        }
                     });
                     partial.orphans += chunk.length - delivered.cardinality(); // allocated, no entity bytes
                     synchronized (buckets) {
@@ -1060,5 +1094,60 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         LOG.info("Exported " + summary.semanticCount() + " semantics.");
         LOG.info("Exported " + summary.patternCount() + " patterns.");
         LOG.info("Exported " + summary.stampCount() + " stamps.");
+    }
+
+    /**
+     * The entity with only the versions under accepted stamps; the entity itself when all are,
+     * null when none is. A stamp is kept or left out whole.
+     */
+    static Entity<?> keepVersions(Entity<?> entity, java.util.function.LongPredicate keepStamp) {
+        if (entity instanceof StampEntity<?> stamp) {
+            return keepStamp.test(stamp.nid()) ? entity : null;
+        }
+        boolean all = true;
+        boolean any = false;
+        for (Object version : entity.versions()) {
+            if (keepStamp.test(((dev.ikm.tinkar.entity.EntityVersion) version).stampNid())) {
+                any = true;
+            } else {
+                all = false;
+            }
+        }
+        if (all) {
+            return entity;
+        }
+        if (!any) {
+            return null;
+        }
+        return switch (entity) {
+            case dev.ikm.tinkar.entity.ConceptRecord record -> {
+                dev.ikm.tinkar.entity.ConceptAnalogueBuilder builder = record.analogueBuilder();
+                for (dev.ikm.tinkar.entity.ConceptVersionRecord version : record.versions()) {
+                    if (!keepStamp.test(version.stampNid())) {
+                        builder = builder.remove(version);
+                    }
+                }
+                yield builder.build();
+            }
+            case dev.ikm.tinkar.entity.SemanticRecord record -> {
+                dev.ikm.tinkar.entity.SemanticAnalogueBuilder builder = record.analogueBuilder();
+                for (dev.ikm.tinkar.entity.SemanticVersionRecord version : record.versions()) {
+                    if (!keepStamp.test(version.stampNid())) {
+                        builder = builder.remove(version);
+                    }
+                }
+                yield builder.build();
+            }
+            case dev.ikm.tinkar.entity.PatternRecord record -> {
+                dev.ikm.tinkar.entity.PatternAnalogueBuilder builder = record.analogueBuilder();
+                for (dev.ikm.tinkar.entity.PatternVersionRecord version : record.versions()) {
+                    if (!keepStamp.test(version.stampNid())) {
+                        builder = builder.remove(version);
+                    }
+                }
+                yield builder.build();
+            }
+            default -> throw new IllegalStateException("No version selection for " + entity.getClass().getName());
+        };
     }
 }
