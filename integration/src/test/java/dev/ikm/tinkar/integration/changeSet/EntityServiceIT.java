@@ -68,9 +68,9 @@ class EntityServiceIT {
         assertEquals(reasoned.concepts(), summary.conceptCount(), summary.toString());
         assertEquals(reasoned.patterns(), summary.patternCount(), summary.toString());
         assertEquals(authored.semantics(), summary.semanticCount(), summary.toString());
-        // Pinned from the starter set carrying the AsciiDoc document model
-        // (IKE-Network/ike-issues#1295).
-        assertEquals(3, summary.stampCount(), summary.toString());
+        // Every authored stamp exports but one: the non-existent stamp, which the set declares at
+        // PrimitiveData.PRE_INCEPTION_TIME, before the range, and no exported version uses.
+        assertEquals(authored.stamps() - 1, summary.stampCount(), summary.toString());
         // To ensure exports are self-contained, when a Component has a version in the specified time range, all its versions
         // are exported with the specified stamp. Therefore, many stamps are expected to be exported here.
     }
