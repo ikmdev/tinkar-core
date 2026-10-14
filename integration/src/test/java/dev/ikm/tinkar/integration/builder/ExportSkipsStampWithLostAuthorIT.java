@@ -14,7 +14,7 @@ import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.State;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -57,7 +57,7 @@ class ExportSkipsStampWithLostAuthorIT {
         ActiveStamp stamp = Stamp.active("2026-07-03T00:00:00Z",
                 set.conceptRef("Lost probe author (Probe)"),
                 set.conceptRef("Lost probe module (Probe)"),
-                KernelTerm.DEVELOPMENT_PATH);
+                KernelConcept.DEVELOPMENT_PATH);
         set.concept("Lost probe author (Probe)").at(stamp).synonym("Lost probe author");
         set.concept("Lost probe module (Probe)").at(stamp).synonym("Lost probe module");
         set.write();
@@ -83,7 +83,7 @@ class ExportSkipsStampWithLostAuthorIT {
         StampRecord stamp = new StampRecord(stampUuid.getMostSignificantBits(),
                 stampUuid.getLeastSignificantBits(), null, PrimitiveData.nid(PublicIds.of(stampUuid)), versions);
         versions.add(new StampVersionRecord(stamp, State.ACTIVE.nid(), time, authorNid,
-                KernelTerm.PRIMORDIAL_MODULE.nid(), KernelTerm.DEVELOPMENT_PATH.nid()));
+                KernelConcept.PRIMORDIAL_MODULE.nid(), KernelConcept.DEVELOPMENT_PATH.nid()));
         versions.build();
         return stamp;
     }

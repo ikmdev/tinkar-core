@@ -15,8 +15,9 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.PatternFacade;
+import network.ike.foundation.ike.bindings.IkeConcept;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -27,6 +28,7 @@ import dev.ikm.tinkar.entity.builder.KonceptExtractor;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.junit.jupiter.api.AfterAll;
@@ -77,34 +79,34 @@ class KonceptExtractorPatternShapeIT {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
 
         ActiveStamp birth = Stamp.active("2020-01-01T00:00:00Z",
-                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelConcept.USER, IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH);
 
-        // Self-minted, not KernelTerm constants: a bare ephemeral store only materializes the
+        // Self-minted, not KernelConcept constants: a bare ephemeral store only materializes the
         // handful of kernel concepts STAMP dimensions themselves need (USER, DEVELOPMENT_
         // MODULE, DEVELOPMENT_PATH, ...) -- most others carry no FQN description here, so
         // identifierByNid wouldn't resolve them. Minting our own guarantees every meaning/
         // purpose/dataType concept this test references is genuinely extractable.
         TEST_SET.concept("Pattern shape probe meaning (Test)").at(birth)
                 .definition("Meaning concept for the pattern-shape probe test.")
-                .isA(IkeTerms.MODEL_CONCEPT);
+                .isA(IkeConcept.MODEL_CONCEPT);
         TEST_SET.concept("Pattern shape probe purpose (Test)").at(birth)
                 .definition("Purpose concept for the pattern-shape probe test.")
-                .isA(IkeTerms.MODEL_CONCEPT);
+                .isA(IkeConcept.MODEL_CONCEPT);
         TEST_SET.concept("Pattern shape probe field meaning (Test)").at(birth)
                 .definition("Field meaning concept for the pattern-shape probe test.")
-                .isA(IkeTerms.MODEL_CONCEPT);
+                .isA(IkeConcept.MODEL_CONCEPT);
         TEST_SET.concept("Pattern shape probe field purpose (Test)").at(birth)
                 .definition("Field purpose concept for the pattern-shape probe test.")
-                .isA(IkeTerms.MODEL_CONCEPT);
+                .isA(IkeConcept.MODEL_CONCEPT);
         TEST_SET.concept("Pattern shape probe field data type (Test)").at(birth)
                 .definition("Field data-type concept for the pattern-shape probe test.")
-                .isA(IkeTerms.MODEL_CONCEPT);
+                .isA(IkeConcept.MODEL_CONCEPT);
         // The referenced component of the example semantic below -- a real concept, so
         // referencedComponentExample resolves to its own koncept identifier (the bare,
         // unquoted style), the same way a field value that resolves to a koncept does.
         TEST_SET.concept("Pattern shape probe subject (Test)").at(birth)
                 .definition("The subject an example semantic of the probe pattern attaches to.")
-                .isA(IkeTerms.MODEL_CONCEPT);
+                .isA(IkeConcept.MODEL_CONCEPT);
 
         TEST_SET.pattern("Pattern shape probe pattern (Test)").at(birth)
                 .meaning(TEST_SET.conceptRef("Pattern shape probe meaning (Test)"))
@@ -147,8 +149,8 @@ class KonceptExtractorPatternShapeIT {
 
         // Instance content stamps in the defaults module -- the module IS the category
         // boundary that keeps a defaults semantic out of the example channel.
-        ActiveStamp defaultsAuthored = Stamp.active("2020-02-01T00:00:00Z", KernelTerm.USER,
-                DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelTerm.DEVELOPMENT_PATH);
+        ActiveStamp defaultsAuthored = Stamp.active("2020-02-01T00:00:00Z", KernelConcept.USER,
+                DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelConcept.DEVELOPMENT_PATH);
 
         // Per-field meaning concepts for the display-sweep pattern -- distinct, so each
         // emitted field block is unambiguous to assert against; purpose and data type are
@@ -171,11 +173,11 @@ class KonceptExtractorPatternShapeIT {
                 "Defaults display probe data type (Test)",
                 "Defaults display probe meaning (Test)",
                 "Defaults display probe pattern purpose (Test)")) {
-            TEST_SET.concept(fqn).at(birth).isA(IkeTerms.MODEL_CONCEPT);
+            TEST_SET.concept(fqn).at(birth).isA(IkeConcept.MODEL_CONCEPT);
         }
 
-        EntityProxy.Concept sweepPurpose = TEST_SET.conceptRef("Defaults display probe purpose (Test)");
-        EntityProxy.Concept sweepDataType = TEST_SET.conceptRef("Defaults display probe data type (Test)");
+        ConceptFacade sweepPurpose = TEST_SET.conceptRef("Defaults display probe purpose (Test)");
+        ConceptFacade sweepDataType = TEST_SET.conceptRef("Defaults display probe data type (Test)");
         TEST_SET.pattern("Defaults display probe pattern (Test)").at(birth)
                 .meaning(TEST_SET.conceptRef("Defaults display probe meaning (Test)"))
                 .purpose(TEST_SET.conceptRef("Defaults display probe pattern purpose (Test)"))
@@ -193,8 +195,8 @@ class KonceptExtractorPatternShapeIT {
                 .field(TEST_SET.conceptRef("Graph default probe meaning (Test)"), sweepPurpose, sweepDataType)
                 .field(TEST_SET.conceptRef("Description default probe meaning (Test)"), sweepPurpose, sweepDataType);
 
-        EntityProxy.Pattern probePattern = TEST_SET.patternRef("Pattern shape probe pattern (Test)");
-        EntityProxy.Pattern sweepPattern = TEST_SET.patternRef("Defaults display probe pattern (Test)");
+        PatternFacade probePattern = TEST_SET.patternRef("Pattern shape probe pattern (Test)");
+        PatternFacade sweepPattern = TEST_SET.patternRef("Defaults display probe pattern (Test)");
         UUID probeDefaultsId = UuidT5Generator.singleSemanticUuid(
                 probePattern.publicId(), DefaultsTemplateTerm.DEFAULT_VALUE_CONCEPT.publicId());
         UUID sweepDefaultsId = UuidT5Generator.singleSemanticUuid(

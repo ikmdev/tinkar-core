@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.integration.coordinate;
 
 import dev.ikm.tinkar.common.id.Nid;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.binary.Encodable;
 import dev.ikm.tinkar.common.binary.EncoderOutput;
 import dev.ikm.tinkar.common.binary.EncodingExceptionUnchecked;
@@ -114,7 +114,7 @@ class CoordinateEncodingIT {
     @Test
     void aStampPositionIsWrittenAsItsTimeAndThePublicIdOfItsPath() throws IOException {
         long time = 1_700_000_000_000L;
-        StampPositionRecord position = StampPositionRecord.make(time, KernelTerm.DEVELOPMENT_PATH);
+        StampPositionRecord position = StampPositionRecord.make(time, KernelConcept.DEVELOPMENT_PATH);
 
         // The whole stream, written here with nothing but java.io: version, class name, time,
         // then the path's public id as a count and its UUIDs. No nid anywhere.
@@ -122,23 +122,23 @@ class CoordinateEncodingIT {
         DataOutputStream out = new DataOutputStream(expected);
         writeHeader(out, Encodable.LATEST_VERSION, StampPositionRecord.class);
         out.writeLong(time);
-        writePublicId(out, PrimitiveData.publicId(KernelTerm.DEVELOPMENT_PATH.nid()));
+        writePublicId(out, PrimitiveData.publicId(KernelConcept.DEVELOPMENT_PATH.nid()));
 
         assertArrayEquals(expected.toByteArray(), position.toBytes());
     }
 
     @Test
     void aStampPositionReadsBackAsItWasWritten() {
-        StampPositionRecord position = StampPositionRecord.make(1_700_000_000_000L, KernelTerm.MASTER_PATH);
+        StampPositionRecord position = StampPositionRecord.make(1_700_000_000_000L, KernelConcept.MASTER_PATH);
         StampPositionRecord decoded = Encodable.decode(position.toBytes());
         assertEquals(position, decoded);
-        assertEquals(KernelTerm.MASTER_PATH.nid(), decoded.getPathForPositionNid());
+        assertEquals(KernelConcept.MASTER_PATH.nid(), decoded.getPathForPositionNid());
     }
 
     @Test
     void aStampPositionOfTheFirstVersionIsStillRead() throws IOException {
         long time = 1_600_000_000_000L;
-        long pathNid = KernelTerm.DEVELOPMENT_PATH.nid();
+        long pathNid = KernelConcept.DEVELOPMENT_PATH.nid();
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(stream);
@@ -170,7 +170,7 @@ class CoordinateEncodingIT {
         ViewCoordinateRecord view = Coordinates.View.DefaultView();
         ViewCoordinateRecord decoded = Encodable.decode(firstVersionStream(view));
         assertEquals(view, decoded);
-        assertEquals(KernelTerm.DEVELOPMENT_PATH.nid(),
+        assertEquals(KernelConcept.DEVELOPMENT_PATH.nid(),
                 decoded.stampCoordinate().stampPosition().getPathForPositionNid());
     }
 
@@ -196,8 +196,8 @@ class CoordinateEncodingIT {
         // Kept as it always was (IKE-Network/ike-issues#745 persists a view override as a delta
         // and depends on it): the edit coordinate is written, and the decoded view coordinate
         // has the default one. Stamping streams with version 11 must not change that.
-        EditCoordinateRecord edit = EditCoordinateRecord.make(KernelTerm.KOMET_USER, KernelTerm.SOLOR_MODULE,
-                KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.MASTER_PATH, KernelTerm.SANDBOX_PATH);
+        EditCoordinateRecord edit = EditCoordinateRecord.make(KernelConcept.KOMET_USER, KernelConcept.SOLOR_MODULE,
+                KernelConcept.SOLOR_OVERLAY_MODULE, KernelConcept.MASTER_PATH, KernelConcept.SANDBOX_PATH);
         assertNotEquals(Coordinates.Edit.Default(), edit, "precondition: not the default edit coordinate");
         ViewCoordinateRecord view = Coordinates.View.DefaultView().withEditCoordinate(edit);
 
@@ -210,7 +210,7 @@ class CoordinateEncodingIT {
 
     @Test
     void aStampPathIsWrittenWithPublicIdsAndReadsBack() throws IOException {
-        StampPathImmutable path = StampPathImmutable.make(KernelTerm.DEVELOPMENT_PATH);
+        StampPathImmutable path = StampPathImmutable.make(KernelConcept.DEVELOPMENT_PATH);
         assertFalse(path.getPathOrigins().isEmpty(), "precondition: the development path has an origin");
 
         ByteArrayOutputStream expected = new ByteArrayOutputStream();
@@ -237,7 +237,7 @@ class CoordinateEncodingIT {
         DataOutputStream out = new DataOutputStream(stream);
         writeHeader(out, Encodable.LATEST_VERSION + 1, StampPositionRecord.class);
         out.writeLong(0L);
-        writePublicId(out, PrimitiveData.publicId(KernelTerm.DEVELOPMENT_PATH.nid()));
+        writePublicId(out, PrimitiveData.publicId(KernelConcept.DEVELOPMENT_PATH.nid()));
 
         EncodingExceptionUnchecked refused = assertThrows(EncodingExceptionUnchecked.class,
                 () -> Encodable.decode(stream.toByteArray()));

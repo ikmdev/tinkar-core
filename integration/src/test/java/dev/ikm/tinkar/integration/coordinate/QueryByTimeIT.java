@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
-import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
@@ -33,6 +32,7 @@ import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
+import dev.ikm.tinkar.terms.KernelPattern;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -73,7 +73,7 @@ public class QueryByTimeIT {
         LocalDateTime localDateTime = LocalDateTime.parse(time, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         long timestamp = localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-        long patternNid = EntityService.get().nidForPublicId(KernelTerm.DESCRIPTION_PATTERN);
+        long patternNid = EntityService.get().nidForPublicId(KernelPattern.DESCRIPTION_PATTERN.publicId());
 
         Set<Long> pathNids = new HashSet<>();
         EntityService.get().forEachSemanticOfPattern(patternNid,patternEntity1 ->
@@ -122,7 +122,7 @@ public class QueryByTimeIT {
         LocalDateTime localDateTime = LocalDateTime.parse(time, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         long timestamp = localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-        long patternNid = EntityService.get().nidForPublicId(KernelTerm.DESCRIPTION_PATTERN);
+        long patternNid = EntityService.get().nidForPublicId(KernelPattern.DESCRIPTION_PATTERN.publicId());
         Stream<Latest<SemanticEntityVersion>> filteredVersionsStream =
                 findAllPatternsByTime(patternNid, timestamp);
         filteredVersionsStream.forEach(latestVersion -> {

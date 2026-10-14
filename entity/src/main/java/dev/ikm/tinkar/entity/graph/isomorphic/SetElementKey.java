@@ -17,8 +17,7 @@ package dev.ikm.tinkar.entity.graph.isomorphic;
 
 import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
-
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.entity.graph.DiTreeAbstract;
@@ -72,22 +71,22 @@ public class SetElementKey
      * @throws IllegalStateException if the vertex is not contained within a known set type
      */
 	private LogicalAxiomSemantic getEnclosingSetType(int vertexIndex, DiTreeAbstract<EntityVertex> expression) {
-		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelTerm.NECESSARY_SET.nid())) {
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelConcept.NECESSARY_SET.nid())) {
 			return LogicalAxiomSemantic.NECESSARY_SET;
 		}
-		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelTerm.SUFFICIENT_SET.nid())) {
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelConcept.SUFFICIENT_SET.nid())) {
 			return LogicalAxiomSemantic.SUFFICIENT_SET;
 		}
-		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelTerm.PROPERTY_SET.nid())) {
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelConcept.PROPERTY_SET.nid())) {
 			return LogicalAxiomSemantic.PROPERTY_SET;
 		}
-		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelTerm.DATA_PROPERTY_SET.nid())) {
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelConcept.DATA_PROPERTY_SET.nid())) {
 			return LogicalAxiomSemantic.DATA_PROPERTY_SET;
 		}
-		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelTerm.INTERVAL_PROPERTY_SET.nid())) {
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelConcept.INTERVAL_PROPERTY_SET.nid())) {
 			return LogicalAxiomSemantic.INTERVAL_PROPERTY_SET;
 		}
-		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelTerm.INCLUSION_SET.nid())) {
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, KernelConcept.INCLUSION_SET.nid())) {
 			return LogicalAxiomSemantic.INCLUSION_SET;
 		}
 		throw new IllegalStateException(

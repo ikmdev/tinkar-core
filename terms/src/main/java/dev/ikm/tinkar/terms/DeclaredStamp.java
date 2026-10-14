@@ -30,5 +30,5 @@ package dev.ikm.tinkar.terms;
  * @param path     the path dimension
  */
 public record DeclaredStamp(EntityProxy.Stamp identity, State state, long time,
-                            EntityProxy.Concept author, EntityProxy.Concept module, EntityProxy.Concept path) {
+                            ConceptFacade author, ConceptFacade module, ConceptFacade path) {
 }

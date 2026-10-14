@@ -15,8 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -34,8 +33,10 @@ import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
+import network.ike.foundation.ike.bindings.IkeConcept;
 import org.eclipse.collections.impl.factory.Lists;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -78,14 +79,14 @@ class SpinedArrayEntityCacheIT {
     @Test
     @DisplayName("Case 1: addInitialVersion")
     public void addInitialVersion() {
-        EntityProxy.Concept conceptProxy = EntityProxy.Concept.make(PublicIds.newRandom());
+        ConceptFacade conceptProxy = EntityProxy.Concept.make(PublicIds.newRandom());
 
         /* Start: Seed database with one STAMP */
         Transaction transaction = new Transaction();
         StampEntity currentStampEntity = transaction.getStamp(State.ACTIVE,
-                KernelTerm.USER,
-                IkeTerms.DEVELOPMENT_MODULE,
-                KernelTerm.DEVELOPMENT_PATH);
+                KernelConcept.USER,
+                IkeConcept.DEVELOPMENT_MODULE,
+                KernelConcept.DEVELOPMENT_PATH);
         transaction.commit();
         /* End: Seed database with one STAMP */
 
@@ -107,19 +108,19 @@ class SpinedArrayEntityCacheIT {
     @Test
     @DisplayName("Case 2: addNewVersionToExisting")
     public void addNewVersionToExisting() {
-        EntityProxy.Concept conceptProxy = EntityProxy.Concept.make(PublicIds.newRandom());
+        ConceptFacade conceptProxy = EntityProxy.Concept.make(PublicIds.newRandom());
 
         /* Start: Seed database with two STAMPs and a Concept Version */
         Transaction transaction = new Transaction();
         StampEntity preInceptionStampEntity = transaction.getStamp(State.ACTIVE,
                 PrimitiveData.PRE_INCEPTION_TIME,
-                KernelTerm.USER.publicId(),
-                IkeTerms.DEVELOPMENT_MODULE.publicId(),
-                KernelTerm.DEVELOPMENT_PATH.publicId());
+                KernelConcept.USER.publicId(),
+                IkeConcept.DEVELOPMENT_MODULE.publicId(),
+                KernelConcept.DEVELOPMENT_PATH.publicId());
         StampEntity currentStampEntity = transaction.getStamp(State.ACTIVE,
-                KernelTerm.USER,
-                IkeTerms.DEVELOPMENT_MODULE,
-                KernelTerm.DEVELOPMENT_PATH);
+                KernelConcept.USER,
+                IkeConcept.DEVELOPMENT_MODULE,
+                KernelConcept.DEVELOPMENT_PATH);
         //Write Concept Version to database
         ConceptEntity seedConceptVersion = writeConceptHelper(conceptProxy, preInceptionStampEntity);
         transaction.addComponent(seedConceptVersion);
@@ -143,7 +144,7 @@ class SpinedArrayEntityCacheIT {
     }
 
     /* Helper Functions */
-    private static ConceptEntity writeConceptHelper(EntityProxy.Concept concept, PublicId stampId) {
+    private static ConceptEntity writeConceptHelper(ConceptFacade concept, PublicId stampId) {
         //Initialize Concept PublicId and version list to prepare for potential merging
         PublicId conceptId = concept.publicId();
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();

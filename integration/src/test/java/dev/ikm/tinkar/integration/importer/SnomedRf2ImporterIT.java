@@ -34,7 +34,8 @@ import dev.ikm.tinkar.importer.StoreWriter;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
@@ -114,22 +115,22 @@ class SnomedRf2ImporterIT {
         assertEquals(2, EntityHandle.get(nid(OLD_HEART)).expectConcept().versions().size(),
                 "a full release keeps both versions");
 
-        SemanticEntityVersion description = only(heart, KernelTerm.DESCRIPTION_PATTERN.nid(), stamps);
+        SemanticEntityVersion description = only(heart, KernelPattern.DESCRIPTION_PATTERN.nid(), stamps);
         assertEquals("Heart structure (body structure)", description.fieldValues().get(1));
-        assertEquals(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+        assertEquals(KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
                 ((EntityFacade) description.fieldValues().get(3)).nid(),
                 "SNOMED's description type resolves to the kernel's");
-        assertEquals(KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid(), ((EntityFacade) description.fieldValues().get(2)).nid());
+        assertEquals(KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE.nid(), ((EntityFacade) description.fieldValues().get(2)).nid());
 
-        SemanticEntityVersion dialect = only(description.nid(), KernelTerm.US_DIALECT_PATTERN.nid(), stamps);
-        assertEquals(KernelTerm.PREFERRED.nid(), ((EntityFacade) dialect.fieldValues().get(0)).nid());
+        SemanticEntityVersion dialect = only(description.nid(), KernelPattern.US_DIALECT_PATTERN.nid(), stamps);
+        assertEquals(KernelConcept.PREFERRED.nid(), ((EntityFacade) dialect.fieldValues().get(0)).nid());
 
-        List<Object> identifiers = EntityService.get().semanticsForComponentOfPattern(heart, KernelTerm.IDENTIFIER_PATTERN.nid())
+        List<Object> identifiers = EntityService.get().semanticsForComponentOfPattern(heart, KernelPattern.IDENTIFIER_PATTERN.nid())
                 .map(s -> stamps.latest(s).get().fieldValues().get(1)).map(Object.class::cast).toList();
         assertTrue(identifiers.contains(HEART), "the SCTID is an identifier: " + identifiers);
         assertTrue(identifiers.contains("8867-4"), "the LOINC code is an identifier: " + identifiers);
 
-        assertTrue(EntityService.get().semanticsForComponentOfPattern(heart, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
+        assertTrue(EntityService.get().semanticsForComponentOfPattern(heart, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
                 .findAny().isPresent(), "the OWL axiom becomes an EL++ stated axiom");
     }
 
@@ -180,22 +181,22 @@ class SnomedRf2ImporterIT {
         assertTrue(PrimitiveData.publicId(aspirin).asUuidList().size() >= 2,
                 "the RxNorm concept is merged with the SNOMED CT concept it cross-references");
         StampCalculator stamps = Calculators.Stamp.DevelopmentLatest();
-        List<Object> identifiers = EntityService.get().semanticsForComponentOfPattern(aspirin, KernelTerm.IDENTIFIER_PATTERN.nid())
+        List<Object> identifiers = EntityService.get().semanticsForComponentOfPattern(aspirin, KernelPattern.IDENTIFIER_PATTERN.nid())
                 .map(s -> stamps.latest(s).get().fieldValues().get(1)).map(Object.class::cast).toList();
         assertTrue(identifiers.contains("1191"), "the RxCUI is an identifier: " + identifiers);
-        assertTrue(EntityService.get().semanticsForComponentOfPattern(aspirin, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
+        assertTrue(EntityService.get().semanticsForComponentOfPattern(aspirin, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
                 .findAny().isPresent(), "the RxNorm axiom becomes an EL++ stated axiom");
 
         List<SemanticEntityVersion> names = EntityService.get()
-                .semanticsForComponentOfPattern(aspirin, KernelTerm.DESCRIPTION_PATTERN.nid())
+                .semanticsForComponentOfPattern(aspirin, KernelPattern.DESCRIPTION_PATTERN.nid())
                 .map(s -> stamps.latest(s).get()).toList();
         SemanticEntityVersion rxnormName = names.stream().filter(d -> "aspirin".equals(d.fieldValues().get(1))).findFirst().orElseThrow();
-        assertEquals(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(), ((EntityFacade) rxnormName.fieldValues().get(3)).nid(),
+        assertEquals(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid(), ((EntityFacade) rxnormName.fieldValues().get(3)).nid(),
                 "on a concept merged with SNOMED CT, RxNorm's name is a regular name, SNOMED CT's FSN the only one");
 
         long drug = PrimitiveData.nid(PublicIds.of(dev.ikm.tinkar.common.util.uuid.UuidT5Generator.get(
                 UuidUtil.SNOMED_NAMESPACE, "999rxnorm")));
-        List<Object> drugIdentifiers = EntityService.get().semanticsForComponentOfPattern(drug, KernelTerm.IDENTIFIER_PATTERN.nid())
+        List<Object> drugIdentifiers = EntityService.get().semanticsForComponentOfPattern(drug, KernelPattern.IDENTIFIER_PATTERN.nid())
                 .map(s -> stamps.latest(s).get().fieldValues().get(1)).map(Object.class::cast).toList();
         assertTrue(drugIdentifiers.contains("999"), "a class with only a label carries its IRI's RxCUI: " + drugIdentifiers);
     }

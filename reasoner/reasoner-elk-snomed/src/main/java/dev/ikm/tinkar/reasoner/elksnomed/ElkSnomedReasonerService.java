@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import dev.ikm.tinkar.terms.KernelTerm;
 import java.util.HashMap;
 import java.util.concurrent.CancellationException;
 import java.util.List;
@@ -44,6 +43,7 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.ext.lang.owl.OwlElToLogicalExpression;
 import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
 import dev.ikm.tinkar.reasoner.service.UnsupportedReasonerProcessIncremental;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.PatternFacade;
 
 public class ElkSnomedReasonerService extends ReasonerServiceBase {
@@ -229,7 +229,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		logMissingReasonerConcepts(superConcepts);
 		
 		nnfb = NecessaryNormalFormBuilder.create(ontology, superConcepts, superRoleTypes, 
-			KernelTerm.ROOT_VERTEX.nid(), 
+			KernelConcept.ROOT_VERTEX.nid(), 
 			(int workDone, int max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
 	}

@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.FieldDefinitionRecord;
@@ -56,7 +57,7 @@ import java.util.Set;
  * RICH_SURFACE.pattern("Journal manifest pattern (RichSurfaceTerms)")
  *     .at(W1)
  *         .meaning(JOURNAL_MANIFEST).purpose(ELEMENT_ORDER)
- *         .field(JOURNAL_ELEMENTS, ELEMENT_ORDER, KernelTerm.COMPONENT_ID_LIST_FIELD)
+ *         .field(JOURNAL_ELEMENTS, ELEMENT_ORDER, KernelConcept.COMPONENT_ID_LIST_FIELD)
  *         .synonym("Journal manifest");
  * }</pre>
  */
@@ -268,7 +269,7 @@ public final class PatternBuilder {
          * @param fieldMeaning  what this field means
          * @param fieldPurpose  what this field is for
          * @param fieldDataType the field's datatype concept, for example
-         *                      {@code KernelTerm.COMPONENT_ID_LIST_FIELD} or {@code KernelTerm.STRING}
+         *                      {@code KernelConcept.COMPONENT_ID_LIST_FIELD} or {@code KernelConcept.STRING}
          * @return this scope, for chaining
          */
         public ActiveScope field(ConceptFacade fieldMeaning, ConceptFacade fieldPurpose, ConceptFacade fieldDataType) {
@@ -284,7 +285,7 @@ public final class PatternBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope synonym(String text) {
-            ledger.addDescription(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, "synonym", text, stamp);
+            ledger.addDescription(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE, "synonym", text, stamp);
             return this;
         }
 
@@ -296,7 +297,7 @@ public final class PatternBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope definition(String text) {
-            ledger.addDescription(KernelTerm.DEFINITION_DESCRIPTION_TYPE, "definition", text, stamp);
+            ledger.addDescription(KernelConcept.DEFINITION_DESCRIPTION_TYPE, "definition", text, stamp);
             return this;
         }
 
@@ -312,7 +313,7 @@ public final class PatternBuilder {
          */
         public ActiveScope reviseSynonym(String currentText, String newText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    ledger.resolveLive(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
                     stamp, newText);
             return this;
         }
@@ -346,7 +347,7 @@ public final class PatternBuilder {
          *                                  value's type is unsupported, or this stamp
          *                                  already carries a version of the semantic
          */
-        public ActiveScope semantic(EntityProxy.Pattern pattern, PublicId declaredIdentity, Object... fieldValues) {
+        public ActiveScope semantic(PatternFacade pattern, PublicId declaredIdentity, Object... fieldValues) {
             ledger.addGenericVersion(pattern, declaredIdentity, null, stamp, fieldValues);
             return this;
         }
@@ -367,7 +368,7 @@ public final class PatternBuilder {
          *                                  {@link #semantic(EntityProxy.Pattern, PublicId, Object...)},
          *                                  or if {@code referencedComponent} is null or empty
          */
-        public ActiveScope semanticOn(PublicId referencedComponent, EntityProxy.Pattern pattern,
+        public ActiveScope semanticOn(PublicId referencedComponent, PatternFacade pattern,
                                       PublicId declaredIdentity, Object... fieldValues) {
             if (referencedComponent == null || referencedComponent.uuidCount() == 0) {
                 throw new IllegalArgumentException(
@@ -441,7 +442,7 @@ public final class PatternBuilder {
          */
         public RetireScope retireSynonym(String currentText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    ledger.resolveLive(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
                     stamp, currentText);
             return this;
         }
@@ -457,7 +458,7 @@ public final class PatternBuilder {
          */
         public RetireScope retireDefinition(String currentText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(KernelTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition"),
+                    ledger.resolveLive(KernelConcept.DEFINITION_DESCRIPTION_TYPE, currentText, "definition"),
                     stamp, currentText);
             return this;
         }
@@ -478,7 +479,7 @@ public final class PatternBuilder {
          *                                  value's type is unsupported, or this stamp
          *                                  already carries a version of the semantic
          */
-        public RetireScope retireSemantic(EntityProxy.Pattern pattern, PublicId declaredIdentity,
+        public RetireScope retireSemantic(PatternFacade pattern, PublicId declaredIdentity,
                                           Object... fieldValues) {
             ledger.retireGenericVersion(pattern, declaredIdentity, stamp, fieldValues);
             return this;

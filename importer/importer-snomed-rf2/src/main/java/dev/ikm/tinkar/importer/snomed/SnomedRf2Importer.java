@@ -31,8 +31,10 @@ import dev.ikm.tinkar.importer.ImportReport;
 import dev.ikm.tinkar.importer.ImportSource;
 import dev.ikm.tinkar.importer.KnowledgeImporter;
 import dev.ikm.tinkar.importer.StoreWriter;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import org.eclipse.collections.api.factory.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,9 +122,9 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
         Rf2Release.Type type = source.option("release").map(Rf2Release.Type::of).orElse(Rf2Release.Type.FULL);
         SnomedIds ids = new SnomedIds(source.uuidOption("namespace").orElse(UuidUtil.SNOMED_NAMESPACE));
         String authorName = source.option("author").orElse("IHTSDO SNOMED CT Author");
-        EntityProxy.Concept author = EntityProxy.Concept.make(authorName, UuidT5Generator.get(ids.namespace(), authorName));
-        EntityProxy.Concept path = source.uuidOption("path").map(uuid -> EntityProxy.Concept.make(PublicIds.of(uuid)))
-                .orElse(KernelTerm.DEVELOPMENT_PATH);
+        ConceptFacade author = EntityProxy.Concept.make(authorName, UuidT5Generator.get(ids.namespace(), authorName));
+        ConceptFacade path = source.uuidOption("path").<ConceptFacade>map(uuid -> EntityProxy.Concept.make(PublicIds.of(uuid)))
+                .orElse(KernelConcept.DEVELOPMENT_PATH);
         Map<String, Long> details = new LinkedHashMap<>();
         StoreWriter.Tally before = writer.counts().tally();
 
@@ -168,23 +170,23 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
         }
     }
 
-    private static void writeAuthor(StoreWriter writer, Stamps stamps, SnomedIds ids, EntityProxy.Concept author,
+    private static void writeAuthor(StoreWriter writer, Stamps stamps, SnomedIds ids, ConceptFacade author,
                                     Rf2Release release) {
         Stamp stamp = stamps.authorStamp();
         long authorNid = writer.concept(stamp, author.publicId());
         UUID authorUuid = author.publicId().leastUuid();
         writer.describe(stamp, authorNid, UuidT5Generator.get(authorUuid, "fqn"), author.description(),
-                KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE);
+                KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE);
         writer.describe(stamp, authorNid, UuidT5Generator.get(authorUuid, "regular name"),
-                author.description().replace("IHTSDO ", ""), KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE);
-        writer.statedParent(stamp, author.publicId(), KernelTerm.USER.publicId());
+                author.description().replace("IHTSDO ", ""), KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE);
+        writer.statedParent(stamp, author.publicId(), KernelConcept.USER.publicId());
     }
 
     private static void concept(StoreWriter writer, Stamps stamps, SnomedIds ids, String[] row) {
         PublicId conceptId = ids.publicId(row[ID]);
         writer.recordConcept(stamps.of(row), conceptId);
-        writer.semantic(stamps.activeAt(row), sctidSemantic(row[ID]), KernelTerm.IDENTIFIER_PATTERN,
-                PrimitiveData.nid(conceptId), Lists.immutable.of(KernelTerm.SCTID, row[ID]));
+        writer.semantic(stamps.activeAt(row), sctidSemantic(row[ID]), KernelPattern.IDENTIFIER_PATTERN,
+                PrimitiveData.nid(conceptId), Lists.immutable.of(KernelConcept.SCTID, row[ID]));
     }
 
     /**
@@ -192,15 +194,15 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
      * the two agree.
      */
     private static PublicId sctidSemantic(String sctid) {
-        return PublicIds.of(UuidT5Generator.singleSemanticUuid(KernelTerm.IDENTIFIER_PATTERN.publicId(),
+        return PublicIds.of(UuidT5Generator.singleSemanticUuid(KernelPattern.IDENTIFIER_PATTERN.publicId(),
                 PublicIds.of(UuidT5Generator.get(sctid))));
     }
 
     private static void description(StoreWriter writer, Stamps stamps, SnomedIds ids, String[] row) {
-        EntityProxy.Concept language = SnomedIds.language(row[LANGUAGE_CODE])
+        ConceptFacade language = SnomedIds.language(row[LANGUAGE_CODE])
                 .orElseThrow(() -> new ImportException("No kernel language concept for RF2 language code "
                         + row[LANGUAGE_CODE] + " (description " + row[ID] + ")"));
-        writer.recordSemantic(stamps.of(row), ids.publicId(row[ID]), KernelTerm.DESCRIPTION_PATTERN,
+        writer.recordSemantic(stamps.of(row), ids.publicId(row[ID]), KernelPattern.DESCRIPTION_PATTERN,
                 PrimitiveData.nid(ids.publicId(row[CONCEPT_ID])),
                 Lists.immutable.of(language, row[TERM], ids.concept(row[CASE_SIGNIFICANCE_ID]), ids.concept(row[TYPE_ID])));
     }
@@ -216,7 +218,7 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
     private static void identifier(StoreWriter writer, Stamps stamps, SnomedIds ids, String[] row) {
         String scheme = row[IDENTIFIER_SCHEME_ID];
         PublicId semanticId = PublicIds.of(UuidT5Generator.get(ids.namespace(), "identifier " + scheme + " " + row[ID]));
-        writer.recordSemantic(stamps.of(row), semanticId, KernelTerm.IDENTIFIER_PATTERN,
+        writer.recordSemantic(stamps.of(row), semanticId, KernelPattern.IDENTIFIER_PATTERN,
                 PrimitiveData.nid(ids.publicId(row[REFERENCED_COMPONENT_ID])),
                 Lists.immutable.of(ids.concept(scheme), row[ID]));
     }
@@ -227,7 +229,7 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
             return; // the OWL ontology reference set: the ontology's header, not an axiom
         }
         long conceptNid = PrimitiveData.nid(ids.publicId(row[REFERENCED_COMPONENT_ID]));
-        writer.recordSemantic(stamps.of(row), PublicIds.of(UUID.fromString(row[ID])), KernelTerm.OWL_AXIOM_SYNTAX_PATTERN,
+        writer.recordSemantic(stamps.of(row), PublicIds.of(UUID.fromString(row[ID])), KernelPattern.OWL_AXIOM_SYNTAX_PATTERN,
                 conceptNid, Lists.immutable.of(ids.owlWithPublicIds(row[OWL_EXPRESSION])));
         axiomConcepts.add(conceptNid);
         axioms.increment();
@@ -238,7 +240,7 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
         LOG.info("Transforming OWL axioms of {} concepts into EL++ stated axioms", axiomConcepts.size());
         try {
             new Rf2OwlToLogicAxiomTransformer(new Transaction("SNOMED CT OWL to logic"),
-                    KernelTerm.OWL_AXIOM_SYNTAX_PATTERN, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                    KernelPattern.OWL_AXIOM_SYNTAX_PATTERN, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                     stamps.author().nid(), PrimitiveData.nid(ids.publicId(CORE_MODULE)), stamps.path().nid(),
                     axiomConcepts::contains).call();
         } catch (Exception e) {
@@ -249,21 +251,21 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
     /** Stamps by effective time, state and module, made once each. */
     static final class Stamps {
         private final SnomedIds ids;
-        private final EntityProxy.Concept author;
-        private final EntityProxy.Concept path;
+        private final ConceptFacade author;
+        private final ConceptFacade path;
         private final Map<String, Stamp> made = new HashMap<>();
 
-        Stamps(SnomedIds ids, EntityProxy.Concept author, EntityProxy.Concept path) {
+        Stamps(SnomedIds ids, ConceptFacade author, ConceptFacade path) {
             this.ids = ids;
             this.author = author;
             this.path = path;
         }
 
-        EntityProxy.Concept author() {
+        ConceptFacade author() {
             return author;
         }
 
-        EntityProxy.Concept path() {
+        ConceptFacade path() {
             return path;
         }
 
@@ -285,7 +287,7 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
         private Stamp make(boolean active, String effectiveTime, String module) {
             return made.computeIfAbsent((active ? "A" : "I") + effectiveTime + module, key -> {
                 long time = DateTimeUtil.compressedDateParse(effectiveTime);
-                EntityProxy.Concept moduleConcept = ids.concept(module);
+                ConceptFacade moduleConcept = ids.concept(module);
                 return active ? new ActiveStamp(time, author, moduleConcept, path)
                         : new InactiveStamp(time, author, moduleConcept, path);
             });

@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
-import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashSet;
@@ -23,6 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import dev.ikm.tinkar.common.service.TrackingCallable;
+import dev.ikm.tinkar.terms.KernelConcept;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +88,7 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 						.collect(ElkSnomedData::getNid)
 						.toSet();
 				if (sctid == SnomedIds.root) {
-					expected_parent_nids = Set.of(KernelTerm.PHENOMENON.nid());
+					expected_parent_nids = Set.of(KernelConcept.PHENOMENON.nid());
 					LOG.warn("Reset expected parents for " + sctid + " " + PrimitiveData.text(nid));
 				}
 				Set<Long> expected_child_nids = isas.getChildren(sctid)

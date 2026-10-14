@@ -31,7 +31,7 @@ import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityBinding;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.State;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -109,7 +109,7 @@ class ConcurrentPutCacheIT {
 
     private static StampEntity stamp(long time) {
         return StampRecord.make(UUID.randomUUID(), State.ACTIVE, time,
-                KernelTerm.USER.publicId(), KernelTerm.PRIMORDIAL_MODULE.publicId(), KernelTerm.DEVELOPMENT_PATH.publicId());
+                KernelConcept.USER.publicId(), KernelConcept.PRIMORDIAL_MODULE.publicId(), KernelConcept.DEVELOPMENT_PATH.publicId());
     }
 
     private static ConceptRecord concept(UUID uuid, long stampNid) {

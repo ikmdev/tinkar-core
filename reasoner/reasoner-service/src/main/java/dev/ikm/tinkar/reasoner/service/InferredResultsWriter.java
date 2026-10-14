@@ -4,7 +4,6 @@ import org.eclipse.collections.api.list.primitive.LongList;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 
-import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -21,6 +20,7 @@ import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.transaction.Transaction;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -214,7 +214,7 @@ public class InferredResultsWriter {
 
 
 			inferredPattern = EntityHandle.getPatternOrThrow(getViewCoordinateRecord().logicCoordinate().inferredAxiomsPatternNid());
-			inferredNavigationPattern = EntityHandle.getPatternOrThrow(KernelTerm.INFERRED_NAVIGATION_PATTERN.nid());
+			inferredNavigationPattern = EntityHandle.getPatternOrThrow(KernelPattern.INFERRED_NAVIGATION_PATTERN.nid());
 			multipleEndpointTimer = new MultipleEndpointTimer<>(IsomorphicResults.EndPoints.class);
 			equivalentSets = new ConcurrentHashSet<>();
 			axiomDataNotFoundCounter = new AtomicInteger();

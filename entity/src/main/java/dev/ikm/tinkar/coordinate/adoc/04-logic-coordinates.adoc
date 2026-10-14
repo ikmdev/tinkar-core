@@ -56,14 +56,14 @@ LogicCoordinateRecord elPlusPlus = Coordinates.Logic.ElPlusPlus();
 
 // Equivalent to:
 LogicCoordinateRecord elPlusPlus = LogicCoordinateRecord.make(
-    KernelTerm.SNOROCKET_CLASSIFIER,              // Classifier
-    KernelTerm.EL_PLUS_PLUS_PROFILE,             // Profile
-    KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
-    KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+    KernelConcept.SNOROCKET_CLASSIFIER,              // Classifier
+    KernelConcept.EL_PLUS_PLUS_PROFILE,             // Profile
+    KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
+    KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
     MyTerms.SOLOR_CONCEPT_PATTERN,            // Concept membership
-    KernelTerm.STATED_NAVIGATION_PATTERN,
-    KernelTerm.INFERRED_NAVIGATION_PATTERN,
-    KernelTerm.NAVIGATION_VERTEX                 // Root
+    KernelPattern.STATED_NAVIGATION_PATTERN,
+    KernelPattern.INFERRED_NAVIGATION_PATTERN,
+    KernelConcept.NAVIGATION_VERTEX                 // Root
 );
 ----
 
@@ -200,7 +200,7 @@ Latest<DiTreeEntity> statedAxioms = calc.getStatedAxiomTree(conceptNid);
 if (statedAxioms.isPresent()) {
     DiTreeEntity tree = statedAxioms.get();
     boolean isSufficientlyDefined =
-        tree.containsVertexWithMeaning(KernelTerm.SUFFICIENT_SET);
+        tree.containsVertexWithMeaning(KernelConcept.SUFFICIENT_SET);
 
     if (isSufficientlyDefined) {
         System.out.println("Concept has sufficient definition");
@@ -311,7 +311,7 @@ for (int conceptNid : allConceptNids) {
 
     if (axioms.isPresent()) {
         DiTreeEntity tree = axioms.get();
-        if (tree.containsVertexWithMeaning(KernelTerm.SUFFICIENT_SET)) {
+        if (tree.containsVertexWithMeaning(KernelConcept.SUFFICIENT_SET)) {
             definedConcepts.add(conceptNid);
         }
     }

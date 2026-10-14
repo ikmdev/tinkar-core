@@ -20,7 +20,9 @@
  */
 module dev.ikm.tinkar.terms {
     requires transitive dev.ikm.tinkar.component;
-    requires dev.ikm.tinkar.common;
+    // Transitive: the exported facades and proxies expose PublicId and other common types,
+    // so modules that use the generated enums (komet-terms) read common through terms.
+    requires transitive dev.ikm.tinkar.common;
     requires java.xml;
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;

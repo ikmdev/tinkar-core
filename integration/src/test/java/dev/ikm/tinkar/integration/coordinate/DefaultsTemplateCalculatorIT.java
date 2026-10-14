@@ -15,10 +15,12 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
+import dev.ikm.tinkar.terms.PatternFacade;
+import network.ike.foundation.ike.bindings.IkeConcept;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
@@ -34,8 +36,8 @@ import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
-import dev.ikm.tinkar.terms.EntityProxy;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.junit.jupiter.api.AfterAll;
@@ -85,8 +87,8 @@ class DefaultsTemplateCalculatorIT {
     static void composeAndWrite() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
 
-        EntityProxy.Pattern p1 = TEST_SET.patternRef(P1_FQN);
-        EntityProxy.Pattern p2 = TEST_SET.patternRef(P2_FQN);
+        PatternFacade p1 = TEST_SET.patternRef(P1_FQN);
+        PatternFacade p2 = TEST_SET.patternRef(P2_FQN);
         p1DefaultId = UuidT5Generator.singleSemanticUuid(
                 p1.publicId(), DefaultsTemplateTerm.DEFAULT_VALUE_CONCEPT.publicId());
         p2DefaultId = UuidT5Generator.singleSemanticUuid(
@@ -101,9 +103,9 @@ class DefaultsTemplateCalculatorIT {
         // category's live-and-die invariant is about defaults/template chronologies,
         // and the anchor concepts themselves are ordinary content.
         ActiveStamp birth = Stamp.active("2020-01-01T00:00:00Z",
-                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
-        ActiveStamp defaultsAuthored = Stamp.active("2020-02-01T00:00:00Z", KernelTerm.USER,
-                DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelConcept.USER, IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH);
+        ActiveStamp defaultsAuthored = Stamp.active("2020-02-01T00:00:00Z", KernelConcept.USER,
+                DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelConcept.DEVELOPMENT_PATH);
 
         // The three seam concepts, minted here with the identities tinkar-core declares
         // (in ike-starter-set the IkeFoundation ledger mints them from the same birth
@@ -116,12 +118,12 @@ class DefaultsTemplateCalculatorIT {
                 .semantic(p1, PublicIds.of(p1DefaultId), "parent default value")
                 .semantic(p2, PublicIds.of(p2DefaultId), "retired default value")
                 // Retirement of P2's default: an inactive version, same module, same path.
-                .at(Stamp.inactive("2020-03-01T00:00:00Z", KernelTerm.USER,
-                        DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelTerm.DEVELOPMENT_PATH))
+                .at(Stamp.inactive("2020-03-01T00:00:00Z", KernelConcept.USER,
+                        DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelConcept.DEVELOPMENT_PATH))
                 .retireSemantic(p2, PublicIds.of(p2DefaultId))
                 // A later default for P1 authored on the child path overrides the
                 // parent-path default for calculators positioned on the child path.
-                .at(Stamp.active("2021-01-01T00:00:00Z", KernelTerm.USER,
+                .at(Stamp.active("2021-01-01T00:00:00Z", KernelConcept.USER,
                         DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
                         TEST_SET.conceptRef(CHILD_PATH_FQN)))
                 .semantic(p1, PublicIds.of(p1DefaultId), "child default value");
@@ -169,15 +171,15 @@ class DefaultsTemplateCalculatorIT {
         // A child path forked from the development path at 2020-06-01: a paths-pattern
         // membership semantic plus a path-origins semantic (origin path, origin instant).
         TEST_SET.concept(CHILD_PATH_FQN).at(birth)
-                .semantic(KernelTerm.PATHS_PATTERN,
+                .semantic(KernelPattern.PATHS_PATTERN,
                         PublicIds.of(UuidT5Generator.singleSemanticUuid(
-                                KernelTerm.PATHS_PATTERN.publicId(),
+                                KernelPattern.PATHS_PATTERN.publicId(),
                                 TEST_SET.conceptRef(CHILD_PATH_FQN).publicId())))
-                .semantic(KernelTerm.PATH_ORIGINS_PATTERN,
+                .semantic(KernelPattern.PATH_ORIGINS_PATTERN,
                         PublicIds.of(UuidT5Generator.singleSemanticUuid(
-                                KernelTerm.PATH_ORIGINS_PATTERN.publicId(),
+                                KernelPattern.PATH_ORIGINS_PATTERN.publicId(),
                                 TEST_SET.conceptRef(CHILD_PATH_FQN).publicId())),
-                        KernelTerm.DEVELOPMENT_PATH, Instant.parse("2020-06-01T00:00:00Z"));
+                        KernelConcept.DEVELOPMENT_PATH, Instant.parse("2020-06-01T00:00:00Z"));
 
         TEST_SET.write();
     }
@@ -193,7 +195,7 @@ class DefaultsTemplateCalculatorIT {
     }
 
     private static StampCalculatorWithCache developmentCalculator() {
-        return calculatorOn(KernelTerm.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE_AND_INACTIVE);
+        return calculatorOn(KernelConcept.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE_AND_INACTIVE);
     }
 
     private static long nidOf(UUID semanticUuid) {
@@ -218,7 +220,7 @@ class DefaultsTemplateCalculatorIT {
         // Both keys are required (KEC, IKE-Network/ike-issues#886): a purpose concept may
         // host templates of more than one pattern, so the (pattern, purpose) pair — not
         // the purpose alone — identifies a template.
-        EntityProxy.Concept purpose = TEST_SET.conceptRef(PURPOSE_FQN);
+        ConceptFacade purpose = TEST_SET.conceptRef(PURPOSE_FQN);
 
         Latest<SemanticEntityVersion> template =
                 developmentCalculator().getTemplate(TEST_SET.patternRef(P1_FQN), purpose);
@@ -304,7 +306,7 @@ class DefaultsTemplateCalculatorIT {
                 "retirement restates the prior version's fields");
 
         Latest<SemanticEntityVersion> activeOnly =
-                calculatorOn(KernelTerm.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE)
+                calculatorOn(KernelConcept.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE)
                         .getDefault(TEST_SET.patternRef(P2_FQN));
         assertTrue(activeOnly.isAbsent(),
                 "an ACTIVE-only calculator must not resurrect the earlier active default");

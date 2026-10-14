@@ -117,7 +117,7 @@
  * // Custom navigation coordinate
  * NavigationCoordinateRecord custom = NavigationCoordinateRecord.make(
  *     LongIds.set.of(
- *         KernelTerm.INFERRED_NAVIGATION.nid(),
+ *         KernelConcept.INFERRED_NAVIGATION.nid(),
  *         MyTerms.CUSTOM_NAVIGATION.nid()
  *     ),
  *     StateSet.ACTIVE,                    // Only active concepts
@@ -170,7 +170,7 @@
  * <pre>{@code
  * NavigationCoordinateRecord mixed = NavigationCoordinateRecord.make(
  *     LongIds.set.of(
- *         KernelTerm.INFERRED_NAVIGATION.nid(),      // Taxonomy
+ *         KernelConcept.INFERRED_NAVIGATION.nid(),      // Taxonomy
  *         MyTerms.PART_OF_NAVIGATION.nid(),       // Part-of hierarchy
  *         MyTerms.PROCEDURE_SITE_NAVIGATION.nid() // Procedure sites
  *     ),

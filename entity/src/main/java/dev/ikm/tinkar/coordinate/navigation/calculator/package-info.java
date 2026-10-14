@@ -207,7 +207,7 @@
  * <pre>{@code
  * NavigationCoordinateRecord multiPattern = NavigationCoordinateRecord.make(
  *     LongIds.set.of(
- *         KernelTerm.INFERRED_NAVIGATION.nid(),
+ *         KernelConcept.INFERRED_NAVIGATION.nid(),
  *         MyTerms.PART_OF_NAVIGATION.nid()
  *     ),
  *     StateSet.ACTIVE,

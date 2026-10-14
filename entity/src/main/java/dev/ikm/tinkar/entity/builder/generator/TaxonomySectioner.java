@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder.generator;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
@@ -67,7 +67,7 @@ public final class TaxonomySectioner {
      */
     public static TaxonomySectioner fromStatedNavigation(StampCalculator calculator) {
         TaxonomySectioner sectioner = new TaxonomySectioner();
-        calculator.forEachSemanticVersionOfPattern(KernelTerm.STATED_NAVIGATION_PATTERN,
+        calculator.forEachSemanticVersionOfPattern(KernelPattern.STATED_NAVIGATION_PATTERN,
                 (semanticVersion, patternVersion) -> {
                     long child = semanticVersion.referencedComponentNid();
                     int parentsFieldIndex = originFieldIndex(patternVersion);
@@ -94,7 +94,7 @@ public final class TaxonomySectioner {
      */
     public static TaxonomySectioner fromStatedAxioms(StampCalculator calculator) {
         TaxonomySectioner sectioner = new TaxonomySectioner();
-        calculator.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+        calculator.forEachSemanticVersionOfPattern(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                 (semanticVersion, patternVersion) -> {
                     long child = semanticVersion.referencedComponentNid();
                     if (semanticVersion.fieldValues().isEmpty()) {

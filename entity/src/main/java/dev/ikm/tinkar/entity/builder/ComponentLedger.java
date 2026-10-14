@@ -15,7 +15,9 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
+import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
@@ -38,7 +40,6 @@ import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
 import org.eclipse.collections.api.factory.Lists;
 
 import java.math.BigDecimal;
@@ -73,7 +74,7 @@ final class ComponentLedger {
     /**
      * The language seed of every derived description identity: {@code T5(component,
      * kind|seed|ordinal)}. A permanent literal, English language's least UUID, which is the first
-     * UUID {@code KernelTerm.ENGLISH_LANGUAGE} carried when the derivation was defined (a proxy
+     * UUID {@code KernelConcept.ENGLISH_LANGUAGE} carried when the derivation was defined (a proxy
      * made from UUIDs keeps them sorted), and never read from a proxy again: a derived identity
      * must not move with how some binding lists a component's UUIDs.
      */
@@ -198,9 +199,9 @@ final class ComponentLedger {
         DescriptionLedger fqn = new DescriptionLedger(
                 UuidT5Generator.get(componentUuid,
                         "fully-qualified-name|" + DESCRIPTION_LANGUAGE_SEED),
-                KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, KernelTerm.ENGLISH_LANGUAGE);
+                KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, KernelConcept.ENGLISH_LANGUAGE);
         fqn.versions.add(new VersionEntry<>(birthStamp, birthFqn));
-        fqn.dialects.add(new VersionEntry<>(birthStamp, KernelTerm.PREFERRED));
+        fqn.dialects.add(new VersionEntry<>(birthStamp, KernelConcept.PREFERRED));
         descriptions.add(0, fqn);
     }
 
@@ -233,13 +234,13 @@ final class ComponentLedger {
      * count of same-type descriptions already declared — stable because the ledger is
      * append-only.
      */
-    void addDescription(EntityProxy.Concept type, String kindKey, String text, Stamp stamp) {
+    void addDescription(ConceptFacade type, String kindKey, String text, Stamp stamp) {
         long ordinal = descriptions.stream().filter(d -> d.type.equals(type)).count();
         UUID descriptionUuid = UuidT5Generator.get(componentUuid,
                 kindKey + "|" + DESCRIPTION_LANGUAGE_SEED + "|" + ordinal);
-        DescriptionLedger description = new DescriptionLedger(descriptionUuid, type, KernelTerm.ENGLISH_LANGUAGE);
+        DescriptionLedger description = new DescriptionLedger(descriptionUuid, type, KernelConcept.ENGLISH_LANGUAGE);
         description.versions.add(new VersionEntry<>(stamp, text));
-        description.dialects.add(new VersionEntry<>(stamp, KernelTerm.PREFERRED));
+        description.dialects.add(new VersionEntry<>(stamp, KernelConcept.PREFERRED));
         descriptions.add(description);
     }
 
@@ -247,7 +248,7 @@ final class ComponentLedger {
      * Resolves the single live description of the given type carrying the given current
      * text — the reference mechanism for revise/retire verbs.
      */
-    DescriptionLedger resolveLive(EntityProxy.Concept type, String currentText, String kindLabel) {
+    DescriptionLedger resolveLive(ConceptFacade type, String currentText, String kindLabel) {
         List<DescriptionLedger> matches = descriptions.stream()
                 .filter(d -> d.type.equals(type))
                 .filter(d -> !d.retired())
@@ -323,7 +324,7 @@ final class ComponentLedger {
     /** The current text of the first live definition description, if any. */
     java.util.Optional<String> currentDefinition() {
         return descriptions.stream()
-                .filter(d -> d.type.equals(KernelTerm.DEFINITION_DESCRIPTION_TYPE))
+                .filter(d -> d.type.equals(KernelConcept.DEFINITION_DESCRIPTION_TYPE))
                 .filter(d -> !d.retired())
                 .findFirst()
                 .map(DescriptionLedger::currentText);
@@ -345,7 +346,7 @@ final class ComponentLedger {
      * derived-identity FQN auto-seed — ingested content carries its FQN description's
      * established identity.
      */
-    void addGenericVersion(EntityProxy.Pattern pattern, PublicId declaredIdentity,
+    void addGenericVersion(PatternFacade pattern, PublicId declaredIdentity,
                            PublicId referencedComponent, Stamp stamp, Object[] fieldValues) {
         if (pattern == null) {
             throw new IllegalArgumentException("A generic semantic requires its pattern: " + birthFqn);
@@ -386,7 +387,7 @@ final class ComponentLedger {
      * On a born component the identity must have been declared, so a mistyped identity
      * still fails at compose time.
      */
-    void retireGenericVersion(EntityProxy.Pattern pattern, PublicId declaredIdentity,
+    void retireGenericVersion(PatternFacade pattern, PublicId declaredIdentity,
                               InactiveStamp stamp, Object[] fieldValues) {
         requireDeclaredIdentity(declaredIdentity);
         GenericSemanticLedger semantic = genericSemantic(declaredIdentity);
@@ -414,7 +415,7 @@ final class ComponentLedger {
         semantic.versions.add(new VersionEntry<>(stamp, values));
     }
 
-    private GenericSemanticLedger openGenericSemantic(EntityProxy.Pattern pattern, PublicId declaredIdentity,
+    private GenericSemanticLedger openGenericSemantic(PatternFacade pattern, PublicId declaredIdentity,
                                                       PublicId referencedComponent) {
         GenericSemanticLedger opened = genericSemantic(declaredIdentity);
         if (opened == null) {
@@ -461,7 +462,7 @@ final class ComponentLedger {
         }
     }
 
-    private void requirePatternAgreement(GenericSemanticLedger semantic, EntityProxy.Pattern pattern) {
+    private void requirePatternAgreement(GenericSemanticLedger semantic, PatternFacade pattern) {
         if (pattern == null || !PublicId.equals(semantic.pattern.publicId(), pattern.publicId())) {
             throw new IllegalArgumentException(
                     "Semantic " + semantic.semanticId + " on " + birthFqn + " belongs to pattern "
@@ -570,8 +571,8 @@ final class ComponentLedger {
      * the content arrives established (ingest), so the derived auto-seed must not add a
      * twin; any other description type leaves the seed in place.
      */
-    private static boolean isExplicitFqnDeclaration(EntityProxy.Pattern pattern, Object[] fieldValues) {
-        if (!PublicId.equals(pattern.publicId(), KernelTerm.DESCRIPTION_PATTERN.publicId())
+    private static boolean isExplicitFqnDeclaration(PatternFacade pattern, Object[] fieldValues) {
+        if (!PublicId.equals(pattern.publicId(), KernelPattern.DESCRIPTION_PATTERN.publicId())
                 || fieldValues.length != 4) {
             return false;
         }
@@ -581,7 +582,7 @@ final class ComponentLedger {
             case null, default -> null;
         };
         return type != null
-                && PublicId.equals(type, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId());
+                && PublicId.equals(type, KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId());
     }
 
     /**
@@ -717,14 +718,14 @@ final class ComponentLedger {
         long descriptionNid = nidFor(description.uuid);
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(PublicIds.of(description.uuid),
-                KernelTerm.DESCRIPTION_PATTERN, componentNid, versions);
+                KernelPattern.DESCRIPTION_PATTERN, componentNid, versions);
         for (VersionEntry<String> version : description.versions) {
             versions.add(SemanticVersionRecordBuilder.builder()
                     .chronology(bootstrap)
                     .stampNid(writeStamp(version.stamp()))
                     .fieldValues(Lists.immutable.of(
                             description.language, version.value(),
-                            KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE, description.type))
+                            KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE, description.type))
                     .build());
         }
         EntityService.get().putEntity(
@@ -737,8 +738,8 @@ final class ComponentLedger {
         UUID dialectUuid = UuidT5Generator.get(description.uuid, "us-dialect");
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(PublicIds.of(dialectUuid),
-                KernelTerm.US_DIALECT_PATTERN, descriptionNid, versions);
-        for (VersionEntry<EntityProxy.Concept> dialect : description.dialects) {
+                KernelPattern.US_DIALECT_PATTERN, descriptionNid, versions);
+        for (VersionEntry<ConceptFacade> dialect : description.dialects) {
             versions.add(SemanticVersionRecordBuilder.builder()
                     .chronology(bootstrap)
                     .stampNid(writeStamp(dialect.stamp()))
@@ -768,7 +769,7 @@ final class ComponentLedger {
         UUID axiomUuid = axiomId.leastUuid();
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(axiomId,
-                KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, componentNid, versions);
+                KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, componentNid, versions);
         for (VersionEntry<Consumer<LogicalExpressionBuilder>> axiom : axiomVersions) {
             UUID stampUuid = axiom.stamp().publicId().leastUuid();
             int[] vertexOrdinal = {0};
@@ -849,7 +850,7 @@ final class ComponentLedger {
      * already holds. Never reverse-resolves a nid to a public id, so it works on
      * persistent providers even when the pattern chronology is not present yet.
      */
-    private static SemanticRecord newSemantic(PublicId semanticId, EntityProxy.Pattern pattern,
+    private static SemanticRecord newSemantic(PublicId semanticId, PatternFacade pattern,
                                               long referencedComponentNid,
                                               RecordListBuilder<SemanticVersionRecord> versions) {
         PublicIdentifierRecord identifier = PublicIdentifierRecord.make(semanticId);
@@ -878,11 +879,11 @@ final class ComponentLedger {
      */
     static final class GenericSemanticLedger {
         final PublicId semanticId;
-        final EntityProxy.Pattern pattern;
+        final PatternFacade pattern;
         final PublicId referencedComponent;
         final List<VersionEntry<List<Object>>> versions = new ArrayList<>();
 
-        GenericSemanticLedger(PublicId semanticId, EntityProxy.Pattern pattern, PublicId referencedComponent) {
+        GenericSemanticLedger(PublicId semanticId, PatternFacade pattern, PublicId referencedComponent) {
             this.semanticId = semanticId;
             this.pattern = pattern;
             this.referencedComponent = referencedComponent;
@@ -891,12 +892,12 @@ final class ComponentLedger {
 
     static final class DescriptionLedger {
         final UUID uuid;
-        final EntityProxy.Concept type;
+        final ConceptFacade type;
         final ConceptFacade language;
         final List<VersionEntry<String>> versions = new ArrayList<>();
-        final List<VersionEntry<EntityProxy.Concept>> dialects = new ArrayList<>();
+        final List<VersionEntry<ConceptFacade>> dialects = new ArrayList<>();
 
-        DescriptionLedger(UUID uuid, EntityProxy.Concept type, ConceptFacade language) {
+        DescriptionLedger(UUID uuid, ConceptFacade type, ConceptFacade language) {
             this.uuid = uuid;
             this.type = type;
             this.language = language;

@@ -20,8 +20,7 @@ import java.util.stream.LongStream;
 
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
-
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -76,7 +75,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.IntStream;
 
-import static dev.ikm.tinkar.terms.KernelTerm.DESCRIPTION_PATTERN;
+import static dev.ikm.tinkar.terms.KernelPattern.DESCRIPTION_PATTERN;
 
 //@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
 public class EntityProvider implements EntityService, EntityLookup, PublicIdService, DefaultDescriptionForNidService, EntityDataRepair {
@@ -145,15 +144,15 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
                         // TODO: use version computer to get version
                         PatternEntityVersion patternEntityVersion = pattern.versions().get(0);
                         SemanticEntityVersion version = (SemanticEntityVersion) descriptionSemantic.versions().get(0);
-                        int indexForMeaning = patternEntityVersion.indexForMeaning(KernelTerm.DESCRIPTION_TYPE);
-                        int indexForText = patternEntityVersion.indexForMeaning(KernelTerm.TEXT_FOR_DESCRIPTION);
+                        int indexForMeaning = patternEntityVersion.indexForMeaning(KernelConcept.DESCRIPTION_TYPE);
+                        int indexForText = patternEntityVersion.indexForMeaning(KernelConcept.TEXT_FOR_DESCRIPTION);
                         if (indexForMeaning == -1 || indexForText == -1) {
                             throw new IllegalStateException("Expecting a pattern entity with description and text fields. Found: " + EntityText.diagnostic(patternEntityVersion));
                         }
-                        if (version.fieldValues().get(indexForMeaning).equals(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE)) {
+                        if (version.fieldValues().get(indexForMeaning).equals(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE)) {
                             return (String) version.fieldValues().get(indexForText);
                         }
-                        if (version.fieldValues().get(indexForMeaning).equals(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
+                        if (version.fieldValues().get(indexForMeaning).equals(KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
                             fqnString = (String) version.fieldValues().get(indexForText);
                         }
                         anyString = (String) version.fieldValues().get(indexForText);

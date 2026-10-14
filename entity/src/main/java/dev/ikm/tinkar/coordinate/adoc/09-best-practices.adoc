@@ -37,7 +37,7 @@ public class AppCoordinates {
     public static ViewCoordinateRecord production() {
         return ViewCoordinateRecord.make(
             Coordinates.Stamp.DevelopmentLatestActiveOnly()
-                .withPath(KernelTerm.MASTER_PATH),
+                .withPath(KernelConcept.MASTER_PATH),
             Coordinates.Language.UsEnglishRegularName(),
             Coordinates.Logic.ElPlusPlus(),
             Coordinates.Navigation.inferred(),
@@ -53,10 +53,10 @@ public class AppCoordinates {
             Coordinates.Navigation.stated(),
             EditCoordinateRecord.make(
                 authorNid,
-                KernelTerm.SOLOR_OVERLAY_MODULE.nid(),
-                KernelTerm.SOLOR_OVERLAY_MODULE.nid(),
-                KernelTerm.DEVELOPMENT_PATH.nid(),
-                KernelTerm.DEVELOPMENT_PATH.nid()
+                KernelConcept.SOLOR_OVERLAY_MODULE.nid(),
+                KernelConcept.SOLOR_OVERLAY_MODULE.nid(),
+                KernelConcept.DEVELOPMENT_PATH.nid(),
+                KernelConcept.DEVELOPMENT_PATH.nid()
             )
         );
     }
@@ -93,7 +93,7 @@ public static ViewCoordinateRecord clinicalReview() {
             StateSet.ACTIVE_AND_INACTIVE,  // See inactive for review
             StampPositionRecord.make(
                 Long.MAX_VALUE,
-                KernelTerm.DEVELOPMENT_PATH.nid()
+                KernelConcept.DEVELOPMENT_PATH.nid()
             )
         ),
         // ... rest of configuration
@@ -275,21 +275,21 @@ List<LanguageCoordinate> languages = List.of(
 ----
 // Clinical display: Regular name first
 LanguageCoordinate clinical = LanguageCoordinateRecord.make(
-    KernelTerm.ENGLISH_LANGUAGE.nid(),
-    List.of(KernelTerm.US_DIALECT_PATTERN.nid()),
+    KernelConcept.ENGLISH_LANGUAGE.nid(),
+    List.of(KernelPattern.US_DIALECT_PATTERN.nid()),
     List.of(
-        KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-        KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
+        KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+        KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
     )
 );
 
 // Technical/debugging: FSN first
 LanguageCoordinate technical = LanguageCoordinateRecord.make(
-    KernelTerm.ENGLISH_LANGUAGE.nid(),
-    List.of(KernelTerm.US_DIALECT_PATTERN.nid()),
+    KernelConcept.ENGLISH_LANGUAGE.nid(),
+    List.of(KernelPattern.US_DIALECT_PATTERN.nid()),
     List.of(
-        KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-        KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
+        KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+        KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid()
     )
 );
 ----
@@ -323,7 +323,7 @@ LogicCoordinate authoring = LogicCoordinateRecord.make(
     statedPatternNid,
     inferredPatternNid,
     classifierNid,
-    KernelTerm.STATED_PREMISE_TYPE.nid()  // What author created
+    KernelConcept.STATED_PREMISE_TYPE.nid()  // What author created
 );
 
 // Querying/browsing: Inferred axioms
@@ -331,7 +331,7 @@ LogicCoordinate querying = LogicCoordinateRecord.make(
     statedPatternNid,
     inferredPatternNid,
     classifierNid,
-    KernelTerm.INFERRED_PREMISE_TYPE.nid()  // What classifier computed
+    KernelConcept.INFERRED_PREMISE_TYPE.nid()  // What classifier computed
 );
 ----
 
@@ -365,8 +365,8 @@ NavigationCoordinate authoring = Coordinates.Navigation.stated();
 // Comparison: Both
 NavigationCoordinate both = NavigationCoordinateRecord.make(
     IntIds.set.of(
-        KernelTerm.INFERRED_NAVIGATION.nid(),
-        KernelTerm.STATED_NAVIGATION_PATTERN.nid()
+        KernelConcept.INFERRED_NAVIGATION.nid(),
+        KernelPattern.STATED_NAVIGATION_PATTERN.nid()
     ),
     StateSet.ACTIVE_ONLY,
     true,
@@ -434,8 +434,8 @@ public EditCoordinateRecord getEditCoordinateForUser(User user) {
         user.getConceptNid(),     // Proper attribution
         user.getDefaultModule(),
         user.getDefaultModule(),
-        KernelTerm.DEVELOPMENT_PATH.nid(),
-        KernelTerm.DEVELOPMENT_PATH.nid()
+        KernelConcept.DEVELOPMENT_PATH.nid(),
+        KernelConcept.DEVELOPMENT_PATH.nid()
     );
 }
 
@@ -456,8 +456,8 @@ EditCoordinateRecord coreEdit = EditCoordinateRecord.make(
     authorNid,
     MyTerms.CORE_MODULE.nid(),  // New content goes to core
     MyTerms.CORE_MODULE.nid(),
-    KernelTerm.DEVELOPMENT_PATH.nid(),
-    KernelTerm.DEVELOPMENT_PATH.nid()
+    KernelConcept.DEVELOPMENT_PATH.nid(),
+    KernelConcept.DEVELOPMENT_PATH.nid()
 );
 
 // Extension development
@@ -465,8 +465,8 @@ EditCoordinateRecord extEdit = EditCoordinateRecord.make(
     authorNid,
     extensionModuleNid,  // New content goes to extension
     coreModuleNid,       // Can modularize to core
-    KernelTerm.DEVELOPMENT_PATH.nid(),
-    KernelTerm.MASTER_PATH.nid()
+    KernelConcept.DEVELOPMENT_PATH.nid(),
+    KernelConcept.MASTER_PATH.nid()
 );
 ----
 
@@ -481,8 +481,8 @@ EditCoordinateRecord devEdit = EditCoordinateRecord.make(
     authorNid,
     moduleNid,
     moduleNid,
-    KernelTerm.DEVELOPMENT_PATH.nid(),  // Create on dev
-    KernelTerm.DEVELOPMENT_PATH.nid()   // No promotion
+    KernelConcept.DEVELOPMENT_PATH.nid(),  // Create on dev
+    KernelConcept.DEVELOPMENT_PATH.nid()   // No promotion
 );
 
 // Release workflow
@@ -490,8 +490,8 @@ EditCoordinateRecord releaseEdit = EditCoordinateRecord.make(
     authorNid,
     moduleNid,
     moduleNid,
-    KernelTerm.DEVELOPMENT_PATH.nid(),  // Create on dev
-    KernelTerm.MASTER_PATH.nid()        // Promote to master
+    KernelConcept.DEVELOPMENT_PATH.nid(),  // Create on dev
+    KernelConcept.MASTER_PATH.nid()        // Promote to master
 );
 ----
 
@@ -662,7 +662,7 @@ public class TestCoordinates {
                 StateSet.ACTIVE_AND_INACTIVE,
                 StampPositionRecord.make(
                     Long.MAX_VALUE,
-                    KernelTerm.DEVELOPMENT_PATH.nid()
+                    KernelConcept.DEVELOPMENT_PATH.nid()
                 )
             ),
             Coordinates.Language.UsEnglishRegularName(),

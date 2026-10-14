@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
-import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler;
@@ -27,6 +26,7 @@ import dev.ikm.tinkar.integration.helper.ChangeSetManifest;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.KernelPattern;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -89,7 +89,7 @@ class AxiomDecompilerIT {
         // section emitter's own compile-and-load IT (#869 verification step).
         Function<ConceptFacade, String> reference = concept -> {
             BindingReferenceResolver.Resolved resolved = resolver.resolve(concept);
-            assertTrue(resolved.sourceExpression().startsWith("KernelTerm.")
+            assertTrue(resolved.sourceExpression().startsWith("KernelConcept.")
                             || resolved.sourceExpression().startsWith("EntityProxy.Concept.make("),
                     "unexpected source expression form: " + resolved.sourceExpression());
             totalReferences[0]++;
@@ -102,7 +102,7 @@ class AxiomDecompilerIT {
             return resolved.sourceExpression();
         };
 
-        calculator.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+        calculator.forEachSemanticVersionOfPattern(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                 (semanticVersion, patternVersion) -> {
                     DiTreeEntity tree = (DiTreeEntity) semanticVersion.fieldValues().get(0);
                     Result result = AxiomDecompiler.decompile(tree);
@@ -143,7 +143,7 @@ class AxiomDecompilerIT {
         // are not the simple isA shape — existential roles, a property set, an empty And —
         // decompile to their full builder expressions; none needs hand authoring.
         long statedDefinitions = ChangeSetManifest.of(TestConstants.PB_STARTER_DATA)
-                .semanticsOf(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN);
+                .semanticsOf(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN);
         assertEquals(statedDefinitions, simpleIsACount[0] + fullExpressionCount[0],
                 "every one of the set's " + statedDefinitions + " stated definitions decompiles");
         assertTrue(fullExpressionCount[0] > 0,

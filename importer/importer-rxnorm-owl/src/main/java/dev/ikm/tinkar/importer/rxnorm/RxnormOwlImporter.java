@@ -31,8 +31,7 @@ import dev.ikm.tinkar.importer.ImportReport;
 import dev.ikm.tinkar.importer.ImportSource;
 import dev.ikm.tinkar.importer.KnowledgeImporter;
 import dev.ikm.tinkar.importer.StoreWriter;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.*;
 import org.eclipse.collections.api.factory.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,9 +124,9 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
         source.requireExists();
         Instant start = Instant.now();
         UUID namespace = source.uuidOption("namespace").orElse(UuidUtil.SNOMED_NAMESPACE);
-        EntityProxy.Concept path = source.uuidOption("path").map(uuid -> EntityProxy.Concept.make(PublicIds.of(uuid)))
-                .orElse(KernelTerm.DEVELOPMENT_PATH);
-        EntityProxy.Concept author = EntityProxy.Concept.make("RxNorm Author", UuidT5Generator.get(namespace, "RxNorm Author"));
+        ConceptFacade path = source.uuidOption("path").<ConceptFacade>map(uuid -> EntityProxy.Concept.make(PublicIds.of(uuid)))
+                .orElse(KernelConcept.DEVELOPMENT_PATH);
+        ConceptFacade author = EntityProxy.Concept.make("RxNorm Author", UuidT5Generator.get(namespace, "RxNorm Author"));
         Map<String, Long> details = new LinkedHashMap<>();
         StoreWriter.Tally before = writer.counts().tally();
 
@@ -156,7 +155,7 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
             try {
                 // Only the concepts this import wrote axioms for: SNOMED CT's beneath are left alone.
                 new Rf2OwlToLogicAxiomTransformer(new Transaction("RxNorm OWL to logic"),
-                        KernelTerm.OWL_AXIOM_SYNTAX_PATTERN, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                        KernelPattern.OWL_AXIOM_SYNTAX_PATTERN, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                         author.nid(), RXNORM_MODULE.nid(), path.nid(), classWriter.axiomConcepts::contains).call();
             } catch (Exception e) {
                 throw new ImportException("Transforming RxNorm OWL axioms failed", e);
@@ -166,12 +165,12 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
                 Duration.between(start, Instant.now()));
     }
 
-    private static void writeAuthor(StoreWriter writer, Stamp stamp, EntityProxy.Concept author) {
+    private static void writeAuthor(StoreWriter writer, Stamp stamp, ConceptFacade author) {
         long authorNid = writer.concept(stamp, author.publicId());
         UUID authorUuid = author.publicId().leastUuid();
         writer.describe(stamp, authorNid, UuidT5Generator.get(authorUuid, "fqn"), "RxNorm Author",
-                KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE);
-        writer.statedParent(stamp, author.publicId(), KernelTerm.USER.publicId());
+                KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE);
+        writer.statedParent(stamp, author.publicId(), KernelConcept.USER.publicId());
     }
 
     /** The starter data, loaded from this module; components already present are merged. */
@@ -271,8 +270,8 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
                     : PublicIds.of(UuidT5Generator.get(UuidUtil.SNOMED_NAMESPACE, rxClass.snomedCtId), rxnormUuid);
             long conceptNid = writer.concept(stamp, conceptId);
             if (rxClass.labelOnly()) {
-                describe(conceptNid, rxnormUuid, rxClass.rdfsLabel, "LDESC", KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
-                        KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, KernelTerm.PREFERRED);
+                describe(conceptNid, rxnormUuid, rxClass.rdfsLabel, "LDESC", KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE,
+                        KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, KernelConcept.PREFERRED);
                 identifier(conceptNid, rxnormUuid, RXCUI_IDENTIFIER, rxClass.rxCuiOrIri(), "RXID", stamp);
                 if (!rxClass.equivalentClasses.isEmpty()) {
                     return axiom(conceptNid, rxnormUuid, rxClass.equivalentClasses, "AXIOM");
@@ -283,13 +282,13 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
             // preferred synonym; RxNorm's names join it as acceptable regular names, so one concept
             // never carries two fully qualified names or two preferred synonyms.
             boolean merged = conceptId.uuidCount() > 1;
-            describe(conceptNid, rxnormUuid, rxClass.rxnormName, "DESC", KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
-                    merged ? KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE : KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE,
-                    merged ? ACCEPTABLE : KernelTerm.PREFERRED);
-            describe(conceptNid, rxnormUuid, rxClass.rxnormSynonym, "SDESC", KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
-                    KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, merged ? ACCEPTABLE : KernelTerm.PREFERRED);
-            describe(conceptNid, rxnormUuid, rxClass.prescribableSynonym, "PSDESC", KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
-                    KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, ACCEPTABLE);
+            describe(conceptNid, rxnormUuid, rxClass.rxnormName, "DESC", KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE,
+                    merged ? KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE : KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE,
+                    merged ? ACCEPTABLE : KernelConcept.PREFERRED);
+            describe(conceptNid, rxnormUuid, rxClass.rxnormSynonym, "SDESC", KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE,
+                    KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE, merged ? ACCEPTABLE : KernelConcept.PREFERRED);
+            describe(conceptNid, rxnormUuid, rxClass.prescribableSynonym, "PSDESC", KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE,
+                    KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE, ACCEPTABLE);
             identifiers(conceptNid, rxnormUuid, rxClass);
             annotations(conceptNid, rxnormUuid, rxClass);
             return rxClass.equivalentClasses.isEmpty() ? 0 : axiom(conceptNid, rxnormUuid, rxClass.equivalentClasses, "AXIOM");
@@ -304,21 +303,21 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
         }
 
         private void describe(long conceptNid, UUID conceptUuid, String text, String suffix,
-                              EntityProxy.Concept caseSignificance, EntityProxy.Concept type, EntityProxy.Concept usAcceptability) {
+                              ConceptFacade caseSignificance, ConceptFacade type, ConceptFacade usAcceptability) {
             if (text.isEmpty()) {
                 return;
             }
             PublicId descriptionId = id(conceptUuid, text, suffix);
-            long descriptionNid = writer.semantic(stamp, descriptionId, KernelTerm.DESCRIPTION_PATTERN, conceptNid,
-                    Lists.immutable.of(KernelTerm.ENGLISH_LANGUAGE, text, caseSignificance, type));
+            long descriptionNid = writer.semantic(stamp, descriptionId, KernelPattern.DESCRIPTION_PATTERN, conceptNid,
+                    Lists.immutable.of(KernelConcept.ENGLISH_LANGUAGE, text, caseSignificance, type));
             writer.dialect(stamp, descriptionNid, UuidT5Generator.get(descriptionId.leastUuid(), "us-dialect"),
-                    KernelTerm.US_DIALECT_PATTERN, usAcceptability);
+                    KernelPattern.US_DIALECT_PATTERN, usAcceptability);
         }
 
         private void identifiers(long conceptNid, UUID conceptUuid, RxnormClass rxClass) {
             if (!rxClass.snomedCtId.isEmpty()) {
                 writer.semantic(stamp, PublicIds.of(UuidT5Generator.get(UuidUtil.SNOMED_NAMESPACE, rxClass.snomedCtId + "snomed")),
-                        KernelTerm.IDENTIFIER_PATTERN, conceptNid, Lists.immutable.of(SNOMED_IDENTIFIER, rxClass.snomedCtId));
+                        KernelPattern.IDENTIFIER_PATTERN, conceptNid, Lists.immutable.of(SNOMED_IDENTIFIER, rxClass.snomedCtId));
             }
             identifier(conceptNid, conceptUuid, RXCUI_IDENTIFIER, rxClass.rxCuiOrIri(), "RXID", stamp);
             identifier(conceptNid, conceptUuid, VUID_IDENTIFIER, rxClass.vuid, "VUID", stamp);
@@ -326,10 +325,10 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
                     endDate.compareTo(releaseMonth) < 0 ? retired : stamp));
         }
 
-        private void identifier(long conceptNid, UUID conceptUuid, EntityProxy.Concept source, String value, String suffix,
+        private void identifier(long conceptNid, UUID conceptUuid, ConceptFacade source, String value, String suffix,
                                 Stamp under) {
             if (!value.isEmpty()) {
-                writer.semantic(under, id(conceptUuid, value, suffix), KernelTerm.IDENTIFIER_PATTERN, conceptNid,
+                writer.semantic(under, id(conceptUuid, value, suffix), KernelPattern.IDENTIFIER_PATTERN, conceptNid,
                         Lists.immutable.of(source, value));
             }
         }
@@ -337,7 +336,7 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
         private void annotations(long conceptNid, UUID conceptUuid, RxnormClass rxClass) {
             if (!rxClass.qualitativeDistinction.isEmpty()) {
                 writer.semantic(stamp, id(conceptUuid, rxClass.qualitativeDistinction, "QD"), QUALITATIVE_DISTINCTION, conceptNid,
-                        Lists.immutable.of(rxClass.qualitativeDistinction, KernelTerm.ENGLISH_LANGUAGE));
+                        Lists.immutable.of(rxClass.qualitativeDistinction, KernelConcept.ENGLISH_LANGUAGE));
             }
             if (!rxClass.quantity.isEmpty()) {
                 writer.semantic(stamp, id(conceptUuid, rxClass.quantity, "QUANTITY"), QUANTITY, conceptNid,
@@ -345,26 +344,26 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
             }
             if (!rxClass.schedule.isEmpty()) {
                 writer.semantic(stamp, id(conceptUuid, rxClass.schedule, "SCHEDULE"), SCHEDULE, conceptNid,
-                        Lists.immutable.of(rxClass.schedule, KernelTerm.ENGLISH_LANGUAGE));
+                        Lists.immutable.of(rxClass.schedule, KernelConcept.ENGLISH_LANGUAGE));
             }
             drug(conceptNid, conceptUuid, rxClass.humanDrug, "HD", HUMAN_DRUG);
             drug(conceptNid, conceptUuid, rxClass.vetDrug, "VD", VET_DRUG);
             for (String synonym : rxClass.tallmanSynonyms) {
-                describe(conceptNid, conceptUuid, synonym, "TSDESC", KernelTerm.DESCRIPTION_CASE_SENSITIVE,
-                        KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, ACCEPTABLE);
+                describe(conceptNid, conceptUuid, synonym, "TSDESC", KernelConcept.DESCRIPTION_CASE_SENSITIVE,
+                        KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE, ACCEPTABLE);
                 writer.semantic(stamp, id(conceptUuid, synonym, "Tallman"), TALLMAN_SYNONYM, conceptNid,
-                        Lists.immutable.of(KernelTerm.PREFERRED));
+                        Lists.immutable.of(KernelConcept.PREFERRED));
             }
         }
 
-        private void drug(long conceptNid, UUID conceptUuid, String value, String suffix, EntityProxy.Pattern pattern) {
+        private void drug(long conceptNid, UUID conceptUuid, String value, String suffix, PatternFacade pattern) {
             if (value.isEmpty()) {
                 return;
             }
             UUID valueUuid = UuidT5Generator.get(namespace, value);
             long valueNid = writer.concept(stamp, PublicIds.of(valueUuid));
             writer.describe(stamp, valueNid, UuidT5Generator.get(valueUuid, "fqn"), value,
-                    KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE);
+                    KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE);
             writer.semantic(stamp, id(conceptUuid, value, suffix), pattern, conceptNid,
                     Lists.immutable.of(EntityProxy.Concept.make(PublicIds.of(valueUuid))));
         }
@@ -373,7 +372,7 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
         final java.util.Set<Long> axiomConcepts = new java.util.HashSet<>();
 
         private long axiom(long conceptNid, UUID conceptUuid, String axiom, String suffix) {
-            writer.semantic(stamp, id(conceptUuid, axiom, suffix), KernelTerm.OWL_AXIOM_SYNTAX_PATTERN, conceptNid,
+            writer.semantic(stamp, id(conceptUuid, axiom, suffix), KernelPattern.OWL_AXIOM_SYNTAX_PATTERN, conceptNid,
                     Lists.immutable.of(RxnormClass.withPublicIds(namespace, axiom)));
             axiomConcepts.add(conceptNid);
             return 1;

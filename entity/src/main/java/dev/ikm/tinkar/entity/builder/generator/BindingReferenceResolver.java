@@ -18,7 +18,8 @@ package dev.ikm.tinkar.entity.builder.generator;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -32,7 +33,7 @@ import java.util.UUID;
 /**
  * Resolves an established identity to the Java source expression the ledger generator
  * (IKE-Network/ike-issues#869) should emit for it: a binding constant, such as
- * {@code KernelTerm.CONSTANT_NAME}, when one of the resolver's binding classes binds the
+ * {@code KernelConcept.CONSTANT_NAME}, when one of the resolver's binding classes binds the
  * identity, or a declared-identity expression otherwise. Generated source then names the
  * kernel the way hand-authored code does, and states every other identity in full.
  */
@@ -47,17 +48,17 @@ public final class BindingReferenceResolver {
     }
 
     /**
-     * Builds a resolver over the kernel ({@link KernelTerm}).
+     * Builds a resolver over the kernel ({@link KernelConcept} and {@link KernelPattern}).
      *
      * @return the built resolver
      */
     public static BindingReferenceResolver build() {
-        return build(KernelTerm.class);
+        return build(KernelConcept.class, KernelPattern.class);
     }
 
     /**
      * Builds a resolver by reflecting over every public static {@link EntityFacade} field
-     * the binding classes declare, once. Every UUID of every constant is registered, so a
+     * the binding classes declare, once: an enum's constants among them. Every UUID of every constant is registered, so a
      * lookup by any of a component's UUIDs finds its constant. Classes are taken in the
      * order given and fields in name order within each, so when two constants bind one
      * component, which name wins is deterministic across runs.
@@ -101,7 +102,7 @@ public final class BindingReferenceResolver {
 
     /**
      * The Java source expression for an established identity: a binding constant, such as
-     * {@code KernelTerm.NAME}, when one binds it, or a declared-identity fallback otherwise — an
+     * {@code KernelConcept.NAME}, when one binds it, or a declared-identity fallback otherwise — an
      * {@code EntityProxy.Concept.make(...)} or {@code EntityProxy.Pattern.make(...)}
      * expression (matching the facade's own kind), directly usable anywhere that kind
      * of facade is expected (the kernel binds only what the engine itself names, so most
@@ -165,7 +166,7 @@ public final class BindingReferenceResolver {
      * the Java source expression to emit either way.
      *
      * @param isBindingConstant {@code true} when {@link #sourceExpression()} names a
-     *                          binding constant, such as {@code KernelTerm.NAME}
+     *                          binding constant, such as {@code KernelConcept.NAME}
      * @param sourceExpression  the Java source expression to embed
      */
     public record Resolved(boolean isBindingConstant, String sourceExpression) {

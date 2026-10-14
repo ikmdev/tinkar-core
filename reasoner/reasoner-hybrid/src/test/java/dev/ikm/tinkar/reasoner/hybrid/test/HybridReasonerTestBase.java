@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid.test;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +42,7 @@ public abstract class HybridReasonerTestBase extends SnomedTestBase {
 		ViewCalculator viewCalculator = getViewCalculator();
 		ElkSnomedData data = new ElkSnomedData();
 		ElkSnomedDataBuilder builder = new ElkSnomedDataBuilder(viewCalculator,
-				KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, data);
+				KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, data);
 		builder.build();
 		return data;
 	}
@@ -51,8 +51,8 @@ public abstract class HybridReasonerTestBase extends SnomedTestBase {
 		ReasonerService rs = PluggableService.load(ReasonerService.class).stream()
 				.filter(x -> x.type().getSimpleName().equals(HybridReasonerService.class.getSimpleName())) //
 				.findFirst().get().get();
-		rs.init(getViewCalculator(), KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-				KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+		rs.init(getViewCalculator(), KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+				KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
 		return rs;
 	}
 

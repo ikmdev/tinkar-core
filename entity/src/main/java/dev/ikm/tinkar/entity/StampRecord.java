@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
@@ -59,7 +59,7 @@ public record StampRecord(
     public static StampRecord nonExistentStamp() {
         if (nonExistentStamp == null) {
             nonExistentStamp = StampRecord.make(PrimitiveData.NONEXISTENT_STAMP_UUID, State.PRIMORDIAL,
-                    PrimitiveData.PRE_INCEPTION_TIME, KernelTerm.AUTHOR_FOR_VERSION, KernelTerm.UNINITIALIZED_COMPONENT, KernelTerm.UNINITIALIZED_COMPONENT);
+                    PrimitiveData.PRE_INCEPTION_TIME, KernelConcept.AUTHOR_FOR_VERSION.publicId(), KernelConcept.UNINITIALIZED_COMPONENT.publicId(), KernelConcept.UNINITIALIZED_COMPONENT.publicId());
         }
         return nonExistentStamp;
     }

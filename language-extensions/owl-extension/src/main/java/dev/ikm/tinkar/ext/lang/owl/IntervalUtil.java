@@ -1,6 +1,6 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import java.math.BigDecimal;
 
 import org.slf4j.Logger;
@@ -17,24 +17,24 @@ public class IntervalUtil {
 	@SuppressWarnings("unused")
 	private static final Logger LOG = LoggerFactory.getLogger(IntervalUtil.class);
 
-	public static long getNid(EntityVertex node, dev.ikm.tinkar.terms.EntityProxy.Concept concept) {
+	public static long getNid(EntityVertex node, ConceptFacade concept) {
 		ConceptFacade cf = node.propertyFast(concept);
 		return cf.nid();
 	}
 
 	public static String getIntervalRoleString(ViewCalculator vc, EntityVertex node) {
-		long role_type_nid = getNid(node, KernelTerm.INTERVAL_ROLE_TYPE);
+		long role_type_nid = getNid(node, KernelConcept.INTERVAL_ROLE_TYPE);
 		Interval interval = makeInterval(node);
 		return vc.getPreferredDescriptionTextWithFallbackOrNid(role_type_nid) + " \u2192 " + interval.toString(false)
 				+ " " + vc.getPreferredDescriptionTextWithFallbackOrNid((int) interval.getUnitOfMeasure().getId());
 	}
 
 	public static Interval makeInterval(EntityVertex node) {
-		BigDecimal lowerBound = node.propertyFast(KernelTerm.INTERVAL_LOWER_BOUND);
-		boolean lowerOpen = node.propertyFast(KernelTerm.LOWER_BOUND_OPEN);
-		BigDecimal upperBound = node.propertyFast(KernelTerm.INTERVAL_UPPER_BOUND);
-		boolean upperOpen = node.propertyFast(KernelTerm.UPPER_BOUND_OPEN);
-		long unit_nid = getNid(node, KernelTerm.UNIT_OF_MEASURE);
+		BigDecimal lowerBound = node.propertyFast(KernelConcept.INTERVAL_LOWER_BOUND);
+		boolean lowerOpen = node.propertyFast(KernelConcept.LOWER_BOUND_OPEN);
+		BigDecimal upperBound = node.propertyFast(KernelConcept.INTERVAL_UPPER_BOUND);
+		boolean upperOpen = node.propertyFast(KernelConcept.UPPER_BOUND_OPEN);
+		long unit_nid = getNid(node, KernelConcept.UNIT_OF_MEASURE);
 		return new Interval(lowerBound, lowerOpen, upperBound, upperOpen, new Concept(unit_nid));
 	}
 

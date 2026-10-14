@@ -1,6 +1,6 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.elk.snomed.interval.Interval;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRole;
@@ -62,9 +62,9 @@ public class OwlElToLogicalExpression {
 			exprs.add(builder.ConceptAxiom(sup.getId()));
 		}
 		if (role_type.isTransitive())
-			exprs.add(builder.ConceptAxiom(KernelTerm.TRANSITIVE_PROPERTY));
+			exprs.add(builder.ConceptAxiom(KernelConcept.TRANSITIVE_PROPERTY));
 		if (role_type.isReflexive())
-			exprs.add(builder.ConceptAxiom(KernelTerm.REFLEXIVE_PROPERTY));
+			exprs.add(builder.ConceptAxiom(KernelConcept.REFLEXIVE_PROPERTY));
 		if (role_type.getChained() != null) {
 			ImmutableList<ConceptFacade> chain = Lists.immutable.of(getConceptFacade(role_type.getId()),
 					getConceptFacade(role_type.getChained().getId()));
@@ -106,7 +106,7 @@ public class OwlElToLogicalExpression {
 		for (RoleGroup rg : def.getRoleGroups()) {
 			List<Atom> roles = buildRoles(rg.getRoles());
 			roles.addAll(buildConcreteRoles(rg.getConcreteRoles()));
-			exprs.add(builder.SomeRole(KernelTerm.ROLE_GROUP, builder.And(toArray(roles))));
+			exprs.add(builder.SomeRole(KernelConcept.ROLE_GROUP, builder.And(toArray(roles))));
 		}
 		And expr = builder.And(toArray(exprs));
 		if (gci) {
@@ -148,7 +148,7 @@ public class OwlElToLogicalExpression {
 				case String -> role.getValue();
 				};
 				exprs.add(builder.FeatureAxiom(getConceptFacade(role.getConcreteRoleType().getId()),
-						KernelTerm.EQUAL_TO, value));
+						KernelConcept.EQUAL_TO, value));
 			}
 		}
 		return exprs;

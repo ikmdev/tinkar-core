@@ -28,12 +28,12 @@
  * <dl>
  * <dt><strong>Natural Language</strong></dt>
  * <dd>Specifies the primary human language (e.g., English, Spanish, French). The language concept
- * NID identifies which language descriptions should be preferred. Special value {@code KernelTerm.LANGUAGE}
+ * NID identifies which language descriptions should be preferred. Special value {@code KernelConcept.LANGUAGE}
  * acts as a wildcard, matching any language.</dd>
  *
  * <dt><strong>Description Patterns</strong></dt>
  * <dd>Defines which description patterns are acceptable for retrieval. Patterns specify the
- * structure and semantics of descriptions. Most commonly uses {@code KernelTerm.DESCRIPTION_PATTERN},
+ * structure and semantics of descriptions. Most commonly uses {@code KernelPattern.DESCRIPTION_PATTERN},
  * but custom patterns can be specified for specialized vocabularies.</dd>
  *
  * <dt><strong>Description Types</strong></dt>
@@ -179,14 +179,14 @@
  * <pre>{@code
  * // Custom coordinate preferring technical definitions in US English
  * LanguageCoordinateRecord technical = LanguageCoordinateRecord.make(
- *     KernelTerm.ENGLISH_LANGUAGE.nid(),
- *     LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+ *     KernelConcept.ENGLISH_LANGUAGE.nid(),
+ *     LongIds.list.of(KernelPattern.DESCRIPTION_PATTERN.nid()),
  *     LongIds.list.of(
- *         KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid(),      // Prefer definitions
- *         KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
- *         KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
+ *         KernelConcept.DEFINITION_DESCRIPTION_TYPE.nid(),      // Prefer definitions
+ *         KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+ *         KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid()
  *     ),
- *     LongIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid()),
+ *     LongIds.list.of(KernelPattern.US_DIALECT_PATTERN.nid()),
  *     LongIds.list.of(MyTerms.TECHNICAL_MODULE.nid())      // Custom module priority
  * );
  * }</pre>

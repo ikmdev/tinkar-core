@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid.test;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.nio.file.Files;
@@ -109,8 +109,8 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 
 	public ReasonerService initReasonerService() {
 		ReasonerService rs = new IntervalReasonerService();
-		rs.init(getViewCalculator(), KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-				KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+		rs.init(getViewCalculator(), KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+				KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
 		return rs;
 	}
 

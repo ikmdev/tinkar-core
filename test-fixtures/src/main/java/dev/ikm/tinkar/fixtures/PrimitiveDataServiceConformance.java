@@ -40,6 +40,7 @@ import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.primitive.LongLists;
 import org.eclipse.collections.api.factory.primitive.LongLists;
@@ -369,7 +370,7 @@ public abstract class PrimitiveDataServiceConformance {
     @Test
     void theBindingPatternsHaveNoSemantics() {
         makeWorld();
-        for (EntityProxy.Pattern binding : List.of(EntityBinding.Concept.pattern(), EntityBinding.Stamp.pattern(),
+        for (PatternFacade binding : List.of(EntityBinding.Concept.pattern(), EntityBinding.Stamp.pattern(),
                 EntityBinding.Pattern.pattern())) {
             long patternNid = EntityService.get().nidForPattern(binding.publicId());
             List<Long> given = new java.util.ArrayList<>();

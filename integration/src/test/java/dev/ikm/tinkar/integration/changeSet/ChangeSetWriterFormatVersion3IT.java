@@ -35,7 +35,7 @@ import dev.ikm.tinkar.schema.PublicId;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.schema.VertexUUID;
 import dev.ikm.tinkar.terms.EntityBinding;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -84,7 +84,7 @@ class ChangeSetWriterFormatVersion3IT {
         // Active state, its semantics, and the stamps of all their versions; the concept twice,
         // as the writer sees a component again when a later commit changes it.
         List<Entity<?>> entities = new ArrayList<>();
-        Entity<?> activeState = EntityHandle.get(KernelTerm.ACTIVE_STATE).expectEntity();
+        Entity<?> activeState = EntityHandle.get(KernelConcept.ACTIVE_STATE).expectEntity();
         entities.add(activeState);
         EntityService.get().semanticsForComponent(activeState.nid()).forEach(entities::add);
         List<Entity<?>> stamps = new ArrayList<>();

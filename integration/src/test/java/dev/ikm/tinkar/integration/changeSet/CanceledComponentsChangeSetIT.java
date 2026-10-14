@@ -40,10 +40,7 @@ import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.terms.State;
+import dev.ikm.tinkar.terms.*;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.BeforeAll;
@@ -167,11 +164,11 @@ class CanceledComponentsChangeSetIT {
             try {
                 TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
                 StampEntity live = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(),
-                        KernelTerm.USER.publicId(), KernelTerm.PRIMORDIAL_MODULE.publicId(), KernelTerm.DEVELOPMENT_PATH.publicId());
+                        KernelConcept.USER.publicId(), KernelConcept.PRIMORDIAL_MODULE.publicId(), KernelConcept.DEVELOPMENT_PATH.publicId());
                 EntityService.get().putEntity(live);
                 // A canceled stamp as a store holds one: canceled state, no time.
                 StampEntity canceled = StampRecord.make(CANCELED_STAMP, State.CANCELED, Long.MIN_VALUE,
-                        KernelTerm.USER.publicId(), KernelTerm.PRIMORDIAL_MODULE.publicId(), KernelTerm.DEVELOPMENT_PATH.publicId());
+                        KernelConcept.USER.publicId(), KernelConcept.PRIMORDIAL_MODULE.publicId(), KernelConcept.DEVELOPMENT_PATH.publicId());
                 EntityService.get().putEntity(canceled);
 
                 // A concept with a live version and a canceled one.
@@ -188,18 +185,18 @@ class CanceledComponentsChangeSetIT {
                 ImmutableList<Object> fields = Lists.immutable.of(
                         EntityProxy.Concept.make(neverWritten),
                         "A description whose language was never written",
-                        EntityProxy.Concept.make(KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid()),
-                        EntityProxy.Concept.make(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
-                SemanticRecord referring = SemanticRecord.build(REFERRING_SEMANTIC, KernelTerm.DESCRIPTION_PATTERN.nid(),
+                        EntityProxy.Concept.make(KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE.nid()),
+                        EntityProxy.Concept.make(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
+                SemanticRecord referring = SemanticRecord.build(REFERRING_SEMANTIC, KernelPattern.DESCRIPTION_PATTERN.nid(),
                         liveConcept.nid(), live.lastVersion(), fields);
                 EntityService.get().putEntity(referring);
                 // And a description whose language is the canceled-only concept.
                 ImmutableList<Object> fieldsToCanceled = Lists.immutable.of(
                         EntityProxy.Concept.make(canceledConcept.nid()),
                         "A description whose language is canceled",
-                        EntityProxy.Concept.make(KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid()),
-                        EntityProxy.Concept.make(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
-                EntityService.get().putEntity(SemanticRecord.build(REFERRING_TO_CANCELED, KernelTerm.DESCRIPTION_PATTERN.nid(),
+                        EntityProxy.Concept.make(KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE.nid()),
+                        EntityProxy.Concept.make(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
+                EntityService.get().putEntity(SemanticRecord.build(REFERRING_TO_CANCELED, KernelPattern.DESCRIPTION_PATTERN.nid(),
                         liveConcept.nid(), live.lastVersion(), fieldsToCanceled));
 
                 File changeSet = new File(in.getProperty(CHANGESET_FILE));

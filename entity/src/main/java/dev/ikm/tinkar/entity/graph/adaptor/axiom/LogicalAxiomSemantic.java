@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.terms.ConceptFacade;
 
@@ -25,21 +25,21 @@ import dev.ikm.tinkar.terms.ConceptFacade;
  * TODO: Not sure if this class is redundant given the sealed logical axiom interfaces. Consider consolidation.
  */
 public enum LogicalAxiomSemantic {
-    AND(KernelTerm.AND, LogicalAxiom.Atom.Connective.And.class),
-    CONCEPT(KernelTerm.CONCEPT_REFERENCE, LogicalAxiom.Atom.ConceptAxiom.class),
-    DEFINITION_ROOT(KernelTerm.DEFINITION_ROOT, LogicalAxiom.Atom.DefinitionRoot.class),
-    NECESSARY_SET(KernelTerm.NECESSARY_SET, LogicalAxiom.Atom.LogicalSet.NecessarySet.class),
-    OR(KernelTerm.OR, LogicalAxiom.Atom.Connective.Or.class),
-    PROPERTY_SEQUENCE_IMPLICATION(KernelTerm.PROPERTY_SEQUENCE_IMPLICATION, LogicalAxiom.Atom.PropertySequenceImplication.class),
-    PROPERTY_SET(KernelTerm.PROPERTY_SET, LogicalAxiom.Atom.LogicalSet.PropertySet.class),
-    DATA_PROPERTY_SET(KernelTerm.DATA_PROPERTY_SET, LogicalAxiom.Atom.LogicalSet.DataPropertySet.class),
-    INTERVAL_PROPERTY_SET(KernelTerm.INTERVAL_PROPERTY_SET, LogicalAxiom.Atom.LogicalSet.IntervalPropertySet.class),
-    ROLE(KernelTerm.ROLE, LogicalAxiom.Atom.TypedAtom.Role.class),
-    INTERVAL_ROLE(KernelTerm.INTERVAL_ROLE, LogicalAxiom.Atom.TypedAtom.IntervalRole.class),
-    SUFFICIENT_SET(KernelTerm.SUFFICIENT_SET, LogicalAxiom.Atom.LogicalSet.SufficientSet.class),
-    DISJOINT_WITH(KernelTerm.DISJOINT_WITH, LogicalAxiom.Atom.DisjointWithAxiom.class),
-    FEATURE(KernelTerm.FEATURE, LogicalAxiom.Atom.TypedAtom.Feature.class),
-    INCLUSION_SET(KernelTerm.INCLUSION_SET, LogicalAxiom.Atom.LogicalSet.InclusionSet.class);
+    AND(KernelConcept.AND, LogicalAxiom.Atom.Connective.And.class),
+    CONCEPT(KernelConcept.CONCEPT_REFERENCE, LogicalAxiom.Atom.ConceptAxiom.class),
+    DEFINITION_ROOT(KernelConcept.DEFINITION_ROOT, LogicalAxiom.Atom.DefinitionRoot.class),
+    NECESSARY_SET(KernelConcept.NECESSARY_SET, LogicalAxiom.Atom.LogicalSet.NecessarySet.class),
+    OR(KernelConcept.OR, LogicalAxiom.Atom.Connective.Or.class),
+    PROPERTY_SEQUENCE_IMPLICATION(KernelConcept.PROPERTY_SEQUENCE_IMPLICATION, LogicalAxiom.Atom.PropertySequenceImplication.class),
+    PROPERTY_SET(KernelConcept.PROPERTY_SET, LogicalAxiom.Atom.LogicalSet.PropertySet.class),
+    DATA_PROPERTY_SET(KernelConcept.DATA_PROPERTY_SET, LogicalAxiom.Atom.LogicalSet.DataPropertySet.class),
+    INTERVAL_PROPERTY_SET(KernelConcept.INTERVAL_PROPERTY_SET, LogicalAxiom.Atom.LogicalSet.IntervalPropertySet.class),
+    ROLE(KernelConcept.ROLE, LogicalAxiom.Atom.TypedAtom.Role.class),
+    INTERVAL_ROLE(KernelConcept.INTERVAL_ROLE, LogicalAxiom.Atom.TypedAtom.IntervalRole.class),
+    SUFFICIENT_SET(KernelConcept.SUFFICIENT_SET, LogicalAxiom.Atom.LogicalSet.SufficientSet.class),
+    DISJOINT_WITH(KernelConcept.DISJOINT_WITH, LogicalAxiom.Atom.DisjointWithAxiom.class),
+    FEATURE(KernelConcept.FEATURE, LogicalAxiom.Atom.TypedAtom.Feature.class),
+    INCLUSION_SET(KernelConcept.INCLUSION_SET, LogicalAxiom.Atom.LogicalSet.InclusionSet.class);
 
     public final long nid;
     public final Class<? extends LogicalAxiom> axiomClass;

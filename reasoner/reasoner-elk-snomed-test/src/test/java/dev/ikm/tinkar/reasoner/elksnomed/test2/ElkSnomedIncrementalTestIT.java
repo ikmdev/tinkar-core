@@ -16,8 +16,8 @@
 package dev.ikm.tinkar.reasoner.elksnomed.test2;
 
 import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
-
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -64,7 +64,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 		LOG.info("Init reasoner service");
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator(version);
 		ReasonerService rs = ElkSnomedTestBase.getElkSnomedReasonerService();
-		rs.init(vc, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+		rs.init(vc, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
 		rs.extractData(new TrackingCallable<Object>() {
 			@Override
 			protected Object compute() throws Exception {
@@ -101,7 +101,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 			LOG.info("\tView calculator time: " + Instant.ofEpochMilli(time) + " " + time);
 			HashMap<Long, SemanticEntityVersion> active = new HashMap<>();
 			HashMap<Long, SemanticEntityVersion> inactive = new HashMap<>();
-			vc.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+			vc.forEachSemanticVersionOfPattern(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 					(semanticEntityVersion, _) -> {
 						if (semanticEntityVersion.time() == time) {
 							long nid = semanticEntityVersion.referencedComponentNid();
@@ -178,7 +178,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
 				assertEquals(1, sups.size());
-				assertEquals(KernelTerm.PHENOMENON.nid(), rs.getParents(nid).longIterator().next());
+				assertEquals(KernelConcept.PHENOMENON.nid(), rs.getParents(nid).longIterator().next());
 				continue;
 			} else {
 				assertNotNull(parents);

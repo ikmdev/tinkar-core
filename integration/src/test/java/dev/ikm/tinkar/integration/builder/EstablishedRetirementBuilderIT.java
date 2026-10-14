@@ -15,8 +15,9 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import network.ike.foundation.ike.bindings.IkeConcept;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -100,46 +101,46 @@ class EstablishedRetirementBuilderIT {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
 
         baseStamp = Stamp.active("2020-01-01T00:00:00Z",
-                KernelTerm.USER, KernelTerm.PRIMORDIAL_MODULE, KernelTerm.PRIMORDIAL_PATH);
+                KernelConcept.USER, KernelConcept.PRIMORDIAL_MODULE, KernelConcept.PRIMORDIAL_PATH);
         birth = Stamp.active("2026-07-15T00:00:00Z",
-                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelConcept.USER, IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH);
         retirement = Stamp.inactive("2026-09-01T00:00:00Z",
-                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelConcept.USER, IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH);
 
         // The base: three established concepts, each with its own names and definition.
-        baseConcept("Retired kind (Test)", RETIRED_ID, RETIRED_FQN_ID, RETIRED_AXIOMS_ID, KernelTerm.USER)
-                .semantic(KernelTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN, RETIRED_MEMBERSHIP_ID);
-        baseConcept("Kept kind (Test)", KEPT_ID, KEPT_FQN_ID, KEPT_AXIOMS_ID, KernelTerm.USER);
+        baseConcept("Retired kind (Test)", RETIRED_ID, RETIRED_FQN_ID, RETIRED_AXIOMS_ID, KernelConcept.USER)
+                .semantic(KernelPattern.TINKAR_BASE_MODEL_COMPONENT_PATTERN, RETIRED_MEMBERSHIP_ID);
+        baseConcept("Kept kind (Test)", KEPT_ID, KEPT_FQN_ID, KEPT_AXIOMS_ID, KernelConcept.USER);
         baseConcept("Other kind (Test)", OTHER_ID, OTHER_FQN_ID,
-                PublicIds.of(UUID.fromString("f9e8d7c6-b5a4-4392-8170-6f5e4d3c2b1a")), KernelTerm.USER);
+                PublicIds.of(UUID.fromString("f9e8d7c6-b5a4-4392-8170-6f5e4d3c2b1a")), KernelConcept.USER);
         BASE_SET.write();
 
         // The ledger: retirement scopes on concepts it never declared.
         LEDGER_SET.concept("Retired kind (Test)", RETIRED_ID).at(retirement)
                 .retire()
                 .retireStatedAxioms(RETIRED_AXIOMS_ID,
-                        leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(KernelTerm.USER))))
-                .retireSemantic(KernelTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN, RETIRED_MEMBERSHIP_ID);
+                        leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(KernelConcept.USER))))
+                .retireSemantic(KernelPattern.TINKAR_BASE_MODEL_COMPONENT_PATTERN, RETIRED_MEMBERSHIP_ID);
         // Semantics only: the concept's own versions stay as the base has them.
         LEDGER_SET.concept("Kept kind (Test)", KEPT_ID).at(retirement)
                 .retireStatedAxioms(KEPT_AXIOMS_ID,
-                        leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(KernelTerm.USER))));
+                        leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(KernelConcept.USER))));
         // A born concept retiring its own definition at a later inactive stamp.
         LEDGER_SET.concept("Born kind (Test)").at(birth)
                 .synonym("Born")
-                .isA(IkeTerms.MODEL_CONCEPT)
+                .isA(IkeConcept.MODEL_CONCEPT)
                 .at(retirement)
-                .retireStatedAxioms(leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(IkeTerms.MODEL_CONCEPT))));
+                .retireStatedAxioms(leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(IkeConcept.MODEL_CONCEPT))));
         LEDGER_SET.write();
     }
 
     private static dev.ikm.tinkar.entity.builder.ConceptBuilder.ActiveScope baseConcept(
             String fqn, PublicId conceptId, PublicId fqnId, PublicId axiomsId, ConceptFacade parent) {
         return BASE_SET.concept(fqn, conceptId).at(baseStamp)
-                .semantic(KernelTerm.DESCRIPTION_PATTERN, fqnId,
-                        KernelTerm.ENGLISH_LANGUAGE, fqn,
-                        KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
-                        KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)
+                .semantic(KernelPattern.DESCRIPTION_PATTERN, fqnId,
+                        KernelConcept.ENGLISH_LANGUAGE, fqn,
+                        KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE,
+                        KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)
                 .statedAxioms(axiomsId, leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(parent))));
     }
 
@@ -170,7 +171,7 @@ class EstablishedRetirementBuilderIT {
         assertEquals(2, axioms.versions().size(), "the base's version and the retirement");
         SemanticEntityVersion inactive = onlyInactive(axioms);
         DiTreeEntity tree = (DiTreeEntity) inactive.fieldValues().get(0);
-        assertTrue(namesConcept(tree, KernelTerm.USER.nid()), "the retired version restates the parent");
+        assertTrue(namesConcept(tree, KernelConcept.USER.nid()), "the retired version restates the parent");
     }
 
     @Test
@@ -185,7 +186,7 @@ class EstablishedRetirementBuilderIT {
     @DisplayName("No description is written for a concept opened by a retirement scope: its names stay with the base")
     void noDescriptionIsWritten() {
         List<SemanticEntity<SemanticEntityVersion>> descriptions = EntityService.get().semanticsForComponentOfPattern(
-                PrimitiveData.nid(RETIRED_ID), KernelTerm.DESCRIPTION_PATTERN.nid()).toList();
+                PrimitiveData.nid(RETIRED_ID), KernelPattern.DESCRIPTION_PATTERN.nid()).toList();
         assertEquals(1, descriptions.size(), "the base's fully qualified name only");
         assertEquals(1, descriptions.getFirst().versions().size(),
                 "and it gained no version");
@@ -205,7 +206,7 @@ class EstablishedRetirementBuilderIT {
     void bornConceptRetiresItsAxiomsLater() {
         long conceptNid = LEDGER_SET.conceptRef("Born kind (Test)").nid();
         List<SemanticEntity<SemanticEntityVersion>> axioms = EntityService.get().semanticsForComponentOfPattern(conceptNid,
-                KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
+                KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
         assertEquals(1, axioms.size(), "one stated-axiom semantic");
         SemanticEntity<? extends SemanticEntityVersion> semantic = axioms.getFirst();
         assertEquals(2, semantic.versions().size(), "the birth statement and the retirement");
@@ -225,7 +226,7 @@ class EstablishedRetirementBuilderIT {
     void undeclaredSemanticStillRequiresDeclarationOnABornConcept() {
         assertThrows(IllegalArgumentException.class,
                 () -> LEDGER_SET.concept("Born kind (Test)").at(retirement)
-                        .retireSemantic(KernelTerm.IDENTIFIER_PATTERN, UNKNOWN_ID));
+                        .retireSemantic(KernelPattern.IDENTIFIER_PATTERN, UNKNOWN_ID));
     }
 
     @Test
@@ -233,7 +234,7 @@ class EstablishedRetirementBuilderIT {
     void identitylessAxiomRetirementNeedsTheEstablishedIdentity() {
         assertThrows(IllegalStateException.class,
                 () -> LEDGER_SET.concept("Other kind (Test)", OTHER_ID).at(retirement)
-                        .retireStatedAxioms(leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(KernelTerm.USER)))));
+                        .retireStatedAxioms(leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(KernelConcept.USER)))));
     }
 
     @Test
@@ -263,8 +264,8 @@ class EstablishedRetirementBuilderIT {
     /** Whether any concept-reference vertex of the expression names the concept. */
     private static boolean namesConcept(DiTreeEntity tree, long conceptNid) {
         for (EntityVertex vertex : tree.vertexMap()) {
-            if (vertex != null && vertex.getMeaningNid() == KernelTerm.CONCEPT_REFERENCE.nid()) {
-                Object reference = vertex.propertyFast(KernelTerm.CONCEPT_REFERENCE);
+            if (vertex != null && vertex.getMeaningNid() == KernelConcept.CONCEPT_REFERENCE.nid()) {
+                Object reference = vertex.propertyFast(KernelConcept.CONCEPT_REFERENCE);
                 if (reference instanceof ConceptFacade facade && facade.nid() == conceptNid) {
                     return true;
                 }

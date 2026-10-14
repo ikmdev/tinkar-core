@@ -1,6 +1,6 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelPattern;
 import java.util.List;
 import java.util.Set;
 
@@ -26,7 +26,7 @@ public class ElkSnomedUtil {
 
 	private static long getStatedSemanticNid(long conceptNid) {
 		List<SemanticEntity<SemanticEntityVersion>> statedSemantics = EntityService.get()
-				.semanticsForComponentOfPattern(conceptNid, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
+				.semanticsForComponentOfPattern(conceptNid, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
 		if (statedSemantics.isEmpty())
 			throw new IllegalStateException("No stated form for concept: " + DiagnosticText.component(conceptNid));
 		if (statedSemantics.size() > 1)
@@ -105,7 +105,7 @@ public class ElkSnomedUtil {
 
 	public static Set<Long> getInferredParents(ViewCalculator vc, long sctid) {
 		long nid = ElkSnomedData.getNid(sctid);
-		SemanticEntityVersion sev = getLatestSemantic(vc, KernelTerm.INFERRED_NAVIGATION_PATTERN.nid(), nid);
+		SemanticEntityVersion sev = getLatestSemantic(vc, KernelPattern.INFERRED_NAVIGATION_PATTERN.nid(), nid);
 		ImmutableList<Object> latestInferredNavigationFields = sev.fieldValues();
 		LongIdSet parent_nids = (LongIdSet) latestInferredNavigationFields.get(1);
 		return parent_nids.mapToSet(x -> x);
@@ -113,7 +113,7 @@ public class ElkSnomedUtil {
 
 	public static Set<Long> getInferredChildren(ViewCalculator vc, long sctid) {
 		long nid = ElkSnomedData.getNid(sctid);
-		SemanticEntityVersion sev = getLatestSemantic(vc, KernelTerm.INFERRED_NAVIGATION_PATTERN.nid(), nid);
+		SemanticEntityVersion sev = getLatestSemantic(vc, KernelPattern.INFERRED_NAVIGATION_PATTERN.nid(), nid);
 		ImmutableList<Object> latestInferredNavigationFields = sev.fieldValues();
 		LongIdSet parent_nids = (LongIdSet) latestInferredNavigationFields.get(0);
 		return parent_nids.mapToSet(x -> x);

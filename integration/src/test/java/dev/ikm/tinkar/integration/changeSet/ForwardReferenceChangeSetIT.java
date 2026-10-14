@@ -36,7 +36,8 @@ import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.schema.TinkarMsg;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.BeforeAll;
@@ -216,9 +217,9 @@ class ForwardReferenceChangeSetIT {
                         UUID.randomUUID(),
                         State.ACTIVE,
                         System.currentTimeMillis(),
-                        KernelTerm.USER.publicId(),
-                        KernelTerm.PRIMORDIAL_MODULE.publicId(),
-                        KernelTerm.DEVELOPMENT_PATH.publicId()
+                        KernelConcept.USER.publicId(),
+                        KernelConcept.PRIMORDIAL_MODULE.publicId(),
+                        KernelConcept.DEVELOPMENT_PATH.publicId()
                 );
                 EntityService.get().putEntity(testStamp);
                 File changesetFile = new File(in.getProperty(CHANGESET_FILE));
@@ -270,16 +271,16 @@ class ForwardReferenceChangeSetIT {
         private static SemanticRecord createDescriptionSemantic(StampEntity testStamp) {
             // Description pattern fields: language, text, case significance, description type
             ImmutableList<Object> fieldValues = org.eclipse.collections.api.factory.Lists.immutable.of(
-                    KernelTerm.ENGLISH_LANGUAGE.nid(),
+                    KernelConcept.ENGLISH_LANGUAGE.nid(),
                     "Test Description for Forward Reference",
-                    KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid(),
-                    KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
+                    KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE.nid(),
+                    KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid()
             );
             // The nid of a concept that is written AFTER this semantic
             long conceptNid = EntityService.get().nidForPublicId(PublicIds.of(CONCEPT_UUID));
             return SemanticRecord.build(
                     SEMANTIC_UUID,
-                    KernelTerm.DESCRIPTION_PATTERN.nid(),
+                    KernelPattern.DESCRIPTION_PATTERN.nid(),
                     conceptNid,
                     testStamp.lastVersion(),
                     fieldValues

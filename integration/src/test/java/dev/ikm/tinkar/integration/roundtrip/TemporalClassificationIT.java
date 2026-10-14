@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.integration.roundtrip;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -123,7 +124,7 @@ class TemporalClassificationIT {
         Properties in = new Properties();
         in.setProperty(STORE, new File(WORK, "store").getPath());
         in.setProperty(IMPORT_FILE, TestConstants.PB_STARTER_DATA.getPath());
-        in.setProperty(PATH, KernelTerm.DEVELOPMENT_PATH.publicId().leastUuid().toString());
+        in.setProperty(PATH, KernelConcept.DEVELOPMENT_PATH.publicId().leastUuid().toString());
 
         Properties imported = ForkedJvm.run(ImportAndFindTimes.class, in);
         List<String> allTimes = List.of(imported.getProperty(TIMES).split(","));
@@ -260,14 +261,14 @@ class TemporalClassificationIT {
                 out.setProperty(prefix + "visible.concepts", Long.toString(visibleConcepts.get()));
                 out.setProperty(prefix + "described.concepts", Long.toString(described.get()));
                 out.setProperty(prefix + "stated.descendants.of.root",
-                        Long.toString(view.navigationCalculator().descendentsOf(KernelTerm.ROOT_VERTEX.nid()).size()));
+                        Long.toString(view.navigationCalculator().descendentsOf(KernelConcept.ROOT_VERTEX.nid()).size()));
 
                 // Classify as of the time.
                 ReasonerService reasoner = PluggableService.load(ReasonerService.class).stream()
                         .map(ServiceLoader.Provider::get)
                         .findFirst().orElseThrow(() -> new IllegalStateException("No ReasonerService is provided"));
                 long start = System.currentTimeMillis();
-                reasoner.init(view, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+                reasoner.init(view, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
                 reasoner.extractData(quiet());
                 reasoner.loadData(quiet());
                 reasoner.computeInferences();

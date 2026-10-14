@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
-import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Calculators;
@@ -26,6 +25,7 @@ import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
 import dev.ikm.tinkar.entity.builder.generator.BindingReferenceResolver;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
+import dev.ikm.tinkar.terms.KernelConcept;
 
 import java.io.File;
 import java.io.IOException;
@@ -100,7 +100,7 @@ public final class LedgerGeneratorMain {
             TaxonomySectioner sectioner = TaxonomySectioner.fromStatedNavigation(calculator);
 
             List<Section> sections = sectioner.sectionsCoveringFullStore(
-                    KernelTerm.ROOT_VERTEX.nid(), 60, 4, 50);
+                    KernelConcept.ROOT_VERTEX.nid(), 60, 4, 50);
             distinctMembers = sections.stream().mapToInt(section -> section.members().size()).sum();
 
             List<String> emissionNotes = new ArrayList<>();

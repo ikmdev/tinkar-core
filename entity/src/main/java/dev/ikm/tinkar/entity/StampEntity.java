@@ -15,13 +15,13 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.StampFacade;
 import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
@@ -61,21 +61,21 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
         if (lastVersion() != null) {
             return lastVersion().pathNid();
         }
-        return KernelTerm.CANCELED_STATE.nid();
+        return KernelConcept.CANCELED_STATE.nid();
     }
 
     default long moduleNid() {
         if (lastVersion() != null) {
             return lastVersion().moduleNid();
         }
-        return KernelTerm.CANCELED_STATE.nid();
+        return KernelConcept.CANCELED_STATE.nid();
     }
 
     default long authorNid() {
         if (lastVersion() != null) {
             return lastVersion().authorNid();
         }
-        return KernelTerm.CANCELED_STATE.nid();
+        return KernelConcept.CANCELED_STATE.nid();
     }
 
     /**
@@ -136,7 +136,7 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
         if (lastVersion() != null) {
             return lastVersion().stateNid();
         }
-        return KernelTerm.CANCELED_STATE.nid();
+        return KernelConcept.CANCELED_STATE.nid();
     }
 
     default String describe() {

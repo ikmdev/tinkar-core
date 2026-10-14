@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.entity.maintenance;
 
-import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.KernelPattern;
+import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 
@@ -28,11 +28,11 @@ import org.eclipse.collections.api.list.ImmutableList;
  */
 public final class SingleSemanticPatterns {
 
-    public static final ImmutableList<EntityProxy.Pattern> DEFAULT = Lists.immutable.of(
-            KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-            KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
-            KernelTerm.STATED_NAVIGATION_PATTERN,
-            KernelTerm.INFERRED_NAVIGATION_PATTERN);
+    public static final ImmutableList<PatternFacade> DEFAULT = Lists.immutable.of(
+            KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+            KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
+            KernelPattern.STATED_NAVIGATION_PATTERN,
+            KernelPattern.INFERRED_NAVIGATION_PATTERN);
 
     private SingleSemanticPatterns() {
     }

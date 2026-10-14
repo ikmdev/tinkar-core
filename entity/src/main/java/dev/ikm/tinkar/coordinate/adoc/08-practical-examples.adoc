@@ -36,33 +36,33 @@ public class ClinicalTerminologyBrowser {
                 StateSet.ACTIVE_ONLY,  // Only active concepts
                 StampPositionRecord.make(
                     Long.MAX_VALUE,    // Latest
-                    KernelTerm.MASTER_PATH.nid()  // Production
+                    KernelConcept.MASTER_PATH.nid()  // Production
                 )
             ),
 
             // Language: US English preferred terms
             List.of(
                 LanguageCoordinateRecord.make(
-                    KernelTerm.ENGLISH_LANGUAGE.nid(),
-                    List.of(KernelTerm.US_DIALECT_PATTERN.nid()),
+                    KernelConcept.ENGLISH_LANGUAGE.nid(),
+                    List.of(KernelPattern.US_DIALECT_PATTERN.nid()),
                     List.of(
-                        KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-                        KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
+                        KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                        KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
                     )
                 )
             ),
 
             // Logic: Inferred relationships
             LogicCoordinateRecord.make(
-                KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
-                KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid(),
-                KernelTerm.SNOROCKET_CLASSIFIER.nid(),
-                KernelTerm.INFERRED_PREMISE_TYPE.nid()
+                KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+                KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid(),
+                KernelConcept.SNOROCKET_CLASSIFIER.nid(),
+                KernelConcept.INFERRED_PREMISE_TYPE.nid()
             ),
 
             // Navigation: Inferred, sorted
             NavigationCoordinateRecord.make(
-                IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
+                IntIds.set.of(KernelConcept.INFERRED_NAVIGATION.nid()),
                 StateSet.ACTIVE_ONLY,
                 true,  // Sort children
                 IntIds.list.empty()  // By description text
@@ -136,11 +136,11 @@ public class MultilingualMedicalDictionary {
             if (!user.getLanguagePreferences().contains("en")) {
                 languagePrefs.add(
                     LanguageCoordinateRecord.make(
-                        KernelTerm.ENGLISH_LANGUAGE.nid(),
-                        List.of(KernelTerm.US_DIALECT_PATTERN.nid()),
+                        KernelConcept.ENGLISH_LANGUAGE.nid(),
+                        List.of(KernelPattern.US_DIALECT_PATTERN.nid()),
                         List.of(
-                            KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-                            KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
+                            KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
                         )
                     )
                 );
@@ -152,7 +152,7 @@ public class MultilingualMedicalDictionary {
                     StateSet.ACTIVE_AND_INACTIVE,
                     StampPositionRecord.make(
                         Long.MAX_VALUE,
-                        KernelTerm.DEVELOPMENT_PATH.nid()
+                        KernelConcept.DEVELOPMENT_PATH.nid()
                     )
                 ),
 
@@ -170,8 +170,8 @@ public class MultilingualMedicalDictionary {
                     user.getConceptNid(),
                     user.getDefaultModule(),
                     user.getDefaultModule(),
-                    KernelTerm.DEVELOPMENT_PATH.nid(),
-                    KernelTerm.DEVELOPMENT_PATH.nid()
+                    KernelConcept.DEVELOPMENT_PATH.nid(),
+                    KernelConcept.DEVELOPMENT_PATH.nid()
                 )
             );
 
@@ -182,27 +182,27 @@ public class MultilingualMedicalDictionary {
     private LanguageCoordinate createLanguageCoordinate(String langCode) {
         return switch (langCode) {
             case "es" -> LanguageCoordinateRecord.make(
-                KernelTerm.SPANISH_LANGUAGE.nid(),
+                KernelConcept.SPANISH_LANGUAGE.nid(),
                 List.of(MyTerms.SPANISH_DIALECT_ASSEMBLAGE.nid()),
                 List.of(
-                    KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-                    KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
+                    KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                    KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
                 )
             );
             case "fr" -> LanguageCoordinateRecord.make(
-                KernelTerm.FRENCH_LANGUAGE.nid(),
+                KernelConcept.FRENCH_LANGUAGE.nid(),
                 List.of(MyTerms.FRENCH_DIALECT_ASSEMBLAGE.nid()),
                 List.of(
-                    KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-                    KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
+                    KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                    KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
                 )
             );
             default -> LanguageCoordinateRecord.make(
-                KernelTerm.ENGLISH_LANGUAGE.nid(),
-                List.of(KernelTerm.US_DIALECT_PATTERN.nid()),
+                KernelConcept.ENGLISH_LANGUAGE.nid(),
+                List.of(KernelPattern.US_DIALECT_PATTERN.nid()),
                 List.of(
-                    KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-                    KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
+                    KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                    KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
                 )
             );
         };
@@ -269,7 +269,7 @@ public class TerminologyAuthoringTool {
                     StateSet.ACTIVE_AND_INACTIVE,  // See all content
                     StampPositionRecord.make(
                         Long.MAX_VALUE,            // Latest
-                        KernelTerm.DEVELOPMENT_PATH.nid()
+                        KernelConcept.DEVELOPMENT_PATH.nid()
                     )
                 ),
 
@@ -278,15 +278,15 @@ public class TerminologyAuthoringTool {
 
                 // Logic: Stated axioms for editing
                 LogicCoordinateRecord.make(
-                    KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
-                    KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid(),
-                    KernelTerm.SNOROCKET_CLASSIFIER.nid(),
-                    KernelTerm.STATED_PREMISE_TYPE.nid()  // Stated!
+                    KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+                    KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid(),
+                    KernelConcept.SNOROCKET_CLASSIFIER.nid(),
+                    KernelConcept.STATED_PREMISE_TYPE.nid()  // Stated!
                 ),
 
                 // Navigation: Stated hierarchy with all states
                 NavigationCoordinateRecord.make(
-                    IntIds.set.of(KernelTerm.STATED_NAVIGATION_PATTERN.nid()),
+                    IntIds.set.of(KernelPattern.STATED_NAVIGATION_PATTERN.nid()),
                     StateSet.ACTIVE_AND_INACTIVE,  // See inactive
                     true,                          // Sorted
                     IntIds.list.empty()
@@ -297,8 +297,8 @@ public class TerminologyAuthoringTool {
                     author.getConceptNid(),
                     author.getDefaultModule(),
                     author.getDefaultModule(),
-                    KernelTerm.DEVELOPMENT_PATH.nid(),
-                    KernelTerm.DEVELOPMENT_PATH.nid()
+                    KernelConcept.DEVELOPMENT_PATH.nid(),
+                    KernelConcept.DEVELOPMENT_PATH.nid()
                 )
             );
 
@@ -366,10 +366,10 @@ public class TerminologyAuthoringTool {
             statedView.stampCoordinate(),
             statedView.languageCoordinateList(),
             LogicCoordinateRecord.make(
-                KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
-                KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid(),
-                KernelTerm.SNOROCKET_CLASSIFIER.nid(),
-                KernelTerm.INFERRED_PREMISE_TYPE.nid()  // Inferred
+                KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+                KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid(),
+                KernelConcept.SNOROCKET_CLASSIFIER.nid(),
+                KernelConcept.INFERRED_PREMISE_TYPE.nid()  // Inferred
             ),
             Coordinates.Navigation.inferred(),
             statedView.editCoordinate()
@@ -531,12 +531,12 @@ public class VersionComparisonTool {
     ) {
         StampPosition devPos = StampPositionRecord.make(
             Long.MAX_VALUE,
-            KernelTerm.DEVELOPMENT_PATH.nid()
+            KernelConcept.DEVELOPMENT_PATH.nid()
         );
 
         StampPosition prodPos = StampPositionRecord.make(
             releaseTime,
-            KernelTerm.MASTER_PATH.nid()
+            KernelConcept.MASTER_PATH.nid()
         );
 
         ConceptComparison comparison = compare(conceptNid, devPos, prodPos);
@@ -615,7 +615,7 @@ public class ModularDevelopment {
                 StateSet.ACTIVE_ONLY,
                 StampPositionRecord.make(
                     Long.MAX_VALUE,
-                    KernelTerm.DEVELOPMENT_PATH.nid()
+                    KernelConcept.DEVELOPMENT_PATH.nid()
                 )
             ).withModuleNids(
                 IntIds.set.of(coreModuleNid)  // Only core
@@ -636,7 +636,7 @@ public class ModularDevelopment {
                 StateSet.ACTIVE_ONLY,
                 StampPositionRecord.make(
                     Long.MAX_VALUE,
-                    KernelTerm.DEVELOPMENT_PATH.nid()
+                    KernelConcept.DEVELOPMENT_PATH.nid()
                 )
             ).withModuleNids(
                 IntIds.set.of(coreModuleNid, extensionModuleNid)
@@ -650,11 +650,11 @@ public class ModularDevelopment {
             Coordinates.Logic.ElPlusPlus(),
             Coordinates.Navigation.inferred(),
             EditCoordinateRecord.make(
-                KernelTerm.USER.nid(),
+                KernelConcept.USER.nid(),
                 extensionModuleNid,      // New content to extension
                 extensionModuleNid,
-                KernelTerm.DEVELOPMENT_PATH.nid(),
-                KernelTerm.DEVELOPMENT_PATH.nid()
+                KernelConcept.DEVELOPMENT_PATH.nid(),
+                KernelConcept.DEVELOPMENT_PATH.nid()
             )
         );
 

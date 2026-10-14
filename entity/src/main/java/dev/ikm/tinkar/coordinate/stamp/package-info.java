@@ -146,12 +146,12 @@
  * // Create custom coordinate
  * StampPositionRecord position = StampPositionRecord.make(
  *     System.currentTimeMillis(),
- *     KernelTerm.DEVELOPMENT_PATH
+ *     KernelConcept.DEVELOPMENT_PATH
  * );
  * StampCoordinateRecord custom = StampCoordinateRecord.make(
  *     StateSet.ACTIVE,
  *     position,
- *     LongIds.set.of(KernelTerm.SOLOR_MODULE.nid())
+ *     LongIds.set.of(KernelConcept.SOLOR_MODULE.nid())
  * );
  * }</pre>
  *
@@ -181,7 +181,7 @@
  *     .toEpochMilli();
  * StampPositionRecord position = StampPositionRecord.make(
  *     timestampJan1_2024,
- *     KernelTerm.MASTER_PATH
+ *     KernelConcept.MASTER_PATH
  * );
  * StampCoordinateRecord stamp = StampCoordinateRecord.make(
  *     StateSet.ACTIVE,
@@ -195,7 +195,7 @@
  * // Include only specific modules
  * StampCoordinateRecord filtered = stamp.withModuleNids(
  *     LongIds.set.of(
- *         KernelTerm.SOLOR_MODULE.nid(),
+ *         KernelConcept.SOLOR_MODULE.nid(),
  *         MyTerms.SNOMED_CT_CORE_MODULE.nid()
  *     )
  * );
@@ -225,17 +225,17 @@
  * <pre>{@code
  * // Master path originates from primordial path
  * StampPathImmutable masterPath = StampPathImmutable.make(
- *     KernelTerm.MASTER_PATH.nid(),
+ *     KernelConcept.MASTER_PATH.nid(),
  *     Sets.immutable.of(
- *         StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.PRIMORDIAL_PATH.nid())
+ *         StampPositionRecord.make(Long.MAX_VALUE, KernelConcept.PRIMORDIAL_PATH.nid())
  *     )
  * );
  *
  * // Development path branches from master
  * StampPathImmutable devPath = StampPathImmutable.make(
- *     KernelTerm.DEVELOPMENT_PATH.nid(),
+ *     KernelConcept.DEVELOPMENT_PATH.nid(),
  *     Sets.immutable.of(
- *         StampPositionRecord.make(branchTimestamp, KernelTerm.MASTER_PATH.nid())
+ *         StampPositionRecord.make(branchTimestamp, KernelConcept.MASTER_PATH.nid())
  *     )
  * );
  * }</pre>

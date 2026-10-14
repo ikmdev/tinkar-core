@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.integration.provider.search;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import network.ike.foundation.ike.bindings.IkeConcept;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
@@ -49,14 +49,15 @@ public class SearchProviderIT {
     @Test
     public void getChildrenIT() {
         List<PublicId> expectedUserChildren = Arrays.asList(
-                KernelTerm.KOMET_USER.publicId(),
-                IkeTerms.IKE_COMMUNITY.publicId(),
-                IkeTerms.BASELINE_STARTER_DATA_AUTHOR.publicId(),
-                IkeTerms.GRETEL.publicId(),
-                IkeTerms.GIT_AUTHOR.publicId()
+                KernelConcept.KOMET_USER.publicId(),
+                IkeConcept.IKE_COMMUNITY.publicId(),
+                IkeConcept.BASELINE_STARTER_DATA_AUTHOR.publicId(),
+                IkeConcept.GRETEL.publicId(),
+                IkeConcept.GIT_AUTHOR.publicId(),
+                IkeConcept.KOMET_ASSISTANT.publicId()
         );
 
-        List<PublicId> actualUserChildren = Searcher.childrenOf(KernelTerm.USER.publicId());
+        List<PublicId> actualUserChildren = Searcher.childrenOf(KernelConcept.USER.publicId());
 
         expectedUserChildren.sort(Comparator.naturalOrder());
         actualUserChildren.sort(Comparator.naturalOrder());
@@ -71,11 +72,11 @@ public class SearchProviderIT {
     @Test
     public void getDescendantsIT() {
         List<PublicId> expectedUserDescendants = Arrays.asList(
-                IkeTerms.ROLE_RESTRICTION.publicId(),
-                KernelTerm.INTERVAL_ROLE.publicId()
+                IkeConcept.ROLE_RESTRICTION.publicId(),
+                KernelConcept.INTERVAL_ROLE.publicId()
         );
 
-        List<PublicId> actualUserDescendants = Searcher.descendantsOf(KernelTerm.ROLE.publicId());
+        List<PublicId> actualUserDescendants = Searcher.descendantsOf(KernelConcept.ROLE.publicId());
 
         expectedUserDescendants.sort(Comparator.naturalOrder());
         actualUserDescendants.sort(Comparator.naturalOrder());
@@ -96,9 +97,9 @@ public class SearchProviderIT {
         );
 
         List<PublicId> conceptsWithFQNs = List.of(
-                KernelTerm.ROOT_VERTEX.publicId(),
-                IkeTerms.MEANING.publicId(),
-                IkeTerms.PURPOSE.publicId()
+                KernelConcept.ROOT_VERTEX.publicId(),
+                IkeConcept.MEANING.publicId(),
+                IkeConcept.PURPOSE.publicId()
         );
 
         List<String> actualFQNs = Searcher.descriptionsOf(conceptsWithFQNs);

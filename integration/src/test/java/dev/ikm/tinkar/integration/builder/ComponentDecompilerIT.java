@@ -26,7 +26,7 @@ import dev.ikm.tinkar.integration.helper.ChangeSetManifest;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelPattern;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -118,7 +118,7 @@ class ComponentDecompilerIT {
         // declared-identity statedAxioms call carrying its full builder expression.
         assertEquals(0, verbKindCounts.getOrDefault("TODO", 0),
                 "every axiom decompiles to a declared-identity statedAxioms call — no hand-authoring TODOs");
-        long statedDefinitions = manifest.semanticsOf(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN);
+        long statedDefinitions = manifest.semanticsOf(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN);
         assertEquals(statedDefinitions, (long) verbKindCounts.getOrDefault("statedAxioms", 0),
                 "every one of the set's " + statedDefinitions + " stated definitions is one statedAxioms line");
         assertEquals(manifest.patterns(), (long) verbKindCounts.getOrDefault("patternDefinition", 0),

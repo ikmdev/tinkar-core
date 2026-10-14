@@ -15,8 +15,9 @@
  */
 package dev.ikm.tinkar.integration.search;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import network.ike.foundation.ike.bindings.IkeConcept;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
@@ -31,6 +32,7 @@ import dev.ikm.tinkar.integration.helper.ChangeSetManifest;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
@@ -108,7 +110,7 @@ public class SearcherIT {
         var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
 
         //When I search "Component" for only the descendants of Role
-        var searchResults = stampCoordinate.stampCalculator().searchDescendants(KernelTerm.ROLE, "Interval", 100);
+        var searchResults = stampCoordinate.stampCalculator().searchDescendants(KernelConcept.ROLE.publicId(), "Interval", 100);
 
         //Then there should only be 2 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
         // 1) Interval role
@@ -128,7 +130,7 @@ public class SearcherIT {
         var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
 
         //When I search "Component" for only the descendants of Role
-        var searchResults = stampCoordinate.stampCalculator().searchDescendants(navigationCalculator, KernelTerm.ROLE, "Interval", 100);
+        var searchResults = stampCoordinate.stampCalculator().searchDescendants(navigationCalculator, KernelConcept.ROLE.publicId(), "Interval", 100);
 
         //Then there should only be 2 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
         // 1) Interval role
@@ -138,7 +140,7 @@ public class SearcherIT {
     @Test
     public void searchConceptsNonExistentMembershipSemantic() {
         // test memberPatternId does not exist
-        EntityProxy.Concept conceptProxy = EntityProxy.Concept.make(PublicIds.newRandom());
+        ConceptFacade conceptProxy = EntityProxy.Concept.make(PublicIds.newRandom());
         List<PublicId> conceptIds = Searcher.membersOf(conceptProxy.publicId());
         assertTrue(conceptIds.isEmpty(), "memberPatternId does not exist, should return empty list");
     }
@@ -146,47 +148,47 @@ public class SearcherIT {
     @Test
     public void searchConceptsNonPatternMembershipSemantic() {
         // test memberPatternId exists but is not a pattern
-        List<PublicId> conceptIds = Searcher.membersOf(KernelTerm.ROLE.publicId());
+        List<PublicId> conceptIds = Searcher.membersOf(KernelConcept.ROLE.publicId());
         assertTrue(conceptIds.isEmpty(), "memberPatternId exists but not a pattern, should return empty list");
     }
 
     @Test
     public void searchConceptsNoTaggedMembershipSemantic() {
         // test memberPatternId with no tagged concepts
-        List<PublicId> conceptIds = Searcher.membersOf(KernelTerm.COMMENT_PATTERN);
+        List<PublicId> conceptIds = Searcher.membersOf(KernelPattern.COMMENT_PATTERN.publicId());
         assertTrue(conceptIds.isEmpty(), "memberPatternId has no tagged concepts, should return empty list");
     }
 
     @Test
     public void searchConceptsWithTaggedMembershipSemantic() {
         // test memberPatternId with tagged concepts
-        List<PublicId> conceptIds = Searcher.membersOf(KernelTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN);
+        List<PublicId> conceptIds = Searcher.membersOf(KernelPattern.KOMET_BASE_MODEL_COMPONENT_PATTERN.publicId());
         assertEquals(1, conceptIds.size(), "there should be 1 tagged concept associated with this pattern");
         // One member per inferred definition the changeset says it holds — its manifest is the
         // oracle, not a number pinned here, since the set grows as it gains content.
         long inferredDefinitions = ChangeSetManifest.of(TestConstants.PB_STARTER_DATA_REASONED)
-                .semanticsOf(KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-        conceptIds = Searcher.membersOf(KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+                .semanticsOf(KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+        conceptIds = Searcher.membersOf(KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.publicId());
         assertEquals(inferredDefinitions, conceptIds.size(),
                 "there should be " + inferredDefinitions + " tagged concepts associated with this pattern");
     }
 
     @Test
     public void searchExistingIdentifier() {
-        //source: IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER
+        //source: IkeConcept.UNIVERSALLY_UNIQUE_IDENTIFIER
         //identifier: LANGUAGE_NID_FOR_LANGUAGE_COORDINATE
-        Optional<PublicId> publicId = Searcher.getPublicId(IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, IkeTerms.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.leastUuid().toString());
+        Optional<PublicId> publicId = Searcher.getPublicId(IkeConcept.UNIVERSALLY_UNIQUE_IDENTIFIER.publicId(), IkeConcept.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.publicId().leastUuid().toString());
         assertTrue(publicId.isPresent(), "PublicId should be found");
-        assertTrue(PublicId.equals(publicId.get(), IkeTerms.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE), "Concept PublicId should be LANGUAGE_NID_FOR_LANGUAGE_COORDINATE");
+        assertTrue(PublicId.equals(publicId.get(), IkeConcept.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.publicId()), "Concept PublicId should be LANGUAGE_NID_FOR_LANGUAGE_COORDINATE");
     }
 
     @Test
     public void searchNonExistingIdentifier() {
-        Optional<PublicId> publicId = Searcher.getPublicId(PublicIds.newRandom(), IkeTerms.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.leastUuid().toString());
+        Optional<PublicId> publicId = Searcher.getPublicId(PublicIds.newRandom(), IkeConcept.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.publicId().leastUuid().toString());
         assertFalse(publicId.isPresent(), "Concept should be null for non-existing Identifier Source");
-        publicId = Searcher.getPublicId(IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "abcxyz");
+        publicId = Searcher.getPublicId(IkeConcept.UNIVERSALLY_UNIQUE_IDENTIFIER.publicId(), "abcxyz");
         assertFalse(publicId.isPresent(), "Concept should be null for non-existing Identifier Value");
-        publicId = Searcher.getPublicId(IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, KernelTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN.leastUuid().toString());
+        publicId = Searcher.getPublicId(IkeConcept.UNIVERSALLY_UNIQUE_IDENTIFIER.publicId(), KernelPattern.KOMET_BASE_MODEL_COMPONENT_PATTERN.publicId().leastUuid().toString());
         assertFalse(publicId.isPresent(), "Concept should be null for non-semantic uuid");
     }
 
@@ -280,17 +282,17 @@ public class SearcherIT {
     }
 
     /**
-     * Writes a new synonym description with the given text on {@link KernelTerm#USER},
+     * Writes a new synonym description with the given text on {@link KernelConcept#USER},
      * returning the {@link EntityProxy.Semantic} proxy so callers can identify the resulting
      * search hit by nid.
      */
     private EntityProxy.Semantic composeSynonym(String text) {
         EntityProxy.Semantic semanticProxy = EntityProxy.Semantic.make(PublicIds.newRandom());
         try (StampedWriter writer = StampedWriter.open("SearcherIT",
-                State.ACTIVE, KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH)) {
-            writer.semantic(semanticProxy, KernelTerm.DESCRIPTION_PATTERN, KernelTerm.USER,
-                    KernelTerm.ENGLISH_LANGUAGE, text,
-                    KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE, KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE);
+                State.ACTIVE, KernelConcept.USER, IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH)) {
+            writer.semantic(semanticProxy, KernelPattern.DESCRIPTION_PATTERN.publicId(), KernelConcept.USER.publicId(),
+                    KernelConcept.ENGLISH_LANGUAGE, text,
+                    KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE, KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE);
             writer.commit();
         }
         return semanticProxy;

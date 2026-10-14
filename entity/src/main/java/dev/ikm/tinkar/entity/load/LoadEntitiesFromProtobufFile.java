@@ -43,6 +43,7 @@ import dev.ikm.tinkar.schema.SemanticChronology;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.entity.changeset.ComponentTable;
 import java.util.zip.GZIPInputStream;
 import java.io.InputStream;
@@ -827,7 +828,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     }
 
 
-    private long makeNid(EntityProxy.Pattern pattern, dev.ikm.tinkar.schema.PublicId pbPublicId) {
+    private long makeNid(PatternFacade pattern, dev.ikm.tinkar.schema.PublicId pbPublicId) {
         PublicId publicId = getEntityPublicId(pbPublicId);
         long nid = makeNid(pattern, getEntityPublicId(pbPublicId));
         for (UUID uuid : publicId.asUuidArray()) {
@@ -839,7 +840,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         }
         return nid;
     }
-    private long makeNid(EntityProxy.Pattern pattern, PublicId entityId) {
+    private long makeNid(PatternFacade pattern, PublicId entityId) {
         dev.ikm.tinkar.common.id.EntityKey entityKey = PrimitiveData.getEntityKey(pattern.publicId(), entityId);
         return entityKey.nid();
     }

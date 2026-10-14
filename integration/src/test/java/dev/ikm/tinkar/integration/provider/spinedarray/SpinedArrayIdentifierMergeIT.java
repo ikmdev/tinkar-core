@@ -15,8 +15,9 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.io.FileUtil;
@@ -33,8 +34,10 @@ import dev.ikm.tinkar.entity.transaction.StampedWriter;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
+import network.ike.foundation.ike.bindings.IkeConcept;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -71,16 +74,16 @@ class SpinedArrayIdentifierMergeIT {
     @Test
     public void testMergeIdentifiersCompoundPublicId_ExpectFailure() {
         UUID namespace = UUID.randomUUID();
-        EntityProxy.Concept author = EntityProxy.Concept.make("IHTSDO SNOMED CT Starter Data Author",
+        ConceptFacade author = EntityProxy.Concept.make("IHTSDO SNOMED CT Starter Data Author",
                 UuidT5Generator.get(namespace, "IHTSDO SNOMED CT Starter Data Author"));
 
         StampedWriter writer = StampedWriter.open("Snomed Starter Data Writer",
-                State.ACTIVE, author, KernelTerm.PRIMORDIAL_MODULE, KernelTerm.PRIMORDIAL_PATH);
+                State.ACTIVE, author, KernelConcept.PRIMORDIAL_MODULE, KernelConcept.PRIMORDIAL_PATH);
 
         initializeAuthor(writer, author);
 
-        EntityProxy.Concept sctId = createIdentifierSemantic(writer, namespace, "SCTID");
-        EntityProxy.Concept gmdnTerms = createIdentifierSemantic(writer, namespace, "GMDN Terms");
+        ConceptFacade sctId = createIdentifierSemantic(writer, namespace, "SCTID");
+        ConceptFacade gmdnTerms = createIdentifierSemantic(writer, namespace, "GMDN Terms");
 
         //
 
@@ -90,8 +93,8 @@ class SpinedArrayIdentifierMergeIT {
         UUID gmdnUuid = createConceptWithIdentifier(writer, namespace, gmdnTerms, "62567");
 
         // 3. Create third concept with compound Public ID
-        EntityProxy.Concept compoundConcept = EntityProxy.Concept.make(PublicIds.of(snomedUuid, gmdnUuid));
-        writer.concept(compoundConcept);
+        ConceptFacade compoundConcept = EntityProxy.Concept.make(PublicIds.of(snomedUuid, gmdnUuid));
+        writer.concept(compoundConcept.publicId());
 
         //
 
@@ -108,16 +111,16 @@ class SpinedArrayIdentifierMergeIT {
     @Test
     public void testMergeIdentifiersCompoundPublicId_Workaround() {
         UUID namespace = UUID.randomUUID();
-        EntityProxy.Concept author = EntityProxy.Concept.make("IHTSDO SNOMED CT Starter Data Author",
+        ConceptFacade author = EntityProxy.Concept.make("IHTSDO SNOMED CT Starter Data Author",
                 UuidT5Generator.get(namespace, "IHTSDO SNOMED CT Starter Data Author"));
 
         StampedWriter writer = StampedWriter.open("Snomed Starter Data Writer",
-                State.ACTIVE, author, KernelTerm.PRIMORDIAL_MODULE, KernelTerm.PRIMORDIAL_PATH);
+                State.ACTIVE, author, KernelConcept.PRIMORDIAL_MODULE, KernelConcept.PRIMORDIAL_PATH);
 
         initializeAuthor(writer, author);
 
-        EntityProxy.Concept sctId = createIdentifierSemantic(writer, namespace, "SCTID");
-        EntityProxy.Concept gmdnTerms = createIdentifierSemantic(writer, namespace, "GMDN Terms");
+        ConceptFacade sctId = createIdentifierSemantic(writer, namespace, "SCTID");
+        ConceptFacade gmdnTerms = createIdentifierSemantic(writer, namespace, "GMDN Terms");
 
         //
 
@@ -125,8 +128,8 @@ class SpinedArrayIdentifierMergeIT {
         UUID gmdnUuid = createConceptWithIdentifier(writer, namespace, gmdnTerms, "62567");
         // 2. Create third concept with compound Public ID, referencing first and second concepts
         UUID snomedUuid = UuidT5Generator.get(namespace, "725561007");
-        EntityProxy.Concept compoundConcept = EntityProxy.Concept.make(PublicIds.of(snomedUuid, gmdnUuid));
-        writer.concept(compoundConcept);
+        ConceptFacade compoundConcept = EntityProxy.Concept.make(PublicIds.of(snomedUuid, gmdnUuid));
+        writer.concept(compoundConcept.publicId());
         // 3. Create second concept, using previously generated UUID
         createConceptWithIdentifier(writer, namespace, sctId, "725561007", snomedUuid);
 
@@ -145,56 +148,56 @@ class SpinedArrayIdentifierMergeIT {
         assertTrue(identifiers.contains("SCTID: 725561007"));
     }
 
-    private EntityProxy.Concept createIdentifierSemantic(StampedWriter writer, UUID namespace, String name) {
+    private ConceptFacade createIdentifierSemantic(StampedWriter writer, UUID namespace, String name) {
         UUID snomedIdentifierUuid = UuidT5Generator.get(namespace, name);
-        EntityProxy.Concept snomedIdentifier = EntityProxy.Concept.make(name, snomedIdentifierUuid);
-        writer.concept(snomedIdentifier);
-        writer.fullyQualifiedName(snomedIdentifier, name);
-        writeIdentifier(writer, snomedIdentifier, IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, snomedIdentifierUuid.toString());
+        ConceptFacade snomedIdentifier = EntityProxy.Concept.make(name, snomedIdentifierUuid);
+        writer.concept(snomedIdentifier.publicId());
+        writer.fullyQualifiedName(snomedIdentifier.publicId(), name);
+        writeIdentifier(writer, snomedIdentifier, IkeConcept.UNIVERSALLY_UNIQUE_IDENTIFIER, snomedIdentifierUuid.toString());
         return snomedIdentifier;
     }
 
-    private UUID createConceptWithIdentifier(StampedWriter writer, UUID namespace, EntityProxy.Concept identifierSource, String identiferValue) {
+    private UUID createConceptWithIdentifier(StampedWriter writer, UUID namespace, ConceptFacade identifierSource, String identiferValue) {
         UUID uuid = UuidT5Generator.get(namespace, identiferValue);
         return createConceptWithIdentifier(writer, namespace, identifierSource, identiferValue, uuid);
     }
 
-    private UUID createConceptWithIdentifier(StampedWriter writer, UUID namespace, EntityProxy.Concept identifierSource, String identifierValue, UUID uuid) {
-        EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.of(uuid));
-        writer.concept(concept);
-        writeIdentifier(writer, concept, IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, uuid.toString());
+    private UUID createConceptWithIdentifier(StampedWriter writer, UUID namespace, ConceptFacade identifierSource, String identifierValue, UUID uuid) {
+        ConceptFacade concept = EntityProxy.Concept.make(PublicIds.of(uuid));
+        writer.concept(concept.publicId());
+        writeIdentifier(writer, concept, IkeConcept.UNIVERSALLY_UNIQUE_IDENTIFIER, uuid.toString());
         writeIdentifier(writer, concept, identifierSource, identifierValue);
         return uuid;
     }
 
-    private void initializeAuthor(StampedWriter writer, EntityProxy.Concept author) {
-        writer.concept(author);
-        writer.fullyQualifiedName(author, "IHTSDO SNOMED CT Starter Data Author");
-        writeIdentifier(writer, author, IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, author.leastUuid().toString());
+    private void initializeAuthor(StampedWriter writer, ConceptFacade author) {
+        writer.concept(author.publicId());
+        writer.fullyQualifiedName(author.publicId(), "IHTSDO SNOMED CT Starter Data Author");
+        writeIdentifier(writer, author, IkeConcept.UNIVERSALLY_UNIQUE_IDENTIFIER, author.publicId().leastUuid().toString());
     }
 
     /** Writes an identifier semantic, its identity derived from the component, source, and value. */
-    private void writeIdentifier(StampedWriter writer, EntityProxy.Concept component,
-                                 EntityProxy.Concept source, String value) {
-        PublicId identifier = PublicIds.of(UuidT5Generator.get(component.leastUuid(),
-                "identifier|" + source.leastUuid() + "|" + value));
-        writer.semantic(identifier, KernelTerm.IDENTIFIER_PATTERN, component, source, value);
+    private void writeIdentifier(StampedWriter writer, ConceptFacade component,
+                                 ConceptFacade source, String value) {
+        PublicId identifier = PublicIds.of(UuidT5Generator.get(component.publicId().leastUuid(),
+                "identifier|" + source.publicId().leastUuid() + "|" + value));
+        writer.semantic(identifier, KernelPattern.IDENTIFIER_PATTERN.publicId(), component.publicId(), source, value);
     }
 
-    private Set<String> extractIdentifiers(EntityProxy componentInDetailsViewer) {
+    private Set<String> extractIdentifiers(EntityFacade componentInDetailsViewer) {
         ViewCoordinateRecord viewCoord = Coordinates.View.DefaultView();
         ViewCalculatorWithCache viewCalc = ViewCalculatorWithCache.getCalculator(viewCoord);
 
-        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(KernelTerm.IDENTIFIER_PATTERN);
+        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(KernelPattern.IDENTIFIER_PATTERN);
         Set<String> identifiers = new HashSet<>();
 
-        EntityService.get().forEachSemanticForComponentOfPattern(componentInDetailsViewer.nid(), KernelTerm.IDENTIFIER_PATTERN.nid(), (semanticEntity) -> {
+        EntityService.get().forEachSemanticForComponentOfPattern(componentInDetailsViewer.nid(), KernelPattern.IDENTIFIER_PATTERN.nid(), (semanticEntity) -> {
             viewCalc.latest(semanticEntity).ifPresent((latestSemanticVersion -> {
-                EntityProxy identifierSource = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_SOURCE, latestSemanticVersion);
-                if (!PublicId.equals(identifierSource, IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER)) {
+                EntityProxy identifierSource = latestIdPattern.get().getFieldWithMeaning(KernelConcept.IDENTIFIER_SOURCE, latestSemanticVersion);
+                if (!PublicId.equals(identifierSource, IkeConcept.UNIVERSALLY_UNIQUE_IDENTIFIER.publicId())) {
                     try {
                         String idSourceName = viewCalc.getPreferredDescriptionTextWithFallbackOrNid(identifierSource);
-                        String idValue = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_VALUE, latestSemanticVersion);
+                        String idValue = latestIdPattern.get().getFieldWithMeaning(KernelConcept.IDENTIFIER_VALUE, latestSemanticVersion);
 
                         identifiers.add("%s: %s".formatted(idSourceName, idValue));
                     } catch (IndexOutOfBoundsException exception) {
