@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.id.EntityKey;
 import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
@@ -202,6 +203,51 @@ public abstract class PrimitiveDataServiceConformance {
         assertEquals(expected, stampNids(EntityStore.current().getBytes(world.concept().nid())), "the bytes stored");
         PrimitiveData.save();
         assertEquals(expected, stampNids(EntityStore.current().getBytes(world.concept().nid())), "the bytes saved");
+    }
+
+    /**
+     * The one write that takes a version away: the version under the withdrawn stamp leaves the
+     * record as the value merges in, in what is returned, read back, and saved
+     * ({@code EntityStore.mergeReplacingVersion}). Moving an uncommitted version out of a shared
+     * transaction depends on it.
+     */
+    @Test
+    void mergingReplacingAVersionWithdrawsIt() {
+        World world = makeWorld();
+        StampRecord shared = stamp(TIME + 1_000);
+        StampRecord own = stamp(TIME + 2_000);
+        merge(laterVersionOf(world.concept(), shared));
+        PrimitiveData.save();
+
+        byte[] returned = mergeReplacing(laterVersionOf(world.concept(), own), shared.nid());
+
+        Set<Long> expected = Set.of(world.stamp().nid(), own.nid());
+        assertEquals(expected, stampNids(returned), "the bytes returned");
+        assertEquals(expected, stampNids(EntityStore.current().getBytes(world.concept().nid())), "the bytes stored");
+        PrimitiveData.save();
+        assertEquals(expected, stampNids(EntityStore.current().getBytes(world.concept().nid())), "the bytes saved");
+    }
+
+    @Test
+    void mergingReplacingAnEntitysOnlyVersionLeavesTheNewOne() {
+        World world = makeWorld();
+        StampRecord own = stamp(TIME + 1_000);
+
+        byte[] returned = mergeReplacing(laterVersionOf(world.concept(), own), world.stamp().nid());
+
+        assertEquals(Set.of(own.nid()), stampNids(returned));
+        assertEquals(Set.of(own.nid()), stampNids(EntityStore.current().getBytes(world.concept().nid())));
+    }
+
+    @Test
+    void mergingReplacingAVersionTheRecordLacksIsAPlainMerge() {
+        World world = makeWorld();
+        StampRecord later = stamp(TIME + 1_000);
+
+        mergeReplacing(laterVersionOf(world.concept(), later), stamp(TIME + 2_000).nid());
+
+        assertEquals(Set.of(world.stamp().nid(), later.nid()),
+                stampNids(EntityStore.current().getBytes(world.concept().nid())));
     }
 
     @Test
@@ -414,6 +460,11 @@ public abstract class PrimitiveDataServiceConformance {
         }
         return EntityStore.current().merge(entity.nid(), NOT_A_SEMANTIC, NOT_A_SEMANTIC,
                 EntityRecordFactory.getBytes(entity), entity);
+    }
+
+    private static byte[] mergeReplacing(ConceptRecord concept, long withdrawnStampNid) {
+        return EntityStore.current().mergeReplacingVersion(concept.nid(), NOT_A_SEMANTIC, NOT_A_SEMANTIC,
+                withdrawnStampNid, EntityRecordFactory.getBytes(concept), concept, DataActivity.SYNCHRONIZABLE_EDIT);
     }
 
     /** The concept again, with one version on another stamp, as a later edit writes it. */

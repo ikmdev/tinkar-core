@@ -36,6 +36,13 @@ import org.slf4j.LoggerFactory;
 /**
  * Parent class of CancelVersionTask and CommitVersionTask. Used for operating on a single version,
  * not for a batch of edits.
+ *
+ * <p>A version that shares its transaction with other components first moves into a transaction of
+ * its own: the version is written under a stamp of the new transaction, and its version under the
+ * shared stamp leaves the stored entity in the same write
+ * ({@link dev.ikm.tinkar.entity.EntityService#putEntityReplacingVersion}). A plain put would only
+ * add the moved version beside the one it replaces, which then stays in the shared transaction
+ * and commits with it.
  */
 public abstract class TransactionVersionTask extends TrackingCallable<Void> {
     protected static final Logger LOG = LoggerFactory.getLogger(TransactionVersionTask.class);
@@ -94,14 +101,14 @@ public abstract class TransactionVersionTask extends TrackingCallable<Void> {
                                     .without(semanticVersionRecord)
                                     .with(semanticVersionRecord.withStampNid(newStamp.nid()))
                                     .build();
-                            Entity.provider().putEntity(analogue);
+                            Entity.provider().putEntityReplacingVersion(analogue, oldStamp.nid());
                         }
                         case PatternVersionRecord patternVersionRecord -> {
                             PatternRecord analogue = patternVersionRecord.chronology()
                                     .without(patternVersionRecord)
                                     .with(patternVersionRecord.withStampNid(newStamp.nid()))
                                     .build();
-                            Entity.provider().putEntity(analogue);
+                            Entity.provider().putEntityReplacingVersion(analogue, oldStamp.nid());
                         }
                         default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(version));
                     }

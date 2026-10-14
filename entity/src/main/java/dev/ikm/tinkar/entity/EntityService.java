@@ -252,6 +252,20 @@ public interface EntityService extends ChronologyService, Broadcaster<Long> {
      */
     void putEntity(Entity entity, DataActivity activity);
 
+    /**
+     * Puts the entity as {@link #putEntity(Entity)} does, first withdrawing from the stored entity
+     * its version written under an uncommitted stamp, in the same write
+     * ({@link dev.ikm.tinkar.common.service.internal.EntityStore#mergeReplacingVersion}). A put
+     * only ever adds versions; this is how an uncommitted version moves from a shared transaction
+     * into one of its own ({@link dev.ikm.tinkar.entity.transaction.TransactionVersionTask}): the
+     * entity passed holds the version under its new stamp, and the one under the shared stamp goes.
+     *
+     * @param entity            the entity to put
+     * @param withdrawnStampNid the uncommitted stamp whose version leaves the stored entity
+     * @throws IllegalStateException if the stamp is committed: a committed version is final
+     */
+    void putEntityReplacingVersion(Entity entity, long withdrawnStampNid);
+
     default void putEntityNoCache(Entity entity) {
         putEntityNoCache(entity, DataActivity.SYNCHRONIZABLE_EDIT);
     }

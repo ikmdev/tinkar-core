@@ -221,6 +221,30 @@ public final class EntityRecordFormat2 {
     }
 
     /**
+     * A record without its version under one stamp, read from the envelope alone: what a store
+     * holds once that version is withdrawn
+     * ({@link dev.ikm.tinkar.common.service.internal.EntityStore#mergeReplacingVersion}).
+     *
+     * @param record   a format 2 record
+     * @param stampNid the stamp whose version to drop
+     * @return the record without that version; {@code record} itself when it holds no version
+     *         under the stamp; null when that version was its only one
+     */
+    public static byte[] withoutVersion(byte[] record, long stampNid) {
+        Parts parts = parts(record);
+        List<byte[]> kept = new ArrayList<>(parts.versions().size());
+        for (byte[] version : parts.versions()) {
+            if (stampNid(version) != stampNid) {
+                kept.add(version);
+            }
+        }
+        if (kept.size() == parts.versions().size()) {
+            return record;
+        }
+        return kept.isEmpty() ? null : assemble(parts.chronology(), kept);
+    }
+
+    /**
      * The nid of the entity a record holds.
      *
      * @param record a format 2 record
