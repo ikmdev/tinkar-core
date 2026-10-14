@@ -112,6 +112,11 @@
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
@@ -152,17 +157,24 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- SnomedRf2ImporterIT calls the importer API directly; the importers themselves it
+             reaches through ServiceLoader, so they are declared below with the other providers. -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>importer-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Service providers the tests reach only through ServiceLoader. -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>importer-snomed-rf2</artifactId>
-            <scope>test</scope>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>importer-rxnorm-owl</artifactId>
-            <scope>test</scope>
+            <scope>runtime</scope>
         </dependency>
-        <!-- Service providers the tests reach only through ServiceLoader. -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>data-spinedarray-provider</artifactId>
