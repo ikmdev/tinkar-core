@@ -235,7 +235,7 @@ final class ComponentLedger {
      * append-only.
      */
     void addDescription(ConceptFacade type, String kindKey, String text, Stamp stamp) {
-        long ordinal = descriptions.stream().filter(d -> d.type.equals(type)).count();
+        long ordinal = descriptions.stream().filter(d -> EntityFacade.same(d.type, type)).count();
         UUID descriptionUuid = UuidT5Generator.get(componentUuid,
                 kindKey + "|" + DESCRIPTION_LANGUAGE_SEED + "|" + ordinal);
         DescriptionLedger description = new DescriptionLedger(descriptionUuid, type, KernelConcept.ENGLISH_LANGUAGE);
@@ -250,7 +250,7 @@ final class ComponentLedger {
      */
     DescriptionLedger resolveLive(ConceptFacade type, String currentText, String kindLabel) {
         List<DescriptionLedger> matches = descriptions.stream()
-                .filter(d -> d.type.equals(type))
+                .filter(d -> EntityFacade.same(d.type, type))
                 .filter(d -> !d.retired())
                 .filter(d -> d.currentText().equals(currentText))
                 .toList();
@@ -324,7 +324,7 @@ final class ComponentLedger {
     /** The current text of the first live definition description, if any. */
     java.util.Optional<String> currentDefinition() {
         return descriptions.stream()
-                .filter(d -> d.type.equals(KernelConcept.DEFINITION_DESCRIPTION_TYPE))
+                .filter(d -> EntityFacade.same(d.type, KernelConcept.DEFINITION_DESCRIPTION_TYPE))
                 .filter(d -> !d.retired())
                 .findFirst()
                 .map(DescriptionLedger::currentText);

@@ -122,6 +122,12 @@
              javac's cap on warnings, high enough that no warning is dropped. -->
         <nid-check.report>error</nid-check.report>
         <nid-check.allow>dev.ikm.tinkar.provider.,dev.ikm.tinkar.common.id.EntityKey,dev.ikm.tinkar.common.id.impl.NidLayout,dev.ikm.tinkar.entity.EntityRecordFactory,dev.ikm.tinkar.entity.graph.EntityVertex,dev.ikm.tinkar.common.id.NidTest,dev.ikm.tinkar.integration.coordinate.CoordinateEncodingIT,dev.ikm.tinkar.reasoner.elksnomed.test.,dev.ikm.tinkar.reasoner.hybrid.test.</nid-check.allow>
+        <!-- The facade build check (FacadeCheck, beside NidCheck in nid-check): how it reports
+             (warning while the census of its findings is worked down, then error) and which
+             top-level classes it skips (prefixes; dev.ikm.tinkar.terms. always is): the
+             decoders and generators that build proxies from serialized ids. -->
+        <facade-check.report>warning</facade-check.report>
+        <facade-check.allow>dev.ikm.tinkar.entity.VersionProxyFactory,dev.ikm.tinkar.entity.builder.BindingsWriter,dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer</facade-check.allow>
         <javac.maxwarns>10000</javac.maxwarns>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
 
@@ -205,6 +211,9 @@
                                  nid-check.report is error, or warning for a census;
                                  nid-check.allow names the classes that may narrow a nid. -->
                             <arg>-Xplugin:NidCheck report=${nid-check.report} allow=${nid-check.allow}</arg>
+                            <!-- The facade build check: comparisons and signatures that treat two forms
+                                 of one component as two (~/ike-dev/notes/2026-10-15-facade-guard-proposal.adoc). -->
+                            <arg>-Xplugin:FacadeCheck report=${facade-check.report} allow=${facade-check.allow}</arg>
                             <arg>-Xmaxwarns</arg>
                             <arg>${javac.maxwarns}</arg>
                             <arg>-Xmaxerrs</arg>

@@ -149,10 +149,12 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
                         if (indexForMeaning == -1 || indexForText == -1) {
                             throw new IllegalStateException("Expecting a pattern entity with description and text fields. Found: " + EntityText.diagnostic(patternEntityVersion));
                         }
-                        if (version.fieldValues().get(indexForMeaning).equals(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE)) {
+                        if (version.fieldValues().get(indexForMeaning) instanceof EntityFacade descriptionType
+                                && EntityFacade.same(descriptionType, KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE)) {
                             return (String) version.fieldValues().get(indexForText);
                         }
-                        if (version.fieldValues().get(indexForMeaning).equals(KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
+                        if (version.fieldValues().get(indexForMeaning) instanceof EntityFacade descriptionType
+                                && EntityFacade.same(descriptionType, KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
                             fqnString = (String) version.fieldValues().get(indexForText);
                         }
                         anyString = (String) version.fieldValues().get(indexForText);

@@ -83,7 +83,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public AndAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.AND);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.AND.nid();
 		}
 
 		@Override
@@ -96,7 +96,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public OrAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.OR);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.OR.nid();
 		}
 
 		@Override
@@ -110,7 +110,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public ConceptAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.CONCEPT_REFERENCE);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.CONCEPT_REFERENCE.nid();
 		}
 
 		@Override
@@ -129,7 +129,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public DisjointWithAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.DISJOINT_WITH);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.DISJOINT_WITH.nid();
 		}
 
 		@Override
@@ -142,7 +142,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public DefinitionRootAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.DEFINITION_ROOT);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.DEFINITION_ROOT.nid();
 		}
 
 		@Override
@@ -156,7 +156,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public NecessarySetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.NECESSARY_SET);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.NECESSARY_SET.nid();
 		}
 
 		@Override
@@ -170,7 +170,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public SufficientSetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.SUFFICIENT_SET);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.SUFFICIENT_SET.nid();
 		}
 
 		@Override
@@ -184,7 +184,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public PropertySetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.PROPERTY_SET);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.PROPERTY_SET.nid();
 		}
 
 		@Override
@@ -198,7 +198,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public DataPropertySetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.DATA_PROPERTY_SET);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.DATA_PROPERTY_SET.nid();
 		}
 
 		@Override
@@ -212,8 +212,8 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public IntervalPropertySetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning()
-					.equals(KernelConcept.INTERVAL_PROPERTY_SET);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()
+					== KernelConcept.INTERVAL_PROPERTY_SET.nid();
 		}
 
 		@Override
@@ -227,7 +227,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public InclusionSetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.INCLUSION_SET);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.INCLUSION_SET.nid();
 		}
 
 		@Override
@@ -240,7 +240,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public RoleAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.ROLE);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.ROLE.nid();
 		}
 
 		@Override
@@ -276,7 +276,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public IntervalRoleAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.INTERVAL_ROLE);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.INTERVAL_ROLE.nid();
 		}
 
 		@Override
@@ -303,7 +303,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public FeatureAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelConcept.FEATURE);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()== KernelConcept.FEATURE.nid();
 		}
 
 		@Override
@@ -327,8 +327,8 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public PropertySequenceImplicationAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning()
-					.equals(KernelConcept.PROPERTY_SEQUENCE_IMPLICATION);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).getMeaningNid()
+					== KernelConcept.PROPERTY_SEQUENCE_IMPLICATION.nid();
 		}
 
 		@Override
