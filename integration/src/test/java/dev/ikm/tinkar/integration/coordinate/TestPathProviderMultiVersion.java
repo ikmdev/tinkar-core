@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.coordinate.PathService;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
@@ -68,9 +69,9 @@ class TestPathProviderMultiVersion {
 
     @Test
     void multiVersionPathOriginsResolveToLatestVersion() {
-        long developmentPathNid = KernelTerm.DEVELOPMENT_PATH.nid();
+        long developmentPathNid = KernelConcept.DEVELOPMENT_PATH.nid();
         List<SemanticEntity<SemanticEntityVersion>> originSemantics = EntityService.get().semanticsForComponentOfPattern(
-                developmentPathNid, KernelTerm.PATH_ORIGINS_PATTERN.nid()).toList();
+                developmentPathNid, KernelPattern.PATH_ORIGINS_PATTERN.nid()).toList();
         assertEquals(1, originSemantics.size(),
                 "Starter data declares exactly one origins semantic for the development path");
         SemanticRecord originSemantic = assertInstanceOf(SemanticRecord.class, originSemantics.getFirst());
@@ -79,7 +80,7 @@ class TestPathProviderMultiVersion {
 
         ImmutableSet<StampPositionRecord> baselineOrigins = PathService.get().getPathOrigins(developmentPathNid);
         assertEquals(1, baselineOrigins.size());
-        assertEquals(KernelTerm.SANDBOX_PATH.nid(), baselineOrigins.getOnly().getPathForPositionNid(),
+        assertEquals(KernelConcept.SANDBOX_PATH.nid(), baselineOrigins.getOnly().getPathForPositionNid(),
                 "Baseline resolves the development path origin to the sandbox path");
 
         // Append a second, later version stamped on the development path, moving the
@@ -88,7 +89,7 @@ class TestPathProviderMultiVersion {
         Instant revisedOriginInstant = Instant.parse("2026-01-01T00:00:00Z");
         long inceptionTime = Instant.parse("2026-07-12T00:00:00Z").toEpochMilli();
         StampEntity inceptionStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, inceptionTime,
-                KernelTerm.USER, KernelTerm.SOLOR_OVERLAY_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelConcept.USER.publicId(), KernelConcept.SOLOR_OVERLAY_MODULE.publicId(), KernelConcept.DEVELOPMENT_PATH.publicId());
         EntityService.get().putEntity(inceptionStamp);
         SemanticVersionRecord baselineVersion = originSemantic.versions().get(0);
         ImmutableList<Object> revisedFields = Lists.immutable.of(
@@ -105,7 +106,7 @@ class TestPathProviderMultiVersion {
         ImmutableSet<StampPositionRecord> resolvedOrigins = PathService.get().getPathOrigins(developmentPathNid);
         assertEquals(1, resolvedOrigins.size());
         StampPositionRecord resolvedOrigin = resolvedOrigins.getOnly();
-        assertEquals(KernelTerm.SANDBOX_PATH.nid(), resolvedOrigin.getPathForPositionNid());
+        assertEquals(KernelConcept.SANDBOX_PATH.nid(), resolvedOrigin.getPathForPositionNid());
         assertEquals(revisedOriginInstant.toEpochMilli(), resolvedOrigin.time(),
                 "The origin instant comes from the latest version, not the baseline");
 

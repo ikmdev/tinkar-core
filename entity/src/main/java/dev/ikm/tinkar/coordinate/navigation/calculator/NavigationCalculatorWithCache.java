@@ -16,8 +16,7 @@
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
 import org.eclipse.collections.api.list.primitive.MutableLongList;
-
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -41,7 +40,7 @@ import dev.ikm.tinkar.coordinate.view.VertexSortNaturalOrder;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
@@ -144,7 +143,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public LongIdList unsortedParentsOf(long conceptNid) {
-        return getIntIdListForMeaning(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
+        return getIntIdListForMeaning(conceptNid, KernelConcept.RELATIONSHIP_ORIGIN);
     }
 
     @Override
@@ -175,7 +174,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public ImmutableList<Edge> unsortedChildEdges(long conceptNid) {
-        return getEdges(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
+        return getEdges(conceptNid, KernelConcept.RELATIONSHIP_DESTINATION);
     }
 
     @Override
@@ -185,7 +184,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public ImmutableList<Edge> unsortedParentEdges(long conceptNid) {
-        return getEdges(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
+        return getEdges(conceptNid, KernelConcept.RELATIONSHIP_ORIGIN);
     }
 
     @Override
@@ -195,15 +194,15 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public LongIdList unsortedChildrenOf(long conceptNid) {
-        return getIntIdListForMeaning(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
+        return getIntIdListForMeaning(conceptNid, KernelConcept.RELATIONSHIP_DESTINATION);
     }
     @Override
     public LongIdList unsortedUnversionedChildrenOf(long conceptNid) {
-        return getIntIdListForMeaningUnversioned(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
+        return getIntIdListForMeaningUnversioned(conceptNid, KernelConcept.RELATIONSHIP_DESTINATION);
     }
     @Override
     public LongIdList unsortedUnversionedParentsOf(long conceptNid) {
-        return getIntIdListForMeaningUnversioned(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
+        return getIntIdListForMeaningUnversioned(conceptNid, KernelConcept.RELATIONSHIP_ORIGIN);
     }
 
     @Override
@@ -219,10 +218,10 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public LongIdList unsortedParentsOf(long conceptNid, long patternNid) {
-        return getIntIdListForMeaningFromPattern(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN, patternNid);
+        return getIntIdListForMeaningFromPattern(conceptNid, KernelConcept.RELATIONSHIP_ORIGIN, patternNid);
     }
 
-    private ImmutableList<Edge> getEdges(long conceptNid, EntityProxy.Concept relationshipDirection) {
+    private ImmutableList<Edge> getEdges(long conceptNid, ConceptFacade relationshipDirection) {
         MutableLongObjectMap<MutableEdge> edges = LongObjectMaps.mutable.empty();
         for (long patternNid : navigationCoordinate.navigationPatternNids().toArray()) {
             stampCalculator.latestPatternEntityVersion(patternNid).ifPresent(patternEntityVersion -> {
@@ -239,13 +238,13 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return Lists.immutable.ofAll(edges.stream().map(mutableEdge -> mutableEdge.toEdge()).toList());
     }
 
-    private LongIdList getIntIdListForMeaningFromPattern(long referencedComponentNid, EntityProxy.Concept fieldMeaning, long patternNid) {
+    private LongIdList getIntIdListForMeaningFromPattern(long referencedComponentNid, ConceptFacade fieldMeaning, long patternNid) {
         MutableLongSet nidsInList = LongSets.mutable.empty();
         intIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, patternNid, nidsInList, navigationCoordinate.vertexStates(), true);
         return LongIds.list.of(nidsInList.toArray());
     }
 
-    private LongIdList getIntIdListForMeaning(long referencedComponentNid, EntityProxy.Concept fieldMeaning) {
+    private LongIdList getIntIdListForMeaning(long referencedComponentNid, ConceptFacade fieldMeaning) {
         LongIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
         MutableLongSet nidsInList = LongSets.mutable.empty();
         navigationPatternNids.forEach(navPatternNid -> {
@@ -254,7 +253,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return LongIds.list.of(nidsInList.toArray());
     }
 
-    private LongIdList getIntIdListForMeaningUnversioned(long referencedComponentNid, EntityProxy.Concept fieldMeaning) {
+    private LongIdList getIntIdListForMeaningUnversioned(long referencedComponentNid, ConceptFacade fieldMeaning) {
         LongIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
         MutableLongSet nidsInList = LongSets.mutable.empty();
         navigationPatternNids.forEach(navPatternNid -> {
@@ -263,7 +262,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return LongIds.list.of(nidsInList.toArray());
     }
 
-    private void intIdListForMeaningFromPattern(long referencedComponentNid, EntityProxy.Concept fieldMeaning,
+    private void intIdListForMeaningFromPattern(long referencedComponentNid, ConceptFacade fieldMeaning,
                                                 long patternNid, MutableLongSet nidsInList, StateSet states, boolean versioned) {
         Latest<PatternEntityVersion> latestPatternEntityVersion = stampCalculator().latest(patternNid);
         latestPatternEntityVersion.ifPresentOrElse(

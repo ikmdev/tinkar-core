@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.coordinate;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.coordinate.edit.EditCoordinateRecord;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
@@ -38,22 +39,22 @@ public class Coordinates {
     public static class Edit {
         public static EditCoordinateRecord Default() {
             return EditCoordinateRecord.make(
-                    KernelTerm.USER.nid(), KernelTerm.SOLOR_OVERLAY_MODULE.nid(),
-                    KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.DEVELOPMENT_PATH.nid(), KernelTerm.DEVELOPMENT_PATH.nid()
+                    KernelConcept.USER.nid(), KernelConcept.SOLOR_OVERLAY_MODULE.nid(),
+                    KernelConcept.SOLOR_OVERLAY_MODULE.nid(), KernelConcept.DEVELOPMENT_PATH.nid(), KernelConcept.DEVELOPMENT_PATH.nid()
             );
         }
     }
 
     public static class Logic {
         public static LogicCoordinateRecord ElPlusPlus() {
-            return LogicCoordinateRecord.make(KernelTerm.SNOROCKET_CLASSIFIER,
-                    KernelTerm.EL_PLUS_PLUS_PROFILE,
-                    KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
-                    KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-                    KernelTerm.SOLOR_CONCEPT_ASSEMBLAGE,
-                    KernelTerm.STATED_NAVIGATION_PATTERN,
-                    KernelTerm.INFERRED_NAVIGATION_PATTERN,
-                    KernelTerm.NAVIGATION_VERTEX);
+            return LogicCoordinateRecord.make(KernelConcept.SNOROCKET_CLASSIFIER,
+                    KernelConcept.EL_PLUS_PLUS_PROFILE,
+                    KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
+                    KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                    KernelPattern.SOLOR_CONCEPT_ASSEMBLAGE,
+                    KernelPattern.STATED_NAVIGATION_PATTERN,
+                    KernelPattern.INFERRED_NAVIGATION_PATTERN,
+                    KernelConcept.NAVIGATION_VERTEX);
         }
     }
 
@@ -66,9 +67,9 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord AnyLanguageRegularName() {
             return LanguageCoordinateRecord.make(
-                    KernelTerm.LANGUAGE,
-                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    KernelConcept.LANGUAGE,
+                    LongIds.list.of(KernelPattern.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
                     LongIds.list.empty(),
                     LongIds.list.empty()
             );
@@ -82,9 +83,9 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord AnyLanguageFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
-                    KernelTerm.LANGUAGE,
-                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    KernelConcept.LANGUAGE,
+                    LongIds.list.of(KernelPattern.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
                     LongIds.list.empty(),
                     LongIds.list.empty()
             );
@@ -99,9 +100,9 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord AnyLanguageDefinition() {
             return LanguageCoordinateRecord.make(
-                    KernelTerm.LANGUAGE,
-                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid()),
+                    KernelConcept.LANGUAGE,
+                    LongIds.list.of(KernelPattern.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.DEFINITION_DESCRIPTION_TYPE.nid()),
                     LongIds.list.empty(),
                     LongIds.list.empty()
             );
@@ -112,12 +113,12 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord UsEnglishFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
-                    KernelTerm.ENGLISH_LANGUAGE.nid(),
-                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-                            KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
-                    LongIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid(), KernelTerm.GB_DIALECT_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    KernelConcept.ENGLISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelPattern.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.of(KernelPattern.US_DIALECT_PATTERN.nid(), KernelPattern.GB_DIALECT_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.SOLOR_OVERLAY_MODULE.nid(), KernelConcept.SOLOR_MODULE.nid())
             );
         }
 
@@ -126,58 +127,58 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord UsEnglishRegularName() {
             return LanguageCoordinateRecord.make(
-                    KernelTerm.ENGLISH_LANGUAGE.nid(),
-                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-                            KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
-                    LongIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid(), KernelTerm.GB_DIALECT_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    KernelConcept.ENGLISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelPattern.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.of(KernelPattern.US_DIALECT_PATTERN.nid(), KernelPattern.GB_DIALECT_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.SOLOR_OVERLAY_MODULE.nid(), KernelConcept.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord GbEnglishFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
-                    KernelTerm.ENGLISH_LANGUAGE.nid(),
-                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-                            KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
-                    LongIds.list.of(KernelTerm.GB_DIALECT_PATTERN.nid(),
-                            KernelTerm.US_DIALECT_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    KernelConcept.ENGLISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelPattern.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.of(KernelPattern.GB_DIALECT_PATTERN.nid(),
+                            KernelPattern.US_DIALECT_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.SOLOR_OVERLAY_MODULE.nid(), KernelConcept.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord GbEnglishPreferredName() {
             return LanguageCoordinateRecord.make(
-                    KernelTerm.ENGLISH_LANGUAGE.nid(),
-                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-                            KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
-                    LongIds.list.of(KernelTerm.GB_DIALECT_PATTERN.nid(),
-                            KernelTerm.US_DIALECT_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    KernelConcept.ENGLISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelPattern.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    LongIds.list.of(KernelPattern.GB_DIALECT_PATTERN.nid(),
+                            KernelPattern.US_DIALECT_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.SOLOR_OVERLAY_MODULE.nid(), KernelConcept.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord SpanishFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
-                    KernelTerm.SPANISH_LANGUAGE.nid(),
-                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-                            KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    KernelConcept.SPANISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelPattern.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
                     LongIds.list.empty(),
-                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    LongIds.list.of(KernelConcept.SOLOR_OVERLAY_MODULE.nid(), KernelConcept.SOLOR_MODULE.nid())
             );
         }
 
         public static LanguageCoordinateRecord SpanishPreferredName() {
             return LanguageCoordinateRecord.make(
-                    KernelTerm.SPANISH_LANGUAGE.nid(),
-                    LongIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
-                    LongIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-                            KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    KernelConcept.SPANISH_LANGUAGE.nid(),
+                    LongIds.list.of(KernelPattern.DESCRIPTION_PATTERN.nid()),
+                    LongIds.list.of(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                            KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
                     LongIds.list.empty(),
-                    LongIds.list.of(KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.SOLOR_MODULE.nid())
+                    LongIds.list.of(KernelConcept.SOLOR_OVERLAY_MODULE.nid(), KernelConcept.SOLOR_MODULE.nid())
             );
         }
     }
@@ -217,11 +218,11 @@ public class Coordinates {
 
     public static class Position {
         public static StampPositionRecord LatestOnDevelopment() {
-            return StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.DEVELOPMENT_PATH);
+            return StampPositionRecord.make(Long.MAX_VALUE, KernelConcept.DEVELOPMENT_PATH);
         }
 
         public static StampPositionRecord LatestOnMaster() {
-            return StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.MASTER_PATH);
+            return StampPositionRecord.make(Long.MAX_VALUE, KernelConcept.MASTER_PATH);
         }
     }
 

@@ -4,7 +4,6 @@ import org.eclipse.collections.api.list.primitive.LongList;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 
-import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -21,6 +20,7 @@ import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.transaction.Transaction;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -34,6 +34,7 @@ import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -132,10 +133,38 @@ public class InferredResultsWriter {
 		Entity.provider().putEntityNoCache(entity);
 	}
 
+	/**
+	 * The failures of a scope's chunks. A failed chunk's concepts are written by no other, so a
+	 * scope that had one fails the write, which cancels the transaction: a chunk that failed
+	 * unreported left every concept in it without an inferred axiom semantic, and the
+	 * classification reported success (IKE-Network/ike-issues#1301).
+	 */
+	private static final class ChunkFailures {
+		private final List<Throwable> failures = new ArrayList<>();
+
+		// Called under the joiner's lock.
+		void add(Throwable chunkFailure) {
+			failures.add(chunkFailure);
+		}
+
+		void throwIfAny() {
+			if (failures.isEmpty()) {
+				return;
+			}
+			IllegalStateException failure = new IllegalStateException(
+					failures.size() + " chunk(s) of inferred results failed", failures.getFirst());
+			failures.stream().skip(1).limit(9).forEach(failure::addSuppressed);
+			throw failure;
+		}
+	}
+
 	private StructuredTaskScope.Joiner<MutableLongList, Void, RuntimeException> createAccumulatingJoiner(MutableLongList accumulator) {
 		return new StructuredTaskScope.Joiner<MutableLongList, Void, RuntimeException>() {
+			private final ChunkFailures failures = new ChunkFailures();
+
 			@Override
 			public Void result() {
+				failures.throwIfAny();
 				return null;
 			}
 
@@ -152,6 +181,8 @@ public class InferredResultsWriter {
 			public synchronized boolean onComplete(StructuredTaskScope.Subtask<MutableLongList> subtask) {
 				if (subtask.state() == StructuredTaskScope.Subtask.State.SUCCESS) {
 					accumulator.addAll(subtask.get());
+				} else if (subtask.state() == StructuredTaskScope.Subtask.State.FAILED) {
+					failures.add(subtask.exception());
 				}
 				return false; // Continue processing all tasks
 			}
@@ -214,7 +245,7 @@ public class InferredResultsWriter {
 
 
 			inferredPattern = EntityHandle.getPatternOrThrow(getViewCoordinateRecord().logicCoordinate().inferredAxiomsPatternNid());
-			inferredNavigationPattern = EntityHandle.getPatternOrThrow(KernelTerm.INFERRED_NAVIGATION_PATTERN.nid());
+			inferredNavigationPattern = EntityHandle.getPatternOrThrow(KernelPattern.INFERRED_NAVIGATION_PATTERN.nid());
 			multipleEndpointTimer = new MultipleEndpointTimer<>(IsomorphicResults.EndPoints.class);
 			equivalentSets = new ConcurrentHashSet<>();
 			axiomDataNotFoundCounter = new AtomicInteger();
@@ -247,8 +278,11 @@ public class InferredResultsWriter {
 
 			// Custom joiner that accumulates results as tasks complete
 			StructuredTaskScope.Joiner<ChunkResults, Void, RuntimeException> accumulatingJoiner = new StructuredTaskScope.Joiner<>() {
+				private final ChunkFailures failures = new ChunkFailures();
+
 				@Override
 				public Void result() {
+					failures.throwIfAny();
 					return null; // No final result needed
 				}
 
@@ -274,7 +308,7 @@ public class InferredResultsWriter {
 						navigationSemanticNids.addAll(results.navSemanticToUpdate);
 						noNavigationSemanticConcepts.addAll(results.conceptForNewNavSemantic);
 					} else if (subtask.state() == StructuredTaskScope.Subtask.State.FAILED) {
-						LOG.error("Task failed", subtask.exception());
+						failures.add(subtask.exception());
 					}
 					return false; // Continue processing remaining tasks
 				}

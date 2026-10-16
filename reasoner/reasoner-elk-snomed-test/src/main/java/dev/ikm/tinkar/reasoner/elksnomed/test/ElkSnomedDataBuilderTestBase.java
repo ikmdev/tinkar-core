@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,7 +48,7 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 	public void statedPattern() throws Exception {
 		ViewCalculator viewCalculator = PrimitiveDataTestUtil.getViewCalculator();
 		LogicCoordinateRecord logicCoordinateRecord = viewCalculator.logicCalculator().logicCoordinateRecord();
-		assertEquals(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+		assertEquals(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 				logicCoordinateRecord.statedAxiomsPatternNid());
 	}
 
@@ -57,7 +58,7 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 		AtomicInteger cnt = new AtomicInteger();
 		AtomicInteger active_cnt = new AtomicInteger();
 		AtomicInteger inactive_cnt = new AtomicInteger();
-		viewCalculator.forEachSemanticVersionOfPatternParallel(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+		viewCalculator.forEachSemanticVersionOfPatternParallel(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 				(semanticEntityVersion, _) -> {
 					if (semanticEntityVersion.active()) {
 						active_cnt.incrementAndGet();
@@ -107,7 +108,7 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 		AtomicInteger cnt = new AtomicInteger();
 		AtomicInteger active_cnt = new AtomicInteger();
 		AtomicInteger inactive_cnt = new AtomicInteger();
-		primordial_vc.forEachSemanticVersionOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid(),
+		primordial_vc.forEachSemanticVersionOfPattern(KernelPattern.IDENTIFIER_PATTERN.nid(),
 				(semanticEntityVersion, _) -> {
 					long conceptNid = semanticEntityVersion.referencedComponentNid();
 					if (primordial_vc.latestIsActive(conceptNid)) {
@@ -129,20 +130,20 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 	public void primordialSctidCount() throws Exception {
 		ViewCalculator primordial_vc = PrimitiveDataTestUtil.getViewCalculatorPrimordial();
 		AtomicInteger cnt = new AtomicInteger();
-		primordial_vc.forEachSemanticVersionOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid(),
+		primordial_vc.forEachSemanticVersionOfPattern(KernelPattern.IDENTIFIER_PATTERN.nid(),
 				(semanticEntityVersion, _) -> {
 					long conceptNid = semanticEntityVersion.referencedComponentNid();
 					ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator();
 					Latest<PatternEntityVersion> latestIdPattern = vc
-							.latestPatternEntityVersion(KernelTerm.IDENTIFIER_PATTERN);
+							.latestPatternEntityVersion(KernelPattern.IDENTIFIER_PATTERN);
 					EntityService.get().forEachSemanticForComponentOfPattern(conceptNid,
-							KernelTerm.IDENTIFIER_PATTERN.nid(), (semanticEntity) -> {
+							KernelPattern.IDENTIFIER_PATTERN.nid(), (semanticEntity) -> {
 								if (vc.latest(semanticEntity).isPresent()) {
 									SemanticEntityVersion latestSemanticVersion = vc.latest(semanticEntity).get();
 									EntityProxy identifierSource = latestIdPattern.get()
-											.getFieldWithMeaning(KernelTerm.IDENTIFIER_SOURCE, latestSemanticVersion);
+											.getFieldWithMeaning(KernelConcept.IDENTIFIER_SOURCE, latestSemanticVersion);
 									boolean has_sctid = false;
-									if (PublicId.equals(identifierSource, KernelTerm.SCTID)) {
+                                                                        if (PublicId.equals(identifierSource, KernelConcept.SCTID.publicId())) {
 										// Just in case it has more than one sctid
 										if (!has_sctid)
 											cnt.incrementAndGet();
@@ -150,7 +151,7 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 										String idSourceName = vc
 												.getPreferredDescriptionTextWithFallbackOrNid(identifierSource);
 										String idValue = latestIdPattern.get().getFieldWithMeaning(
-												KernelTerm.IDENTIFIER_VALUE, latestSemanticVersion);
+												KernelConcept.IDENTIFIER_VALUE, latestSemanticVersion);
 										LOG.info("Primordial: " + conceptNid + " " + PrimitiveData.text(conceptNid));
 										LOG.info("ID: " + idSourceName + " " + idValue);
 									}

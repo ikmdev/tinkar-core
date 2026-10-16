@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptRecordBuilder;
@@ -219,7 +220,7 @@ public final class ConceptBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope synonym(String text) {
-            ledger.addDescription(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, "synonym", text, stamp);
+            ledger.addDescription(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE, "synonym", text, stamp);
             return this;
         }
 
@@ -231,7 +232,7 @@ public final class ConceptBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope definition(String text) {
-            ledger.addDescription(KernelTerm.DEFINITION_DESCRIPTION_TYPE, "definition", text, stamp);
+            ledger.addDescription(KernelConcept.DEFINITION_DESCRIPTION_TYPE, "definition", text, stamp);
             return this;
         }
 
@@ -248,7 +249,7 @@ public final class ConceptBuilder {
          */
         public ActiveScope reviseSynonym(String currentText, String newText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    ledger.resolveLive(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
                     stamp, newText);
             return this;
         }
@@ -350,7 +351,7 @@ public final class ConceptBuilder {
          *                                  value's type is unsupported, or this stamp
          *                                  already carries a version of the semantic
          */
-        public ActiveScope semantic(EntityProxy.Pattern pattern, PublicId declaredIdentity, Object... fieldValues) {
+        public ActiveScope semantic(PatternFacade pattern, PublicId declaredIdentity, Object... fieldValues) {
             ledger.addGenericVersion(pattern, declaredIdentity, null, stamp, fieldValues);
             return this;
         }
@@ -373,7 +374,7 @@ public final class ConceptBuilder {
          *                                  {@link #semantic(EntityProxy.Pattern, PublicId, Object...)},
          *                                  or if {@code referencedComponent} is null or empty
          */
-        public ActiveScope semanticOn(PublicId referencedComponent, EntityProxy.Pattern pattern,
+        public ActiveScope semanticOn(PublicId referencedComponent, PatternFacade pattern,
                                       PublicId declaredIdentity, Object... fieldValues) {
             if (referencedComponent == null || referencedComponent.uuidCount() == 0) {
                 throw new IllegalArgumentException(
@@ -509,7 +510,7 @@ public final class ConceptBuilder {
          */
         public RetireScope retireSynonym(String currentText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    ledger.resolveLive(KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
                     stamp, currentText);
             return this;
         }
@@ -525,7 +526,7 @@ public final class ConceptBuilder {
          */
         public RetireScope retireDefinition(String currentText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(KernelTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition"),
+                    ledger.resolveLive(KernelConcept.DEFINITION_DESCRIPTION_TYPE, currentText, "definition"),
                     stamp, currentText);
             return this;
         }
@@ -552,7 +553,7 @@ public final class ConceptBuilder {
          *                                  or this stamp already carries a version of the
          *                                  semantic
          */
-        public RetireScope retireSemantic(EntityProxy.Pattern pattern, PublicId declaredIdentity,
+        public RetireScope retireSemantic(PatternFacade pattern, PublicId declaredIdentity,
                                           Object... fieldValues) {
             ledger.retireGenericVersion(pattern, declaredIdentity, stamp, fieldValues);
             return this;

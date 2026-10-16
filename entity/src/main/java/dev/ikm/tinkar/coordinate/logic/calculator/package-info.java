@@ -153,11 +153,11 @@
  *
  * // Check for sufficient definition
  * boolean isSufficientlyDefined =
- *     axiomTree.containsVertexWithMeaning(KernelTerm.SUFFICIENT_SET);
+ *     axiomTree.containsVertexWithMeaning(KernelConcept.SUFFICIENT_SET);
  *
  * // Check for necessary definition
  * boolean isNecessary =
- *     axiomTree.containsVertexWithMeaning(KernelTerm.NECESSARY_SET);
+ *     axiomTree.containsVertexWithMeaning(KernelConcept.NECESSARY_SET);
  *
  * // Traverse tree vertices
  * axiomTree.vertices().forEach(vertex -> {
@@ -254,7 +254,7 @@
  *     Latest<DiTreeEntity> stated = calc.getStatedAxiomTree(conceptNid);
  *     if (stated.isPresent()) {
  *         return stated.get().containsVertexWithMeaning(
- *             KernelTerm.SUFFICIENT_SET);
+ *             KernelConcept.SUFFICIENT_SET);
  *     }
  *     return false;
  * }
@@ -284,7 +284,7 @@
  *
  *     // Find role groups (AND vertices with SOME children)
  *     tree.vertices().stream()
- *         .filter(v -> v.getMeaningNid() == KernelTerm.AND.nid())
+ *         .filter(v -> v.getMeaningNid() == KernelConcept.AND.nid())
  *         .forEach(roleGroup -> {
  *             // Process relationships in role group
  *         });

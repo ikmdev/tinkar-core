@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -222,8 +222,8 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp, PrimordialStam
      * @return the non-existent stamp
      */
     static PrimordialStamp nonExistent() {
-        return new PrimordialStamp(PrimitiveData.PRE_INCEPTION_TIME, KernelTerm.AUTHOR_FOR_VERSION,
-                KernelTerm.UNINITIALIZED_COMPONENT, KernelTerm.UNINITIALIZED_COMPONENT,
+        return new PrimordialStamp(PrimitiveData.PRE_INCEPTION_TIME, KernelConcept.AUTHOR_FOR_VERSION,
+                KernelConcept.UNINITIALIZED_COMPONENT, KernelConcept.UNINITIALIZED_COMPONENT,
                 PublicIds.of(PrimitiveData.NONEXISTENT_STAMP_UUID));
     }
 

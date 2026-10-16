@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.stamp.change;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.service.NonExistentValue;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
@@ -62,14 +62,14 @@ public record ChangeChronology(long nid, ImmutableList<VersionChangeRecord> chan
             for (FieldChangeRecord fieldChange: changeRecord.changes()) {
                 sb.append("\n   ");
                 Function<Object, String> formatFunction = value -> value.toString();
-                if (fieldChange.currentValue().fieldDefinition(viewCalculator).meaningNid() == KernelTerm.TIME_FOR_VERSION.nid()) {
+                if (fieldChange.currentValue().fieldDefinition(viewCalculator).meaningNid() == KernelConcept.TIME_FOR_VERSION.nid()) {
                     formatFunction = value -> switch (value) {
                         case Long epochMs -> DateTimeUtil.format(epochMs);
                         case NonExistentValue nonExistentValue -> nonExistentValue.toString();
                         default -> value.toString();
                     };
-                } else if (fieldChange.currentValue().fieldDefinition(viewCalculator).dataTypeNid() == KernelTerm.CONCEPT_FIELD.nid() ||
-                        fieldChange.currentValue().fieldDefinition(viewCalculator).dataTypeNid() == KernelTerm.COMPONENT_FIELD.nid()) {
+                } else if (fieldChange.currentValue().fieldDefinition(viewCalculator).dataTypeNid() == KernelConcept.CONCEPT_FIELD.nid() ||
+                        fieldChange.currentValue().fieldDefinition(viewCalculator).dataTypeNid() == KernelConcept.COMPONENT_FIELD.nid()) {
                     formatFunction = value -> switch (value) {
                         case ConceptFacade conceptFacade -> viewCalculator.getPreferredDescriptionTextOrNid(conceptFacade);
                         default -> value.toString();

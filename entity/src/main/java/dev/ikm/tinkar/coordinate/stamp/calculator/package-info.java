@@ -248,7 +248,7 @@
  * // Create snapshot of concept at specific time
  * StampPositionRecord historicPosition = StampPositionRecord.make(
  *     historicTimestamp,
- *     KernelTerm.MASTER_PATH
+ *     KernelConcept.MASTER_PATH
  * );
  *
  * EntitySnapshot snapshot = calculator.snapshot(conceptEntity, historicPosition);
@@ -274,7 +274,7 @@
  * });
  *
  * // Stream pattern matching
- * calculator.streamLatestVersionForPattern(KernelTerm.DESCRIPTION_PATTERN)
+ * calculator.streamLatestVersionForPattern(KernelPattern.DESCRIPTION_PATTERN)
  *     .filter(Latest::isPresent)
  *     .map(Latest::get)
  *     .forEach(desc -> {

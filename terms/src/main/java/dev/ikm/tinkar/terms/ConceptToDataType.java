@@ -21,52 +21,52 @@ import dev.ikm.tinkar.component.FieldDataType;
 
 public class ConceptToDataType {
     public static FieldDataType convert(Concept dataTypeConcept) {
-        if (KernelTerm.STRING.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.STRING.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.STRING;
         }
-        if (KernelTerm.COMPONENT_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.COMPONENT_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.IDENTIFIED_THING;
         }
-        if (KernelTerm.COMPONENT_ID_SET_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.COMPONENT_ID_SET_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.COMPONENT_ID_SET;
         }
-        if (KernelTerm.COMPONENT_ID_LIST_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.COMPONENT_ID_LIST_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.COMPONENT_ID_LIST;
         }
-        if (KernelTerm.DITREE_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.DITREE_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.DITREE;
         }
-        if (KernelTerm.DIGRAPH_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.DIGRAPH_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.DIGRAPH;
         }
-        if (KernelTerm.CONCEPT_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.CONCEPT_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.CONCEPT;
         }
-        if (KernelTerm.SEMANTIC_FIELD_TYPE.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.SEMANTIC_FIELD_TYPE.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.SEMANTIC;
         }
-        if (KernelTerm.INTEGER_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.INTEGER_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.INTEGER;
         }
-        if (KernelTerm.FLOAT_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.FLOAT_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.FLOAT;
         }
-        if (KernelTerm.BOOLEAN_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.BOOLEAN_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.BOOLEAN;
         }
-        if (KernelTerm.BYTE_ARRAY_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.BYTE_ARRAY_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.BYTE_ARRAY;
         }
-        if (KernelTerm.ARRAY_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.ARRAY_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.OBJECT_ARRAY;
         }
-        if (KernelTerm.INSTANT_LITERAL.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.INSTANT_LITERAL.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.INSTANT;
         }
-        if (KernelTerm.LONG.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.LONG.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.LONG;
         }
-        if (KernelTerm.DECIMAL_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+        if (KernelConcept.DECIMAL_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.DECIMAL;
         }
 

@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.integration.roundtrip;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.FileUtil;
@@ -175,8 +176,8 @@ class KnowledgeBaseRoundTripIT {
                     .map(ServiceLoader.Provider::get)
                     .findFirst().orElseThrow(() -> new IllegalStateException("No ReasonerService is provided"));
             long start = System.currentTimeMillis();
-            reasoner.init(Calculators.View.Default(), KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-                    KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+            reasoner.init(Calculators.View.Default(), KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                    KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
             reasoner.extractData(quiet());
             reasoner.loadData(quiet());
             reasoner.computeInferences();
@@ -210,7 +211,7 @@ class KnowledgeBaseRoundTripIT {
         void work(Properties in, Properties out) {
             ViewCalculator view = Calculators.View.Default();
             long start = System.currentTimeMillis();
-            long root = KernelTerm.ROOT_VERTEX.nid();
+            long root = KernelConcept.ROOT_VERTEX.nid();
             AtomicLong concepts = new AtomicLong();
             AtomicLong withoutDescription = new AtomicLong();
             EntityService.get().forEachConceptEntity(concept -> {

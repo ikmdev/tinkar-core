@@ -18,7 +18,7 @@ package dev.ikm.tinkar.entity.builder;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
@@ -61,7 +61,7 @@ public sealed interface GraphFieldValue permits GraphFieldValue.Tree, GraphField
      *                 replay reproduces the same vertex
      * @param meaning  the concept this vertex means, as an identity handle
      */
-    record Vertex(UUID vertexId, EntityProxy.Concept meaning) {
+    record Vertex(UUID vertexId, ConceptFacade meaning) {
 
         /**
          * Validates the vertex.

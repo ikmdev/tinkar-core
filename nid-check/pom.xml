@@ -13,7 +13,10 @@
         A javac plugin, NidCheck, that fails the build on the nid hazards the compiler accepts
         when nids widen from int to long: a long passed to a lookup in a collection of Integer,
         an (int) cast of a nid outside Nid, and Nid.narrowChecked outside the classes allowed
-        to narrow (design-2026-09-30-64-bit-nids).
+        to narrow (design-2026-09-30-64-bit-nids). Beside it, FacadeCheck reports the comparisons
+        and signatures that treat two forms of one component (a proxy, a binding enum, a record)
+        as two: == on components, equals on a binding enum or a facade interface, EntityProxy in
+        public signatures, and casts and instanceof to EntityProxy.
     </description>
 
     <dependencies>

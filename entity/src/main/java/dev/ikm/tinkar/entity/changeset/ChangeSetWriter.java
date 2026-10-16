@@ -17,7 +17,7 @@ package dev.ikm.tinkar.entity.changeset;
 
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.schema.TinkarMsg;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
@@ -138,7 +138,7 @@ public final class ChangeSetWriter {
     public static String manifestContent(EntityCountSummary counts, List<Entry> entries, long componentCount, String sections) {
         StringBuilder manifest = new StringBuilder()
                 .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.CURRENT_VERSION).append("\n")
-                .append("Packager-Name: ").append(KernelTerm.KOMET_USER.description()).append("\n")
+                .append("Packager-Name: ").append(KernelConcept.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
                 .append("Total-Count: ").append(counts.getTotalCount()).append("\n")
                 .append("Concept-Count: ").append(counts.conceptCount()).append("\n")
@@ -163,7 +163,7 @@ public final class ChangeSetWriter {
     public static String identityIndexManifestContent(EntityCountSummary counts, String sections) {
         return new StringBuilder()
                 .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.IDENTITY_INDEX_VERSION).append("\n")
-                .append("Packager-Name: ").append(KernelTerm.KOMET_USER.description()).append("\n")
+                .append("Packager-Name: ").append(KernelConcept.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
                 .append("Total-Count: ").append(counts.getTotalCount()).append("\n")
                 .append("Concept-Count: ").append(counts.conceptCount()).append("\n")

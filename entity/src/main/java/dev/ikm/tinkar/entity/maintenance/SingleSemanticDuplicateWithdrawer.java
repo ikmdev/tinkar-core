@@ -32,7 +32,7 @@ import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.transaction.Transaction;
-import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -92,7 +92,7 @@ public final class SingleSemanticDuplicateWithdrawer {
         default void onNidsProcessed(long processed) {}
 
         /** Called when a pattern starts its parallel grouping pass. */
-        default void onPatternStarting(EntityProxy.Pattern pattern, int nidsForPattern) {}
+        default void onPatternStarting(PatternFacade pattern, int nidsForPattern) {}
     }
 
     private static final ProgressListener NO_OP_LISTENER = new ProgressListener() {};
@@ -203,17 +203,17 @@ public final class SingleSemanticDuplicateWithdrawer {
         this.dryRun = dryRun;
     }
 
-    public Report scan(Iterable<? extends EntityProxy.Pattern> patterns) {
+    public Report scan(Iterable<? extends PatternFacade> patterns) {
         return scan(patterns, NO_OP_LISTENER);
     }
 
-    public Report scan(Iterable<? extends EntityProxy.Pattern> patterns, ProgressListener listener) {
-        record PatternEnum(EntityProxy.Pattern pattern, PatternEntity<?> entity, MutableLongList allNids) {}
+    public Report scan(Iterable<? extends PatternFacade> patterns, ProgressListener listener) {
+        record PatternEnum(PatternFacade pattern, PatternEntity<?> entity, MutableLongList allNids) {}
 
         // Phase 1: sequential enumeration so we know the total before parallel work starts.
         List<PatternEnum> enumerated = new ArrayList<>();
         long totalNids = 0;
-        for (EntityProxy.Pattern pattern : patterns) {
+        for (PatternFacade pattern : patterns) {
             long patternNid;
             try {
                 patternNid = pattern.nid();

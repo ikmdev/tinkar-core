@@ -54,13 +54,13 @@ A position specifies *when* on *which path*:
 // Latest on development path
 StampPositionRecord latest = StampPositionRecord.make(
     Long.MAX_VALUE,                      // Latest
-    KernelTerm.DEVELOPMENT_PATH
+    KernelConcept.DEVELOPMENT_PATH
 );
 
 // Specific date on master path
 StampPositionRecord historic = StampPositionRecord.make(
     Instant.parse("2024-01-01T00:00:00Z").toEpochMilli(),
-    KernelTerm.MASTER_PATH
+    KernelConcept.MASTER_PATH
 );
 ----
 
@@ -72,17 +72,17 @@ Paths represent development branches with their origins:
 ----
 // Master path branches from primordial path
 StampPathImmutable masterPath = StampPathImmutable.make(
-    KernelTerm.MASTER_PATH.nid(),
+    KernelConcept.MASTER_PATH.nid(),
     Sets.immutable.of(
-        StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.PRIMORDIAL_PATH.nid())
+        StampPositionRecord.make(Long.MAX_VALUE, KernelConcept.PRIMORDIAL_PATH.nid())
     )
 );
 
 // Development branches from master at specific time
 StampPathImmutable devPath = StampPathImmutable.make(
-    KernelTerm.DEVELOPMENT_PATH.nid(),
+    KernelConcept.DEVELOPMENT_PATH.nid(),
     Sets.immutable.of(
-        StampPositionRecord.make(branchTimestamp, KernelTerm.MASTER_PATH.nid())
+        StampPositionRecord.make(branchTimestamp, KernelConcept.MASTER_PATH.nid())
     )
 );
 ----
@@ -97,7 +97,7 @@ StampCoordinateRecord coordinate = StampCoordinateRecord.make(
     StateSet.ACTIVE,                     // Only active content
     StampPositionRecord.make(            // Latest on master
         Long.MAX_VALUE,
-        KernelTerm.MASTER_PATH
+        KernelConcept.MASTER_PATH
     ),
     IntIds.set.empty()                   // All modules (wildcard)
 );
@@ -177,7 +177,7 @@ StateSet both = StateSet.ACTIVE_AND_INACTIVE;
 // Latest versions
 StampPositionRecord latest = StampPositionRecord.make(
     Long.MAX_VALUE,
-    KernelTerm.DEVELOPMENT_PATH
+    KernelConcept.DEVELOPMENT_PATH
 );
 ----
 
@@ -189,7 +189,7 @@ StampPositionRecord latest = StampPositionRecord.make(
 long timestamp = Instant.parse("2024-01-01T00:00:00Z").toEpochMilli();
 StampPositionRecord pointInTime = StampPositionRecord.make(
     timestamp,
-    KernelTerm.MASTER_PATH
+    KernelConcept.MASTER_PATH
 );
 
 // Use in coordinate
@@ -211,11 +211,11 @@ Latest<ConceptVersion> historicVersion = calc.latest(concept);
 // Find what changed between two dates
 StampPositionRecord start = StampPositionRecord.make(
     startTimestamp,
-    KernelTerm.MASTER_PATH
+    KernelConcept.MASTER_PATH
 );
 StampPositionRecord end = StampPositionRecord.make(
     endTimestamp,
-    KernelTerm.MASTER_PATH
+    KernelConcept.MASTER_PATH
 );
 
 // Get changes
@@ -237,7 +237,7 @@ if (!changes.versionChanges().isEmpty()) {
 ----
 // Include specific modules only
 IntIdSet allowedModules = IntIds.set.of(
-    KernelTerm.SOLOR_MODULE.nid(),
+    KernelConcept.SOLOR_MODULE.nid(),
     MyTerms.SNOMED_CT_CORE_MODULE.nid()
 );
 
@@ -264,8 +264,8 @@ When multiple versions exist with the same timestamp:
 ----
 // Prefer versions from these modules (in order)
 IntIdList modulePriority = IntIds.list.of(
-    KernelTerm.SOLOR_OVERLAY_MODULE.nid(),  // 1st preference
-    KernelTerm.SOLOR_MODULE.nid()           // 2nd preference
+    KernelConcept.SOLOR_OVERLAY_MODULE.nid(),  // 1st preference
+    KernelConcept.SOLOR_MODULE.nid()           // 2nd preference
 );
 
 StampCoordinateRecord prioritized = coordinate.withModulePriorityNidList(modulePriority);
@@ -340,7 +340,7 @@ StampCoordinateRecord production = Coordinates.Stamp.MasterLatestActiveOnly();
 long historicDate = Instant.parse("2023-01-01T00:00:00Z").toEpochMilli();
 StampCoordinateRecord historic = StampCoordinateRecord.make(
     StateSet.ACTIVE_AND_INACTIVE,  // See everything
-    StampPositionRecord.make(historicDate, KernelTerm.MASTER_PATH),
+    StampPositionRecord.make(historicDate, KernelConcept.MASTER_PATH),
     IntIds.set.empty()
 );
 ----
@@ -352,7 +352,7 @@ StampCoordinateRecord historic = StampCoordinateRecord.make(
 // Only SNOMED CT core content
 StampCoordinateRecord snomedOnly = StampCoordinateRecord.make(
     StateSet.ACTIVE,
-    StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.MASTER_PATH),
+    StampPositionRecord.make(Long.MAX_VALUE, KernelConcept.MASTER_PATH),
     IntIds.set.of(MyTerms.SNOMED_CT_CORE_MODULE.nid())
 );
 ----
@@ -462,11 +462,11 @@ long sevenDaysAgo = Instant.now()
 
 StampPositionRecord weekAgo = StampPositionRecord.make(
     sevenDaysAgo,
-    KernelTerm.DEVELOPMENT_PATH
+    KernelConcept.DEVELOPMENT_PATH
 );
 StampPositionRecord now = StampPositionRecord.make(
     Long.MAX_VALUE,
-    KernelTerm.DEVELOPMENT_PATH
+    KernelConcept.DEVELOPMENT_PATH
 );
 
 List<Integer> changedConcepts = new ArrayList<>();

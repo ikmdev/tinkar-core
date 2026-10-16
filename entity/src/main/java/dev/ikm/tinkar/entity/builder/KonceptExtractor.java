@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.EntityKey;
 import dev.ikm.tinkar.common.id.LongIdList;
@@ -188,7 +189,7 @@ public final class KonceptExtractor {
         Map<Long, String> labelByNid = new LinkedHashMap<>();
         Map<String, Long> identifierToNid = new LinkedHashMap<>();
         for (long nid : named) {
-            String fqn = descriptionText(nid, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
+            String fqn = descriptionText(nid, KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
             if (fqn == null) {
                 continue;
             }
@@ -223,7 +224,7 @@ public final class KonceptExtractor {
             boolean isPattern = patternNids.contains(nid);
             sb.append(identifierByNid.get(nid)).append(":\n");
             sb.append("  label: ").append(yaml(labelByNid.get(nid))).append('\n');
-            String definition = descriptionText(nid, KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid());
+            String definition = descriptionText(nid, KernelConcept.DEFINITION_DESCRIPTION_TYPE.nid());
             if (definition != null) {
                 sb.append("  definition: ").append(yaml(definition)).append('\n');
             }
@@ -286,7 +287,7 @@ public final class KonceptExtractor {
                     if (known != null) {
                         return known;
                     }
-                    String fqn = descriptionText(refNid, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
+                    String fqn = descriptionText(refNid, KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
                     return fqn != null ? label(fqn) : dev.ikm.tinkar.common.service.PrimitiveData.text(refNid);
                 };
                 String axiom = stated.sets().stream()
@@ -360,7 +361,7 @@ public final class KonceptExtractor {
      * concept/pattern entity iteration, which silently skips a nid that has a description
      * (so it's in {@code identifierByNid}, and gets emitted) but no materializable entity
      * chronology of its own -- true for a handful of primordial/meta-schema value concepts
-     * (for example {@code KernelTerm.PRIMORDIAL_STATE}) referenced only as STAMP dimensions,
+     * (for example {@code KernelConcept.PRIMORDIAL_STATE}) referenced only as STAMP dimensions,
      * never as an authored component. Every extracted koncept still needs a value, so
      * whatever {@link TaxonomySectioner} doesn't cover falls into one final fixed bucket
      * here rather than emitting no {@code section:} at all.
@@ -369,12 +370,12 @@ public final class KonceptExtractor {
                                                         Map<Long, String> identifierByNid) {
         TaxonomySectioner sectioner = TaxonomySectioner.fromStatedAxioms(calculator);
         List<Section> sections = sectioner.sectionsCoveringFullStore(
-                KernelTerm.ROOT_VERTEX.nid(), SPLIT_THRESHOLD, MAX_DEPTH, RESIDUAL_BATCH_SIZE);
+                KernelConcept.ROOT_VERTEX.nid(), SPLIT_THRESHOLD, MAX_DEPTH, RESIDUAL_BATCH_SIZE);
         Map<Long, String> sectionByNid = new LinkedHashMap<>();
         int residualIndex = 0;
         for (Section section : sections) {
             String key;
-            if (section.rootNid() == KernelTerm.ROOT_VERTEX.nid()) {
+            if (section.rootNid() == KernelConcept.ROOT_VERTEX.nid()) {
                 residualIndex++;
                 key = "Residual" + residualIndex;
             } else {
@@ -432,13 +433,13 @@ public final class KonceptExtractor {
     }
 
     /**
-     * Text of every {@link KernelTerm#COMMENT_PATTERN} semantic on a component whose
+     * Text of every {@link KernelPattern#COMMENT_PATTERN} semantic on a component whose
      * current version, per {@code calculator}, is active.
      */
     private static List<String> activeComments(long componentNid, StampCalculator calculator) {
         List<String> comments = new ArrayList<>();
         for (long semanticNid : EntityStore.current().semanticNidsForComponentOfPattern(
-                componentNid, KernelTerm.COMMENT_PATTERN.nid())) {
+                componentNid, KernelPattern.COMMENT_PATTERN.nid())) {
             Latest<SemanticEntityVersion> latest = calculator.latestSemanticVersion(semanticNid);
             if (latest.isPresent()) {
                 comments.add(latest.get().fieldValues().get(COMMENT_FIELD_TEXT).toString());
@@ -467,7 +468,7 @@ public final class KonceptExtractor {
 
     /**
      * A comment's text immediately before it was retired, and the time of that retirement --
-     * present only for a {@link KernelTerm#COMMENT_PATTERN} semantic whose calculator-resolved
+     * present only for a {@link KernelPattern#COMMENT_PATTERN} semantic whose calculator-resolved
      * current version is absent (nothing active) because its latest version by time is
      * itself inactive.
      */
@@ -477,7 +478,7 @@ public final class KonceptExtractor {
     private static List<RetiredComment> retiredComments(long componentNid, StampCalculator calculator) {
         List<RetiredComment> retired = new ArrayList<>();
         for (long semanticNid : EntityStore.current().semanticNidsForComponentOfPattern(
-                componentNid, KernelTerm.COMMENT_PATTERN.nid())) {
+                componentNid, KernelPattern.COMMENT_PATTERN.nid())) {
             if (calculator.latestSemanticVersion(semanticNid).isPresent()) {
                 continue;
             }
@@ -507,7 +508,7 @@ public final class KonceptExtractor {
      */
     private static String descriptionText(long componentNid, long descriptionTypeNid) {
         long[] descriptionSemanticNids = EntityStore.current().semanticNidsForComponentOfPattern(
-                componentNid, KernelTerm.DESCRIPTION_PATTERN.nid());
+                componentNid, KernelPattern.DESCRIPTION_PATTERN.nid());
         for (long semanticNid : descriptionSemanticNids) {
             SemanticEntityVersion version = latestVersion(EntityHandle.get(semanticNid).expectSemantic());
             if (version == null) {
@@ -608,7 +609,7 @@ public final class KonceptExtractor {
      */
     private static StatedDefinition statedDefinition(long componentNid) {
         long[] axiomNids = EntityStore.current().semanticNidsForComponentOfPattern(
-                componentNid, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
+                componentNid, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
         boolean present = false;
         boolean sufficient = false;
         java.util.LinkedHashSet<Long> parents = new java.util.LinkedHashSet<>();
@@ -879,7 +880,7 @@ public final class KonceptExtractor {
         EntityHandle handle = EntityHandle.get(nid);
         Optional<SemanticEntity> semantic = handle.asSemantic();
         if (semantic.isPresent()) {
-            if (semantic.get().patternNid() == KernelTerm.DESCRIPTION_PATTERN.nid()) {
+            if (semantic.get().patternNid() == KernelPattern.DESCRIPTION_PATTERN.nid()) {
                 SemanticEntityVersion description = latestVersion(semantic.get());
                 if (description != null) {
                     return description.fieldValues().get(FIELD_TEXT).toString();

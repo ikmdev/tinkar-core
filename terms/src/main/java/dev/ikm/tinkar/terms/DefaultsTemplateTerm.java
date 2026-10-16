@@ -46,7 +46,7 @@ import java.util.UUID;
  *
  * <h2>Home</h2>
  * Bindings live in this package ({@code dev.ikm.tinkar.terms}, the {@code terms}
- * module) — see {@link KernelTerm}. This class is deliberately
+ * module) — see {@link KernelConcept}. This class is deliberately
  * separate and small: these are not SOLOR starter-data bindings but the
  * declared-identity seam for concepts the IkeFoundation knowledge set
  * ({@code ike-starter-set}'s {@code ike-terms} ledger) mints. tinkar-core

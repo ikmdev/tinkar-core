@@ -57,13 +57,13 @@ The natural language for descriptions:
 [source,java]
 ----
 // English
-int langNid = KernelTerm.ENGLISH_LANGUAGE.nid();
+int langNid = KernelConcept.ENGLISH_LANGUAGE.nid();
 
 // Spanish
-int langNid = KernelTerm.SPANISH_LANGUAGE.nid();
+int langNid = KernelConcept.SPANISH_LANGUAGE.nid();
 
 // Any language (wildcard)
-int langNid = KernelTerm.LANGUAGE.nid();
+int langNid = KernelConcept.LANGUAGE.nid();
 ----
 
 === Description Patterns
@@ -73,7 +73,7 @@ Patterns that define description structure (usually DESCRIPTION_PATTERN):
 [source,java]
 ----
 IntIdList patterns = IntIds.list.of(
-    KernelTerm.DESCRIPTION_PATTERN.nid()
+    KernelPattern.DESCRIPTION_PATTERN.nid()
 );
 ----
 
@@ -85,19 +85,19 @@ Preferred types in priority order:
 ----
 // Prefer regular names, fall back to FQN
 IntIdList types = IntIds.list.of(
-    KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-    KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
+    KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+    KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
 );
 
 // Prefer FQN, fall back to regular name
 IntIdList types = IntIds.list.of(
-    KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-    KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
+    KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+    KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.nid()
 );
 
 // Definitions only
 IntIdList types = IntIds.list.of(
-    KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid()
+    KernelConcept.DEFINITION_DESCRIPTION_TYPE.nid()
 );
 ----
 
@@ -109,14 +109,14 @@ Language variants in priority order:
 ----
 // Prefer US English, fall back to GB English
 IntIdList dialects = IntIds.list.of(
-    KernelTerm.US_DIALECT_PATTERN.nid(),
-    KernelTerm.GB_DIALECT_PATTERN.nid()
+    KernelPattern.US_DIALECT_PATTERN.nid(),
+    KernelPattern.GB_DIALECT_PATTERN.nid()
 );
 
 // Prefer GB English
 IntIdList dialects = IntIds.list.of(
-    KernelTerm.GB_DIALECT_PATTERN.nid(),
-    KernelTerm.US_DIALECT_PATTERN.nid()
+    KernelPattern.GB_DIALECT_PATTERN.nid(),
+    KernelPattern.US_DIALECT_PATTERN.nid()
 );
 ----
 
@@ -128,8 +128,8 @@ When multiple descriptions match all criteria:
 ----
 // Prefer overlay module, fall back to core
 IntIdList modules = IntIds.list.of(
-    KernelTerm.SOLOR_OVERLAY_MODULE.nid(),
-    KernelTerm.SOLOR_MODULE.nid()
+    KernelConcept.SOLOR_OVERLAY_MODULE.nid(),
+    KernelConcept.SOLOR_MODULE.nid()
 );
 ----
 
@@ -213,11 +213,11 @@ LanguageCoordinateRecord anyDef =
 ----
 // Custom: German, prefer definitions
 LanguageCoordinateRecord germanDef = LanguageCoordinateRecord.make(
-    KernelTerm.GERMAN_LANGUAGE.nid(),
-    IntIds.list.of(KernelTerm.DESCRIPTION_PATTERN.nid()),
+    KernelConcept.GERMAN_LANGUAGE.nid(),
+    IntIds.list.of(KernelPattern.DESCRIPTION_PATTERN.nid()),
     IntIds.list.of(
-        KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid(),
-        KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
+        KernelConcept.DEFINITION_DESCRIPTION_TYPE.nid(),
+        KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
     ),
     IntIds.list.empty(),  // No dialect preferences
     IntIds.list.empty()   // No module preferences
@@ -329,12 +329,12 @@ LanguageCalculator calc = LanguageCalculatorWithCache.getCalculator(
 
 Latest<SemanticEntityVersion> regularName = calc.getDescription(
     conceptNid,
-    KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE
+    KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE
 );
 
 Latest<SemanticEntityVersion> fqn = calc.getDescription(
     conceptNid,
-    KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE
+    KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE
 );
 
 if (regularName.isPresent() && fqn.isPresent()) {

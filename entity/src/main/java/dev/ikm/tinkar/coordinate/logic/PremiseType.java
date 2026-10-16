@@ -15,14 +15,12 @@
  */
 package dev.ikm.tinkar.coordinate.logic;
 
-
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
 
 /**
  * The Enum PremiseType.
@@ -33,28 +31,28 @@ public enum PremiseType implements dev.ikm.tinkar.component.Concept, ComponentWi
     /**
      * Compute the taxonomy from stated axioms.
      */
-    STATED("Stated", KernelTerm.STATED_PREMISE_TYPE, TaxonomyFlag.STATED),
+    STATED("Stated", KernelConcept.STATED_PREMISE_TYPE, TaxonomyFlag.STATED),
 
     /**
      * Compute the taxonomy from inferred axioms.
      */
-    INFERRED("Inferred", KernelTerm.INFERRED_PREMISE_TYPE, TaxonomyFlag.INFERRED);
+    INFERRED("Inferred", KernelConcept.INFERRED_PREMISE_TYPE, TaxonomyFlag.INFERRED);
 
     String displayName;
-    EntityProxy.Concept premiseTypeConcept;
+    ConceptFacade premiseTypeConcept;
     int[] flags;
 
-    PremiseType(String displayName, EntityProxy.Concept premiseTypeConcept, TaxonomyFlag taxonomyFlag) {
+    PremiseType(String displayName, ConceptFacade premiseTypeConcept, TaxonomyFlag taxonomyFlag) {
         this.displayName = displayName;
         this.premiseTypeConcept = premiseTypeConcept;
         this.flags = new int[]{taxonomyFlag.bits};
     }
 
     public static PremiseType fromConcept(ConceptFacade concept) {
-        if (Entity.nid(concept) == KernelTerm.INFERRED_PREMISE_TYPE.nid()) {
+        if (Entity.nid(concept) == KernelConcept.INFERRED_PREMISE_TYPE.nid()) {
             return INFERRED;
         }
-        if (Entity.nid(concept) == KernelTerm.STATED_PREMISE_TYPE.nid()) {
+        if (Entity.nid(concept) == KernelConcept.STATED_PREMISE_TYPE.nid()) {
             return STATED;
         }
         throw new IllegalStateException("PremiseType.fromConcept can't handle: " + DiagnosticText.component(Entity.nid(concept)));
@@ -86,7 +84,7 @@ public enum PremiseType implements dev.ikm.tinkar.component.Concept, ComponentWi
 
     @Override
     public PublicId publicId() {
-        return premiseTypeConcept;
+        return premiseTypeConcept.publicId();
     }
 
     @Override

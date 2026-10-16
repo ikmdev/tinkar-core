@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
@@ -23,9 +23,7 @@ import dev.ikm.tinkar.entity.builder.BindingClass;
 import dev.ikm.tinkar.entity.builder.BindingsWriter;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.Stamp;
-import dev.ikm.tinkar.terms.DeclaredStamp;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.State;
+import dev.ikm.tinkar.terms.*;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.AfterAll;
@@ -75,47 +73,50 @@ class BindingClassesIT {
         set.concept("Retrieve (Test)").binding(cql, "RETRIEVE");
         set.concept("Unbound concept (Test)");
 
-        List<Path> files = BindingsWriter.writeAll(set, "test.binding.classes", "TestTerms", outputDir);
+        List<Path> files = BindingsWriter.writeAll(set, "test.binding.classes", "Test", outputDir);
 
-        assertEquals(List.of("TestTerms.java", "ElPlus.java", "Cql.java"),
+        assertEquals(List.of("TestConcept.java", "ElPlusConcept.java", "CqlConcept.java"),
                 files.stream().map(file -> file.getFileName().toString()).toList());
         String defaults = Files.readString(files.get(0));
         String elPlusSource = Files.readString(files.get(1));
         String cqlSource = Files.readString(files.get(2));
         PublicId conjunction = set.conceptRef("Conjunction (Test)").publicId();
 
-        assertTrue(defaults.contains("EntityProxy.Concept UNBOUND_CONCEPT ="), "unbound, named from its FQN");
+        assertTrue(defaults.contains("    UNBOUND_CONCEPT(\"Unbound concept (Test)\""), "unbound, named from its FQN");
         assertFalse(defaults.contains("CONJUNCTION"), "a bound component is not in the default class");
-        assertTrue(elPlusSource.contains("EntityProxy.Concept AND =") && containsEveryUuid(elPlusSource, conjunction),
+        assertTrue(elPlusSource.contains("    AND(\"") && containsEveryUuid(elPlusSource, conjunction),
                 "the shared concept, in ElPlus");
-        assertTrue(cqlSource.contains("EntityProxy.Concept AND =") && containsEveryUuid(cqlSource, conjunction),
+        assertTrue(cqlSource.contains("    AND(\"") && containsEveryUuid(cqlSource, conjunction),
                 "the shared concept, in Cql, under the same identity");
-        assertTrue(elPlusSource.contains("EntityProxy.Concept SOME =") && !cqlSource.contains(" SOME ="),
+        assertTrue(elPlusSource.contains("    SOME(\"") && !cqlSource.contains(" SOME(\""),
                 "a component bound in one class only");
-        assertTrue(cqlSource.contains("EntityProxy.Concept RETRIEVE ="));
+        assertTrue(cqlSource.contains("    RETRIEVE(\""));
     }
 
     @Test
     @DisplayName("A bound stamp is generated in its class, with its identity and every dimension")
     void stampsBesideBindings() throws Exception {
         KnowledgeSet set = KnowledgeSet.of("3c8f1a2e-6b4d-5e7f-8a9b-0c1d2e3f4a56");
-        BindingClass stamps = set.bindingClass("TestStamps");
-        EntityProxy.Concept module = set.conceptRef("Test module (Test)");
-        ActiveStamp inception = Stamp.active(PrimitiveData.INCEPTION_EPOCH, KernelTerm.USER, module,
-                KernelTerm.DEVELOPMENT_PATH);
+        BindingClass stamps = set.bindingClass("Test");
+        ConceptFacade module = set.conceptRef("Test module (Test)");
+        ActiveStamp inception = Stamp.active(PrimitiveData.INCEPTION_EPOCH, KernelConcept.USER, module,
+                KernelConcept.DEVELOPMENT_PATH);
         set.bindStamp(inception, stamps, "INCEPTION");
         set.bindStamp(inception, stamps, "INCEPTION");
         assertThrows(IllegalStateException.class, () -> set.bindStamp(inception, stamps, "BIRTH"),
                 "a second name for the stamp in the class");
 
-        List<Path> files = BindingsWriter.writeAll(set, "test.binding.stamps", "TestTerms", outputDir);
-        String source = Files.readString(files.get(1));
+        List<Path> files = BindingsWriter.writeAll(set, "test.binding.stamps", "Test", outputDir);
+        assertEquals(List.of("TestStamp.java"), files.stream().map(file -> file.getFileName().toString()).toList(),
+                "a binding class named like the set's base adds its stamps to that base");
+        String source = Files.readString(files.getFirst());
 
-        assertTrue(source.contains("public static final DeclaredStamp INCEPTION ="));
+        assertTrue(source.contains("public enum TestStamp {"));
+        assertTrue(source.contains("    INCEPTION(new DeclaredStamp("));
         assertTrue(containsEveryUuid(source, inception.publicId()), "the stamp's identity");
         assertTrue(source.contains("State.ACTIVE, " + PrimitiveData.INCEPTION_EPOCH + "L"), "status and time");
         assertTrue(containsEveryUuid(source, module.publicId()), "the module");
-        assertTrue(containsEveryUuid(source, KernelTerm.DEVELOPMENT_PATH.publicId()), "the path");
+        assertTrue(containsEveryUuid(source, KernelConcept.DEVELOPMENT_PATH.publicId()), "the path");
     }
 
     /** Whether generated source names every UUID of a component: a binding carries them all. */
@@ -131,18 +132,18 @@ class BindingClassesIT {
     @Test
     @DisplayName("A declared stamp turns back into the builder stamp it was generated from")
     void declaredStampRoundTrips() {
-        EntityProxy.Concept module = EntityProxy.Concept.make("Test module (Test)",
+        ConceptFacade module = EntityProxy.Concept.make("Test module (Test)",
                 dev.ikm.tinkar.common.id.PublicIds.of(java.util.UUID.fromString("7b0e6f3a-1c2d-5e4f-9a8b-7c6d5e4f3a21")));
-        ActiveStamp derived = Stamp.active(PrimitiveData.INCEPTION_EPOCH, KernelTerm.USER, module,
-                KernelTerm.DEVELOPMENT_PATH);
+        ActiveStamp derived = Stamp.active(PrimitiveData.INCEPTION_EPOCH, KernelConcept.USER, module,
+                KernelConcept.DEVELOPMENT_PATH);
         Stamp back = Stamp.from(new DeclaredStamp(EntityProxy.Stamp.make("INCEPTION", derived.publicId()),
-                State.ACTIVE, derived.time(), KernelTerm.USER, module, KernelTerm.DEVELOPMENT_PATH));
+                State.ACTIVE, derived.time(), KernelConcept.USER, module, KernelConcept.DEVELOPMENT_PATH));
         assertEquals(derived, back, "a derived identity comes back derived");
 
         Stamp nonExistent = Stamp.nonExistent();
         Stamp primordial = Stamp.from(new DeclaredStamp(EntityProxy.Stamp.make("NON_EXISTENT", nonExistent.publicId()),
-                State.PRIMORDIAL, nonExistent.time(), KernelTerm.AUTHOR_FOR_VERSION,
-                KernelTerm.UNINITIALIZED_COMPONENT, KernelTerm.UNINITIALIZED_COMPONENT));
+                State.PRIMORDIAL, nonExistent.time(), KernelConcept.AUTHOR_FOR_VERSION,
+                KernelConcept.UNINITIALIZED_COMPONENT, KernelConcept.UNINITIALIZED_COMPONENT));
         assertEquals(nonExistent.publicId(), primordial.publicId(), "a declared identity is kept");
         assertEquals(State.PRIMORDIAL, primordial.state());
     }
@@ -158,15 +159,61 @@ class BindingClassesIT {
                 dev.ikm.tinkar.common.id.PublicIds.of(java.util.UUID.fromString("00000000-0000-5000-8000-000000000001")),
                 kernel, "ABSENT"), "an identity the set does not declare");
 
-        List<Path> files = BindingsWriter.writeAll(set, "test.binding.apart", "TestTerms", outputDir);
-        assertEquals(List.of("TestTerms.java"), files.stream().map(file -> file.getFileName().toString()).toList(),
+        List<Path> files = BindingsWriter.writeAll(set, "test.binding.apart", "Test", outputDir);
+        assertEquals(List.of("TestConcept.java"), files.stream().map(file -> file.getFileName().toString()).toList(),
                 "the class with a package of its own is not among the set's bindings");
-        assertTrue(Files.readString(files.getFirst()).contains("EntityProxy.Concept KERNEL_CONCEPT ="),
-                "its member stays in the default class");
+        assertTrue(Files.readString(files.getFirst()).contains("    KERNEL_CONCEPT(\""),
+                "its member stays in the set's own enum");
 
-        Path apart = BindingsWriter.writeBindingClass(set, kernel, outputDir);
-        assertTrue(apart.endsWith(Path.of("test", "binding", "kernel", "TestKernel.java")), "written into its own package");
-        assertTrue(Files.readString(apart).contains("EntityProxy.Concept KERNEL_CONCEPT ="));
+        Path apart = BindingsWriter.writeBindingClass(set, kernel, outputDir).getFirst();
+        assertTrue(apart.endsWith(Path.of("test", "binding", "kernel", "TestKernelConcept.java")), "written into its own package");
+        assertTrue(Files.readString(apart).contains("    KERNEL_CONCEPT(\""));
+    }
+
+    @Test
+    @DisplayName("Generated enums compile, split by kind, and stand for their components")
+    void generatedEnumsCompileAndResolve() throws Exception {
+        KnowledgeSet set = KnowledgeSet.of("3c8f1a2e-6b4d-5e7f-8a9b-0c1d2e3f4a58");
+        BindingClass stamps = set.bindingClass("Compiled");
+        ActiveStamp birth = Stamp.active(PrimitiveData.INCEPTION_EPOCH, KernelConcept.USER,
+                set.conceptRef("Test module (Test)"), KernelConcept.DEVELOPMENT_PATH);
+        set.concept("Field meaning (Test)").at(birth);
+        set.concept("Pattern meaning (Test)").at(birth);
+        set.pattern("Sample pattern (Test)").at(birth)
+                .meaning(set.conceptRef("Pattern meaning (Test)"))
+                .purpose(set.conceptRef("Field meaning (Test)"));
+        set.bindStamp(birth, stamps, "INCEPTION");
+
+        Path sources = outputDir.resolve("compiled-src");
+        List<Path> files = BindingsWriter.writeAll(set, "test.binding.compiled", "Compiled", sources);
+        assertEquals(List.of("CompiledConcept.java", "CompiledPattern.java", "CompiledStamp.java"),
+                files.stream().map(file -> file.getFileName().toString()).toList());
+
+        Path classes = outputDir.resolve("compiled-classes");
+        Files.createDirectories(classes);
+        javax.tools.JavaCompiler compiler = javax.tools.ToolProvider.getSystemJavaCompiler();
+        List<String> arguments = new java.util.ArrayList<>(List.of("--enable-preview", "--release",
+                String.valueOf(Runtime.version().feature()), "-proc:none", "-d", classes.toString(),
+                "-cp", System.getProperty("java.class.path"), "-p", System.getProperty("jdk.module.path", ""),
+                "--add-modules", "ALL-MODULE-PATH"));
+        files.forEach(file -> arguments.add(file.toString()));
+        assertEquals(0, compiler.run(null, null, null, arguments.toArray(String[]::new)), "the generated enums compile");
+
+        try (java.net.URLClassLoader loader = new java.net.URLClassLoader(new java.net.URL[] {classes.toUri().toURL()},
+                getClass().getClassLoader())) {
+            Class<?> concepts = loader.loadClass("test.binding.compiled.CompiledConcept");
+            Object fieldMeaning = concepts.getField("FIELD_MEANING").get(null);
+            assertTrue(fieldMeaning instanceof ConceptEnumerationFacade<?>, "a concept constant is a concept facade");
+            assertEquals(set.conceptRef("Field meaning (Test)").publicId(),
+                    ((ConceptEnumerationFacade<?>) fieldMeaning).publicId(), "its identity");
+            assertEquals("Field meaning (Test)", ((ConceptEnumerationFacade<?>) fieldMeaning).description(),
+                    "its birth FQN, with no store lookup");
+            Object sample = loader.loadClass("test.binding.compiled.CompiledPattern").getField("SAMPLE_PATTERN").get(null);
+            assertTrue(sample instanceof PatternEnumerationFacade<?>, "a pattern constant is a pattern facade");
+            Object stamp = loader.loadClass("test.binding.compiled.CompiledStamp").getField("INCEPTION").get(null);
+            assertTrue(stamp.getClass().getMethod("stamp").invoke(stamp) instanceof DeclaredStamp,
+                    "a stamp constant gives its declared stamp");
+        }
     }
 
     @Test
@@ -190,7 +237,7 @@ class BindingClassesIT {
 
         set.concept("Logical and (Test)").binding(elPlus, "AND");
         assertThrows(IllegalStateException.class,
-                () -> BindingsWriter.writeAll(set, "test.binding.collision", "TestTerms", outputDir),
+                () -> BindingsWriter.writeAll(set, "test.binding.collision", "Test", outputDir),
                 "two components under one name in the class");
     }
 

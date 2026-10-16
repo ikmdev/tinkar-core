@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -283,12 +283,12 @@ public class LogicalExpressionBuilder {
 			BigDecimal lowerBound, boolean lowerOpen, BigDecimal upperBound, boolean upperOpen, ConceptFacade units) {
 		EntityVertex intervalRole = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.INTERVAL_ROLE.nid);
 		builder.addVertex(intervalRole);
-		intervalRole.putUncommittedProperty(KernelTerm.INTERVAL_ROLE_TYPE.nid(), intervalRoleType);
-		intervalRole.putUncommittedProperty(KernelTerm.INTERVAL_LOWER_BOUND.nid(), lowerBound);
-		intervalRole.putUncommittedProperty(KernelTerm.LOWER_BOUND_OPEN.nid(), lowerOpen);
-		intervalRole.putUncommittedProperty(KernelTerm.INTERVAL_UPPER_BOUND.nid(), upperBound);
-		intervalRole.putUncommittedProperty(KernelTerm.UPPER_BOUND_OPEN.nid(), upperOpen);
-		intervalRole.putUncommittedProperty(KernelTerm.UNIT_OF_MEASURE.nid(), units);
+		intervalRole.putUncommittedProperty(KernelConcept.INTERVAL_ROLE_TYPE.nid(), intervalRoleType);
+		intervalRole.putUncommittedProperty(KernelConcept.INTERVAL_LOWER_BOUND.nid(), lowerBound);
+		intervalRole.putUncommittedProperty(KernelConcept.LOWER_BOUND_OPEN.nid(), lowerOpen);
+		intervalRole.putUncommittedProperty(KernelConcept.INTERVAL_UPPER_BOUND.nid(), upperBound);
+		intervalRole.putUncommittedProperty(KernelConcept.UPPER_BOUND_OPEN.nid(), upperOpen);
+		intervalRole.putUncommittedProperty(KernelConcept.UNIT_OF_MEASURE.nid(), units);
 		intervalRole.commitProperties();
 		return new LogicalAxiomAdaptor.IntervalRoleAxiomAdaptor(logicalExpression, intervalRole.vertexIndex());
 	}
@@ -313,7 +313,7 @@ public class LogicalExpressionBuilder {
 
     private int findFirstAnd(int vertexIndex) {
         EntityVertex vertex = this.builder.vertex(vertexIndex);
-        if (vertex.getMeaningNid() == KernelTerm.AND.nid()) {
+        if (vertex.getMeaningNid() == KernelConcept.AND.nid()) {
             return vertex.vertexIndex();
         } else {
             for (int successorIndex : this.builder.successors(vertexIndex).toArray()) {
@@ -370,8 +370,8 @@ public class LogicalExpressionBuilder {
     public LogicalAxiom.Atom.TypedAtom.Role SomeRole(UUID vertexUuid, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
         EntityVertex someRole = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.ROLE.nid);
         builder.addVertex(someRole);
-        someRole.putUncommittedProperty(KernelTerm.ROLE_TYPE.nid(), roleType);
-        someRole.putUncommittedProperty(KernelTerm.ROLE_OPERATOR.nid(), KernelTerm.EXISTENTIAL_RESTRICTION);
+        someRole.putUncommittedProperty(KernelConcept.ROLE_TYPE.nid(), roleType);
+        someRole.putUncommittedProperty(KernelConcept.ROLE_OPERATOR.nid(), KernelConcept.EXISTENTIAL_RESTRICTION);
         someRole.commitProperties();
         builder.addEdge(restriction.vertexIndex(), someRole.vertexIndex());
         return new LogicalAxiomAdaptor.RoleAxiomAdaptor(logicalExpression, someRole.vertexIndex());
@@ -384,8 +384,8 @@ public class LogicalExpressionBuilder {
     public LogicalAxiom.Atom.TypedAtom.Role AllRole(UUID vertexUuid, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
         EntityVertex allRole = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.ROLE.nid);
         builder.addVertex(allRole);
-        allRole.putUncommittedProperty(KernelTerm.ROLE_TYPE.nid(), roleType);
-        allRole.putUncommittedProperty(KernelTerm.ROLE_OPERATOR.nid(), KernelTerm.UNIVERSAL_RESTRICTION);
+        allRole.putUncommittedProperty(KernelConcept.ROLE_TYPE.nid(), roleType);
+        allRole.putUncommittedProperty(KernelConcept.ROLE_OPERATOR.nid(), KernelConcept.UNIVERSAL_RESTRICTION);
         allRole.commitProperties();
         builder.addEdge(restriction.vertexIndex(), allRole.vertexIndex());
         return new LogicalAxiomAdaptor.RoleAxiomAdaptor(logicalExpression, allRole.vertexIndex());
@@ -398,8 +398,8 @@ public class LogicalExpressionBuilder {
     public LogicalAxiom.Atom.TypedAtom.Role Role(UUID vertexUuid, ConceptFacade roleOperator, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
         EntityVertex role = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.ROLE.nid);
         builder.addVertex(role);
-        role.putUncommittedProperty(KernelTerm.ROLE_TYPE.nid(), roleType);
-        role.putUncommittedProperty(KernelTerm.ROLE_OPERATOR.nid(), roleOperator);
+        role.putUncommittedProperty(KernelConcept.ROLE_TYPE.nid(), roleType);
+        role.putUncommittedProperty(KernelConcept.ROLE_OPERATOR.nid(), roleOperator);
         role.commitProperties();
         builder.addEdge(restriction.vertexIndex(), role.vertexIndex());
         return new LogicalAxiomAdaptor.RoleAxiomAdaptor(logicalExpression, role.vertexIndex());
@@ -420,7 +420,7 @@ public class LogicalExpressionBuilder {
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(UUID vertexUuid, ConceptFacade concept) {
         EntityVertex conceptAxiom = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.CONCEPT.nid);
         builder.addVertex(conceptAxiom);
-        conceptAxiom.putUncommittedProperty(KernelTerm.CONCEPT_REFERENCE.nid(), concept);
+        conceptAxiom.putUncommittedProperty(KernelConcept.CONCEPT_REFERENCE.nid(), concept);
         conceptAxiom.commitProperties();
         return new LogicalAxiomAdaptor.ConceptAxiomAdaptor(logicalExpression, conceptAxiom.vertexIndex());
     }
@@ -432,7 +432,7 @@ public class LogicalExpressionBuilder {
     public LogicalAxiom.Atom.DisjointWithAxiom DisjointWithAxiom(UUID vertexUuid, ConceptFacade disjointConcept) {
         EntityVertex disjointWithAxiom = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.DISJOINT_WITH.nid);
         builder.addVertex(disjointWithAxiom);
-        disjointWithAxiom.putUncommittedProperty(KernelTerm.DISJOINT_WITH.nid(), disjointConcept);
+        disjointWithAxiom.putUncommittedProperty(KernelConcept.DISJOINT_WITH.nid(), disjointConcept);
         disjointWithAxiom.commitProperties();
         return new LogicalAxiomAdaptor.DisjointWithAxiomAdaptor(logicalExpression, disjointWithAxiom.vertexIndex());
     }
@@ -446,9 +446,9 @@ public class LogicalExpressionBuilder {
                                                             Object literal) {
         EntityVertex featureAxiom = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.FEATURE.nid);
         builder.addVertex(featureAxiom);
-        featureAxiom.putUncommittedProperty(KernelTerm.FEATURE_TYPE.nid(), featureType);
-        featureAxiom.putUncommittedProperty(KernelTerm.CONCRETE_DOMAIN_OPERATOR.nid(), concreteDomainOperator);
-        featureAxiom.putUncommittedProperty(KernelTerm.LITERAL_VALUE.nid(), literal);
+        featureAxiom.putUncommittedProperty(KernelConcept.FEATURE_TYPE.nid(), featureType);
+        featureAxiom.putUncommittedProperty(KernelConcept.CONCRETE_DOMAIN_OPERATOR.nid(), concreteDomainOperator);
+        featureAxiom.putUncommittedProperty(KernelConcept.LITERAL_VALUE.nid(), literal);
 
         featureAxiom.commitProperties();
         return new LogicalAxiomAdaptor.FeatureAxiomAdaptor(logicalExpression, featureAxiom.vertexIndex());
@@ -465,11 +465,11 @@ public class LogicalExpressionBuilder {
                 LogicalAxiomSemantic.PROPERTY_SEQUENCE_IMPLICATION.nid);
         builder.addVertex(propertySequenceImplicationAxiom);
 
-//        boolean isPropertySeqPresent = EntityService.get().getEntity(KernelTerm.PROPERTY_SEQUENCE.publicId()).isPresent();
-//        EntityProxy.Concept propertyGroupConcept = isPropertySeqPresent ? KernelTerm.PROPERTY_SEQUENCE : KernelTerm.PROPERTY_SET;
-        propertySequenceImplicationAxiom.putUncommittedProperty(KernelTerm.PROPERTY_SEQUENCE.nid(),
+//        boolean isPropertySeqPresent = EntityService.get().getEntity(KernelConcept.PROPERTY_SEQUENCE.publicId()).isPresent();
+//        EntityProxy.Concept propertyGroupConcept = isPropertySeqPresent ? KernelConcept.PROPERTY_SEQUENCE : KernelConcept.PROPERTY_SET;
+        propertySequenceImplicationAxiom.putUncommittedProperty(KernelConcept.PROPERTY_SEQUENCE.nid(),
                 LongIds.list.of(propertySequence.castToList(), (ConceptFacade conceptFacade) -> conceptFacade.nid()));
-        propertySequenceImplicationAxiom.putUncommittedProperty(KernelTerm.PROPERTY_SEQUENCE_IMPLICATION.nid(),
+        propertySequenceImplicationAxiom.putUncommittedProperty(KernelConcept.PROPERTY_SEQUENCE_IMPLICATION.nid(),
                 implication);
 
         propertySequenceImplicationAxiom.commitProperties();
@@ -559,7 +559,7 @@ public class LogicalExpressionBuilder {
      */
     public void updateConceptReference(LogicalAxiom.Atom.ConceptAxiom conceptAxiom, ConceptFacade newConceptReference) {
         EntityVertex conceptReferenceVertex = this.builder.vertex(conceptAxiom.vertexIndex());
-        conceptReferenceVertex.putUncommittedProperty(KernelTerm.CONCEPT_REFERENCE.nid(),
+        conceptReferenceVertex.putUncommittedProperty(KernelConcept.CONCEPT_REFERENCE.nid(),
                 EntityProxy.Concept.make(newConceptReference.description(), newConceptReference.publicId()));
         conceptReferenceVertex.commitProperties();
     }
@@ -571,7 +571,7 @@ public class LogicalExpressionBuilder {
      * @param newConceptReference    The new concept reference to update within the vertex.
      */
     public void updateConceptReference(EntityVertex conceptReferenceVertex, ConceptFacade newConceptReference) {
-        conceptReferenceVertex.putUncommittedProperty(KernelTerm.CONCEPT_REFERENCE.nid(),
+        conceptReferenceVertex.putUncommittedProperty(KernelConcept.CONCEPT_REFERENCE.nid(),
                 EntityProxy.Concept.make(newConceptReference.description(), newConceptReference.publicId()));
         conceptReferenceVertex.commitProperties();
     }
@@ -595,7 +595,7 @@ public class LogicalExpressionBuilder {
      */
     public void updateRoleType(LogicalAxiom.Atom.TypedAtom.Role roleAxiom, ConceptFacade conceptToChangeTo) {
         EntityVertex roleVertex = this.builder.vertex(roleAxiom.vertexIndex());
-        roleVertex.putUncommittedProperty(KernelTerm.ROLE_TYPE.nid(), EntityProxy.Concept.make(conceptToChangeTo));
+        roleVertex.putUncommittedProperty(KernelConcept.ROLE_TYPE.nid(), EntityProxy.Concept.make(conceptToChangeTo));
         roleVertex.commitProperties();
     }
     
@@ -610,7 +610,7 @@ public class LogicalExpressionBuilder {
 	public void updateIntervalRoleType(LogicalAxiom.Atom.TypedAtom.IntervalRole intervalRoleAxiom,
 			ConceptFacade conceptToChangeTo) {
 		EntityVertex roleVertex = this.builder.vertex(intervalRoleAxiom.vertexIndex());
-		roleVertex.putUncommittedProperty(KernelTerm.INTERVAL_ROLE_TYPE.nid(),
+		roleVertex.putUncommittedProperty(KernelConcept.INTERVAL_ROLE_TYPE.nid(),
 				EntityProxy.Concept.make(conceptToChangeTo));
 		roleVertex.commitProperties();
 	}
@@ -627,7 +627,7 @@ public class LogicalExpressionBuilder {
 	public void updateIntervalRoleUnitOfMeasure(LogicalAxiom.Atom.TypedAtom.IntervalRole intervalRoleAxiom,
 			ConceptFacade conceptToChangeTo) {
 		EntityVertex roleVertex = this.builder.vertex(intervalRoleAxiom.vertexIndex());
-		roleVertex.putUncommittedProperty(KernelTerm.UNIT_OF_MEASURE.nid(),
+		roleVertex.putUncommittedProperty(KernelConcept.UNIT_OF_MEASURE.nid(),
 				EntityProxy.Concept.make(conceptToChangeTo));
 		roleVertex.commitProperties();
 	}
@@ -635,10 +635,10 @@ public class LogicalExpressionBuilder {
 	public void updateIntervalRoleValue(LogicalAxiom.Atom.TypedAtom.IntervalRole intervalRoleAxiom, BigDecimal lowerBound,
 			boolean lowerOpen, BigDecimal upperBound, boolean upperOpen) {
 		EntityVertex roleVertex = this.builder.vertex(intervalRoleAxiom.vertexIndex());
-		roleVertex.putUncommittedProperty(KernelTerm.INTERVAL_LOWER_BOUND.nid(), lowerBound);
-		roleVertex.putUncommittedProperty(KernelTerm.LOWER_BOUND_OPEN.nid(), lowerOpen);
-		roleVertex.putUncommittedProperty(KernelTerm.INTERVAL_UPPER_BOUND.nid(), upperBound);
-		roleVertex.putUncommittedProperty(KernelTerm.UPPER_BOUND_OPEN.nid(), upperOpen);
+		roleVertex.putUncommittedProperty(KernelConcept.INTERVAL_LOWER_BOUND.nid(), lowerBound);
+		roleVertex.putUncommittedProperty(KernelConcept.LOWER_BOUND_OPEN.nid(), lowerOpen);
+		roleVertex.putUncommittedProperty(KernelConcept.INTERVAL_UPPER_BOUND.nid(), upperBound);
+		roleVertex.putUncommittedProperty(KernelConcept.UPPER_BOUND_OPEN.nid(), upperOpen);
 		roleVertex.commitProperties();
 	}
 
@@ -650,13 +650,13 @@ public class LogicalExpressionBuilder {
      */
     public void updateFeatureType(LogicalAxiom.Atom.TypedAtom.Feature featureAxiom, ConceptFacade conceptToChangeTo) {
         EntityVertex vertex = this.builder.vertex(featureAxiom.vertexIndex());
-        vertex.putUncommittedProperty(KernelTerm.FEATURE_TYPE.nid(), EntityProxy.Concept.make(conceptToChangeTo));
+        vertex.putUncommittedProperty(KernelConcept.FEATURE_TYPE.nid(), EntityProxy.Concept.make(conceptToChangeTo));
         vertex.commitProperties();
     }
 
     public void updateFeatureLiteralValue(LogicalAxiom.Atom.TypedAtom.Feature featureAxiom, Object literalValue) {
         EntityVertex vertex = this.builder.vertex(featureAxiom.vertexIndex());
-        vertex.putUncommittedProperty(KernelTerm.LITERAL_VALUE.nid(), literalValue);
+        vertex.putUncommittedProperty(KernelConcept.LITERAL_VALUE.nid(), literalValue);
         vertex.commitProperties();
     }
 
@@ -668,7 +668,7 @@ public class LogicalExpressionBuilder {
      */
     public void updateFeatureOperator(LogicalAxiom.Atom.TypedAtom.Feature featureAxiom, ConceptFacade conceptToChangeTo) {
         EntityVertex vertex = this.builder.vertex(featureAxiom.vertexIndex());
-        vertex.putUncommittedProperty(KernelTerm.CONCRETE_DOMAIN_OPERATOR.nid(), EntityProxy.Concept.make(conceptToChangeTo));
+        vertex.putUncommittedProperty(KernelConcept.CONCRETE_DOMAIN_OPERATOR.nid(), EntityProxy.Concept.make(conceptToChangeTo));
         vertex.commitProperties();
     }
 

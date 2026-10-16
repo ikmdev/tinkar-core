@@ -48,10 +48,10 @@
  * StampCalculator calculator = StampCalculatorWithCache.getCalculator(stampCoord);
  *
  * StampPositionRecord fromPos = StampPositionRecord.make(
- *     time1, KernelTerm.DEVELOPMENT_PATH
+ *     time1, KernelConcept.DEVELOPMENT_PATH
  * );
  * StampPositionRecord toPos = StampPositionRecord.make(
- *     time2, KernelTerm.DEVELOPMENT_PATH
+ *     time2, KernelConcept.DEVELOPMENT_PATH
  * );
  *
  * ChangeChronology changes = calculator.getChanges(conceptEntity, fromPos, toPos);

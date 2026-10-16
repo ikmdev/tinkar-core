@@ -1,0 +1,15 @@
+REVIEW_PANEL|MEDICALSPECIALTY|PRODUCTCODE|DEVICENAME|DEVICECLASS|UNCLASSIFIED_REASON|GMPEXEMPTFLAG|THIRDPARTYFLAG|REVIEWCODE|REGULATIONNUMBER|SUBMISSION_TYPE_ID|DEFINITION|PHYSICALSTATE|TECHNICALMETHOD|TARGETAREA|Implant_Flag|Life_Sustain_support_flag|SummaryMalfunctionReporting
+AN|AN|BZG|Spirometer, Diagnostic|2||N|Y||868.1840|1|||||N|N|Eligible
+AN|AN|JEH|Plethysmograph, Volume|2||N|Y||868.1760|1|||||N|N|Eligible
+CV|CV|MWI|Monitor, Physiological, Patient (Without Arrhythmia Detection Or Alarms)|2||N|Y||870.2300|1|||||N|N|Eligible
+DE|DE|DZP|Instrument, Diamond, Dental|1||N|N||872.4535|4|||||N|N|Eligible
+DE|DE|EFB|Handpiece, Air-Powered, Dental|1||N|Y||872.4200|1|||||N|N|Eligible
+DE|DE|EIH|Powder, Porcelain|2||N|Y||872.6660|1|||||N|N|Eligible
+DE|DE|ELC|Scaler, Ultrasonic|2||N|Y||872.4850|1|||||N|N|Eligible
+DE|DE|JEX|Plier, Orthodontic|1||N|N||872.4565|4|||||N|N|Eligible
+DE|DE|LZD|Joint, Temporomandibular, Implant|3||N|N||872.3940|2|Call for PMAs to be filed by 3/30/99 per 63 FR 71746 on 12/30/98 - Indicated for reconstruction of the temporomandibular joint.|The device is a ball and socket joint with one side mounted to the jaw and the other side mounted to the head right in front of the ear.|||Y|N|Eligible
+GU|GU|FEO|Lithotriptor, Ultrasonic|2||N|Y||876.4480|1|||||N|N|Eligible
+GU|GU|FFK|Lithotriptor, Electro-Hydraulic|2||N|Y||876.4480|1|||||N|N|Eligible
+HO|HO|FQL|Stocking, Medical Support (For General Medical Purposes)|1||Y|N||880.5780|4|||||N|N|Eligible
+HO|HO|KMJ|Lubricant, Patient|1||N|N||880.6375|4|||||N|N|Eligible
+NE|NE|SAP|Computerized Behavioral Therapy Device For Depressive Disorders.|2||N|N||882.5801|1|The device is intended to provide computerized behavioral therapy to treat depressive disorders.|The device is a software-based mobile app downloaded onto a smartphone.|The device is a software-based mobile app that provides a computerized version of behavioral therapy to the patient.|The device is intended to provided psychiatric treatment.|N|N|Ineligible

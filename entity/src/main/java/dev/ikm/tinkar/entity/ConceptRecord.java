@@ -16,6 +16,8 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.Nid;
+import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.terms.EntityBinding;
@@ -102,7 +104,10 @@ public record ConceptRecord(
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null) return false;
+        if (o instanceof ComponentWithNid component) {
+            // EntityProxy's contract: a proxy, a binding enum and a record of one component agree
+            return this.nid == component.nid();
+        }
         if (o instanceof PublicId publicId) {
             return PublicId.equals(this.publicId(), publicId);
         }
@@ -111,7 +116,7 @@ public record ConceptRecord(
 
     @Override
     public int hashCode() {
-        return Objects.hash(nid);
+        return Nid.hash(nid);
     }
 
     @Override

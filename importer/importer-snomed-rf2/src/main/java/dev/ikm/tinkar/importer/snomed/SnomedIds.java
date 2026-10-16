@@ -19,8 +19,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.*;
 
 import java.util.Map;
 import java.util.Optional;
@@ -48,26 +47,26 @@ final class SnomedIds {
     private static final PublicId ACCEPTABLE = PublicIds.of(UUID.fromString("12b9e103-060e-3256-9982-18c1191af60e"));
 
     private static final Map<String, PublicId> KERNEL = Map.ofEntries(
-            Map.entry("900000000000446008", KernelTerm.DESCRIPTION_TYPE.publicId()),
-            Map.entry("900000000000003001", KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId()),
-            Map.entry("900000000000013009", KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.publicId()),
-            Map.entry("900000000000550004", KernelTerm.DEFINITION_DESCRIPTION_TYPE.publicId()),
-            Map.entry("900000000000447004", KernelTerm.DESCRIPTION_CASE_SIGNIFICANCE.publicId()),
-            Map.entry("900000000000448009", KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.publicId()),
-            Map.entry("900000000000017005", KernelTerm.DESCRIPTION_CASE_SENSITIVE.publicId()),
-            Map.entry("900000000000020002", KernelTerm.DESCRIPTION_INITIAL_CHARACTER_CASE_SENSITIVE.publicId()),
-            Map.entry("900000000000511003", KernelTerm.DESCRIPTION_ACCEPTABILITY.publicId()),
-            Map.entry("900000000000548007", KernelTerm.PREFERRED.publicId()),
+            Map.entry("900000000000446008", KernelConcept.DESCRIPTION_TYPE.publicId()),
+            Map.entry("900000000000003001", KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId()),
+            Map.entry("900000000000013009", KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE.publicId()),
+            Map.entry("900000000000550004", KernelConcept.DEFINITION_DESCRIPTION_TYPE.publicId()),
+            Map.entry("900000000000447004", KernelConcept.DESCRIPTION_CASE_SIGNIFICANCE.publicId()),
+            Map.entry("900000000000448009", KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE.publicId()),
+            Map.entry("900000000000017005", KernelConcept.DESCRIPTION_CASE_SENSITIVE.publicId()),
+            Map.entry("900000000000020002", KernelConcept.DESCRIPTION_INITIAL_CHARACTER_CASE_SENSITIVE.publicId()),
+            Map.entry("900000000000511003", KernelConcept.DESCRIPTION_ACCEPTABILITY.publicId()),
+            Map.entry("900000000000548007", KernelConcept.PREFERRED.publicId()),
             Map.entry("900000000000549004", ACCEPTABLE),
-            Map.entry(SNOMED_CT_IDENTIFIER, KernelTerm.SCTID.publicId()));
+            Map.entry(SNOMED_CT_IDENTIFIER, KernelConcept.SCTID.publicId()));
 
-    private static final Map<String, EntityProxy.Pattern> DIALECTS = Map.of(
-            "900000000000509007", KernelTerm.US_DIALECT_PATTERN,
-            "900000000000508004", KernelTerm.GB_DIALECT_PATTERN);
+    private static final Map<String, PatternFacade> DIALECTS = Map.of(
+            "900000000000509007", KernelPattern.US_DIALECT_PATTERN,
+            "900000000000508004", KernelPattern.GB_DIALECT_PATTERN);
 
-    private static final Map<String, EntityProxy.Concept> LANGUAGES = Map.of(
-            "en", KernelTerm.ENGLISH_LANGUAGE,
-            "es", KernelTerm.SPANISH_LANGUAGE);
+    private static final Map<String, ConceptFacade> LANGUAGES = Map.of(
+            "en", KernelConcept.ENGLISH_LANGUAGE,
+            "es", KernelConcept.SPANISH_LANGUAGE);
 
     private static final Pattern SCTID_IN_OWL = Pattern.compile("(?<=:)([0-9]+)");
     private static final Pattern IRI_IN_OWL = Pattern.compile("<[^>]+>");
@@ -113,7 +112,7 @@ final class SnomedIds {
      * @param refsetId the language reference set's SCTID
      * @return the pattern, if the kernel has one for it
      */
-    static Optional<EntityProxy.Pattern> dialect(String refsetId) {
+    static Optional<PatternFacade> dialect(String refsetId) {
         return Optional.ofNullable(DIALECTS.get(refsetId));
     }
 
@@ -123,7 +122,7 @@ final class SnomedIds {
      * @param code the code, {@code en} or {@code es}
      * @return the concept, if the kernel has one for it
      */
-    static Optional<EntityProxy.Concept> language(String code) {
+    static Optional<ConceptFacade> language(String code) {
         return Optional.ofNullable(LANGUAGES.get(code));
     }
 

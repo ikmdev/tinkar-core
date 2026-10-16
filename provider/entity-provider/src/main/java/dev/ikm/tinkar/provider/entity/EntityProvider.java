@@ -20,8 +20,7 @@ import java.util.stream.LongStream;
 
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
-
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -76,7 +75,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.IntStream;
 
-import static dev.ikm.tinkar.terms.KernelTerm.DESCRIPTION_PATTERN;
+import static dev.ikm.tinkar.terms.KernelPattern.DESCRIPTION_PATTERN;
 
 //@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
 public class EntityProvider implements EntityService, EntityLookup, PublicIdService, DefaultDescriptionForNidService, EntityDataRepair {
@@ -145,15 +144,17 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
                         // TODO: use version computer to get version
                         PatternEntityVersion patternEntityVersion = pattern.versions().get(0);
                         SemanticEntityVersion version = (SemanticEntityVersion) descriptionSemantic.versions().get(0);
-                        int indexForMeaning = patternEntityVersion.indexForMeaning(KernelTerm.DESCRIPTION_TYPE);
-                        int indexForText = patternEntityVersion.indexForMeaning(KernelTerm.TEXT_FOR_DESCRIPTION);
+                        int indexForMeaning = patternEntityVersion.indexForMeaning(KernelConcept.DESCRIPTION_TYPE);
+                        int indexForText = patternEntityVersion.indexForMeaning(KernelConcept.TEXT_FOR_DESCRIPTION);
                         if (indexForMeaning == -1 || indexForText == -1) {
                             throw new IllegalStateException("Expecting a pattern entity with description and text fields. Found: " + EntityText.diagnostic(patternEntityVersion));
                         }
-                        if (version.fieldValues().get(indexForMeaning).equals(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE)) {
+                        if (version.fieldValues().get(indexForMeaning) instanceof EntityFacade descriptionType
+                                && EntityFacade.same(descriptionType, KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE)) {
                             return (String) version.fieldValues().get(indexForText);
                         }
-                        if (version.fieldValues().get(indexForMeaning).equals(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
+                        if (version.fieldValues().get(indexForMeaning) instanceof EntityFacade descriptionType
+                                && EntityFacade.same(descriptionType, KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
                             fqnString = (String) version.fieldValues().get(indexForText);
                         }
                         anyString = (String) version.fieldValues().get(indexForText);
@@ -302,6 +303,31 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
     }
 
     private void putEntity(Entity entity, DataActivity activity, boolean dispatch, boolean addToCache) {
+        putEntity(entity, activity, dispatch, addToCache, EntityStore.current()::merge);
+    }
+
+    @Override
+    public void putEntityReplacingVersion(Entity entity, long withdrawnStampNid) {
+        Entity<?> stored = getEntityFast(withdrawnStampNid);
+        if (stored instanceof StampEntity<?> stamp && stamp.lastVersion().time() != Long.MAX_VALUE) {
+            throw new IllegalStateException("A committed version is final, so it is not withdrawn: "
+                    + EntityText.diagnostic(stamp));
+        }
+        putEntity(entity, DataActivity.SYNCHRONIZABLE_EDIT, true, true,
+                (nid, patternNid, referencedComponentNid, value, sourceObject, activity) ->
+                        EntityStore.current().mergeReplacingVersion(nid, patternNid, referencedComponentNid,
+                                withdrawnStampNid, value, sourceObject, activity));
+    }
+
+    /** How a put writes the entity's bytes to the store: a merge, or a merge replacing a version. */
+    @FunctionalInterface
+    private interface StoreWrite {
+        byte[] write(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject,
+                     DataActivity activity);
+    }
+
+    private void putEntity(Entity entity, DataActivity activity, boolean dispatch, boolean addToCache,
+                           StoreWrite write) {
         invalidateCaches(entity);
         // Only a semantic has a pattern and a referenced component; every other entity passes
         // the not-applicable sentinel, Integer.MAX_VALUE (Nid.NOT_APPLICABLE), for both.
@@ -309,17 +335,17 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
             byte[] mergedEntityBytes = switch (entity) {
                 case ConceptEntity conceptEntity -> {
                     STRING_CACHE.put(conceptEntity.nid(), conceptEntity.asUuidList().toString());
-                    yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                    yield write.write(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
                             entity.getBytes(), entity, activity);
                 }
                 case PatternEntity patternEntity -> {
                     STRING_CACHE.put(patternEntity.nid(), patternEntity.asUuidList().toString());
-                    yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                    yield write.write(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
                             entity.getBytes(), entity, activity);
                 }
                 case SemanticEntity semanticEntity -> {
                     STRING_CACHE.put(semanticEntity.nid(), semanticEntity.asUuidList().toString());
-                    yield EntityStore.current().merge(entity.nid(),
+                    yield write.write(entity.nid(),
                             semanticEntity.patternNid(),
                             semanticEntity.referencedComponentNid(),
                             entity.getBytes(), entity, activity);
@@ -328,7 +354,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
                     if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
                         PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
                     }
-                    yield EntityStore.current().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                    yield write.write(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
                             entity.getBytes(), entity, activity);
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));

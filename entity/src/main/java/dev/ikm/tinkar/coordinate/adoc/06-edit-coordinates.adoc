@@ -66,11 +66,11 @@ EditCoordinateRecord editCoord = Coordinates.Edit.Default();
 
 // Equivalent to:
 EditCoordinateRecord editCoord = EditCoordinateRecord.make(
-    KernelTerm.USER.nid(),                    // Author
-    KernelTerm.SOLOR_OVERLAY_MODULE.nid(),    // Default module
-    KernelTerm.SOLOR_OVERLAY_MODULE.nid(),    // Destination module
-    KernelTerm.DEVELOPMENT_PATH.nid(),        // Default path
-    KernelTerm.DEVELOPMENT_PATH.nid()         // Promotion path
+    KernelConcept.USER.nid(),                    // Author
+    KernelConcept.SOLOR_OVERLAY_MODULE.nid(),    // Default module
+    KernelConcept.SOLOR_OVERLAY_MODULE.nid(),    // Destination module
+    KernelConcept.DEVELOPMENT_PATH.nid(),        // Default path
+    KernelConcept.DEVELOPMENT_PATH.nid()         // Promotion path
 );
 ----
 
@@ -133,8 +133,8 @@ public class UserEditContext {
                 userNid,
                 moduleNid,
                 moduleNid,
-                KernelTerm.DEVELOPMENT_PATH.nid(),
-                KernelTerm.DEVELOPMENT_PATH.nid()
+                KernelConcept.DEVELOPMENT_PATH.nid(),
+                KernelConcept.DEVELOPMENT_PATH.nid()
             );
         });
     }
@@ -151,8 +151,8 @@ public EditCoordinateRecord createExtensionEditCoordinate(int authorNid) {
         authorNid,
         MyTerms.EXTENSION_MODULE.nid(),      // Extensions go here
         MyTerms.CORE_MODULE.nid(),           // Modularize to core
-        KernelTerm.DEVELOPMENT_PATH.nid(),
-        KernelTerm.MASTER_PATH.nid()
+        KernelConcept.DEVELOPMENT_PATH.nid(),
+        KernelConcept.MASTER_PATH.nid()
     );
 }
 ----
@@ -226,8 +226,8 @@ public EditCoordinateRecord getUserEditCoordinate(User user) {
         user.getConceptNid(),
         user.getDefaultModule(),
         user.getDefaultModule(),
-        KernelTerm.DEVELOPMENT_PATH.nid(),
-        KernelTerm.DEVELOPMENT_PATH.nid()
+        KernelConcept.DEVELOPMENT_PATH.nid(),
+        KernelConcept.DEVELOPMENT_PATH.nid()
     );
 }
 ----

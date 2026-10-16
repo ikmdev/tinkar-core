@@ -144,7 +144,7 @@
             <artifactId>elk-snomed</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- The IKE starter set's bindings (IkeTerms): the components tests name beyond the
+        <!-- The IKE starter set's bindings (IkeConcept, IkePattern): the components tests name beyond the
              kernel, from the set the tests load. -->
         <dependency>
             <groupId>network.ike.foundation</groupId>
@@ -177,6 +177,11 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>importer-rxnorm-owl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>importer-gudid</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>

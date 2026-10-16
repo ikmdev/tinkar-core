@@ -126,6 +126,30 @@ public interface EntityStore {
      */
     byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity);
 
+    /**
+     * {@link #merge(long, long, long, byte[], Object, DataActivity) Merges} the value after first
+     * removing, from the record stored for the nid, the version written under one stamp — in one
+     * write, so no reader sees the record without either. A merge only ever adds versions; this is
+     * the one way a version leaves a record, which moving an uncommitted version out of a shared
+     * transaction into one of its own needs: its version under the shared stamp must go, and the
+     * shared stamp cannot be canceled without cancelling everything else written under it
+     * ({@code TransactionVersionTask}).
+     *
+     * <p>The caller ensures the withdrawn stamp is uncommitted: a committed version is final.
+     * When the record holds no version under the stamp, this is a plain merge.
+     *
+     * @param nid                    native identifier of the entity
+     * @param patternNid             as for {@code merge}
+     * @param referencedComponentNid as for {@code merge}
+     * @param withdrawnStampNid      the stamp whose version is removed from the stored record
+     * @param value                  the record to merge once that version is removed
+     * @param sourceObject           the entity that is the source of the bytes
+     * @param activity               the data activity performed
+     * @return the record now associated with the nid
+     */
+    byte[] mergeReplacingVersion(long nid, long patternNid, long referencedComponentNid, long withdrawnStampNid,
+                                 byte[] value, Object sourceObject, DataActivity activity);
+
     default long[] semanticNidsOfPattern(long patternNid) {
         MutableLongList nidList = LongLists.mutable.empty();
         forEachSemanticNidOfPattern(patternNid, nid -> nidList.add(nid));

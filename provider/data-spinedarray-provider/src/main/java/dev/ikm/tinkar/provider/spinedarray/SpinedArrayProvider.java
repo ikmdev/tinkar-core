@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.provider.spinedarray;
 
 import org.eclipse.collections.api.block.procedure.primitive.LongProcedure;
+import java.util.function.BinaryOperator;
 import java.util.function.ObjLongConsumer;
 import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 
@@ -526,6 +527,21 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
 
     @Override
     public byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
+        return merge(nid, patternNid, referencedComponentNid, value, sourceObject, activity, PrimitiveDataService::merge);
+    }
+
+    @Override
+    public byte[] mergeReplacingVersion(long nid, long patternNid, long referencedComponentNid, long withdrawnStampNid,
+                                        byte[] value, Object sourceObject, DataActivity activity) {
+        // The version leaves the stored record inside the same atomic accumulation that merges
+        // the value in, so no reader sees the record with neither.
+        return merge(nid, patternNid, referencedComponentNid, value, sourceObject, activity,
+                (stored, incoming) -> PrimitiveDataService.merge(
+                        EntityRecordFactory.withoutVersion(stored, withdrawnStampNid), incoming));
+    }
+
+    private byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject,
+                         DataActivity activity, BinaryOperator<byte[]> accumulator) {
         if (Nid.isNone(nid)) {
             LOG.error("NID should not be Integer.MIN_VALUE");
             throw new IllegalStateException("NID should not be Integer.MIN_VALUE");
@@ -550,7 +566,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
                 this.stampNids.add(Nid.narrowChecked(stampEntity.nid()));
             }
         }
-        byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(Nid.narrowChecked(nid), value, PrimitiveDataService::merge);
+        byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(Nid.narrowChecked(nid), value, accumulator);
         this.writeSequence.increment();
         this.changeSetWriterServices.forEach(writerService -> writerService.writeToChangeSet((Entity) sourceObject, activity));
 

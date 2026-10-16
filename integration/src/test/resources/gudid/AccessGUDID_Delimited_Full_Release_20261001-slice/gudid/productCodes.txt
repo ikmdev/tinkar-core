@@ -1,0 +1,38 @@
+PrimaryDI|productCode|productCodeName
+07613378199127|FQL|Stocking, Medical Support (For General Medical Purposes)
+07613378199110|FQL|Stocking, Medical Support (For General Medical Purposes)
+07613378199103|FQL|Stocking, Medical Support (For General Medical Purposes)
+07613378199097|FQL|Stocking, Medical Support (For General Medical Purposes)
+07613365900132|MWI|Monitor,Physiological,Patient(Without Arrhythmia Detection Or Alarms)
+07613365900125|MWI|Monitor,Physiological,Patient(Without Arrhythmia Detection Or Alarms)
+07613365900118|MWI|Monitor,Physiological,Patient(Without Arrhythmia Detection Or Alarms)
+07613365900101|MWI|Monitor,Physiological,Patient(Without Arrhythmia Detection Or Alarms)
+07613365501254|JEH|Plethysmograph, Volume
+07613365501254|BZG|Spirometer, Diagnostic
+07613365501247|JEH|Plethysmograph, Volume
+07613365501247|BZG|Spirometer, Diagnostic
+07613365501230|JEH|Plethysmograph, Volume
+07613365501230|BZG|Spirometer, Diagnostic
+07613365501223|JEH|Plethysmograph, Volume
+07613365501223|BZG|Spirometer, Diagnostic
+07613353198312|EFB|Handpiece, Air-Powered, Dental
+07613353183790|ELC|Scaler, Ultrasonic
+07613353183776|ELC|Scaler, Ultrasonic
+07613353162702|FEO|Lithotriptor, Ultrasonic
+07613353162702|FFK|Lithotriptor, Electro-Hydraulic
+07613353162696|FEO|Lithotriptor, Ultrasonic
+07613353162696|FFK|Lithotriptor, Electro-Hydraulic
+07613353162689|FEO|Lithotriptor, Ultrasonic
+07613353162689|FFK|Lithotriptor, Electro-Hydraulic
+07613327626926|LZD|Joint, Temporomandibular, Implant
+07613327626919|LZD|Joint, Temporomandibular, Implant
+07613327626902|LZD|Joint, Temporomandibular, Implant
+07540281000267|QND|Ablation System, High Intensity Focused Ultrasound (Hifu), Mr Guided, Orthopedic
+07540281000250|QND|Ablation System, High Intensity Focused Ultrasound (Hifu), Mr Guided, Orthopedic
+07540281000243|QND|Ablation System, High Intensity Focused Ultrasound (Hifu), Mr Guided, Orthopedic
+EJOT806314707504|DZP|Instrument, Diamond, Dental
+D952CM0034|EIH|Powder, Porcelain
+00860015066008|SAP|Computerized Behavioral Therapy Device For Depressive Disorders.
+00857335005121|SAP|Computerized Behavioral Therapy Device For Depressive Disorders.
+D917O12PM0|JEX|Plier, Orthodontic
+00851809002470|KMJ|Lubricant, patient

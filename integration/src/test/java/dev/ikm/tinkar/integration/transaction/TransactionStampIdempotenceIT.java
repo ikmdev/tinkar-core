@@ -15,8 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transaction;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -26,6 +25,7 @@ import dev.ikm.tinkar.fixtures.OpenSpinedArrayKeyValueProvider;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.State;
+import network.ike.foundation.ike.bindings.IkeConcept;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -109,9 +109,9 @@ class TransactionStampIdempotenceIT {
 
         // Define stamp coordinates
         State state = State.ACTIVE;
-        PublicId authorId = KernelTerm.USER;
-        PublicId moduleId = IkeTerms.DEVELOPMENT_MODULE;
-        PublicId pathId = KernelTerm.DEVELOPMENT_PATH;
+        PublicId authorId = KernelConcept.USER.publicId();
+        PublicId moduleId = IkeConcept.DEVELOPMENT_MODULE.publicId();
+        PublicId pathId = KernelConcept.DEVELOPMENT_PATH.publicId();
 
         // Create a mock entity facade for testing
         PublicId entityId = PublicIds.of(UUID.randomUUID());

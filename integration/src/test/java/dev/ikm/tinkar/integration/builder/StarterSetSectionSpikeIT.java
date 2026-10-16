@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -180,7 +181,7 @@ class StarterSetSectionSpikeIT {
      */
     private static int statedNavigationParentsIndex() {
         PatternEntity<?> navigation =
-                EntityHandle.get(KernelTerm.STATED_NAVIGATION_PATTERN.nid()).expectPattern();
+                EntityHandle.get(KernelPattern.STATED_NAVIGATION_PATTERN.nid()).expectPattern();
         PatternEntityVersion latest = navigation.versions().getLast();
         for (int index = 0; index < latest.fieldDefinitions().size(); index++) {
             FieldDefinitionForEntity field = latest.fieldDefinitions().get(index);
@@ -196,7 +197,7 @@ class StarterSetSectionSpikeIT {
         List<SemanticEntity<SemanticEntityVersion>> semantics = new ArrayList<>();
         EntityService.get().forEachSemanticEntity(semantics::add);
         for (SemanticEntity<?> semantic : semantics) {
-            if (semantic.patternNid() != KernelTerm.STATED_NAVIGATION_PATTERN.nid()) {
+            if (semantic.patternNid() != KernelPattern.STATED_NAVIGATION_PATTERN.nid()) {
                 continue;
             }
             long child = semantic.referencedComponentNid();
@@ -266,9 +267,9 @@ class StarterSetSectionSpikeIT {
     private int verbEstimate(long conceptNid) {
         int[] verbs = {1};
         EntityService.get().forEachSemanticForComponent(conceptNid, semantic -> {
-            if (semantic.patternNid() != KernelTerm.STATED_NAVIGATION_PATTERN.nid()
-                    && semantic.patternNid() != KernelTerm.INFERRED_NAVIGATION_PATTERN.nid()
-                    && semantic.patternNid() != KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
+            if (semantic.patternNid() != KernelPattern.STATED_NAVIGATION_PATTERN.nid()
+                    && semantic.patternNid() != KernelPattern.INFERRED_NAVIGATION_PATTERN.nid()
+                    && semantic.patternNid() != KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
                 verbs[0] += semantic.versions().size();
             }
         });
@@ -325,20 +326,20 @@ class StarterSetSectionSpikeIT {
             }
         }
         long patternNid = semantic.patternNid();
-        if (patternNid == KernelTerm.DESCRIPTION_PATTERN.nid()) {
+        if (patternNid == KernelPattern.DESCRIPTION_PATTERN.nid()) {
             SemanticEntityVersion latest = semantic.versions().getLast();
-            if (nidOf(latest.fieldValues().get(0)) != KernelTerm.ENGLISH_LANGUAGE.nid()) {
+            if (nidOf(latest.fieldValues().get(0)) != KernelConcept.ENGLISH_LANGUAGE.nid()) {
                 tally("non-English descriptions");
             }
-            if (nidOf(latest.fieldValues().get(2)) != KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid()) {
+            if (nidOf(latest.fieldValues().get(2)) != KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE.nid()) {
                 tally("non-default case significance");
             }
-        } else if (patternNid == KernelTerm.GB_DIALECT_PATTERN.nid()) {
+        } else if (patternNid == KernelPattern.GB_DIALECT_PATTERN.nid()) {
             tally("GB dialect semantics");
-        } else if (patternNid == KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid() && onPattern) {
+        } else if (patternNid == KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid() && onPattern) {
             tally("stated-axiom semantics on PATTERN components");
         }
-        if (onPattern && patternNid == KernelTerm.STATED_NAVIGATION_PATTERN.nid()) {
+        if (onPattern && patternNid == KernelPattern.STATED_NAVIGATION_PATTERN.nid()) {
             tally("navigation semantics on PATTERN components");
         }
     }

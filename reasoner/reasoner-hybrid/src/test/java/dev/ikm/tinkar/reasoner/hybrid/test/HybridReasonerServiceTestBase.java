@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.reasoner.hybrid.test;
 
 import dev.ikm.tinkar.common.id.Nid;
-import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,6 +23,7 @@ import java.util.List;
 
 import dev.ikm.tinkar.reasoner.hybrid.HybridReasonerService;
 import dev.ikm.tinkar.common.service.TrackingCallable;
+import dev.ikm.tinkar.terms.KernelConcept;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +81,7 @@ public abstract class HybridReasonerServiceTestBase extends HybridReasonerTestBa
 			LOG.info(PrimitiveData.text(nid) + " " + nid);
 		}
 		{
-			long nid = KernelTerm.ROOT_VERTEX.nid();
+			long nid = KernelConcept.ROOT_VERTEX.nid();
 			LOG.info(PrimitiveData.text(nid) + " " + nid);
 		}
 	}

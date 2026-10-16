@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.reasoner.hybrid.test;
 
 import dev.ikm.tinkar.common.id.Nid;
-import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,7 +25,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
-
+import dev.ikm.tinkar.terms.KernelConcept;
 import org.eclipse.collections.api.LongIterable;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
@@ -107,7 +106,7 @@ public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReason
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
 				assertEquals(1, sups.size());
-				assertEquals(KernelTerm.PHENOMENON.nid(), sso.getSuperConcepts(nid).longIterator().next());
+				assertEquals(KernelConcept.PHENOMENON.nid(), sso.getSuperConcepts(nid).longIterator().next());
 				continue;
 			} else {
 				assertNotNull(parents);

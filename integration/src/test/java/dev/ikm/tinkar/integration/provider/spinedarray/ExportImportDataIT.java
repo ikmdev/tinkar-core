@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.id.LongIdSet;
@@ -44,6 +45,7 @@ import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
@@ -110,17 +112,17 @@ class ExportImportDataIT {
 
     @Test
     public void testImportFieldTypeSetToList() {
-        EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("dde159ca-415e-4947-9174-cae7e8e7202d")));
+        ConceptFacade concept = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("dde159ca-415e-4947-9174-cae7e8e7202d")));
         StateSet stateActive = StateSet.ACTIVE;
         StampCalculator stampCalcActive = StampCalculatorWithCache
                 .getCalculator(StampCoordinateRecord.make(stateActive, Coordinates.Position.LatestOnDevelopment()));
 
         // NOTE. No binding declares EXAMPLE_PATTERN_TWO. Instead, tinkar-example-data repo creates its own EntityProxy.Pattern
         // Therefore, we declare it here to be used for PatternEntityVersion
-        EntityProxy.Pattern EXAMPLE_PATTERN_TWO = EntityProxy.Pattern.make("Example Pattern Two", UUID.fromString("7222d538-9641-474a-94ce-72c5bf6462b3"));
+        PatternFacade EXAMPLE_PATTERN_TWO = EntityProxy.Pattern.make("Example Pattern Two", UUID.fromString("7222d538-9641-474a-94ce-72c5bf6462b3"));
         // Repeat the same for the following Concepts related to EXAMPLE_PATTERN_TWO
-        EntityProxy.Concept COMPONENT_SET_FIELD_MEANING = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("990e5a92-cdc2-4e23-a68d-1f01345b8759")));
-        EntityProxy.Concept COMPONENT_LIST_FIELD_MEANING = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("f0847cd3-2034-43f5-b25f-2bd6e923d228")));
+        ConceptFacade COMPONENT_SET_FIELD_MEANING = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("990e5a92-cdc2-4e23-a68d-1f01345b8759")));
+        ConceptFacade COMPONENT_LIST_FIELD_MEANING = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("f0847cd3-2034-43f5-b25f-2bd6e923d228")));
 
         PatternEntityVersion latestPattern = (PatternEntityVersion) Calculators.Stamp.DevelopmentLatest().latest(EXAMPLE_PATTERN_TWO).get();
         AtomicReference<LongIdSetArray> intIdSet = new AtomicReference<>();
@@ -134,11 +136,11 @@ class ExportImportDataIT {
             if (latestActive2.isPresent()) {
                 intIdSet.set(latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive2.get()));
                 // A set: Active state is a member, in no particular position.
-                assertTrue(intIdSet.get().contains(KernelTerm.ACTIVE_STATE.nid()));
+                assertTrue(intIdSet.get().contains(KernelConcept.ACTIVE_STATE.nid()));
 
                 intIdList.set(latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive2.get()));
                 long [] tempListArray2 = intIdList.get().toArray();
-                assertEquals(KernelTerm.ACTIVE_STATE.nid(), tempListArray2 [0]);
+                assertEquals(KernelConcept.ACTIVE_STATE.nid(), tempListArray2 [0]);
 
                 atomicBoolean.set(true);
             }
@@ -177,19 +179,19 @@ class ExportImportDataIT {
          * so a change has to be put, not made in a cached array.
          */
         private static void changeFirstSetAndListElementsToActive() {
-            EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("dde159ca-415e-4947-9174-cae7e8e7202d")));
+            ConceptFacade concept = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("dde159ca-415e-4947-9174-cae7e8e7202d")));
             StampCalculator stampCalcActive = StampCalculatorWithCache
                     .getCalculator(StampCoordinateRecord.make(StateSet.ACTIVE, Coordinates.Position.LatestOnDevelopment()));
 
             // NOTE. No binding declares EXAMPLE_PATTERN_TWO. Instead, tinkar-example-data repo creates its own EntityProxy.Pattern
-            EntityProxy.Pattern EXAMPLE_PATTERN_TWO = EntityProxy.Pattern.make("Example Pattern Two", UUID.fromString("7222d538-9641-474a-94ce-72c5bf6462b3"));
-            EntityProxy.Concept COMPONENT_SET_FIELD_MEANING = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("990e5a92-cdc2-4e23-a68d-1f01345b8759")));
-            EntityProxy.Concept COMPONENT_LIST_FIELD_MEANING = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("f0847cd3-2034-43f5-b25f-2bd6e923d228")));
+            PatternFacade EXAMPLE_PATTERN_TWO = EntityProxy.Pattern.make("Example Pattern Two", UUID.fromString("7222d538-9641-474a-94ce-72c5bf6462b3"));
+            ConceptFacade COMPONENT_SET_FIELD_MEANING = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("990e5a92-cdc2-4e23-a68d-1f01345b8759")));
+            ConceptFacade COMPONENT_LIST_FIELD_MEANING = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("f0847cd3-2034-43f5-b25f-2bd6e923d228")));
 
             PatternEntityVersion latestPattern = (PatternEntityVersion) Calculators.Stamp.DevelopmentLatest().latest(EXAMPLE_PATTERN_TWO).get();
 
             StampEntity stamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(),
-                    KernelTerm.USER.publicId(), KernelTerm.PRIMORDIAL_MODULE.publicId(), KernelTerm.DEVELOPMENT_PATH.publicId());
+                    KernelConcept.USER.publicId(), KernelConcept.PRIMORDIAL_MODULE.publicId(), KernelConcept.DEVELOPMENT_PATH.publicId());
             EntityService.get().putEntity(stamp);
             EntityService.get().forEachSemanticForComponentOfPattern(concept.nid(), EXAMPLE_PATTERN_TWO.nid(), semanticEntity -> {
                 Latest<SemanticEntityVersion> latestActive = stampCalcActive.latest(semanticEntity);
@@ -197,11 +199,11 @@ class ExportImportDataIT {
                     MutableList<Object> fields = Lists.mutable.withAll(latestActive.get().fieldValues());
                     int setIndex = latestPattern.indexForMeaning(COMPONENT_SET_FIELD_MEANING);
                     long[] set = ((LongIdSet) fields.get(setIndex)).toArray().clone();
-                    set[0] = KernelTerm.ACTIVE_STATE.nid();
+                    set[0] = KernelConcept.ACTIVE_STATE.nid();
                     fields.set(setIndex, LongIds.set.of(set));
                     int listIndex = latestPattern.indexForMeaning(COMPONENT_LIST_FIELD_MEANING);
                     long[] list = ((LongIdList) fields.get(listIndex)).toArray().clone();
-                    list[0] = KernelTerm.ACTIVE_STATE.nid();
+                    list[0] = KernelConcept.ACTIVE_STATE.nid();
                     fields.set(listIndex, LongIds.list.of(list));
                     SemanticRecord changed = SemanticRecord.build(semanticEntity.publicId().asUuidArray()[0], semanticEntity.patternNid(),
                             semanticEntity.referencedComponentNid(), stamp.lastVersion(), fields.toImmutable());

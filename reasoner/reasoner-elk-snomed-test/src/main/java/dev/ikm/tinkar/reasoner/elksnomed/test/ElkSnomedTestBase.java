@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelPattern;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -91,7 +91,7 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		ViewCalculator viewCalculator = getViewCalculator();
 		ElkSnomedData data = new ElkSnomedData();
 		ElkSnomedDataBuilder builder = new ElkSnomedDataBuilder(viewCalculator,
-				KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, data);
+				KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, data);
 		builder.build();
 		return data;
 	}
@@ -136,8 +136,8 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 
 	public ReasonerService initReasonerService() {
 		ReasonerService rs = getElkSnomedReasonerService();
-		rs.init(getViewCalculator(), KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-				KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+		rs.init(getViewCalculator(), KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+				KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
 		return rs;
 	}
 

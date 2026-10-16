@@ -29,6 +29,7 @@ import dev.ikm.tinkar.common.id.PublicIdSet;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.EntityRecordFormat2;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.component.Component;
@@ -423,6 +424,51 @@ public class EntityRecordFactory {
             patternElementNidsMap.getIfAbsentPut(patternNid, integer -> new ConcurrentHashSet())
                     .add(nid);
         }
+    }
+
+    /**
+     * A record without the version written under one stamp, in the record's own format: what a
+     * store holds once that version is withdrawn
+     * ({@link dev.ikm.tinkar.common.service.internal.EntityStore#mergeReplacingVersion}). A stamp's
+     * own versions are never withdrawn: its canceled version is what records the cancellation.
+     *
+     * @param bytes    a stored record, or null
+     * @param stampNid the stamp whose version to drop
+     * @return the record without that version; {@code bytes} itself when it holds no version
+     *         under the stamp; null when that version was its only one
+     * @throws IllegalArgumentException if the record is a stamp's
+     */
+    public static byte[] withoutVersion(byte[] bytes, long stampNid) {
+        if (bytes == null) {
+            return null;
+        }
+        if (EntityRecordFormat2.isFormat2(bytes)) {
+            if (EntityRecordFormat2.parts(bytes).chronology()[0] == PrimitiveDataService.STAMP_DATA_TYPE) {
+                throw new IllegalArgumentException("A stamp's versions are not withdrawn: nid "
+                        + EntityRecordFormat2.nid(bytes));
+            }
+            return EntityRecordFormat2.withoutVersion(bytes, stampNid);
+        }
+        Entity<? extends EntityVersion> entity = make(bytes);
+        if (entity.versions().stream().noneMatch(version -> version.stampNid() == stampNid)) {
+            return bytes;
+        }
+        if (entity.versions().size() == 1) {
+            return null;
+        }
+        Entity<? extends EntityVersion> without = switch (entity) {
+            case ConceptRecord concept -> concept.without(version(concept, stampNid)).build();
+            case PatternRecord pattern -> pattern.without(version(pattern, stampNid)).build();
+            case SemanticRecord semantic -> semantic.without(version(semantic, stampNid)).build();
+            case StampRecord stamp -> throw new IllegalArgumentException(
+                    "A stamp's versions are not withdrawn: " + EntityText.diagnostic(stamp));
+            default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
+        };
+        return getBytes(without);
+    }
+
+    private static <V extends EntityVersion> V version(Entity<V> entity, long stampNid) {
+        return entity.versions().stream().filter(version -> version.stampNid() == stampNid).findFirst().orElseThrow();
     }
 
     /**

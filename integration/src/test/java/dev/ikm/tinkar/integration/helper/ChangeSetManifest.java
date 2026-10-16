@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.integration.helper;
 
 import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
-import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +74,7 @@ public record ChangeSetManifest(long concepts, long semantics, long patterns, lo
     }
 
     /** The semantics of {@code pattern} the changeset holds: zero when it holds none. */
-    public long semanticsOf(EntityProxy.Pattern pattern) {
+    public long semanticsOf(PatternFacade pattern) {
         return Arrays.stream(pattern.publicId().asUuidArray())
                 .mapToLong(uuid -> semanticsByPattern.getOrDefault(uuid, 0L))
                 .sum();

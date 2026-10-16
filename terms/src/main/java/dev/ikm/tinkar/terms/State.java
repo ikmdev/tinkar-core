@@ -22,22 +22,22 @@ import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
 import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
 
 public enum State implements dev.ikm.tinkar.component.Concept, ComponentWithNid {
-    ACTIVE(KernelTerm.ACTIVE_STATE),
-    INACTIVE(KernelTerm.INACTIVE_STATE),
-    WITHDRAWN(KernelTerm.WITHDRAWN_STATE),
-    CANCELED(KernelTerm.CANCELED_STATE),
+    ACTIVE(KernelConcept.ACTIVE_STATE),
+    INACTIVE(KernelConcept.INACTIVE_STATE),
+    WITHDRAWN(KernelConcept.WITHDRAWN_STATE),
+    CANCELED(KernelConcept.CANCELED_STATE),
     /* TODO Consider changing from PRIMORDIAL to Pre-inception (historically "premundane") */
-    PRIMORDIAL(KernelTerm.PRIMORDIAL_STATE);
+    PRIMORDIAL(KernelConcept.PRIMORDIAL_STATE);
 
-    final EntityProxy.Concept proxyForState;
+    final KernelConcept proxyForState;
 
-    State(EntityProxy.Concept proxyForState) {
+    State(KernelConcept proxyForState) {
         this.proxyForState = proxyForState;
     }
 
     @Override
     public PublicId publicId() {
-        return proxyForState;
+        return proxyForState.publicId();
     }
 
     @Override

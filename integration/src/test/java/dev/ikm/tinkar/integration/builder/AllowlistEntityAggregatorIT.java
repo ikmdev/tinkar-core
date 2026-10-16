@@ -1,7 +1,8 @@
 package dev.ikm.tinkar.integration.builder;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.PatternFacade;
+import network.ike.foundation.ike.bindings.IkeConcept;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.Entity;
@@ -14,7 +15,7 @@ import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -35,11 +36,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AllowlistEntityAggregatorIT {
 
-    private EntityProxy.Concept moduleA;
-    private EntityProxy.Concept moduleB;
-    private EntityProxy.Concept thingA;
-    private EntityProxy.Concept thingB;
-    private EntityProxy.Pattern probePattern;
+    private ConceptFacade moduleA;
+    private ConceptFacade moduleB;
+    private ConceptFacade thingA;
+    private ConceptFacade thingB;
+    private PatternFacade probePattern;
 
     @BeforeAll
     void beforeAll() {
@@ -52,8 +53,8 @@ class AllowlistEntityAggregatorIT {
         thingB = set.conceptRef("Thing B (Probe)");
         probePattern = set.patternRef("Probe pattern (Probe)");
 
-        ActiveStamp stampA = Stamp.active("2026-07-10T00:00:00Z", KernelTerm.USER, moduleA, KernelTerm.DEVELOPMENT_PATH);
-        ActiveStamp stampB = Stamp.active("2026-07-10T00:00:00Z", KernelTerm.USER, moduleB, KernelTerm.DEVELOPMENT_PATH);
+        ActiveStamp stampA = Stamp.active("2026-07-10T00:00:00Z", KernelConcept.USER, moduleA, KernelConcept.DEVELOPMENT_PATH);
+        ActiveStamp stampB = Stamp.active("2026-07-10T00:00:00Z", KernelConcept.USER, moduleB, KernelConcept.DEVELOPMENT_PATH);
 
         // Two modules, each with a module concept (stamped under itself) and a thing.
         set.concept("Module A (Probe)").at(stampA).synonym("Module A");
@@ -62,8 +63,8 @@ class AllowlistEntityAggregatorIT {
         set.concept("Thing B (Probe)").at(stampB).synonym("Thing B");
         // A pattern in module A, so an in-store pattern exists to test emission ordering.
         set.pattern("Probe pattern (Probe)").at(stampA)
-                .meaning(IkeTerms.MEANING).purpose(IkeTerms.PURPOSE)
-                .field(IkeTerms.MEANING, IkeTerms.PURPOSE, KernelTerm.STRING)
+                .meaning(IkeConcept.MEANING).purpose(IkeConcept.PURPOSE)
+                .field(IkeConcept.MEANING, IkeConcept.PURPOSE, KernelConcept.STRING)
                 .synonym("Probe pattern");
         set.write();
     }

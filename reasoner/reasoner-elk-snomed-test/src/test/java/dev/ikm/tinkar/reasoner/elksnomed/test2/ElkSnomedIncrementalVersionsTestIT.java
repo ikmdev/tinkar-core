@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test2;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.text.SimpleDateFormat;
@@ -56,7 +56,7 @@ public class ElkSnomedIncrementalVersionsTestIT extends ElkSnomedIncrementalTest
 			HashSet<Long> no_sctid_nids = new HashSet<>();
 			HashSet<Long> active_nids = new HashSet<>();
 			HashSet<Long> inactive_nids = new HashSet<>();
-			vc.forEachSemanticVersionOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid(), (semanticEntityVersion, _) -> {
+			vc.forEachSemanticVersionOfPattern(KernelPattern.IDENTIFIER_PATTERN.nid(), (semanticEntityVersion, _) -> {
 				long nid = semanticEntityVersion.referencedComponentNid();
 				String sctid = PrimitiveDataTestUtil.getSctid(nid, vc);
 				if (sctid != null) {
@@ -90,7 +90,7 @@ public class ElkSnomedIncrementalVersionsTestIT extends ElkSnomedIncrementalTest
 			AtomicInteger active = new AtomicInteger();
 			AtomicInteger inactive = new AtomicInteger();
 			AtomicInteger time_cnt = new AtomicInteger();
-			vc.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+			vc.forEachSemanticVersionOfPattern(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 					(semanticEntityVersion, _) -> {
 						if (semanticEntityVersion.time() == time)
 							time_cnt.incrementAndGet();

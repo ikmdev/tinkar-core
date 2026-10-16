@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.integration.diagnostic;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -98,13 +99,13 @@ class ExceptionMessageIT {
 
         Transaction transaction = Transaction.make("Components for the exception message tests");
         StampEntity<?> stamp = transaction.getStamp(State.ACTIVE, System.currentTimeMillis(),
-                KernelTerm.USER.nid(), KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.DEVELOPMENT_PATH.nid());
+                KernelConcept.USER.nid(), KernelConcept.SOLOR_OVERLAY_MODULE.nid(), KernelConcept.DEVELOPMENT_PATH.nid());
         StampEntityVersion version = stamp.versions().get(0);
 
         undescribedNid = put(transaction, ConceptRecord.build(fixtureUuid("undescribed concept"), version));
         malformedNid = put(transaction, ConceptRecord.build(fixtureUuid("concept with a malformed definition"), version));
         SemanticRecord definition = SemanticRecord.build(fixtureUuid("malformed definition"),
-                KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(), malformedNid, version,
+                KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(), malformedNid, version,
                 Lists.immutable.of(aNecessarySetWithTwoChildren()));
         put(transaction, definition);
         transaction.commit();
@@ -120,7 +121,7 @@ class ExceptionMessageIT {
 
     @Test
     void aHandleAskedForTheWrongKindNamesTheComponentByDescriptionAndUuid() {
-        long conceptNid = KernelTerm.ENGLISH_LANGUAGE.nid();
+        long conceptNid = KernelConcept.ENGLISH_LANGUAGE.nid();
 
         IllegalStateException failure = assertThrows(IllegalStateException.class,
                 () -> EntityHandle.get(conceptNid).expectSemantic());
@@ -170,40 +171,40 @@ class ExceptionMessageIT {
 
     @Test
     void aFieldThatAPatternDoesNotHaveIsNamedByDescriptionAndUuid() {
-        SemanticEntityVersion description = aDescriptionOf(KernelTerm.ENGLISH_LANGUAGE);
+        SemanticEntityVersion description = aDescriptionOf(KernelConcept.ENGLISH_LANGUAGE);
         StampCalculator stamps = view.stampCalculator();
-        String pattern = DiagnosticText.component(KernelTerm.DESCRIPTION_PATTERN.nid());
-        String roleType = DiagnosticText.component(KernelTerm.ROLE_TYPE.nid());
+        String pattern = DiagnosticText.component(KernelPattern.DESCRIPTION_PATTERN.nid());
+        String roleType = DiagnosticText.component(KernelConcept.ROLE_TYPE.nid());
 
         IllegalArgumentException meaningByNid = assertThrows(IllegalArgumentException.class,
-                () -> FieldHandle.ofMeaning(description, KernelTerm.ROLE_TYPE.nid(), stamps));
+                () -> FieldHandle.ofMeaning(description, KernelConcept.ROLE_TYPE.nid(), stamps));
         assertEquals("No field with meaning " + roleType + " found in pattern " + pattern, meaningByNid.getMessage());
         assertNoNid(meaningByNid.getMessage());
 
         IllegalArgumentException meaningByFacade = assertThrows(IllegalArgumentException.class,
-                () -> FieldHandle.of(description, KernelTerm.ROLE_TYPE, stamps));
+                () -> FieldHandle.of(description, KernelConcept.ROLE_TYPE, stamps));
         assertEquals("No field with meaning " + roleType + " found in pattern " + pattern,
                 meaningByFacade.getMessage());
 
         IllegalArgumentException purposeByNid = assertThrows(IllegalArgumentException.class,
-                () -> FieldHandle.ofPurpose(description, KernelTerm.ROLE_TYPE.nid(), stamps));
+                () -> FieldHandle.ofPurpose(description, KernelConcept.ROLE_TYPE.nid(), stamps));
         assertEquals("No field with purpose " + roleType + " found in pattern " + pattern, purposeByNid.getMessage());
 
         IllegalArgumentException purposeByFacade = assertThrows(IllegalArgumentException.class,
-                () -> FieldHandle.ofPurpose(description, KernelTerm.ROLE_TYPE, stamps));
+                () -> FieldHandle.ofPurpose(description, KernelConcept.ROLE_TYPE, stamps));
         assertEquals("No field with purpose " + roleType + " found in pattern " + pattern,
                 purposeByFacade.getMessage());
     }
 
     @Test
     void aFieldMeaningWithNoDescriptionIsNamedByItsUuid() {
-        SemanticEntityVersion description = aDescriptionOf(KernelTerm.ENGLISH_LANGUAGE);
+        SemanticEntityVersion description = aDescriptionOf(KernelConcept.ENGLISH_LANGUAGE);
 
         IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
                 () -> FieldHandle.ofMeaning(description, undescribedNid, view.stampCalculator()));
 
         assertEquals("No field with meaning UUID " + fixtureUuid("undescribed concept") + " found in pattern "
-                + DiagnosticText.component(KernelTerm.DESCRIPTION_PATTERN.nid()), failure.getMessage());
+                + DiagnosticText.component(KernelPattern.DESCRIPTION_PATTERN.nid()), failure.getMessage());
         assertNoNid(failure.getMessage());
     }
 
@@ -211,7 +212,7 @@ class ExceptionMessageIT {
 
     @Test
     void aConceptThatIsNotAnAxiomMeaningIsNamed() {
-        long nid = KernelTerm.ENGLISH_LANGUAGE.nid();
+        long nid = KernelConcept.ENGLISH_LANGUAGE.nid();
 
         IllegalStateException failure = assertThrows(IllegalStateException.class, () -> LogicalAxiomSemantic.get(nid));
 
@@ -227,7 +228,7 @@ class ExceptionMessageIT {
                 undescribed.getMessage());
         assertNoNid(undescribed.getMessage());
 
-        long patternNid = KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid();
+        long patternNid = KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid();
         IllegalStateException noSemantic = assertThrows(IllegalStateException.class,
                 () -> ElkSnomedUtil.getLatestSemantic(view, patternNid, undescribedNid));
         assertEquals("No semantic of pattern " + DiagnosticText.component(patternNid) + " for component: UUID "
@@ -253,20 +254,20 @@ class ExceptionMessageIT {
 
     /** A definition whose necessary set has two children where one is allowed. */
     private static DiTreeEntity aNecessarySetWithTwoChildren() {
-        EntityVertex root = EntityVertex.make(KernelTerm.DEFINITION_ROOT);
-        EntityVertex necessarySet = EntityVertex.make(KernelTerm.NECESSARY_SET);
+        EntityVertex root = EntityVertex.make(KernelConcept.DEFINITION_ROOT);
+        EntityVertex necessarySet = EntityVertex.make(KernelConcept.NECESSARY_SET);
         DiTreeEntity.Builder builder = DiTreeEntity.builder();
         builder.setRoot(root);
         builder.addEdge(necessarySet, root);
-        builder.addEdge(EntityVertex.make(KernelTerm.AND), necessarySet);
-        builder.addEdge(EntityVertex.make(KernelTerm.AND), necessarySet);
+        builder.addEdge(EntityVertex.make(KernelConcept.AND), necessarySet);
+        builder.addEdge(EntityVertex.make(KernelConcept.AND), necessarySet);
         return builder.build();
     }
 
     /** The latest version of a description of a concept. */
     private SemanticEntityVersion aDescriptionOf(EntityFacade concept) {
         SemanticEntity<SemanticEntityVersion> semantic = EntityService.get().semanticsForComponentOfPattern(
-                concept.nid(), KernelTerm.DESCRIPTION_PATTERN.nid()).findFirst().orElseThrow();
+                concept.nid(), KernelPattern.DESCRIPTION_PATTERN.nid()).findFirst().orElseThrow();
         Latest<SemanticEntityVersion> latest = view.stampCalculator().latest(semantic);
         return latest.get();
     }

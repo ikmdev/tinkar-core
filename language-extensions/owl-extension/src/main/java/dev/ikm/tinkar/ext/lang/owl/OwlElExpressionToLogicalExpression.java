@@ -1,6 +1,5 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
-import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.Concept;
@@ -12,6 +11,7 @@ import dev.ikm.elk.snomed.owlel.parser.SnomedOfsParser;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
+import dev.ikm.tinkar.terms.KernelConcept;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class OwlElExpressionToLogicalExpression extends OwlElToLogicalExpression
 		UUID uuid = UUID.fromString(str);
 		// The OwlEl transform depends on this value
 		// TODO make this a param in the owl el transform
-		if (!sub_object_property && KernelTerm.ROLE_GROUP.contains(uuid))
+		if (!sub_object_property && KernelConcept.ROLE_GROUP.publicId().contains(uuid))
 			return String.valueOf(SnomedIds.role_group);
 		long nid = PrimitiveData.nid(uuid);
 		return String.valueOf(nid);

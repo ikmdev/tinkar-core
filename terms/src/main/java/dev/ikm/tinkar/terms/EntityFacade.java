@@ -31,6 +31,28 @@ public interface EntityFacade extends Component, ComponentWithNid {
         return entityFacade.nid();
     }
 
+    /**
+     * Whether two references name the same component, whatever form each has: an
+     * {@link EntityProxy}, a binding enum ({@link ConceptEnumerationFacade}), an entity record, or
+     * any other facade. Compare components with this, never with {@code ==} or {@code equals}:
+     * {@code ==} is false whenever the forms differ, and {@code equals} depends on the receiver's
+     * class ({@code Enum.equals} is identity, so {@code KernelConcept.X.equals(proxyOfX)} is
+     * false).
+     *
+     * @param a a reference, or {@code null}
+     * @param b a reference, or {@code null}
+     * @return whether both are {@code null} or both name the component with the same nid
+     */
+    static boolean same(EntityFacade a, EntityFacade b) {
+        if (a == b) {
+            return true;
+        }
+        if (a == null || b == null) {
+            return false;
+        }
+        return a.nid() == b.nid();
+    }
+
     default String description() {
         return PrimitiveData.text(nid());
     }

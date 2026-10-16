@@ -15,8 +15,9 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
+import network.ike.foundation.ike.bindings.IkeConcept;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
@@ -113,7 +114,7 @@ class GeneratorEndToEndIT {
         int patternsBefore = countPatterns();
         assertEquals(manifest.concepts(), conceptsBefore, "the store holds every concept the changeset does");
         assertEquals(manifest.patterns(), patternsBefore, "the store holds every pattern the changeset does");
-        int modelConceptVersionsBefore = EntityHandle.get(IkeTerms.MODEL_CONCEPT.nid()).expectConcept()
+        int modelConceptVersionsBefore = EntityHandle.get(IkeConcept.MODEL_CONCEPT.nid()).expectConcept()
                 .versions().size();
         int userModuleVersionsBefore = EntityHandle.get(findByName("User module")).expectConcept()
                 .versions().size();
@@ -125,10 +126,10 @@ class GeneratorEndToEndIT {
         long userModuleNid = findByName("User module");
         String userModuleFqnBefore = languageCalculator.getFullyQualifiedNameText(
                 dev.ikm.tinkar.terms.EntityProxy.Concept.make(userModuleNid)).orElseThrow();
-        String modelConceptFqnBefore = languageCalculator.getFullyQualifiedNameText(IkeTerms.MODEL_CONCEPT)
+        String modelConceptFqnBefore = languageCalculator.getFullyQualifiedNameText(IkeConcept.MODEL_CONCEPT)
                 .orElseThrow();
         Set<Long> userModuleParentsBefore = latestIsAParents(userModuleNid, calculator);
-        int descriptionPatternVersionsBefore = EntityHandle.get(KernelTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
+        int descriptionPatternVersionsBefore = EntityHandle.get(KernelPattern.DESCRIPTION_PATTERN.nid()).expectPattern()
                 .versions().size();
         // Every stated definition, not a sample: each stated-axiom semantic's latest
         // expression in canonical form (concept references as nids, so the comparison is
@@ -138,7 +139,7 @@ class GeneratorEndToEndIT {
         Map<Long, Long> statedReferencedComponents = new HashMap<>();
         Map<Long, Set<Long>> statedStampsBefore = new HashMap<>();
         Set<Long> beyondSimpleIsA = new HashSet<>();
-        calculator.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+        calculator.forEachSemanticVersionOfPattern(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                 (semanticVersion, patternVersion) -> {
                     long semanticNid = semanticVersion.nid();
                     statedExpressionsBefore.put(semanticNid,
@@ -163,7 +164,7 @@ class GeneratorEndToEndIT {
         // catch-all, batched to stay under the JVM's 64KB bytecode-per-method limit) —
         // shared with LedgerGeneratorMain's real ingest run so the two can't drift.
         List<Section> exclusiveSections = sectioner.sectionsCoveringFullStore(
-                KernelTerm.ROOT_VERTEX.nid(), 60, 4, 50);
+                KernelConcept.ROOT_VERTEX.nid(), 60, 4, 50);
         int distinctMembers = exclusiveSections.stream().mapToInt(section -> section.members().size()).sum();
         LOG.info("{} sections covering {} distinct components after cross-section dedup + residual catch-all",
                 exclusiveSections.size(), distinctMembers);
@@ -183,8 +184,8 @@ class GeneratorEndToEndIT {
             sectionClassNames.add(className);
             SectionEmitter.EmittedSection emitted = SectionEmitter.emitSection(packageName, className, section,
                     calculator, languageCalculator, resolver,
-                    "Stamp.active(PrimitiveData.INCEPTION_EPOCH, KernelTerm.USER,"
-                            + " KernelTerm.PRIMORDIAL_MODULE, KernelTerm.PRIMORDIAL_PATH)");
+                    "Stamp.active(PrimitiveData.INCEPTION_EPOCH, KernelConcept.USER,"
+                            + " KernelConcept.PRIMORDIAL_MODULE, KernelConcept.PRIMORDIAL_PATH)");
             emissionNotes.addAll(emitted.manifestNotes());
             writeSourceFile(sourceDir, packageName, className, emitted.source());
         }
@@ -214,7 +215,7 @@ class GeneratorEndToEndIT {
         assertEquals(conceptsBefore, conceptsAfter, "identity-exact ingest mints no new concepts");
         assertEquals(patternsBefore, patternsAfter, "identity-exact ingest mints no new patterns");
 
-        int modelConceptVersionsAfter = EntityHandle.get(IkeTerms.MODEL_CONCEPT.nid()).expectConcept()
+        int modelConceptVersionsAfter = EntityHandle.get(IkeConcept.MODEL_CONCEPT.nid()).expectConcept()
                 .versions().size();
         assertEquals(modelConceptVersionsBefore + 1, modelConceptVersionsAfter,
                 "the round trip adds exactly one new (inception) version — a true merge, not a replace");
@@ -223,7 +224,7 @@ class GeneratorEndToEndIT {
         assertEquals(userModuleVersionsBefore + 1, userModuleVersionsAfter,
                 "a leaf concept from a split section also merges cleanly");
 
-        int descriptionPatternVersionsAfter = EntityHandle.get(KernelTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
+        int descriptionPatternVersionsAfter = EntityHandle.get(KernelPattern.DESCRIPTION_PATTERN.nid()).expectPattern()
                 .versions().size();
         assertEquals(descriptionPatternVersionsBefore + 1, descriptionPatternVersionsAfter,
                 "a pattern from the residual catch-all also merges cleanly, meaning and purpose intact");
@@ -240,7 +241,7 @@ class GeneratorEndToEndIT {
                 dev.ikm.tinkar.terms.EntityProxy.Concept.make(userModuleNid)).orElseThrow();
         assertEquals(userModuleFqnBefore, userModuleFqnAfter,
                 "the round trip must not change the calculator-resolved FQN text");
-        String modelConceptFqnAfter = languageCalculator.getFullyQualifiedNameText(IkeTerms.MODEL_CONCEPT)
+        String modelConceptFqnAfter = languageCalculator.getFullyQualifiedNameText(IkeConcept.MODEL_CONCEPT)
                 .orElseThrow();
         assertEquals(modelConceptFqnBefore, modelConceptFqnAfter,
                 "the round trip must not change the calculator-resolved FQN text");
@@ -282,7 +283,7 @@ class GeneratorEndToEndIT {
         assertEquals(List.of(), roundTripFailures, "every stated definition must round-trip exactly");
         LOG.info("{} stated definitions round-tripped exactly, {} of them beyond the simple isA shape",
                 restated, nonSimpleRestated);
-        long statedDefinitions = manifest.semanticsOf(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN);
+        long statedDefinitions = manifest.semanticsOf(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN);
         assertEquals(statedDefinitions, restated,
                 "every one of the set's " + statedDefinitions + " stated definitions round-trips");
         assertTrue(!beyondSimpleIsA.isEmpty(),
@@ -314,7 +315,7 @@ class GeneratorEndToEndIT {
         Set<Long> parents = new HashSet<>();
         calculator.forEachSemanticVersionForComponentOfPattern(
                 dev.ikm.tinkar.terms.EntityProxy.Concept.make(componentNid),
-                KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                 (semanticVersion, entityVersion, patternVersion) -> {
                     dev.ikm.tinkar.entity.graph.DiTreeEntity tree =
                             (dev.ikm.tinkar.entity.graph.DiTreeEntity) semanticVersion.fieldValues().get(0);

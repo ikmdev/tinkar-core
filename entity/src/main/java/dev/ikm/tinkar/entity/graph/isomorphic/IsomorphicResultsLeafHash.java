@@ -19,7 +19,7 @@ import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
 
 import dev.ikm.tinkar.common.id.Nid;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.ArrayUtil;
 import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
@@ -513,7 +513,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                         addFragment(elementToAdd, this.comparisonTree, rootToAddParentIndexInMergedTree, treeBuilder);
                     } else {
                         // Decide where to put it.
-                        if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelTerm.NECESSARY_SET)) {
+                        if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelConcept.NECESSARY_SET)) {
                             // Easy case is if it is inside  the necessary set, since there is only one necessary set
                             BitSet necessarySetIndexes = this.referenceVisitData().necessarySetIndexes();
                             switch (necessarySetIndexes.cardinality()) {
@@ -527,11 +527,11 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                                 case 1 -> {
                                     // Find the AND under the necessary set...
                                     DiTreeEntity tree = treeBuilder.build();
-                                    EntityVertex necessarySet = tree.firstVertexWithMeaning(KernelTerm.NECESSARY_SET).get();
+                                    EntityVertex necessarySet = tree.firstVertexWithMeaning(KernelConcept.NECESSARY_SET).get();
                                     ImmutableList<EntityVertex> necessarySetSuccessors = tree.successors(necessarySet);
 
                                     necessarySetSuccessors.getFirstOptional().ifPresent(andVertex -> {
-                                        if (andVertex.getMeaningNid() != KernelTerm.AND.nid()) {
+                                        if (andVertex.getMeaningNid() != KernelConcept.AND.nid()) {
                                             throw new IllegalStateException("Missing necessary set and:\n" + DiTreeText.diagnostic(tree));
                                         }
                                         addFragment(elementToAdd, this.comparisonTree, andVertex.vertexIndex(), treeBuilder);
@@ -542,16 +542,16 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                                 default ->
                                         throw new IllegalStateException("More than one necessary set found: " + necessarySetIndexes);
                             }
-                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelTerm.SUFFICIENT_SET)) {
+                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelConcept.SUFFICIENT_SET)) {
                             //@TODO simple algorithm for now, just add all sufficient sets. In the future, do more complete comparison.
                             int andParentIndex =
                                     this.comparisonVisitData().predecessorIndex(elementToAdd.vertexIndex()).getAsInt();
-                            if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != KernelTerm.AND.nid()) {
+                            if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != KernelConcept.AND.nid()) {
                                 throw new IllegalStateException("Element to add does not have AND for its parent: " + DiTreeText.diagnostic(this.comparisonTree.vertex(andParentIndex)));
                             }
                             int sufficientSetIndexInComparison = this.comparisonVisitData().predecessorIndex(andParentIndex).getAsInt();
                             EntityVertex sufficientSetVertexInComparison = this.comparisonTree.vertex(sufficientSetIndexInComparison);
-                            if (sufficientSetVertexInComparison.getMeaningNid() != KernelTerm.SUFFICIENT_SET.nid()) {
+                            if (sufficientSetVertexInComparison.getMeaningNid() != KernelConcept.SUFFICIENT_SET.nid()) {
                                 throw new IllegalStateException("Element to add does not have SUFFICIENT_SET for its ancestor: " + DiTreeText.diagnostic(sufficientSetVertexInComparison));
                             }
                             AtomicBoolean notAdded = new AtomicBoolean(true);
@@ -564,17 +564,17 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                             if (notAdded.get()) {
                                 addFragment(sufficientSetVertexInComparison, this.comparisonTree, treeBuilder.getRoot().vertexIndex(), treeBuilder);
                             }
-                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelTerm.INCLUSION_SET)) {
+                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelConcept.INCLUSION_SET)) {
                             // There can be multiple implication sets
                             //@TODO simple algorithm for now, just add all implication sets. In the future, do more complete comparison.
                             int andParentIndex =
                                     this.comparisonVisitData().predecessorIndex(elementToAdd.vertexIndex()).getAsInt();
-                            if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != KernelTerm.AND.nid()) {
+                            if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != KernelConcept.AND.nid()) {
                                 throw new IllegalStateException("Element to add does not have AND for its parent: " + DiTreeText.diagnostic(this.comparisonTree.vertex(andParentIndex)));
                             }
                             int implicationSetIndexInComparison = this.comparisonVisitData().predecessorIndex(andParentIndex).getAsInt();
                             EntityVertex implicationSetVertexInComparison = this.comparisonTree.vertex(implicationSetIndexInComparison);
-                            if (implicationSetVertexInComparison.getMeaningNid() != KernelTerm.INCLUSION_SET.nid()) {
+                            if (implicationSetVertexInComparison.getMeaningNid() != KernelConcept.INCLUSION_SET.nid()) {
                                 throw new IllegalStateException("Element to add does not have IMPLICATION_SET for its ancestor: " + DiTreeText.diagnostic(implicationSetVertexInComparison));
                             }
                             AtomicBoolean notAdded = new AtomicBoolean(true);
@@ -587,7 +587,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                             if (notAdded.get()) {
                                 addFragment(implicationSetVertexInComparison, this.comparisonTree, treeBuilder.getRoot().vertexIndex(), treeBuilder);
                             }
-                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelTerm.PROPERTY_SET)) {
+                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, KernelConcept.PROPERTY_SET)) {
                             // Easy case is if it is inside  the property set, since there is only one property set
                             BitSet propertySetIndexes = this.referenceVisitData().propertySetIndexes();
                             switch (propertySetIndexes.cardinality()) {
@@ -601,11 +601,11 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                                 case 1 -> {
                                     // Find the AND under the property set...
                                     DiTreeEntity tree = treeBuilder.build();
-                                    EntityVertex propertySet = tree.firstVertexWithMeaning(KernelTerm.PROPERTY_SET).get();
+                                    EntityVertex propertySet = tree.firstVertexWithMeaning(KernelConcept.PROPERTY_SET).get();
                                     ImmutableList<EntityVertex> propertySetSuccessors = tree.successors(propertySet);
 
                                     propertySetSuccessors.getFirstOptional().ifPresent(andVertex -> {
-                                        if (andVertex.getMeaningNid() != KernelTerm.AND.nid()) {
+                                        if (andVertex.getMeaningNid() != KernelConcept.AND.nid()) {
                                             throw new IllegalStateException("Missing property set and:\n" + DiTreeText.diagnostic(tree));
                                         }
                                         addFragment(elementToAdd, this.comparisonTree, andVertex.vertexIndex(), treeBuilder);

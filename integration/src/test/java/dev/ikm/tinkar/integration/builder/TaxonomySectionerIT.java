@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import network.ike.foundation.ike.bindings.IkeConcept;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner;
@@ -63,7 +63,7 @@ class TaxonomySectionerIT {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
         TaxonomySectioner sectioner = TaxonomySectioner.fromStatedNavigation(calculator);
 
-        long platformRoot = KernelTerm.ROOT_VERTEX.nid();
+        long platformRoot = KernelConcept.ROOT_VERTEX.nid();
         assertEquals(2, sectioner.childrenOf(platformRoot).size(),
                 "the platform root's stated-nav children, Model concept and Phenomenon, seed the depth-1 sections");
 
@@ -74,8 +74,8 @@ class TaxonomySectionerIT {
         LOG.info("Depth-1 sections: {}", sizes);
 
         // Sizes pinned from the IKE starter set's stated navigation (re-pinned for the
-        // AsciiDoc document model, IKE-Network/ike-issues#1295).
-        assertEquals(1359, sizes.get("Model concept"));
+        // shared block model and the annotation model, IKE-Network/ike-issues#844 and #1300).
+        assertEquals(1378, sizes.get("Model concept"));
         assertEquals(4, sizes.get("Phenomenon"));
         assertEquals(2, sizes.size(), "the platform root has exactly two depth-1 sections");
     }
@@ -86,24 +86,24 @@ class TaxonomySectionerIT {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
         TaxonomySectioner sectioner = TaxonomySectioner.fromStatedNavigation(calculator);
 
-        List<Section> sections = sectioner.sectionsUnder(KernelTerm.ROOT_VERTEX.nid(), 60, 2);
+        List<Section> sections = sectioner.sectionsUnder(KernelConcept.ROOT_VERTEX.nid(), 60, 2);
         Map<String, Integer> sizes = new TreeMap<>();
         sections.forEach(section -> sizes.merge(section.name(), section.members().size(), Integer::sum));
         LOG.info("Split sections (threshold 60): {}", sizes);
 
         // "Model concept" splits into its children; the largest exceed the threshold, but
         // maxDepth=2 stops further splitting.
-        assertEquals(362, sizes.get("IKE base model concept"));
+        assertEquals(376, sizes.get("IKE base model concept"));
         assertEquals(298, sizes.get("Expression language model"));
         assertEquals(466, sizes.get("ELM node catalog"));
         // Sections at or under the threshold are not split further.
-        assertEquals(6, sizes.get("Author"));
+        assertEquals(7, sizes.get("Author"));
         assertEquals(6, sizes.get("Status"));
         assertEquals(4, sizes.get("Phenomenon"));
         // Regression guard: a splitting node must still get its own singleton section
         // (a prior bug dropped the splitting node's identity entirely — "Model
         // concept" would silently vanish from every generated section, taking
-        // IkeTerms.MODEL_CONCEPT itself with it).
+        // IkeConcept.MODEL_CONCEPT itself with it).
         assertEquals(1, sizes.get("Model concept"),
                 "the splitting node itself must appear as its own singleton section");
     }

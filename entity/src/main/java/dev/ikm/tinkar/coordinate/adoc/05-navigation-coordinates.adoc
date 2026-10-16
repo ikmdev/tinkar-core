@@ -64,7 +64,7 @@ NavigationCoordinate inferred = Coordinates.Navigation.inferred();
 
 // Equivalent to:
 NavigationCoordinateRecord inferred = NavigationCoordinateRecord.make(
-    IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
+    IntIds.set.of(KernelConcept.INFERRED_NAVIGATION.nid()),
     StateSet.ACTIVE,
     IntIds.list.empty(),
     true  // Sort enabled
@@ -88,7 +88,7 @@ NavigationCoordinate stated = Coordinates.Navigation.stated();
 
 // Equivalent to:
 NavigationCoordinateRecord stated = NavigationCoordinateRecord.make(
-    IntIds.set.of(KernelTerm.STATED_NAVIGATION_PATTERN.nid()),
+    IntIds.set.of(KernelPattern.STATED_NAVIGATION_PATTERN.nid()),
     StateSet.ACTIVE,
     IntIds.list.empty(),
     true
@@ -109,7 +109,7 @@ NavigationCoordinateRecord stated = NavigationCoordinateRecord.make(
 // Combine inferred is-a with part-of relationships
 NavigationCoordinateRecord combined = NavigationCoordinateRecord.make(
     IntIds.set.of(
-        KernelTerm.INFERRED_NAVIGATION.nid(),
+        KernelConcept.INFERRED_NAVIGATION.nid(),
         MyTerms.PART_OF_NAVIGATION.nid()
     ),
     StateSet.ACTIVE,
@@ -149,7 +149,7 @@ NavigationCoordinateRecord sorted = NavigationCoordinateRecord.makeInferred();
 
 // Unsorted (faster)
 NavigationCoordinateRecord unsorted = NavigationCoordinateRecord.make(
-    IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
+    IntIds.set.of(KernelConcept.INFERRED_NAVIGATION.nid()),
     StateSet.ACTIVE,
     IntIds.list.empty(),
     false  // No sorting
@@ -162,7 +162,7 @@ NavigationCoordinateRecord unsorted = NavigationCoordinateRecord.make(
 ----
 // Sort by custom patterns, then alphabetically
 NavigationCoordinateRecord customSort = NavigationCoordinateRecord.make(
-    IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
+    IntIds.set.of(KernelConcept.INFERRED_NAVIGATION.nid()),
     StateSet.ACTIVE,
     IntIds.list.of(
         MyTerms.SEVERITY_SORT_PATTERN.nid(),  // Sort by severity first
@@ -388,7 +388,7 @@ IntIdSet children = calc.childrenOf(diseaseNid);
 NavigationCalculator unsortedCalc = NavigationCalculatorWithCache.getCalculator(
     stamp,
     NavigationCoordinateRecord.make(
-        IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
+        IntIds.set.of(KernelConcept.INFERRED_NAVIGATION.nid()),
         StateSet.ACTIVE,
         IntIds.list.empty(),
         false  // No sorting
@@ -429,7 +429,7 @@ if (isAuthoringContext) {
 ----
 // GOOD: Disable sorting when order doesn't matter
 NavigationCoordinateRecord unsorted = NavigationCoordinateRecord.make(
-    IntIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid()),
+    IntIds.set.of(KernelConcept.INFERRED_NAVIGATION.nid()),
     StateSet.ACTIVE,
     IntIds.list.empty(),
     false  // Faster when order doesn't matter

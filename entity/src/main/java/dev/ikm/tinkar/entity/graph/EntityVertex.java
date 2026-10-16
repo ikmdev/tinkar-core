@@ -149,11 +149,11 @@ public class EntityVertex implements Vertex, VertexId {
 
 	private Object abstractObject(Object object) {
 		return switch (object) {
-		case EntityProxy.Concept con -> con;
+		case ConceptFacade con -> con;
 		case Concept concept -> EntityProxy.Concept.make(concept.publicId());
 		case EntityProxy.Semantic semantic -> semantic;
 		case Semantic semantic -> EntityProxy.Semantic.make(semantic.publicId());
-		case EntityProxy.Pattern pattern -> pattern;
+		case PatternFacade pattern -> pattern;
 		case Pattern pattern -> EntityProxy.Pattern.make(pattern.publicId());
 		case StampEntity stamp -> createStampRecord(stamp);
 		case Double double_ -> double_.floatValue();

@@ -22,5 +22,6 @@ module dev.ikm.tinkar.nidcheck {
 
     exports dev.ikm.tinkar.nidcheck;
 
-    provides com.sun.source.util.Plugin with dev.ikm.tinkar.nidcheck.NidCheck;
+    provides com.sun.source.util.Plugin with dev.ikm.tinkar.nidcheck.NidCheck,
+            dev.ikm.tinkar.nidcheck.FacadeCheck;
 }

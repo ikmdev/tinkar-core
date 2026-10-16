@@ -36,9 +36,7 @@ import dev.ikm.tinkar.entity.SemanticRecordBuilder;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.terms.State;
+import dev.ikm.tinkar.terms.*;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -89,7 +87,7 @@ public final class StampedWriter implements AutoCloseable {
      *
      * @param meaning  what the field means
      * @param purpose  what the field is for
-     * @param dataType the field's data type, such as {@link KernelTerm#STRING}
+     * @param dataType the field's data type, such as {@link KernelConcept#STRING}
      */
     public record Field(ConceptFacade meaning, ConceptFacade purpose, ConceptFacade dataType) {
     }
@@ -296,11 +294,11 @@ public final class StampedWriter implements AutoCloseable {
             throw new IllegalArgumentException("A fully qualified name needs text: " + component.idString());
         }
         PublicId description = PublicIds.of(fullyQualifiedNameUuid(component));
-        long nid = semantic(description, KernelTerm.DESCRIPTION_PATTERN, component,
-                KernelTerm.ENGLISH_LANGUAGE, text,
-                KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE);
+        long nid = semantic(description, KernelPattern.DESCRIPTION_PATTERN.publicId(), component,
+                KernelConcept.ENGLISH_LANGUAGE, text,
+                KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE, KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE);
         semantic(PublicIds.of(UuidT5Generator.get(description.leastUuid(), "us-dialect")),
-                KernelTerm.US_DIALECT_PATTERN, description, KernelTerm.PREFERRED);
+                KernelPattern.US_DIALECT_PATTERN.publicId(), description, KernelConcept.PREFERRED);
         return nid;
     }
 

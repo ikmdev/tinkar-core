@@ -15,7 +15,9 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
+
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
@@ -161,7 +163,7 @@ public abstract class PrimitiveDataTestUtil {
 		Instant instant = LocalDate.parse(time, dtf).atStartOfDay().toInstant(ZoneOffset.UTC);
 		// workaround until db create issue fixed
 //		instant = instant.plus(4, ChronoUnit.HOURS);
-		StampPositionRecord pos = StampPositionRecord.make(instant, KernelTerm.DEVELOPMENT_PATH);
+		StampPositionRecord pos = StampPositionRecord.make(instant, KernelConcept.DEVELOPMENT_PATH);
 		StampCoordinateRecord scr = StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE, pos, LongIds.set.empty());
 		ViewCoordinateRecord vcr = ViewCoordinateRecord.make(scr, Language.UsEnglishRegularName(), Logic.ElPlusPlus(),
 				Navigation.inferred(), Edit.Default());
@@ -171,7 +173,7 @@ public abstract class PrimitiveDataTestUtil {
 
 	public static ViewCalculator getViewCalculatorPrimordial() {
 		StampCoordinateRecord scr = StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
-				Position.LatestOnDevelopment(), LongIds.set.of(KernelTerm.PRIMORDIAL_MODULE.nid()));
+				Position.LatestOnDevelopment(), LongIds.set.of(KernelConcept.PRIMORDIAL_MODULE.nid()));
 		ViewCoordinateRecord vcr = ViewCoordinateRecord.make(scr, Language.UsEnglishRegularName(), Logic.ElPlusPlus(),
 				Navigation.inferred(), Edit.Default());
 		ViewCalculatorWithCache vc = ViewCalculatorWithCache.getCalculator(vcr);
@@ -181,7 +183,7 @@ public abstract class PrimitiveDataTestUtil {
 	public static HashSet<Long> getPrimordialNids() throws Exception {
 		HashSet<Long> nids = new HashSet<>();
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculatorPrimordial();
-		vc.forEachSemanticVersionOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid(), (semanticEntityVersion, _) -> {
+		vc.forEachSemanticVersionOfPattern(KernelPattern.IDENTIFIER_PATTERN.nid(), (semanticEntityVersion, _) -> {
 			long conceptNid = semanticEntityVersion.referencedComponentNid();
 			if (vc.latestIsActive(conceptNid))
 				nids.add(conceptNid);
@@ -197,16 +199,16 @@ public abstract class PrimitiveDataTestUtil {
 
 	public static String getSctid(long conceptNid, ViewCalculator vc) {
 		ArrayList<String> ret = new ArrayList<>();
-		Latest<PatternEntityVersion> latestIdPattern = vc.latestPatternEntityVersion(KernelTerm.IDENTIFIER_PATTERN);
-		EntityService.get().forEachSemanticForComponentOfPattern(conceptNid, KernelTerm.IDENTIFIER_PATTERN.nid(),
+		Latest<PatternEntityVersion> latestIdPattern = vc.latestPatternEntityVersion(KernelPattern.IDENTIFIER_PATTERN);
+		EntityService.get().forEachSemanticForComponentOfPattern(conceptNid, KernelPattern.IDENTIFIER_PATTERN.nid(),
 				(semanticEntity) -> {
 					if (vc.latest(semanticEntity).isPresent()) {
 						SemanticEntityVersion latestSemanticVersion = vc.latest(semanticEntity).get();
 						EntityProxy identifierSource = latestIdPattern.get()
-								.getFieldWithMeaning(KernelTerm.IDENTIFIER_SOURCE, latestSemanticVersion);
-						if (PublicId.equals(identifierSource, KernelTerm.SCTID)) {
+								.getFieldWithMeaning(KernelConcept.IDENTIFIER_SOURCE, latestSemanticVersion);
+                                                if (PublicId.equals(identifierSource, KernelConcept.SCTID.publicId())) {
 //							String idSourceName = vc.getPreferredDescriptionTextWithFallbackOrNid(identifierSource);
-							String idValue = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_VALUE,
+							String idValue = latestIdPattern.get().getFieldWithMeaning(KernelConcept.IDENTIFIER_VALUE,
 									latestSemanticVersion);
 							ret.add(idValue);
 						}

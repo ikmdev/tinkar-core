@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.entity.export;
 
 import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
-import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
@@ -46,6 +45,7 @@ import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.changeset.ComponentTable;
 import dev.ikm.tinkar.terms.EntityBinding;
+import dev.ikm.tinkar.terms.KernelConcept;
 import org.eclipse.collections.api.factory.primitive.LongLists;
 import org.eclipse.collections.api.factory.primitive.LongObjectMaps;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
@@ -986,7 +986,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                                   Collection<PublicId> moduleList, Collection<PublicId> authorList) {
         StringBuilder manifest = new StringBuilder()
                 .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.CURRENT_VERSION).append("\n")
-                .append("Packager-Name: ").append(KernelTerm.KOMET_USER.description()).append("\n")
+                .append("Packager-Name: ").append(KernelConcept.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
                 .append("Total-Count: ").append(counts.getTotalCount()).append("\n")
                 .append("Concept-Count: ").append(counts.conceptCount()).append("\n")
@@ -1020,7 +1020,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         StringBuilder manifestContent = new StringBuilder()
                 .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.IDENTITY_INDEX_VERSION).append("\n")
                 // TODO: Dynamically populate this user
-                .append("Packager-Name: ").append(KernelTerm.KOMET_USER.description()).append("\n")
+                .append("Packager-Name: ").append(KernelConcept.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
                 .append("Total-Count: ").append(entityCount).append("\n")
                 .append("Concept-Count: ").append(conceptsCount).append("\n")

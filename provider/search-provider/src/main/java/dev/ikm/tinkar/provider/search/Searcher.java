@@ -15,7 +15,9 @@
  */
 package dev.ikm.tinkar.provider.search;
 
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
+import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -551,7 +553,7 @@ public class Searcher {
      */
     public static Optional<PublicId> getPublicId(PublicId identifierSource, String identifierValue) {
         ViewCalculator viewCalc = Calculators.View.Default();
-        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(KernelTerm.IDENTIFIER_PATTERN);
+        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(KernelPattern.IDENTIFIER_PATTERN);
 
         if (latestIdPattern.isAbsent()) {
             throw new RuntimeException("Identifier Pattern is absent from data set");
@@ -559,13 +561,13 @@ public class Searcher {
 
         try {
             Iterator<SemanticEntity<SemanticEntityVersion>> semantics =
-                    EntityService.get().semanticsOfPattern(KernelTerm.IDENTIFIER_PATTERN.nid()).iterator();
+                    EntityService.get().semanticsOfPattern(KernelPattern.IDENTIFIER_PATTERN.nid()).iterator();
             while (semantics.hasNext()) {
                 EntityVersion entityVersion = viewCalc.latest(semantics.next()).get();
                 if (entityVersion instanceof SemanticEntityVersion semanticEntityVersion) {
-                    Object idValue = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_VALUE, semanticEntityVersion);
+                    Object idValue = latestIdPattern.get().getFieldWithMeaning(KernelConcept.IDENTIFIER_VALUE, semanticEntityVersion);
                     if (identifierValue != null && identifierValue.equals(idValue)) {
-                        Component idSource = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_SOURCE, semanticEntityVersion);
+                        Component idSource = latestIdPattern.get().getFieldWithMeaning(KernelConcept.IDENTIFIER_SOURCE, semanticEntityVersion);
                         if (identifierSource != null && idSource != null && PublicId.equals(idSource.publicId(), identifierSource)) {
                             return Optional.of(semanticEntityVersion.referencedComponent().publicId());
                         }

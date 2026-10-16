@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import network.ike.foundation.ike.bindings.IkeConcept;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.IdentityAdvisories;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -62,18 +62,18 @@ class UuidsAddedToComponentIT {
     @Test
     @DisplayName("Content naming a component under an extra UUID adds it to the component, with one advisory")
     void extraUuidIsAddedWithAnAdvisory() {
-        ActiveStamp stamp = Stamp.active("2020-01-01T00:00:00Z", KernelTerm.USER,
-                IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+        ActiveStamp stamp = Stamp.active("2020-01-01T00:00:00Z", KernelConcept.USER,
+                IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH);
 
         KnowledgeSet first = KnowledgeSet.of("6a1f2b3c-4d5e-5f60-8a7b-9c0d1e2f3a00");
-        first.concept("Shared concept (Test)", PublicIds.of(HELD)).at(stamp).isA(IkeTerms.MODEL_CONCEPT);
+        first.concept("Shared concept (Test)", PublicIds.of(HELD)).at(stamp).isA(IkeConcept.MODEL_CONCEPT);
         first.write();
         long nid = PrimitiveData.nid(PublicIds.of(HELD));
         long advisoriesBefore = IdentityAdvisories.uuidsAddedCount();
 
         // Another source names the same component under one more UUID.
         KnowledgeSet second = KnowledgeSet.of("6a1f2b3c-4d5e-5f60-8a7b-9c0d1e2f3a01");
-        second.concept("Shared concept (Test)", PublicIds.of(HELD, ADDED)).at(stamp).isA(IkeTerms.MODEL_CONCEPT);
+        second.concept("Shared concept (Test)", PublicIds.of(HELD, ADDED)).at(stamp).isA(IkeConcept.MODEL_CONCEPT);
         second.write();
 
         assertEquals(nid, PrimitiveData.nid(PublicIds.of(ADDED)), "the added UUID finds the existing component");
@@ -92,11 +92,11 @@ class UuidsAddedToComponentIT {
     void componentsNamedAsOneAreAdvisedNotReconciled() {
         UUID x = UUID.fromString("6a1f2b3c-4d5e-5f60-8a7b-9c0d1e2f3a51");
         UUID y = UUID.fromString("6a1f2b3c-4d5e-5f60-8a7b-9c0d1e2f3a52");
-        ActiveStamp stamp = Stamp.active("2020-01-01T00:00:00Z", KernelTerm.USER,
-                IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+        ActiveStamp stamp = Stamp.active("2020-01-01T00:00:00Z", KernelConcept.USER,
+                IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH);
         KnowledgeSet separate = KnowledgeSet.of("6a1f2b3c-4d5e-5f60-8a7b-9c0d1e2f3a10");
-        separate.concept("Component x (Test)", PublicIds.of(x)).at(stamp).isA(IkeTerms.MODEL_CONCEPT);
-        separate.concept("Component y (Test)", PublicIds.of(y)).at(stamp).isA(IkeTerms.MODEL_CONCEPT);
+        separate.concept("Component x (Test)", PublicIds.of(x)).at(stamp).isA(IkeConcept.MODEL_CONCEPT);
+        separate.concept("Component y (Test)", PublicIds.of(y)).at(stamp).isA(IkeConcept.MODEL_CONCEPT);
         separate.write();
         long nidX = PrimitiveData.nid(PublicIds.of(x));
         long nidY = PrimitiveData.nid(PublicIds.of(y));

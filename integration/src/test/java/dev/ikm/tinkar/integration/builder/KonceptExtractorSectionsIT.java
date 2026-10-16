@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
-import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
@@ -25,6 +24,7 @@ import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
+import dev.ikm.tinkar.terms.KernelConcept;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -91,7 +91,7 @@ class KonceptExtractorSectionsIT {
         // no stated-navigation cache at all. See KonceptExtractor's class javadoc.
         TaxonomySectioner sectioner = TaxonomySectioner.fromStatedAxioms(calculator);
         List<Section> sections = sectioner.sectionsCoveringFullStore(
-                KernelTerm.ROOT_VERTEX.nid(), SPLIT_THRESHOLD, MAX_DEPTH, RESIDUAL_BATCH_SIZE);
+                KernelConcept.ROOT_VERTEX.nid(), SPLIT_THRESHOLD, MAX_DEPTH, RESIDUAL_BATCH_SIZE);
 
         // Every UUID the extract lists for a koncept finds its section.
         Map<UUID, String> sectionByUuid = new HashMap<>();

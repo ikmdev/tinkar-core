@@ -15,8 +15,9 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
-import network.ike.foundation.ike.bindings.IkeTerms;
-import dev.ikm.tinkar.terms.KernelTerm;
+import network.ike.foundation.ike.bindings.IkeConcept;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
@@ -40,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * {@link KonceptExtractor}'s {@code since:}/{@code comments:}/{@code retiredComments:}
  * fields (IKE-Network/ike-issues#877), against a small hand-composed ledger — the real
- * starter set has no {@link KernelTerm#COMMENT_PATTERN} content yet to exercise this
+ * starter set has no {@link KernelPattern#COMMENT_PATTERN} content yet to exercise this
  * against, so this test builds its own: one concept, two comments (one that stays active,
  * one later retired), read back after a session write.
  */
@@ -63,21 +64,21 @@ class KonceptExtractorHistoryIT {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
 
         birth = Stamp.active("2020-01-01T00:00:00Z",
-                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelConcept.USER, IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH);
 
         TEST_SET.concept("History probe concept (Test)").at(birth)
                 .definition("A concept authored only to exercise since/comments/retiredComments extraction.")
-                .isA(IkeTerms.MODEL_CONCEPT)
-                .semantic(KernelTerm.COMMENT_PATTERN, PublicIds.of(RETIRED_COMMENT_ID), "Original comment text")
-                .semantic(KernelTerm.COMMENT_PATTERN, PublicIds.of(ACTIVE_COMMENT_ID), "Still active comment text");
+                .isA(IkeConcept.MODEL_CONCEPT)
+                .semantic(KernelPattern.COMMENT_PATTERN, PublicIds.of(RETIRED_COMMENT_ID), "Original comment text")
+                .semantic(KernelPattern.COMMENT_PATTERN, PublicIds.of(ACTIVE_COMMENT_ID), "Still active comment text");
 
         retirement = Stamp.inactive("2020-06-01T00:00:00Z",
-                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelConcept.USER, IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH);
 
         // Empty field values restate the prior text verbatim under the new inactive stamp --
         // ConceptBuilder.RetireScope#retireSemantic's documented behavior.
         TEST_SET.concept("History probe concept (Test)").at(retirement)
-                .retireSemantic(KernelTerm.COMMENT_PATTERN, PublicIds.of(RETIRED_COMMENT_ID));
+                .retireSemantic(KernelPattern.COMMENT_PATTERN, PublicIds.of(RETIRED_COMMENT_ID));
 
         TEST_SET.write();
     }

@@ -17,7 +17,8 @@ package dev.ikm.tinkar.entity.maintenance;
 
 import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
 import dev.ikm.tinkar.entity.changeset.SchemaIds;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -958,18 +959,18 @@ public final class ChangeSetSummarizer {
             int desc = 0, fqn = 0, stated = 0, inferred = 0, navS = 0, navI = 0, ident = 0, other = 0;
 
             for (SemanticAccum s : related) {
-                if (PublicId.equals(s.patternId, KernelTerm.DESCRIPTION_PATTERN)) {
-                    if (latestDescriptionTypeIs(s.latestVersion, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) fqn++;
+                if (PublicId.equals(s.patternId, KernelPattern.DESCRIPTION_PATTERN.publicId())) {
+                    if (latestDescriptionTypeIs(s.latestVersion, KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId())) fqn++;
                     else desc++;
-                } else if (PublicId.equals(s.patternId, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN)) {
+                } else if (PublicId.equals(s.patternId, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.publicId())) {
                     stated++;
-                } else if (PublicId.equals(s.patternId, KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN)) {
+                } else if (PublicId.equals(s.patternId, KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.publicId())) {
                     inferred++;
-                } else if (PublicId.equals(s.patternId, KernelTerm.STATED_NAVIGATION_PATTERN)) {
+                } else if (PublicId.equals(s.patternId, KernelPattern.STATED_NAVIGATION_PATTERN.publicId())) {
                     navS++;
-                } else if (PublicId.equals(s.patternId, KernelTerm.INFERRED_NAVIGATION_PATTERN)) {
+                } else if (PublicId.equals(s.patternId, KernelPattern.INFERRED_NAVIGATION_PATTERN.publicId())) {
                     navI++;
-                } else if (PublicId.equals(s.patternId, KernelTerm.IDENTIFIER_PATTERN)) {
+                } else if (PublicId.equals(s.patternId, KernelPattern.IDENTIFIER_PATTERN.publicId())) {
                     ident++;
                 } else {
                     other++;
@@ -1062,27 +1063,27 @@ public final class ChangeSetSummarizer {
 
     private String renderFields(PublicId patternId, SemanticVersion v, LabelResolver resolver) {
         if (v == null || v.getFieldsCount() == 0) return "(no fields)";
-        if (PublicId.equals(patternId, KernelTerm.DESCRIPTION_PATTERN)) {
+        if (PublicId.equals(patternId, KernelPattern.DESCRIPTION_PATTERN.publicId())) {
             // language, text, case, descType
             String text = fieldString(v, 1);
             String descType = resolver.resolve(fieldPublicId(v, 3));
             String lang = resolver.resolve(fieldPublicId(v, 0));
             return "[" + descType + "/" + lang + "] " + truncate(text, 120);
         }
-        if (PublicId.equals(patternId, KernelTerm.IDENTIFIER_PATTERN)) {
+        if (PublicId.equals(patternId, KernelPattern.IDENTIFIER_PATTERN.publicId())) {
             String source = resolver.resolve(fieldPublicId(v, 0));
             String id = fieldString(v, 1);
             return source + " = " + id;
         }
-        if (PublicId.equals(patternId, KernelTerm.STATED_NAVIGATION_PATTERN)
-                || PublicId.equals(patternId, KernelTerm.INFERRED_NAVIGATION_PATTERN)) {
+        if (PublicId.equals(patternId, KernelPattern.STATED_NAVIGATION_PATTERN.publicId())
+                || PublicId.equals(patternId, KernelPattern.INFERRED_NAVIGATION_PATTERN.publicId())) {
             // Field 0 = destinations (children), Field 1 = origins (parents)
             String children = renderPublicIdSet(v, 0, resolver);
             String parents = renderPublicIdSet(v, 1, resolver);
             return "parents=[" + parents + "] children=[" + children + "]";
         }
-        if (PublicId.equals(patternId, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN)
-                || PublicId.equals(patternId, KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN)) {
+        if (PublicId.equals(patternId, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.publicId())
+                || PublicId.equals(patternId, KernelPattern.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.publicId())) {
             return summarizeAxiomTree(v, 0);
         }
         return renderGenericFields(v, resolver);

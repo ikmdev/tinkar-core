@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.entity.builder.generator;
 
 import dev.ikm.tinkar.common.id.LongIdList;
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
@@ -132,48 +132,48 @@ public final class AxiomDecompiler {
                 yield new Connective(kind, atomsBelow(tree, vertex, visited));
             }
             case CONCEPT -> {
-                expectProperties(vertex, KernelTerm.CONCEPT_REFERENCE);
-                yield new ConceptReference(concept(vertex, KernelTerm.CONCEPT_REFERENCE));
+                expectProperties(vertex, KernelConcept.CONCEPT_REFERENCE);
+                yield new ConceptReference(concept(vertex, KernelConcept.CONCEPT_REFERENCE));
             }
             case ROLE -> {
-                expectProperties(vertex, KernelTerm.ROLE_TYPE, KernelTerm.ROLE_OPERATOR);
+                expectProperties(vertex, KernelConcept.ROLE_TYPE, KernelConcept.ROLE_OPERATOR);
                 List<Node> restriction = atomsBelow(tree, vertex, visited);
                 if (restriction.size() != 1) {
                     throw new Unsupported("Role with " + restriction.size() + " restrictions (expected one)");
                 }
-                yield new Role(concept(vertex, KernelTerm.ROLE_OPERATOR), concept(vertex, KernelTerm.ROLE_TYPE),
+                yield new Role(concept(vertex, KernelConcept.ROLE_OPERATOR), concept(vertex, KernelConcept.ROLE_TYPE),
                         restriction.getFirst());
             }
             case DISJOINT_WITH -> {
-                expectProperties(vertex, KernelTerm.DISJOINT_WITH);
-                yield new DisjointWith(concept(vertex, KernelTerm.DISJOINT_WITH));
+                expectProperties(vertex, KernelConcept.DISJOINT_WITH);
+                yield new DisjointWith(concept(vertex, KernelConcept.DISJOINT_WITH));
             }
             case FEATURE -> {
-                expectProperties(vertex, KernelTerm.FEATURE_TYPE, KernelTerm.CONCRETE_DOMAIN_OPERATOR,
-                        KernelTerm.LITERAL_VALUE);
-                Object literal = vertex.propertyFast(KernelTerm.LITERAL_VALUE);
+                expectProperties(vertex, KernelConcept.FEATURE_TYPE, KernelConcept.CONCRETE_DOMAIN_OPERATOR,
+                        KernelConcept.LITERAL_VALUE);
+                Object literal = vertex.propertyFast(KernelConcept.LITERAL_VALUE);
                 literalSource(literal); // Fails fast on a literal type the builder source cannot carry.
-                yield new Feature(concept(vertex, KernelTerm.FEATURE_TYPE),
-                        concept(vertex, KernelTerm.CONCRETE_DOMAIN_OPERATOR), literal);
+                yield new Feature(concept(vertex, KernelConcept.FEATURE_TYPE),
+                        concept(vertex, KernelConcept.CONCRETE_DOMAIN_OPERATOR), literal);
             }
             case INTERVAL_ROLE -> {
-                expectProperties(vertex, KernelTerm.INTERVAL_ROLE_TYPE, KernelTerm.INTERVAL_LOWER_BOUND,
-                        KernelTerm.LOWER_BOUND_OPEN, KernelTerm.INTERVAL_UPPER_BOUND, KernelTerm.UPPER_BOUND_OPEN,
-                        KernelTerm.UNIT_OF_MEASURE);
-                yield new IntervalRole(concept(vertex, KernelTerm.INTERVAL_ROLE_TYPE),
-                        property(vertex, KernelTerm.INTERVAL_LOWER_BOUND, BigDecimal.class),
-                        property(vertex, KernelTerm.LOWER_BOUND_OPEN, Boolean.class),
-                        property(vertex, KernelTerm.INTERVAL_UPPER_BOUND, BigDecimal.class),
-                        property(vertex, KernelTerm.UPPER_BOUND_OPEN, Boolean.class),
-                        concept(vertex, KernelTerm.UNIT_OF_MEASURE));
+                expectProperties(vertex, KernelConcept.INTERVAL_ROLE_TYPE, KernelConcept.INTERVAL_LOWER_BOUND,
+                        KernelConcept.LOWER_BOUND_OPEN, KernelConcept.INTERVAL_UPPER_BOUND, KernelConcept.UPPER_BOUND_OPEN,
+                        KernelConcept.UNIT_OF_MEASURE);
+                yield new IntervalRole(concept(vertex, KernelConcept.INTERVAL_ROLE_TYPE),
+                        property(vertex, KernelConcept.INTERVAL_LOWER_BOUND, BigDecimal.class),
+                        property(vertex, KernelConcept.LOWER_BOUND_OPEN, Boolean.class),
+                        property(vertex, KernelConcept.INTERVAL_UPPER_BOUND, BigDecimal.class),
+                        property(vertex, KernelConcept.UPPER_BOUND_OPEN, Boolean.class),
+                        concept(vertex, KernelConcept.UNIT_OF_MEASURE));
             }
             case PROPERTY_SEQUENCE_IMPLICATION -> {
-                expectProperties(vertex, KernelTerm.PROPERTY_SEQUENCE, KernelTerm.PROPERTY_SEQUENCE_IMPLICATION);
-                LongIdList sequence = property(vertex, KernelTerm.PROPERTY_SEQUENCE, LongIdList.class);
+                expectProperties(vertex, KernelConcept.PROPERTY_SEQUENCE, KernelConcept.PROPERTY_SEQUENCE_IMPLICATION);
+                LongIdList sequence = property(vertex, KernelConcept.PROPERTY_SEQUENCE, LongIdList.class);
                 List<ConceptFacade> properties = new ArrayList<>(sequence.size());
                 sequence.forEach(nid -> properties.add(EntityProxy.Concept.make(nid)));
                 yield new PropertySequenceImplication(List.copyOf(properties),
-                        concept(vertex, KernelTerm.PROPERTY_SEQUENCE_IMPLICATION));
+                        concept(vertex, KernelConcept.PROPERTY_SEQUENCE_IMPLICATION));
             }
             default -> throw new Unsupported(describe(vertex) + " has no builder verb");
         };
@@ -212,9 +212,9 @@ public final class AxiomDecompiler {
      * replay as a null the builder never stores, and an extra one would be silently
      * dropped, since no builder verb carries it.
      */
-    private static void expectProperties(EntityVertex vertex, EntityProxy.Concept... expected) {
+    private static void expectProperties(EntityVertex vertex, ConceptFacade... expected) {
         Set<Long> expectedNids = new HashSet<>();
-        for (EntityProxy.Concept property : expected) {
+        for (ConceptFacade property : expected) {
             expectedNids.add(property.nid());
         }
         Set<Long> actualNids = new HashSet<>();
@@ -230,11 +230,11 @@ public final class AxiomDecompiler {
         }
     }
 
-    private static ConceptFacade concept(EntityVertex vertex, EntityProxy.Concept property) {
+    private static ConceptFacade concept(EntityVertex vertex, ConceptFacade property) {
         return property(vertex, property, ConceptFacade.class);
     }
 
-    private static <T> T property(EntityVertex vertex, EntityProxy.Concept property, Class<T> type) {
+    private static <T> T property(EntityVertex vertex, ConceptFacade property, Class<T> type) {
         Object value = vertex.propertyFast(property);
         if (!type.isInstance(value)) {
             throw new Unsupported(describe(vertex) + " property " + PrimitiveData.text(property.nid()) + " is "
@@ -367,10 +367,10 @@ public final class AxiomDecompiler {
         @Override
         public String builderSource(Function<? super ConceptFacade, String> reference) {
             String restrictionSource = restriction.builderSource(reference);
-            if (operator.nid() == KernelTerm.EXISTENTIAL_RESTRICTION.nid()) {
+            if (operator.nid() == KernelConcept.EXISTENTIAL_RESTRICTION.nid()) {
                 return "leb.SomeRole(" + reference.apply(type) + ", " + restrictionSource + ")";
             }
-            if (operator.nid() == KernelTerm.UNIVERSAL_RESTRICTION.nid()) {
+            if (operator.nid() == KernelConcept.UNIVERSAL_RESTRICTION.nid()) {
                 return "leb.AllRole(" + reference.apply(type) + ", " + restrictionSource + ")";
             }
             return "leb.Role(" + reference.apply(operator) + ", " + reference.apply(type) + ", "

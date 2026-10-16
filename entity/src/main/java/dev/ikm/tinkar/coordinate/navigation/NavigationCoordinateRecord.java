@@ -15,8 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.navigation;
 
-
-import dev.ikm.tinkar.terms.KernelTerm;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.binary.Decoder;
 import dev.ikm.tinkar.common.binary.DecoderInput;
 import dev.ikm.tinkar.common.binary.Encodable;
@@ -56,13 +55,13 @@ public record NavigationCoordinateRecord(LongIdSet navigationPatternNids,
 
     public static NavigationCoordinateRecord makeInferred() {
         return new NavigationCoordinateRecord(
-                LongIds.set.of(KernelTerm.INFERRED_NAVIGATION_PATTERN.nid()),
+                LongIds.set.of(KernelPattern.INFERRED_NAVIGATION_PATTERN.nid()),
                 StateSet.ACTIVE_AND_INACTIVE, true, LongIds.list.empty());
     }
 
     public static NavigationCoordinateRecord makeStated() {
         return new NavigationCoordinateRecord(
-                LongIds.set.of(KernelTerm.STATED_NAVIGATION_PATTERN.nid()),
+                LongIds.set.of(KernelPattern.STATED_NAVIGATION_PATTERN.nid()),
                 StateSet.ACTIVE_AND_INACTIVE, true, LongIds.list.empty());
     }
 

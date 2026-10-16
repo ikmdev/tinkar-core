@@ -44,10 +44,7 @@ import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
-import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.KernelTerm;
-import dev.ikm.tinkar.terms.State;
+import dev.ikm.tinkar.terms.*;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
@@ -226,7 +223,7 @@ public final class StoreWriter {
      */
     public long concept(Stamp stamp, PublicId conceptId) {
         long stampNid = stamp(stamp);
-        long nid = PrimitiveData.nid(conceptId);
+        long nid = EntityService.get().nidForConcept(conceptId);
         Optional<ConceptRecord> existing = EntityHandle.get(nid).entity().filter(e -> !e.canceled())
                 .map(e -> (ConceptRecord) e);
         if (existing.isEmpty()) {
@@ -270,9 +267,9 @@ public final class StoreWriter {
         LogicalExpressionBuilder builder = new LogicalExpressionBuilder(
                 UuidT5Generator.get(conceptUuid, "definition root"),
                 () -> UuidT5Generator.get(conceptUuid, "axiom vertex " + ordinal[0]++));
-        builder.NecessarySet(builder.And(builder.ConceptAxiom(EntityProxy.Concept.make(PrimitiveData.nid(parentId)))));
+        builder.NecessarySet(builder.And(builder.ConceptAxiom(EntityProxy.Concept.make(EntityService.get().nidForConcept(parentId)))));
         DiTreeEntity tree = (DiTreeEntity) builder.build().sourceGraph();
-        return semantic(stamp, axiomId, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, PrimitiveData.nid(conceptId),
+        return semantic(stamp, axiomId, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, EntityService.get().nidForConcept(conceptId),
                 Lists.immutable.of(tree));
     }
 
@@ -288,7 +285,7 @@ public final class StoreWriter {
      * @param fieldValues            its field values, in the pattern's order
      * @return the semantic's nid
      */
-    public long semantic(Stamp stamp, PublicId semanticId, EntityProxy.Pattern pattern, long referencedComponentNid,
+    public long semantic(Stamp stamp, PublicId semanticId, PatternFacade pattern, long referencedComponentNid,
                          ImmutableList<Object> fieldValues) {
         long stampNid = stamp(stamp);
         PublicIdentifierRecord identifier = PublicIdentifierRecord.make(semanticId);
@@ -350,7 +347,7 @@ public final class StoreWriter {
      */
     public long recordConcept(Stamp stamp, PublicId conceptId) {
         long stampNid = stamp(stamp);
-        long nid = PrimitiveData.nid(conceptId);
+        long nid = EntityService.get().nidForConcept(conceptId);
         Optional<ConceptRecord> existing = EntityHandle.get(nid).entity().filter(e -> !e.canceled())
                 .map(e -> (ConceptRecord) e);
         if (existing.isEmpty()) {
@@ -383,7 +380,7 @@ public final class StoreWriter {
      * @return the semantic's nid
      * @see #recordConcept(Stamp, PublicId)
      */
-    public long recordSemantic(Stamp stamp, PublicId semanticId, EntityProxy.Pattern pattern,
+    public long recordSemantic(Stamp stamp, PublicId semanticId, PatternFacade pattern,
                                long referencedComponentNid, ImmutableList<Object> fieldValues) {
         long stampNid = stamp(stamp);
         long nid = ScopedValue.where(PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID, pattern.publicId())
@@ -420,8 +417,8 @@ public final class StoreWriter {
      * @param type            the description type, a fully qualified name or a regular name
      * @return the description semantic's nid
      */
-    public long describe(Stamp stamp, long aboutNid, UUID descriptionUuid, String text, EntityProxy.Concept type) {
-        return describe(stamp, aboutNid, descriptionUuid, text, type, KernelTerm.PREFERRED);
+    public long describe(Stamp stamp, long aboutNid, UUID descriptionUuid, String text, ConceptFacade type) {
+        return describe(stamp, aboutNid, descriptionUuid, text, type, KernelConcept.PREFERRED);
     }
 
     /**
@@ -436,11 +433,11 @@ public final class StoreWriter {
      * @param usAcceptability preferred or acceptable in the US dialect
      * @return the description semantic's nid
      */
-    public long describe(Stamp stamp, long aboutNid, UUID descriptionUuid, String text, EntityProxy.Concept type,
-                         EntityProxy.Concept usAcceptability) {
-        long descriptionNid = semantic(stamp, PublicIds.of(descriptionUuid), KernelTerm.DESCRIPTION_PATTERN, aboutNid,
-                Lists.immutable.of(KernelTerm.ENGLISH_LANGUAGE, text, KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE, type));
-        dialect(stamp, descriptionNid, UuidT5Generator.get(descriptionUuid, "us-dialect"), KernelTerm.US_DIALECT_PATTERN,
+    public long describe(Stamp stamp, long aboutNid, UUID descriptionUuid, String text, ConceptFacade type,
+                         ConceptFacade usAcceptability) {
+        long descriptionNid = semantic(stamp, PublicIds.of(descriptionUuid), KernelPattern.DESCRIPTION_PATTERN, aboutNid,
+                Lists.immutable.of(KernelConcept.ENGLISH_LANGUAGE, text, KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE, type));
+        dialect(stamp, descriptionNid, UuidT5Generator.get(descriptionUuid, "us-dialect"), KernelPattern.US_DIALECT_PATTERN,
                 usAcceptability);
         return descriptionNid;
     }
@@ -455,8 +452,8 @@ public final class StoreWriter {
      * @param acceptability  preferred or acceptable
      * @return the dialect semantic's nid
      */
-    public long dialect(Stamp stamp, long descriptionNid, UUID dialectUuid, EntityProxy.Pattern dialectPattern,
-                        EntityProxy.Concept acceptability) {
+    public long dialect(Stamp stamp, long descriptionNid, UUID dialectUuid, PatternFacade dialectPattern,
+                        ConceptFacade acceptability) {
         return semantic(stamp, PublicIds.of(dialectUuid), dialectPattern, descriptionNid, Lists.immutable.of(acceptability));
     }
 

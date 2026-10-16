@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.coordinate.navigation;
 
-import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.LongIds;
@@ -23,6 +22,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -39,7 +39,7 @@ import java.util.UUID;
 public interface NavigationCoordinate {
 
     static LongIdSet defaultNavigationConceptIdentifierNids() {
-        return LongIds.set.of(KernelTerm.INFERRED_NAVIGATION.nid());
+        return LongIds.set.of(KernelConcept.INFERRED_NAVIGATION.nid());
     }
 
     default UUID getNavigationCoordinateUuid() {
