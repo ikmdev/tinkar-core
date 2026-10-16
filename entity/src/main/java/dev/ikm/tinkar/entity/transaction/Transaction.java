@@ -214,6 +214,13 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     }
 
     /**
+     * @return the name the transaction was made with; saved and restored with it
+     */
+    public String name() {
+        return transactionName;
+    }
+
+    /**
      * Compares this transaction with the specified transaction for order.
      * Returns a negative integer, zero, or a positive integer as this transaction's UUID
      * is less than, equal to, or greater than the specified transaction's UUID.
