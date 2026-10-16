@@ -186,21 +186,6 @@ public interface EntityStore {
         return java.util.Arrays.copyOfRange(all, from, to);
     }
 
-    /**
-     * The first semantics of a pattern whose referenced component's preferred description contains
-     * {@code text}, ignoring case, when the store can find them itself: a remote store asks its
-     * server, which holds every semantic. A store answers empty when the caller should search,
-     * as a local store does by reading its semantics.
-     *
-     * @param patternNid the pattern
-     * @param text       the text the referenced component's description contains
-     * @param limit      how many at most
-     * @return the nids found, or empty when the caller should search itself
-     */
-    default java.util.Optional<long[]> semanticNidsOfPatternMatching(long patternNid, String text, int limit) {
-        return java.util.Optional.empty();
-    }
-
     void forEachPatternNid(LongProcedure procedure);
 
     void forEachConceptNid(LongProcedure procedure);
