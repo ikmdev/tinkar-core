@@ -5,12 +5,13 @@
 	<artifactId>importer</artifactId>
 	<packaging>pom</packaging>
 	<name>TINKAR Knowledge Importers</name>
-	<description>Importers that write a source release (SNOMED CT RF2, RxNorm OWL, ...) into the
+	<description>Importers that write a source release (SNOMED CT RF2, RxNorm OWL, GUDID, ...) into the
 		running store: a provider interface, the version-aware store writer they share, and the
 		importer implementations, each found through ServiceLoader.</description>
 	<subprojects>
 		<subproject>importer-api</subproject>
 		<subproject>importer-snomed-rf2</subproject>
 		<subproject>importer-rxnorm-owl</subproject>
+		<subproject>importer-gudid</subproject>
 	</subprojects>
 </project>

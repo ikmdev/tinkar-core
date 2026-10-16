@@ -65,7 +65,11 @@ import java.util.zip.ZipFile;
  * <p>Before the classes, the importer loads IKM's RxNorm starter data, carried in this module:
  * the RxNorm module, the identifier sources (RxCUI, VUID, NDC, SNOMED CT) and the patterns RxNorm's
  * annotations are recorded in (qualitative distinction, quantity, schedule, human and veterinary
- * drug, Tall Man synonym). Then, for each class, every write under the file's release date:
+ * drug, Tall Man synonym). The carried copy is IKM's export without its inferred navigation
+ * semantics, which assembly derives itself: IKM's listed the legacy user-interface concepts the
+ * starter set does not restate as children of Author, references no store can resolve and a
+ * Rocks64 store cannot load (IKE-Network/ike-issues#1301). Then, for each class, every write under
+ * the file's release date:
  * <ul>
  *   <li>the concept, merged with the SNOMED CT concept it cross-references, if any;</li>
  *   <li>descriptions: RxNorm name (fully qualified), RxNorm and prescribable synonyms, Tall Man

@@ -223,7 +223,7 @@ public final class StoreWriter {
      */
     public long concept(Stamp stamp, PublicId conceptId) {
         long stampNid = stamp(stamp);
-        long nid = PrimitiveData.nid(conceptId);
+        long nid = EntityService.get().nidForConcept(conceptId);
         Optional<ConceptRecord> existing = EntityHandle.get(nid).entity().filter(e -> !e.canceled())
                 .map(e -> (ConceptRecord) e);
         if (existing.isEmpty()) {
@@ -267,9 +267,9 @@ public final class StoreWriter {
         LogicalExpressionBuilder builder = new LogicalExpressionBuilder(
                 UuidT5Generator.get(conceptUuid, "definition root"),
                 () -> UuidT5Generator.get(conceptUuid, "axiom vertex " + ordinal[0]++));
-        builder.NecessarySet(builder.And(builder.ConceptAxiom(EntityProxy.Concept.make(PrimitiveData.nid(parentId)))));
+        builder.NecessarySet(builder.And(builder.ConceptAxiom(EntityProxy.Concept.make(EntityService.get().nidForConcept(parentId)))));
         DiTreeEntity tree = (DiTreeEntity) builder.build().sourceGraph();
-        return semantic(stamp, axiomId, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, PrimitiveData.nid(conceptId),
+        return semantic(stamp, axiomId, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, EntityService.get().nidForConcept(conceptId),
                 Lists.immutable.of(tree));
     }
 
@@ -347,7 +347,7 @@ public final class StoreWriter {
      */
     public long recordConcept(Stamp stamp, PublicId conceptId) {
         long stampNid = stamp(stamp);
-        long nid = PrimitiveData.nid(conceptId);
+        long nid = EntityService.get().nidForConcept(conceptId);
         Optional<ConceptRecord> existing = EntityHandle.get(nid).entity().filter(e -> !e.canceled())
                 .map(e -> (ConceptRecord) e);
         if (existing.isEmpty()) {

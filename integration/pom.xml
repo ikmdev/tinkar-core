@@ -181,6 +181,11 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>importer-gudid</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>data-spinedarray-provider</artifactId>
             <scope>runtime</scope>
         </dependency>
