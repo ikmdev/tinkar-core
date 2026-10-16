@@ -9,7 +9,6 @@ import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
-import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
@@ -17,8 +16,8 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.DiTreeIsomorphism;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
-import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.terms.State;
@@ -66,8 +65,6 @@ public class InferredResultsWriter {
 
 	private PatternEntity<PatternEntityVersion> inferredPattern;
 	private PatternEntity<PatternEntityVersion> inferredNavigationPattern;
-
-	private MultipleEndpointTimer<IsomorphicResults.EndPoints> multipleEndpointTimer;
 
 	private ConcurrentHashSet<ImmutableLongList> equivalentSets;
 
@@ -246,7 +243,6 @@ public class InferredResultsWriter {
 
 			inferredPattern = EntityHandle.getPatternOrThrow(getViewCoordinateRecord().logicCoordinate().inferredAxiomsPatternNid());
 			inferredNavigationPattern = EntityHandle.getPatternOrThrow(KernelPattern.INFERRED_NAVIGATION_PATTERN.nid());
-			multipleEndpointTimer = new MultipleEndpointTimer<>(IsomorphicResults.EndPoints.class);
 			equivalentSets = new ConcurrentHashSet<>();
 			axiomDataNotFoundCounter = new AtomicInteger();
 			emptyParentCount = new AtomicInteger();
@@ -523,11 +519,12 @@ public class InferredResultsWriter {
 		}
 		boolean same = true;
 		if (latestInferredSemantic.isPresent()) {
-			ImmutableList<Object> latestInferredFields = latestInferredSemantic.get().fieldValues();
-			DiTreeEntity latestInferredTree = (DiTreeEntity) latestInferredFields.get(0);
-			DiTreeEntity correlatedTree = latestInferredTree.makeCorrelatedTree((DiTreeEntity) nnf.sourceGraph(),
-					semanticEntity.referencedComponentNid(), multipleEndpointTimer.startNew());
-            same = correlatedTree.equals(latestInferredTree);
+			DiTreeEntity latestInferredTree = (DiTreeEntity) latestInferredSemantic.get().fieldValues().get(0);
+			// Written unless the normal form is the latest inferred form exactly. The isomorphic
+			// analysis this replaced (a correlated tree, then equals) ran twice per concept and
+			// found a form "the same" whenever the latest form mapped into it, so a normal form
+			// that only added a parent or role was never written.
+			same = DiTreeIsomorphism.isomorphic((DiTreeEntity) nnf.sourceGraph(), latestInferredTree);
 		}
 		if (!same) {
 		    ImmutableList<Object> fields = Lists.immutable.of(nnf.sourceGraph());
