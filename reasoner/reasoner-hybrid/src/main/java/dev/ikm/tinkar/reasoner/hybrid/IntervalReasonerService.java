@@ -75,6 +75,7 @@ public class IntervalReasonerService extends ElkSnomedReasonerService {
 				reasoner.getSuperRoleTypes(false), KernelConcept.ROOT_VERTEX.nid(), intervalRoles,
 				(workDone, max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
+		useTaxonomyOf(nnfb);
 	}
 
 }

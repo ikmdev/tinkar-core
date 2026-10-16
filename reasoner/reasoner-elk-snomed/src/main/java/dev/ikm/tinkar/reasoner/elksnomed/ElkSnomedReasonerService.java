@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.NecessaryNormalFormBuilder;
+import dev.ikm.elk.snomed.SnomedIsa;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.SnomedOntologyReasoner;
 import dev.ikm.elk.snomed.model.Concept;
@@ -60,6 +61,16 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	protected NecessaryNormalFormBuilder nnfb;
 
+	/**
+	 * The classified taxonomy the necessary normal form was built from: every concept's direct
+	 * parents, and their inverse, the direct children. The writer asks for both for every concept,
+	 * and asking ELK costs a query each (an IRI built and parsed per class, and ELK's
+	 * incompleteness check), about half the writer's time on a knowledge base of millions of
+	 * concepts; these are the same sets, already computed. Null whenever the reasoner has changed
+	 * since, so a query then goes to the reasoner.
+	 */
+	private volatile SnomedIsa taxonomy;
+
 	@Override
 	public String getName() {
 		return "Elk Snomed Reasoner";
@@ -74,6 +85,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		this.ontology = null;
 		this.reasoner = null;
 		this.nnfb = null;
+		this.taxonomy = null;
 	}
 
 	@Override
@@ -94,11 +106,13 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		// the pipeline's phases honest — the classification now happens in computeInferences,
 		// which is what the caller reports it as.
 		reasoner = SnomedOntologyReasoner.createUninitialized(ontology);
+		taxonomy = null;
 	}
 
 	@Override
 	public void computeInferences(TrackingCallable<?> progressTracker) {
 		LOG.info("Compute inferences");
+		taxonomy = null;
 		try (CancelWatcher ignored = new CancelWatcher(progressTracker, reasoner)) {
 			reasoner.computeInferences();
 		} catch (RuntimeException e) {
@@ -199,6 +213,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	@Override
 	public void processIncremental(List<Long> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater) {
+		taxonomy = null;
 		for (long delete : deletes) {
 			Concept concept = builder.processDelete(delete);
 			if (concept != null) {
@@ -232,6 +247,15 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 			KernelConcept.ROOT_VERTEX.nid(), 
 			(int workDone, int max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
+		useTaxonomyOf(nnfb);
+	}
+
+	/**
+	 * Answers parents and children from the taxonomy this builder was made from, which must be
+	 * the reasoner's current direct super concepts of every concept.
+	 */
+	protected void useTaxonomyOf(NecessaryNormalFormBuilder builder) {
+		taxonomy = builder.getIsa();
 	}
 
 	private void logMissingReasonerConcepts(MutableLongObjectMap<MutableLongSet> superConcepts) {
@@ -296,14 +320,28 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	@Override
 	public ImmutableLongSet getParents(long id) {
-		MutableLongSet supers = reasoner.getSuperConcepts(id);
-		return toLongSet(supers);
+		SnomedIsa isa = taxonomy;
+		if (isa == null) {
+			return toLongSet(reasoner.getSuperConcepts(id));
+		}
+		// Keyed by every concept of the ontology, as the reasoner's answer is null for any other.
+		MutableLongSet parents = isa.getParentsMap().get(id);
+		return parents == null ? null : parents.toImmutable();
 	}
 
 	@Override
 	public ImmutableLongSet getChildren(long id) {
-		MutableLongSet subs = reasoner.getSubConcepts(id);
-		return toLongSet(subs);
+		SnomedIsa isa = taxonomy;
+		if (isa == null) {
+			return toLongSet(reasoner.getSubConcepts(id));
+		}
+		if (!isa.getParentsMap().containsKey(id)) {
+			return null;
+		}
+		// ELK's direct sub classes of a class are exactly the classes it is a direct super class
+		// of, so the inverse of the parents holds them; a concept with none has no entry.
+		MutableLongSet children = isa.getChildrenMap().get(id);
+		return children == null ? LongSets.immutable.empty() : children.toImmutable();
 	}
 
 	@Override

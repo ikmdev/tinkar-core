@@ -252,23 +252,23 @@ public class InferredResultsWriter {
 			// Create more chunks than cores for work stealing
 			int chunkSize = PrimitiveData.calculateOptimalChunkSize(conceptsToUpdate.size());
 
-			MutableLongList inferredSemanticNids = LongLists.mutable.empty();
+			AtomicInteger inferredSemanticsUpdated = new AtomicInteger();
 			MutableLongList noInferredSemanticConcepts = LongLists.mutable.empty();
-			MutableLongList navigationSemanticNids = LongLists.mutable.empty();
+			AtomicInteger navigationSemanticsUpdated = new AtomicInteger();
 			MutableLongList noNavigationSemanticConcepts = LongLists.mutable.empty();
 
 			// Record to hold results from each task
 			record ChunkResults(
-					MutableLongList inferredSemanticToUpdate,
+					MutableLongList conceptsWithInferredChanges,
 					MutableLongList conceptForNewInferredSemantic,
-					MutableLongList navSemanticToUpdate,
+					MutableLongList conceptsWithNavigationChanges,
 					MutableLongList conceptForNewNavSemantic) {
 
-				ChunkResults(int chunkCount) {
-						this(LongLists.mutable.withInitialCapacity(chunkCount),
-								LongLists.mutable.withInitialCapacity(chunkCount),
-								LongLists.mutable.withInitialCapacity(chunkCount),
-								LongLists.mutable.withInitialCapacity(chunkCount));
+				ChunkResults() {
+						this(LongLists.mutable.empty(),
+								LongLists.mutable.empty(),
+								LongLists.mutable.empty(),
+								LongLists.mutable.empty());
 					}
 			}
 
@@ -299,9 +299,9 @@ public class InferredResultsWriter {
 					if (subtask.state() == StructuredTaskScope.Subtask.State.SUCCESS) {
 						ChunkResults results = subtask.get();
 						// Add to master lists immediately as each task completes
-						inferredSemanticNids.addAll(results.inferredSemanticToUpdate);
+						conceptsWithInferredChanges.addAll(results.conceptsWithInferredChanges);
 						noInferredSemanticConcepts.addAll(results.conceptForNewInferredSemantic);
-						navigationSemanticNids.addAll(results.navSemanticToUpdate);
+						conceptsWithNavigationChanges.addAll(results.conceptsWithNavigationChanges);
 						noNavigationSemanticConcepts.addAll(results.conceptForNewNavSemantic);
 					} else if (subtask.state() == StructuredTaskScope.Subtask.State.FAILED) {
 						failures.add(subtask.exception());
@@ -314,15 +314,17 @@ public class InferredResultsWriter {
 					return false; // Don't short-circuit on fork
 				}
 			};
-			final int totalWork = inferredSemanticNids.size() + noInferredSemanticConcepts.size() + navigationSemanticNids.size() + noNavigationSemanticConcepts.size();
-					LOG.info(String.format("Starting inferred results write. Total concepts: %,d, Total tasks (NNF+Nav): %,d, Chunk size: %,d",
-							conceptsToUpdate.size(), totalWork, chunkSize));
+					LOG.info(String.format("Starting inferred results write. Total concepts: %,d, Chunk size: %,d",
+							conceptsToUpdate.size(), chunkSize));
 
 
 			Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 20);
 
 
-// Process all concepts in chunks to categorize them
+			// Process all concepts in chunks: a concept's existing inferred and navigation semantics
+			// are updated as soon as they are found, from the entity the lookup already read, rather
+			// than collected and read again in a pass of their own; a concept lacking one is
+			// collected for the passes below that create them.
 			try (var scope = StructuredTaskScope.open(accumulatingJoiner)) {
 				for (int i = 0; i < conceptsToUpdate.size(); i += chunkSize) {
 					int start = i;
@@ -332,25 +334,29 @@ public class InferredResultsWriter {
 					permits.acquire();
 					scope.fork(() -> {
                         try {
-                            ChunkResults results = new ChunkResults(chunkSize);
+                            ChunkResults results = new ChunkResults();
 
                             EntityService.get().forEachEntity(conceptChunk, concept -> {
 								progressUpdater.completedUnitOfWork();
 								
 								// Find canonical inferred semantic, handling duplicates gracefully
-								Optional<Long> inferredSemanticNid = findCanonicalSemanticNid(
+								Optional<SemanticEntity<SemanticEntityVersion>> inferredSemantic = findCanonicalSemantic(
 										inferredPattern, concept);
-								if (inferredSemanticNid.isPresent()) {
-									results.inferredSemanticToUpdate.add(inferredSemanticNid.get());
+								if (inferredSemantic.isPresent()) {
+									progressUpdater.completedUnitOfWork();
+									inferredSemanticsUpdated.incrementAndGet();
+									updateNNF(inferredSemantic.get(), results.conceptsWithInferredChanges);
 								} else {
 									results.conceptForNewInferredSemantic.add(concept.nid());
 								}
 
 								// Find canonical navigation semantic, handling duplicates gracefully
-								Optional<Long> navigationSemanticNid = findCanonicalSemanticNid(
+								Optional<SemanticEntity<SemanticEntityVersion>> navigationSemantic = findCanonicalSemantic(
 										inferredNavigationPattern, concept);
-								if (navigationSemanticNid.isPresent()) {
-									results.navSemanticToUpdate.add(navigationSemanticNid.get());
+								if (navigationSemantic.isPresent()) {
+									progressUpdater.completedUnitOfWork();
+									navigationSemanticsUpdated.incrementAndGet();
+									updateNavigation(navigationSemantic.get(), results.conceptsWithNavigationChanges);
 								} else {
 									results.conceptForNewNavSemantic.add(concept.nid());
 								}
@@ -366,33 +372,14 @@ public class InferredResultsWriter {
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
-			LOG.info("Inferred semantics to update: " + String.format("%,d", inferredSemanticNids.size()));
+			LOG.info("Inferred semantics updated: " + String.format("%,d", inferredSemanticsUpdated.get()));
 			LOG.info("Concepts needing new inferred semantics: " + String.format("%,d", noInferredSemanticConcepts.size()));
-			LOG.info("Navigation semantics to update: " + String.format("%,d", navigationSemanticNids.size()));
+			LOG.info("Navigation semantics updated: " + String.format("%,d", navigationSemanticsUpdated.get()));
 			LOG.info("Concepts needing new navigation semantics: " + String.format("%,d", noNavigationSemanticConcepts.size()));
 			logSampleConcepts("Concepts missing inferred semantics (sample)", noInferredSemanticConcepts, 10);
 			logSampleConcepts("Concepts missing navigation semantics (sample)", noNavigationSemanticConcepts, 10);
 
 			try {
-				progressUpdater.updateMessage("Processing updates to inferred semantics");
-
-				conceptsWithInferredChanges.addAll(
-						processEntitiesInScope(
-								inferredSemanticNids,
-								"Processing updates to {} inferred semantic nids in chunks of {}",
-								(entity, changedConcepts) -> {
-									if (entity instanceof SemanticEntity<?> semanticEntity) {
-										progressUpdater.completedUnitOfWork();
-										updateNNF(semanticEntity, changedConcepts);
-									} else {
-										LOG.error("Unexpected entity type: {}", entity.getClass());
-									}
-								},
-								permits
-						)
-				);
-				LOG.info("Updated inferred semantics.");
-
 				progressUpdater.updateMessage("Processing new inferred semantics");
 				conceptsWithInferredChanges.addAll(
 						processEntitiesInScope(
@@ -412,25 +399,7 @@ public class InferredResultsWriter {
 				);
 				LOG.info("Created new inferred semantics.");
 
-				progressUpdater.updateMessage("Processing updates to navigation semantics");
-				conceptsWithNavigationChanges.addAll(
-						processEntitiesInScope(
-								navigationSemanticNids,
-								"Processing updates to {} navigation semantic nids in chunks of {}",
-								(entity, changedConcepts) -> {
-									progressUpdater.completedUnitOfWork();
-									if (entity instanceof SemanticEntity<?> semanticEntity) {
-										updateNavigation(semanticEntity, changedConcepts);
-									} else {
-										LOG.error("Unexpected entity type: {}", entity.getClass());
-									}
-								},
-								permits
-						)
-				);
-				LOG.info("Updated navigation semantics.");
-
-				progressUpdater.updateMessage("Processing updates to navigation semantics");
+				progressUpdater.updateMessage("Processing new navigation semantics");
 				conceptsWithNavigationChanges.addAll(
 						processEntitiesInScope(
 								noNavigationSemanticConcepts,
@@ -671,9 +640,9 @@ public class InferredResultsWriter {
 	 *
 	 * @param patternEntity the pattern entity
 	 * @param referencedComponent the referenced component (concept)
-	 * @return Optional containing the nid of the correct semantic, or empty if none exists
+	 * @return Optional containing the correct semantic, or empty if none exists
 	 */
-	private Optional<Long> findCanonicalSemanticNid(PatternEntity<?> patternEntity, Entity<?> referencedComponent) {
+	private Optional<SemanticEntity<SemanticEntityVersion>> findCanonicalSemantic(PatternEntity<?> patternEntity, Entity<?> referencedComponent) {
 		// A semantic the index lists but the store does not hold is passed over; one the store
 		// holds but cannot read throws, rather than reading as absent and being written again.
 		List<SemanticEntity<SemanticEntityVersion>> semantics = EntityService.get().semanticsForComponentOfPattern(
@@ -686,7 +655,7 @@ public class InferredResultsWriter {
 		
 		if (semanticNids.length == 1) {
 			// Verify the single semantic belongs to the expected pattern
-            SemanticEntity<?> semantic = semantics.getFirst();
+            SemanticEntity<SemanticEntityVersion> semantic = semantics.getFirst();
             if (semantic.patternNid() != patternEntity.nid()) {
 				LOG.error("Pattern mismatch! Expected pattern {} but semantic {} has pattern {}. " +
 						"Referenced component: {}. This indicates a data or indexing corruption.",
@@ -696,17 +665,18 @@ public class InferredResultsWriter {
 						PrimitiveData.textWithNid(referencedComponent.nid()));
 				return Optional.empty(); // Don't return mismatched semantic
 			}
-			return Optional.of(semanticNids[0]);
+			return Optional.of(semantic);
 		}
 		
 		// Multiple semantics found - need to determine which is canonical
 		UUID canonicalUuid = UuidT5Generator.singleSemanticUuid(patternEntity, referencedComponent.publicId());
 		
+		SemanticEntity<SemanticEntityVersion> canonical = null;
 		long canonicalNid = -1;
 		MutableLongList duplicateNids = LongLists.mutable.empty();
 		MutableLongList wrongPatternNids = LongLists.mutable.empty();
 		
-		for (SemanticEntity<?> semantic : semantics) {
+		for (SemanticEntity<SemanticEntityVersion> semantic : semantics) {
 			long semanticNid = semantic.nid();
 			
 			// Verify semantic belongs to the expected pattern
@@ -722,6 +692,7 @@ public class InferredResultsWriter {
 			}
 			
 			if (semantic.publicId().contains(canonicalUuid)) {
+				canonical = semantic;
 				canonicalNid = semanticNid;
 			} else {
 				duplicateNids.add(semanticNid);
@@ -752,13 +723,14 @@ public class InferredResultsWriter {
 					duplicateNids.toList());
 		}
 		
-		if (canonicalNid != -1) {
-			return Optional.of(canonicalNid);
+		if (canonical != null) {
+			return Optional.of(canonical);
 		}
 		
 		// None matched the canonical UUID - this shouldn't happen but handle gracefully
 		// Find first semantic with correct pattern
-		for (long semanticNid : semanticNids) {
+		for (SemanticEntity<SemanticEntityVersion> semantic : semantics) {
+			long semanticNid = semantic.nid();
 			if (!wrongPatternNids.contains(semanticNid)) {
 				LOG.error("No semantic matched the canonical UUID {} for pattern {} and component {}. " +
 						"Using first found semantic with correct pattern (nid: {}). All semantic NIDs: {}",
@@ -767,7 +739,7 @@ public class InferredResultsWriter {
 						PrimitiveData.text(referencedComponent.nid()),
 						semanticNid,
 						Arrays.toString(semanticNids));
-				return Optional.of(semanticNid);
+				return Optional.of(semantic);
 			}
 		}
 		
