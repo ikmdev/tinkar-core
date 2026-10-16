@@ -425,7 +425,50 @@ public interface EntityService extends ChronologyService, Broadcaster<Long> {
         if (keysNoSemantics(patternNid)) {
             return 0;
         }
-        return EntityStore.current().semanticNidsOfPattern(patternNid).length;
+        return EntityStore.current().countSemanticsOfPattern(patternNid);
+    }
+
+    /**
+     * One page of a pattern's semantics, in the store's order. A view that shows a page of a
+     * pattern's semantics asks for just that page; a remote store then fetches only it.
+     *
+     * @param patternNid the pattern
+     * @param offset     how many to skip
+     * @param limit      how many at most
+     * @return the page's semantics
+     */
+    @SuppressWarnings("unchecked")
+    default Stream<SemanticEntity<SemanticEntityVersion>> semanticsOfPattern(long patternNid, int offset, int limit) {
+        if (keysNoSemantics(patternNid)) {
+            return Stream.empty();
+        }
+        return java.util.stream.LongStream.of(EntityStore.current().semanticNidsOfPattern(patternNid, offset, limit))
+                .mapToObj(nid -> EntityHandle.get(nid).orNull())
+                .filter(entity -> entity instanceof SemanticEntity)
+                .map(entity -> (SemanticEntity<SemanticEntityVersion>) entity);
+    }
+
+    /**
+     * The first semantics of a pattern whose referenced component's preferred description contains
+     * {@code text}, ignoring case, when the store can find them itself (a remote store asks its
+     * server). Empty when the caller should search, by reading {@link #semanticsOfPattern(long)}.
+     *
+     * @param patternNid the pattern
+     * @param text       the text the referenced component's description contains
+     * @param limit      how many at most
+     * @return the semantics found, or empty when the caller should search itself
+     */
+    @SuppressWarnings("unchecked")
+    default java.util.Optional<Stream<SemanticEntity<SemanticEntityVersion>>> semanticsOfPatternMatching(
+            long patternNid, String text, int limit) {
+        if (keysNoSemantics(patternNid)) {
+            return java.util.Optional.of(Stream.empty());
+        }
+        return EntityStore.current().semanticNidsOfPatternMatching(patternNid, text, limit)
+                .map(nids -> java.util.stream.LongStream.of(nids)
+                        .mapToObj(nid -> EntityHandle.get(nid).orNull())
+                        .filter(entity -> entity instanceof SemanticEntity)
+                        .map(entity -> (SemanticEntity<SemanticEntityVersion>) entity));
     }
 
     /**
