@@ -80,6 +80,8 @@ public class NidToSctid {
 			if (role.getChained() != null)
 				new_role.setChained(new_roles.get(role.getChained().getId()));
 			new_role.setChained(role.getChained());
+			role.getChains().forEach(chain -> new_role
+					.addChain(chain.stream().map(link -> new_roles.get(link.getId())).toList()));
 			new_role.setReflexive(role.isReflexive());
 			new_role.setTransitive(role.isTransitive());
 			role.getSuperRoleTypes().forEach(sup -> new_role.addSuperRoleType(new_roles.get(sup.getId())));

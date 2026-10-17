@@ -89,7 +89,12 @@ public enum KernelPattern implements PatternEnumerationFacade<KernelPattern> {
     /**
      * Path origins pattern (SOLOR)
      */
-    PATH_ORIGINS_PATTERN("Path origins pattern (SOLOR)", "70f89dd5-2cdb-59bb-bbaa-98527513547c");
+    PATH_ORIGINS_PATTERN("Path origins pattern (SOLOR)", "70f89dd5-2cdb-59bb-bbaa-98527513547c"),
+
+    /**
+     * The concepts classification found the referenced concept logically equivalent to, never including the concept itself. Written beside the inferred navigation semantic only for a concept with equivalents; when a later classification finds none, the set is empty.
+     */
+    INFERRED_EQUIVALENCE_PATTERN("Inferred equivalence pattern (IkeFoundation)", "749e039b-33c1-587c-83f0-a72a6e9eabef");
 
     private final EntityProxy.Pattern proxy;
 

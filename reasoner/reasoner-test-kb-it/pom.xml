@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd">
+	<modelVersion>4.1.0</modelVersion>
+	<parent/>
+	<artifactId>reasoner-test-kb-it</artifactId>
+	<name>Reasoner Test KB Integration Tests</name>
+	<description>Classifies each case of the reasoner test knowledge base on its own — the starter set
+		and that case's module, every other case's module excluded — with every reasoner service on the
+		class path, and compares each case entity's parents and equivalents with the inferred navigation
+		and equivalence semantics the case expects.</description>
+	<properties>
+		<!-- The reasoner modules leave their integration tests to the snomed profile; these need
+			 only the starter set and the reasoner test knowledge base, so they always run. -->
+		<skipITs>false</skipITs>
+		<failsafeArgLine>
+			--enable-preview
+			-Xmx8G
+			--add-modules jdk.incubator.vector
+			--sun-misc-unsafe-memory-access=allow
+			-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
+			-Dlog4j.jul.LoggerAdapter=org.apache.logging.log4j.jul.CoreLoggerAdapter
+			-Dorg.apache.lucene.vectorization.upperJavaFeatureVersion=27
+		</failsafeArgLine>
+	</properties>
+	<!-- A test-only module, run on the class path with services found through META-INF/services,
+		 as tinkar-core's integration module is. -->
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>common</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>entity</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>terms</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>reasoner-service</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- The knowledge base's own components, which the tests find cases by. -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>importer-elk-test-cases</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.collections</groupId>
+			<artifactId>eclipse-collections-api</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.collections</groupId>
+			<artifactId>eclipse-collections</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Service providers the tests reach only through ServiceLoader: each reasoner service
+			 on the class path classifies every case. -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>reasoner-elk-snomed</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- The hybrid module's reasoners, named directly: they register only for the module path. -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>reasoner-hybrid</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>data-spinedarray-provider</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>entity-provider</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>executor-provider</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>search-provider</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>dev.ikm.tinkar</groupId>
+			<artifactId>test-logging</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>analyze</id>
+						<goals>
+							<goal>analyze-only</goal>
+						</goals>
+						<configuration>
+							<ignoreUnusedRuntime>true</ignoreUnusedRuntime>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-knowledge-bases</id>
+						<phase>process-test-resources</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>network.ike.foundation</groupId>
+									<artifactId>ike-starter-set</artifactId>
+									<version>${ike-starter-set.version}</version>
+									<classifier>unreasoned-pb</classifier>
+									<type>zip</type>
+									<destFileName>ike-starter-set-unreasoned-pb.zip</destFileName>
+								</artifactItem>
+								<artifactItem>
+									<groupId>network.ike.data</groupId>
+									<artifactId>reasoner-test-kb</artifactId>
+									<version>${reasoner-test-kb.version}</version>
+									<classifier>unreasoned-pb</classifier>
+									<type>zip</type>
+									<destFileName>reasoner-test-kb-unreasoned-pb.zip</destFileName>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/data</outputDirectory>
+							<overWriteReleases>false</overWriteReleases>
+							<overWriteSnapshots>false</overWriteSnapshots>
+							<overWriteIfNewer>true</overWriteIfNewer>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

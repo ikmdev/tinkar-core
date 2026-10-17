@@ -66,6 +66,9 @@ public class InferredResultsWriter {
 	private PatternEntity<PatternEntityVersion> inferredPattern;
 	private PatternEntity<PatternEntityVersion> inferredNavigationPattern;
 
+	/** Absent on a store whose starter data predates the pattern; equivalences are then not written. */
+	private PatternEntity<PatternEntityVersion> inferredEquivalencePattern;
+
 	private ConcurrentHashSet<ImmutableLongList> equivalentSets;
 
 	private AtomicInteger axiomDataNotFoundCounter;
@@ -243,6 +246,15 @@ public class InferredResultsWriter {
 
 			inferredPattern = EntityHandle.getPatternOrThrow(getViewCoordinateRecord().logicCoordinate().inferredAxiomsPatternNid());
 			inferredNavigationPattern = EntityHandle.getPatternOrThrow(KernelPattern.INFERRED_NAVIGATION_PATTERN.nid());
+			// Asked by public id first: a Rocks store cannot give a nid to a pattern it does not hold.
+			inferredEquivalencePattern = PrimitiveData.get().hasPublicId(KernelPattern.INFERRED_EQUIVALENCE_PATTERN.publicId())
+					? EntityHandle.get(KernelPattern.INFERRED_EQUIVALENCE_PATTERN.nid()).asPattern()
+							.map(pattern -> (PatternEntity<PatternEntityVersion>) pattern).orElse(null)
+					: null;
+			if (inferredEquivalencePattern == null) {
+				LOG.info("The store has no {}; equivalences are reported but not written",
+						KernelPattern.INFERRED_EQUIVALENCE_PATTERN);
+			}
 			equivalentSets = new ConcurrentHashSet<>();
 			axiomDataNotFoundCounter = new AtomicInteger();
 			emptyParentCount = new AtomicInteger();
@@ -418,6 +430,21 @@ public class InferredResultsWriter {
 				);
 				LOG.info("Created new navigation semantics.");
 
+				progressUpdater.updateMessage("Processing equivalences");
+				MutableLongList conceptsWithEquivalenceChanges = processEntitiesInScope(
+						conceptsToUpdate,
+						"Processing equivalences of {} concepts in chunks of {}",
+						(entity, changedConcepts) -> {
+							if (entity instanceof ConceptEntity<?> conceptEntity) {
+								writeEquivalence(conceptEntity, changedConcepts);
+							} else {
+								LOG.error("Unexpected entity type: {}", entity.getClass());
+							}
+						},
+						permits
+				);
+				LOG.info("Equivalence changes: {}", String.format("%,d", conceptsWithEquivalenceChanges.size()));
+
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
@@ -474,6 +501,50 @@ public class InferredResultsWriter {
 					PrimitiveData.publicId(conceptNid).idString(), PrimitiveData.text(conceptNid));
 		} else if (equivalentNids.size() > 1) {
 			equivalentSets.add(equivalentNids.toSortedList().toImmutable());
+		}
+	}
+
+	/**
+	 * Records the concept's equivalence class, and writes the concepts it is equivalent to, never
+	 * itself, as its inferred equivalence semantic: created only when there are some, and updated
+	 * (to an empty set when there are none now) whenever the latest one differs.
+	 */
+	private void writeEquivalence(ConceptEntity<?> concept, MutableLongList changedConcepts) {
+		updateEquivalentSets(concept.nid());
+		if (inferredEquivalencePattern == null) {
+			return;
+		}
+		ImmutableLongSet equivalentNids = rs.getEquivalent(concept.nid());
+		long[] others = equivalentNids == null ? new long[0]
+				: equivalentNids.reject(nid -> nid == concept.nid()).toSortedArray();
+		Optional<SemanticEntity<SemanticEntityVersion>> equivalenceSemantic =
+				findCanonicalSemantic(inferredEquivalencePattern, concept);
+		if (equivalenceSemantic.isPresent()) {
+			SemanticEntity<SemanticEntityVersion> semanticEntity = equivalenceSemantic.get();
+			Latest<SemanticEntityVersion> latest = rs.getViewCalculator().latest(semanticEntity);
+			if (latest.isPresent() && LongSets.immutable.of(others)
+					.equals(LongSets.immutable.of(((LongIdSet) latest.get().fieldValues().get(0)).toArray()))) {
+				return;
+			}
+			processSemantic(rs.getViewCalculator().updateFields(semanticEntity.nid(),
+					Lists.immutable.of(LongIds.set.of(others)), updateStampNid));
+			changedConcepts.add(concept.nid());
+		} else if (others.length > 0) {
+			UUID equivalenceUuid = UuidT5Generator.singleSemanticUuid(inferredEquivalencePattern, concept.publicId());
+			RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
+			long semanticNid = ScopedValue
+					.where(SCOPED_PATTERN_PUBLICID_FOR_NID, inferredEquivalencePattern.publicId())
+					.call(() -> PrimitiveData.nid(equivalenceUuid));
+			SemanticRecord equivalenceRecord = SemanticRecordBuilder.builder()
+					.nid(semanticNid)
+					.referencedComponentNid(concept.nid())
+					.leastSignificantBits(equivalenceUuid.getLeastSignificantBits())
+					.mostSignificantBits(equivalenceUuid.getMostSignificantBits())
+					.patternNid(inferredEquivalencePattern.nid()).versions(versionRecords).build();
+			versionRecords.add(new SemanticVersionRecord(equivalenceRecord, updateStampNid,
+					Lists.immutable.of(LongIds.set.of(others))));
+			processSemantic(equivalenceRecord);
+			changedConcepts.add(concept.nid());
 		}
 	}
 

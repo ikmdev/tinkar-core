@@ -107,6 +107,9 @@
              starter-data-ws, which is built with this repository, so a fresh machine builds
              tinkar-core without tests, then starter-data-ws, then tests tinkar-core. -->
         <ike-starter-set.version>1-SNAPSHOT</ike-starter-set.version>
+        <!-- The reasoner test knowledge base (knowledge-sources/reasoner-test-kb), which
+             reasoner-test-kb-it classifies case by case. -->
+        <reasoner-test-kb.version>1-SNAPSHOT</reasoner-test-kb.version>
         <tinkar-example-data.version>1.2.0+1.2.2</tinkar-example-data.version>
         <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml

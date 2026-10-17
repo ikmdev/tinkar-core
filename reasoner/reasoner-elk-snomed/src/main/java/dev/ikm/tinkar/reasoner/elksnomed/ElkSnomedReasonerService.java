@@ -85,6 +85,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		this.ontology = null;
 		this.reasoner = null;
 		this.nnfb = null;
+		resetRoleHierarchy();
 		this.taxonomy = null;
 	}
 
@@ -112,6 +113,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	@Override
 	public void computeInferences(TrackingCallable<?> progressTracker) {
 		LOG.info("Compute inferences");
+		resetRoleHierarchy();
 		taxonomy = null;
 		try (CancelWatcher ignored = new CancelWatcher(progressTracker, reasoner)) {
 			reasoner.computeInferences();
@@ -228,6 +230,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 			reasoner.processUpdate(concept);
 		}
 		data.initializeReasonerConceptSet();
+		resetRoleHierarchy();
 		try {
 			reasoner.flush();
 		} catch (Exception ex) {
@@ -318,8 +321,45 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		return toLongSet(eqs);
 	}
 
+	/**
+	 * A concept's direct parents; for a role type, its direct super-roles in the classified role
+	 * hierarchy, which also holds what property chains entail (with a reflexive role, R ∘ S ⊑ H
+	 * makes R a kind of H). A role's concept is classified only from the super-roles it is stated
+	 * with, so it is the answer only for a role directly under the top role.
+	 */
 	@Override
 	public ImmutableLongSet getParents(long id) {
+		MutableLongSet superRoles = directSuperRoles().get(id);
+		if (superRoles != null && superRoles.notEmpty()) {
+			return toLongSet(superRoles);
+		}
+		return conceptParents(id);
+	}
+
+	/**
+	 * A concept's direct children; for a role type, its direct sub-roles in the classified role
+	 * hierarchy, with any concept that is not a role beneath the role's concept.
+	 */
+	@Override
+	public ImmutableLongSet getChildren(long id) {
+		ImmutableLongSet subs = conceptChildren(id);
+		if (!directSuperRoles().containsKey(id)) {
+			return subs;
+		}
+		MutableLongSet children = LongSets.mutable.empty();
+		if (subs != null) {
+			subs.forEach(sub -> {
+				if (!directSuperRoles().containsKey(sub)) {
+					children.add(sub);
+				}
+			});
+		}
+		subRoles().getIfAbsent(id, LongSets.mutable::empty).forEach(children::add);
+		return toLongSet(children);
+	}
+
+	/** A concept's direct parents in the classified concept hierarchy. */
+	protected ImmutableLongSet conceptParents(long id) {
 		SnomedIsa isa = taxonomy;
 		if (isa == null) {
 			return toLongSet(reasoner.getSuperConcepts(id));
@@ -329,8 +369,8 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		return parents == null ? null : parents.toImmutable();
 	}
 
-	@Override
-	public ImmutableLongSet getChildren(long id) {
+	/** A concept's direct children in the classified concept hierarchy. */
+	protected ImmutableLongSet conceptChildren(long id) {
 		SnomedIsa isa = taxonomy;
 		if (isa == null) {
 			return toLongSet(reasoner.getSubConcepts(id));
@@ -342,6 +382,37 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		// of, so the inverse of the parents holds them; a concept with none has no entry.
 		MutableLongSet children = isa.getChildrenMap().get(id);
 		return children == null ? LongSets.immutable.empty() : children.toImmutable();
+	}
+
+	/** Each role type's direct super-roles in the classified role hierarchy. */
+	protected MutableLongObjectMap<MutableLongSet> classifiedSuperRoles() {
+		return reasoner.getSuperRoleTypes(true);
+	}
+
+	private MutableLongObjectMap<MutableLongSet> directSuperRoles;
+	private MutableLongObjectMap<MutableLongSet> subRoles;
+
+	/** Forgets the role hierarchy read from an earlier classification. */
+	protected synchronized void resetRoleHierarchy() {
+		directSuperRoles = null;
+		subRoles = null;
+	}
+
+	private synchronized MutableLongObjectMap<MutableLongSet> directSuperRoles() {
+		if (directSuperRoles == null) {
+			directSuperRoles = classifiedSuperRoles();
+		}
+		return directSuperRoles;
+	}
+
+	/** Each role type's direct sub-roles, inverted from the classified role hierarchy once. */
+	private synchronized MutableLongObjectMap<MutableLongSet> subRoles() {
+		if (subRoles == null) {
+			subRoles = LongObjectMaps.mutable.empty();
+			directSuperRoles().forEachKeyValue((role, superRoles) -> superRoles
+					.forEach(superRole -> subRoles.getIfAbsentPut(superRole, LongSets.mutable::empty).add(role)));
+		}
+		return subRoles;
 	}
 
 	@Override
