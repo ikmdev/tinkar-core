@@ -140,10 +140,15 @@
 	</build>
 	<profiles>
 		<!-- Runs the tests: copies the starter set and the reasoner test knowledge base into
-			 target/data and lets failsafe run. Off by default, as the snomed profile is, since the
-			 knowledge base is not yet published where every build can resolve it. -->
+			 target/data and lets failsafe run. Active unless staging for Maven Central, as
+			 tinkar-core's integration test data is: the knowledge base is published on ike-public. -->
 		<profile>
 			<id>reasoner-test-kb</id>
+			<activation>
+				<property>
+					<name>!stageMavenCentralRepository</name>
+				</property>
+			</activation>
 			<properties>
 				<skipITs>false</skipITs>
 			</properties>
