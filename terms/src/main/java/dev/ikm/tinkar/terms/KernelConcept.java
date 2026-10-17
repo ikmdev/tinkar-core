@@ -539,7 +539,27 @@ public enum KernelConcept implements ConceptEnumerationFacade<KernelConcept> {
     /**
      * The identifier source of SNOMED CT identifiers (SCTIDs): an identifier semantic whose source is this concept carries the SNOMED CT identifier of the component it identifies.
      */
-    SCTID("SCTID (SOLOR)", "0418a591-f75b-39ad-be2c-3ab849326da9,87360947-e603-3397-804b-efd0fcc509b9,ab9a0e0a-6359-5462-859c-96c3d4ef2341");
+    SCTID("SCTID (SOLOR)", "0418a591-f75b-39ad-be2c-3ab849326da9,87360947-e603-3397-804b-efd0fcc509b9,ab9a0e0a-6359-5462-859c-96c3d4ef2341"),
+
+    /**
+     * The module transaction records are written to: bookkeeping about how the knowledge base changed, not knowledge. Default views and published releases leave it out; change sets exchanged between people carry it.
+     */
+    CHANGE_TRACKING_MODULE("Change tracking module (IkeFoundation)", "a6ef93c4-8e0b-5278-82a3-0fa30c4f1d95"),
+
+    /**
+     * The transaction may still write; what it wrote is uncommitted.
+     */
+    TRANSACTION_OPEN("Transaction open (IkeFoundation)", "ccad0c40-10f4-552d-a610-64a78d7aaa0d"),
+
+    /**
+     * The transaction ended by committing what it wrote.
+     */
+    TRANSACTION_COMMITTED("Transaction committed (IkeFoundation)", "c417eb2f-e971-543e-9eb0-4e175c8c4583"),
+
+    /**
+     * The transaction ended by cancelling what it wrote; its versions are withdrawn, its record remains.
+     */
+    TRANSACTION_CANCELLED("Transaction cancelled (IkeFoundation)", "93693d17-7fa5-57ae-9f25-e9bf3f709b06");
 
     private final EntityProxy.Concept proxy;
 

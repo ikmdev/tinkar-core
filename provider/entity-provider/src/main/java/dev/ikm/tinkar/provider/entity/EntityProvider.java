@@ -754,11 +754,10 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
 
         @Override
         protected void startProvider(EntityProvider provider) {
-            // EntityProvider starts upon construction. Uncommitted stamps survive a restart
-            // unless the deployment asks for them to be canceled as it starts.
-            if (ServiceProperties.get(ServiceKeys.CANCEL_UNCOMMITTED_STAMPS_AT_STARTUP, Boolean.FALSE)) {
-                provider.cancelUncommittedStamps();
-            }
+            // EntityProvider starts upon construction. Open transactions are rebuilt from their
+            // records, and uncommitted stamps outside a transaction cancelled when the deployment
+            // asks, by TransactionRecordsController, which starts next, once this provider answers
+            // reads (IKE-Network/ike-issues#1308). Uncommitted stamps survive a restart otherwise.
         }
 
         @Override

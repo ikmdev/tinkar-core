@@ -94,7 +94,12 @@ public enum KernelPattern implements PatternEnumerationFacade<KernelPattern> {
     /**
      * The concepts classification found the referenced concept logically equivalent to, never including the concept itself. Written beside the inferred navigation semantic only for a concept with equivalents; when a later classification finds none, the set is empty.
      */
-    INFERRED_EQUIVALENCE_PATTERN("Inferred equivalence pattern (IkeFoundation)", "749e039b-33c1-587c-83f0-a72a6e9eabef");
+    INFERRED_EQUIVALENCE_PATTERN("Inferred equivalence pattern (IkeFoundation)", "749e039b-33c1-587c-83f0-a72a6e9eabef"),
+
+    /**
+     * A transaction that wrote uncommitted versions, referencing the change tracking module, with the transaction's UUID as its identity and its author on every version's stamp: its name, its state, its basis (time, path, and any external basis such as a git commit), and, while it is open, the components it has written. Its uncommitted stamps are not listed: each derives from the transaction's UUID. Written in the change tracking module under committed stamps of its own, one version per lifecycle event.
+     */
+    CHANGE_TRANSACTION_PATTERN("Change transaction pattern (IkeFoundation)", "ad41bbd5-e973-5779-9975-e4b6206ef3ed");
 
     private final EntityProxy.Pattern proxy;
 

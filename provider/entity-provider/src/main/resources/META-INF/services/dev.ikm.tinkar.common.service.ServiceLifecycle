@@ -1,2 +1,3 @@
 dev.ikm.tinkar.provider.entity.EntityProvider$Controller
 dev.ikm.tinkar.provider.entity.StampProvider$Controller
+dev.ikm.tinkar.provider.entity.TransactionRecordsController
