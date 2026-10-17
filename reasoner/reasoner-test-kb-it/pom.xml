@@ -9,9 +9,6 @@
 		class path, and compares each case entity's parents and equivalents with the inferred navigation
 		and equivalence semantics the case expects.</description>
 	<properties>
-		<!-- The reasoner modules leave their integration tests to the snomed profile; these need
-			 only the starter set and the reasoner test knowledge base, so they always run. -->
-		<skipITs>false</skipITs>
 		<failsafeArgLine>
 			--enable-preview
 			-Xmx8G
@@ -137,39 +134,60 @@
 							<ignoreUnusedRuntime>true</ignoreUnusedRuntime>
 						</configuration>
 					</execution>
-					<execution>
-						<id>copy-knowledge-bases</id>
-						<phase>process-test-resources</phase>
-						<goals>
-							<goal>copy</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>network.ike.foundation</groupId>
-									<artifactId>ike-starter-set</artifactId>
-									<version>${ike-starter-set.version}</version>
-									<classifier>unreasoned-pb</classifier>
-									<type>zip</type>
-									<destFileName>ike-starter-set-unreasoned-pb.zip</destFileName>
-								</artifactItem>
-								<artifactItem>
-									<groupId>network.ike.data</groupId>
-									<artifactId>reasoner-test-kb</artifactId>
-									<version>${reasoner-test-kb.version}</version>
-									<classifier>unreasoned-pb</classifier>
-									<type>zip</type>
-									<destFileName>reasoner-test-kb-unreasoned-pb.zip</destFileName>
-								</artifactItem>
-							</artifactItems>
-							<outputDirectory>${project.build.directory}/data</outputDirectory>
-							<overWriteReleases>false</overWriteReleases>
-							<overWriteSnapshots>false</overWriteSnapshots>
-							<overWriteIfNewer>true</overWriteIfNewer>
-						</configuration>
-					</execution>
 				</executions>
 			</plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<!-- Runs the tests: copies the starter set and the reasoner test knowledge base into
+			 target/data and lets failsafe run. Off by default, as the snomed profile is, since the
+			 knowledge base is not yet published where every build can resolve it. -->
+		<profile>
+			<id>reasoner-test-kb</id>
+			<properties>
+				<skipITs>false</skipITs>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-dependency-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>copy-knowledge-bases</id>
+								<phase>process-test-resources</phase>
+								<goals>
+									<goal>copy</goal>
+								</goals>
+								<configuration>
+									<artifactItems>
+										<artifactItem>
+											<groupId>network.ike.foundation</groupId>
+											<artifactId>ike-starter-set</artifactId>
+											<version>${ike-starter-set.version}</version>
+											<classifier>unreasoned-pb</classifier>
+											<type>zip</type>
+											<destFileName>ike-starter-set-unreasoned-pb.zip</destFileName>
+										</artifactItem>
+										<artifactItem>
+											<groupId>network.ike.data</groupId>
+											<artifactId>reasoner-test-kb</artifactId>
+											<version>${reasoner-test-kb.version}</version>
+											<classifier>unreasoned-pb</classifier>
+											<type>zip</type>
+											<destFileName>reasoner-test-kb-unreasoned-pb.zip</destFileName>
+										</artifactItem>
+									</artifactItems>
+									<outputDirectory>${project.build.directory}/data</outputDirectory>
+									<overWriteReleases>false</overWriteReleases>
+									<overWriteSnapshots>false</overWriteSnapshots>
+									<overWriteIfNewer>true</overWriteIfNewer>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
