@@ -51,6 +51,7 @@ import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.component.Version;
+import dev.ikm.tinkar.entity.graph.VertexIdentityWrite;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.internal.EntityLookup;
@@ -303,7 +304,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
     }
 
     private void putEntity(Entity entity, DataActivity activity, boolean dispatch, boolean addToCache) {
-        putEntity(entity, activity, dispatch, addToCache, EntityStore.current()::merge);
+        putEntity(entity, activity, dispatch, addToCache, 0, EntityStore.current()::merge);
     }
 
     @Override
@@ -313,7 +314,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
             throw new IllegalStateException("A committed version is final, so it is not withdrawn: "
                     + EntityText.diagnostic(stamp));
         }
-        putEntity(entity, DataActivity.SYNCHRONIZABLE_EDIT, true, true,
+        putEntity(entity, DataActivity.SYNCHRONIZABLE_EDIT, true, true, withdrawnStampNid,
                 (nid, patternNid, referencedComponentNid, value, sourceObject, activity) ->
                         EntityStore.current().mergeReplacingVersion(nid, patternNid, referencedComponentNid,
                                 withdrawnStampNid, value, sourceObject, activity));
@@ -326,8 +327,13 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
                      DataActivity activity);
     }
 
+    /**
+     * Every put ends here. A semantic version whose fields hold a logical definition gets its
+     * vertex identities first ({@link VertexIdentityWrite}), inside the put lock, against the
+     * semantic as stored: the one place every writer passes (IKE-Network/ike-issues#1310).
+     */
     private void putEntity(Entity entity, DataActivity activity, boolean dispatch, boolean addToCache,
-                           StoreWrite write) {
+                           long withdrawnStampNid, StoreWrite write) {
         invalidateCaches(entity);
         // Only a semantic has a pattern and a referenced component; every other entity passes
         // the not-applicable sentinel, Integer.MAX_VALUE (Nid.NOT_APPLICABLE), for both.
@@ -345,10 +351,18 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
                 }
                 case SemanticEntity semanticEntity -> {
                     STRING_CACHE.put(semanticEntity.nid(), semanticEntity.asUuidList().toString());
+                    // Read past the cache, which invalidateCaches just cleared and a put without
+                    // caching must leave clear.
+                    SemanticEntity<?> identified = VertexIdentityWrite.forWrite(semanticEntity, () -> {
+                                byte[] bytes = EntityStore.current().getBytes(entity.nid());
+                                return bytes != null && EntityRecordFactory.make(bytes) instanceof SemanticEntity<?> stored
+                                        ? stored : null;
+                            },
+                            withdrawnStampNid, stampNid -> getStampFast(stampNid), activity);
                     yield write.write(entity.nid(),
                             semanticEntity.patternNid(),
                             semanticEntity.referencedComponentNid(),
-                            entity.getBytes(), entity, activity);
+                            identified.getBytes(), identified, activity);
                 }
                 case StampEntity stampEntity -> {
                     if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {

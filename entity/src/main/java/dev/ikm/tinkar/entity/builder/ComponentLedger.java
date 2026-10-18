@@ -766,16 +766,13 @@ final class ComponentLedger {
         PublicId axiomId = declaredAxiomIdentity != null
                 ? declaredAxiomIdentity
                 : PublicIds.of(UuidT5Generator.get(componentUuid, "el-plus-plus-stated-axioms"));
-        UUID axiomUuid = axiomId.leastUuid();
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(axiomId,
                 KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, componentNid, versions);
         for (VersionEntry<Consumer<LogicalExpressionBuilder>> axiom : axiomVersions) {
-            UUID stampUuid = axiom.stamp().publicId().leastUuid();
-            int[] vertexOrdinal = {0};
-            LogicalExpressionBuilder logicalExpressionBuilder = new LogicalExpressionBuilder(
-                    UuidT5Generator.get(axiomUuid, "definition-root|" + stampUuid),
-                    () -> UuidT5Generator.get(axiomUuid, stampUuid + "|" + vertexOrdinal[0]++));
+            // Vertex UUIDs are not minted here: the write path correlates each version with the
+            // ones before it and derives its newborns (IKE-Network/ike-issues#1310).
+            LogicalExpressionBuilder logicalExpressionBuilder = new LogicalExpressionBuilder();
             axiom.value().accept(logicalExpressionBuilder);
             DiTreeEntity tree = (DiTreeEntity) logicalExpressionBuilder.build().sourceGraph();
             versions.add(SemanticVersionRecordBuilder.builder()

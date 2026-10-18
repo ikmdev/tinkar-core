@@ -27,7 +27,6 @@ import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
 import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +48,11 @@ import java.util.UUID;
  * <p>The phases, each deterministic:
  * <ol>
  *   <li>{@link Phase#CARRIED} -- UUIDs the incoming tree already holds from history win.
+ *   <li>{@link Phase#DERIVED} -- beneath a matched parent, an operand whose derived UUID
+ *       ({@link VertexDerivation}) is that of a leftover earlier child with its key is matched
+ *       by lookup: the common case, when history was itself derived. It runs within keyed
+ *       recovery, after equal content, so a content change that reorders equal-key siblings
+ *       cannot trade their identities.
  *   <li>{@link Phase#ANCHORED} -- subtrees with equal canonical hashes
  *       ({@link DiTreeIsomorphism#vertexHashes}) match anywhere in the tree, largest first, when
  *       the hash is unique among the unmatched vertices of both trees: an unchanged subtree that
@@ -70,10 +74,13 @@ import java.util.UUID;
  *       phases run again beneath each such match.
  * </ol>
  *
- * <p>The design names derived candidates (a newborn's T5 UUID found live in the ledger) as a
- * phase between carried identity and anchors; it arrives with derivation
- * (arch-vertex-identity-birth), and until then a newborn keeps the UUID the incoming tree gave
- * it when history never held it.
+ * <p>A newborn's UUID is derived (arch-vertex-identity-birth): the root's from the seed the
+ * caller gives (the semantic's public id and field), any other's from its parent's UUID, its key
+ * and its ordinal among equal-key siblings. A derived UUID an inherited vertex holds is never
+ * taken: the newborn re-derives with its ordinal bumped. A derived UUID that retired under the
+ * same parent with the same meaning comes back ({@link Phase#RESURRECTED}): resurrection in place
+ * is free. Without a seed, a newborn root keeps the UUID it arrived with when history never held
+ * it.
  *
  * <p>The design places containers before keyed recovery. Here they run after it, because the
  * rule decides first: a vertex whose parent was matched and whose key is unchanged keeps its
@@ -87,8 +94,8 @@ import java.util.UUID;
  * incoming side, and then of previous UUID. Between isomorphic siblings, which a normal form
  * never holds, child order decides.
  *
- * <p>Out of scope here, and follow-ups to #1310: running the matcher in the entity write path,
- * deriving newborn UUIDs, and the identity ledger store; history stands in for the ledger.
+ * <p>The identity ledger is the semantic's stored versions: every UUID they hold, the retired
+ * ones as last seen. Versions are immutable, so settled identities stay frozen.
  */
 public final class DiTreeCorrelation {
 
@@ -111,6 +118,8 @@ public final class DiTreeCorrelation {
     public enum Phase {
         /** The incoming tree held it, from history. */
         CARRIED,
+        /** Beneath a matched parent, by its derived UUID. */
+        DERIVED,
         /** Part of an unchanged subtree whose hash is unique on both sides. */
         ANCHORED,
         /** Beneath a matched parent, by position, by content or by key. */
@@ -159,7 +168,19 @@ public final class DiTreeCorrelation {
      * @return as {@link #correlate(List, DiTreeEntity)}
      */
     public static Correlation correlate(List<DiTreeEntity> history, DiTreeEntity incoming, double containerDice) {
-        return new Matcher(history, incoming, containerDice).run();
+        return new Matcher(history, incoming, containerDice, null).run();
+    }
+
+    /**
+     * Correlates as the write path does, a newborn root taking the UUID derived for the field.
+     *
+     * @param history  as {@link #correlate(List, DiTreeEntity)}
+     * @param incoming as {@link #correlate(List, DiTreeEntity)}
+     * @param rootSeed the root's derived UUID ({@link VertexDerivation#root})
+     * @return as {@link #correlate(List, DiTreeEntity)}
+     */
+    public static Correlation correlate(List<DiTreeEntity> history, DiTreeEntity incoming, UUID rootSeed) {
+        return new Matcher(history, incoming, CONTAINER_DICE, rootSeed).run();
     }
 
     // ----- the matcher -----
@@ -207,7 +228,7 @@ public final class DiTreeCorrelation {
             this.uuid = new UUID[size];
             Arrays.fill(parent, -1);
             for (int i = 0; i < size; i++) {
-                uuid[i] = tree.vertex(i).asUuidList().getFirst();
+                uuid[i] = EntityVertexUuid.of(tree.vertex(i));
             }
             signature[root] = DiTreeIsomorphism.mix(hashes[root]);
             walk(root, new int[1]);
@@ -281,9 +302,17 @@ public final class DiTreeCorrelation {
         final Map<UUID, List<Retired>> retiredByParent = new HashMap<>();
         final Map<UUID, Integer> prevByUuid = new HashMap<>();
         final Deque<Integer> work = new ArrayDeque<>();
+        final UUID rootSeed;
+        final String[] derivationKey;
+        final int[] ordinal;
+        long[] publicHashes;
 
-        Matcher(List<DiTreeEntity> history, DiTreeEntity incoming, double containerDice) {
+        Matcher(List<DiTreeEntity> history, DiTreeEntity incoming, double containerDice, UUID rootSeed) {
             this.in = new Tree(incoming);
+            this.rootSeed = rootSeed;
+            this.derivationKey = new String[in.size];
+            this.ordinal = new int[in.size];
+            Arrays.fill(ordinal, -1);
             this.prev = history.isEmpty() ? null : new Tree(history.getLast());
             this.containerDice = containerDice;
             this.inToPrev = new int[in.size];
@@ -513,6 +542,14 @@ public final class DiTreeCorrelation {
                         }
                     }
                 }
+                // derived
+                for (int c : leftIn(i)) {
+                    Integer q = prevByUuid.get(derived(c, assigned[i], 0));
+                    if (q != null && prev.parent[q] == p && prevToIn[q] < 0 && prev.meaning(q) == in.meaning(c)
+                            && key(prev.vertex(q), true).equals(key(in.vertex(c), true))) {
+                        match(c, q, Phase.DERIVED);
+                    }
+                }
                 // equal key
                 Map<Key, List<Integer>> keysIn = new LinkedHashMap<>();
                 for (int c : leftIn(i)) {
@@ -675,28 +712,76 @@ public final class DiTreeCorrelation {
         // ----- newborns -----
 
         /**
-         * Every vertex still unassigned is a newborn: it keeps the UUID the incoming tree gave it
-         * when history never held it and no other vertex has it, and otherwise takes one named by
-         * its parent's UUID and its path signature.
+         * Every vertex still unassigned is a newborn, top down, so each parent's UUID is settled
+         * before its children derive from it. A child derives its UUID, bumping its ordinal past
+         * any UUID an inherited vertex holds, and takes back a derived UUID that retired under
+         * the same parent with the same meaning. A root derives from the seed, or without one
+         * keeps the UUID it arrived with when history never held it.
          */
         void newborns() {
             for (int i : inOrder(Comparator.comparingInt((Integer x) -> in.depth[x]))) {
                 if (isAssigned(i)) {
                     continue;
                 }
-                UUID uuid = in.uuid[i];
-                if (historyUuids.contains(uuid) || used.contains(uuid) || uuidCountIn.get(uuid) != 1) {
-                    UUID parent = in.parent[i] < 0 ? new UUID(0, 0) : assigned[in.parent[i]];
+                if (in.parent[i] >= 0) {
+                    UUID parent = assigned[in.parent[i]];
+                    for (int bump = 0; ; bump++) {
+                        UUID uuid = derived(i, parent, bump);
+                        if (used.contains(uuid)) {
+                            continue;
+                        }
+                        Retired seen = retired.get(uuid);
+                        if (seen != null && parent.equals(seen.parent()) && seen.tree().meaning(seen.index()) == in.meaning(i)) {
+                            assign(i, uuid, Phase.RESURRECTED);
+                            break;
+                        }
+                        if (!historyUuids.contains(uuid)) {
+                            assign(i, uuid, Phase.NEWBORN);
+                            break;
+                        }
+                    }
+                } else {
+                    UUID uuid = rootSeed != null ? rootSeed : in.uuid[i];
                     long salt = 0;
-                    do {
-                        ByteBuffer name = ByteBuffer.allocate(40).putLong(parent.getMostSignificantBits())
-                                .putLong(parent.getLeastSignificantBits()).putLong(in.signature[i])
-                                .putLong(in.hashes[i]).putLong(salt++);
-                        uuid = UUID.nameUUIDFromBytes(name.array());
-                    } while (historyUuids.contains(uuid) || used.contains(uuid));
+                    while (historyUuids.contains(uuid) || used.contains(uuid) || rootSeed == null && uuidCountIn.get(uuid) != 1) {
+                        uuid = VertexDerivation.child(rootSeed != null ? rootSeed : in.uuid[i], "root", (int) salt++);
+                    }
+                    assign(i, uuid, Phase.NEWBORN);
                 }
-                assign(i, uuid, Phase.NEWBORN);
             }
+        }
+
+        /**
+         * A vertex's derived UUID beneath a parent UUID, its ordinal bumped as asked: the ordinal
+         * ranks the parent's children with an equal key by their public canonical hash.
+         */
+        UUID derived(int i, UUID parent, int bump) {
+            if (ordinal[i] < 0) {
+                if (publicHashes == null) {
+                    publicHashes = VertexDerivation.publicHashes(in.tree);
+                }
+                int p = in.parent[i];
+                boolean operand = in.operands(p);
+                List<Integer> siblings = new ArrayList<>();
+                for (int s : in.children(p).toArray()) {
+                    if (derivationKey[s] == null) {
+                        derivationKey[s] = VertexDerivation.key(in.vertex(s), operand);
+                    }
+                    siblings.add(s);
+                }
+                Map<String, List<Integer>> byKey = new HashMap<>();
+                for (int s : siblings) {
+                    byKey.computeIfAbsent(derivationKey[s], k -> new ArrayList<>()).add(s);
+                }
+                for (List<Integer> equal : byKey.values()) {
+                    // between identical siblings, which a normal form never holds, index decides
+                    equal.sort(Comparator.<Integer>comparingLong(x -> publicHashes[x]).thenComparingInt(x -> x));
+                    for (int rank = 0; rank < equal.size(); rank++) {
+                        ordinal[equal.get(rank)] = rank;
+                    }
+                }
+            }
+            return VertexDerivation.child(parent, derivationKey[i], ordinal[i] + bump);
         }
 
         DiTreeEntity build() {

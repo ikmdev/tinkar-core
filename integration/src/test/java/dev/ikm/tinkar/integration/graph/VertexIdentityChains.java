@@ -63,9 +63,10 @@ import static dev.ikm.tinkar.integration.graph.RandomDefinitions.CONCEPTS;
  * <p>The expectations come from the rule and the edit, never from a matcher. Edits whose
  * outcome the rule leaves to the matcher's judgment are not generated: a version isomorphic to
  * the one before (the isomorphism, not the edit, would decide which vertex is which), identical
- * siblings (a normal form never holds the same operand twice), and a vertex born where a
- * retired vertex had its key but other content (resurrection versus birth turns on the
- * bottom-up threshold the oracle exists to set).
+ * siblings (a normal form never holds the same operand twice), a vertex born where a retired
+ * vertex had its key but other content (resurrection versus birth turns on the bottom-up
+ * threshold the oracle exists to set), and a restore where another retired vertex was last seen
+ * under the same parent with the same content (which one returns is then a judgment).
  */
 final class VertexIdentityChains {
 
@@ -435,7 +436,8 @@ final class VertexIdentityChains {
             }
             case RESTORE_OPERAND -> {
                 Grave raised = any(graves.stream().filter(g -> nodes.containsKey(g.parent())).toList(), random);
-                edited = raised == null ? null : addChild(root, raised.parent(), raised.subtree());
+                edited = raised == null || hasRetiredTwin(versions, raised) ? null
+                        : addChild(root, raised.parent(), raised.subtree());
             }
             default -> throw new IllegalStateException();
         }
@@ -454,6 +456,19 @@ final class VertexIdentityChains {
         java.util.Set<UUID> live = nodes(resolved.get()).keySet();
         graves.removeIf(grave -> live.contains(grave.subtree().id()));
         return new Version(kind, resolved.get());
+    }
+
+    /**
+     * Whether another retired vertex was last seen under a grave's parent with the grave's
+     * content: then which of the two a restore brings back is the matcher's judgment, as for a
+     * newborn ({@link #resolve}), so the restore is not made.
+     */
+    private static boolean hasRetiredTwin(List<Version> versions, Grave grave) {
+        java.util.Set<UUID> live = nodes(versions.getLast().root()).keySet();
+        String shape = canonical(grave.subtree());
+        return ledger(versions).entrySet().stream().anyMatch(entry -> !entry.getKey().equals(grave.subtree().id())
+                && !live.contains(entry.getKey()) && grave.parent().equals(entry.getValue().parent())
+                && canonical(entry.getValue().subtree()).equals(shape));
     }
 
     /**
