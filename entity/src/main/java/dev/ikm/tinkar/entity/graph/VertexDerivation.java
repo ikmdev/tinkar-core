@@ -21,6 +21,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityFacade;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 
 import java.util.Arrays;
@@ -152,10 +153,15 @@ public final class VertexDerivation {
         return hash;
     }
 
-    /** A property value as derivation reads it: a component by its least UUID, anything else typed. */
+    /**
+     * A property value as derivation reads it: a component by its least UUID, anything else typed.
+     * A component that carries its public id (an {@link dev.ikm.tinkar.terms.EntityProxy} made from
+     * its UUIDs, an entity) is read by it, so derivation needs no store to name it.
+     */
     private static String text(Object value) {
         return switch (value) {
             case null -> "∅";
+            case EntityFacade component -> uuid(component).toString();
             case ComponentWithNid component -> uuid(component.nid()).toString();
             case PublicId publicId -> publicId.leastUuid().toString();
             case LongIdList list -> {
@@ -169,8 +175,35 @@ public final class VertexDerivation {
         };
     }
 
+    /** A component's least UUID, from the public id it carries, or the store's when it carries a nid alone. */
+    private static UUID uuid(EntityFacade component) {
+        try {
+            return component.publicId().leastUuid();
+        } catch (UnsupportedOperationException noReverseMap) {
+            throw unnamed(component.nid(), noReverseMap);
+        }
+    }
+
+    /**
+     * A component's least UUID by its nid: the stored entity's or, for a component the store does
+     * not hold, the identity map's. A store with no reverse identity map (the legacy 8-bit Rocks
+     * layout) cannot name an absent component, and derivation never falls back to the nid, which
+     * would derive another UUID in every store.
+     */
     private static UUID uuid(long nid) {
-        return PrimitiveData.publicId(nid).leastUuid();
+        try {
+            return PrimitiveData.publicId(nid).leastUuid();
+        } catch (UnsupportedOperationException noReverseMap) {
+            throw unnamed(nid, noReverseMap);
+        }
+    }
+
+    private static IllegalStateException unnamed(long nid, UnsupportedOperationException noReverseMap) {
+        return new IllegalStateException("Cannot derive a vertex UUID: the tree references nid " + nid
+                + ", a component this store does not hold, and the store keeps no reverse identity map"
+                + " to name it by its public id (" + noReverseMap.getMessage() + "). Write the component first,"
+                + " or give the vertex a value that carries its public id, such as an EntityProxy made from"
+                + " its UUIDs.", noReverseMap);
     }
 
     private static long uuidHash(UUID uuid) {
