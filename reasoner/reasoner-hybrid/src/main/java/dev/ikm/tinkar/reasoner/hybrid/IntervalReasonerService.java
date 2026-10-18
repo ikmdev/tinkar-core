@@ -51,6 +51,7 @@ public class IntervalReasonerService extends ElkSnomedReasonerService {
 	public void loadData(TrackingCallable<?> progressTracker) throws Exception {
 		LOG.info("Create ontology");
 		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
+		nameBottom(ontology);
 		LOG.info("Create reasoner");
 		List<ConcreteRoleType> intervalRoles = List.copyOf(data.getIntervalRoleTypes());
 		intervalRoles.forEach(x -> LOG.info("IR: " + PrimitiveData.text(x.getId())));

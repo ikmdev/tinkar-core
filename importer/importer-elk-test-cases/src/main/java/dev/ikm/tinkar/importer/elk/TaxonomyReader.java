@@ -60,9 +60,6 @@ final class TaxonomyReader {
                     for (ElkClassExpression member : equivalent.getClassExpressions()) {
                         members.add(className(member));
                     }
-                    if (members.contains(ElkCase.NOTHING)) {
-                        throw new OutOfScope("unsatisfiable class");
-                    }
                     nodes.equivalent(members);
                 }
                 case ElkSubClassOfAxiom subClassOf -> {
@@ -157,6 +154,10 @@ final class TaxonomyReader {
         }
 
         Taxonomy taxonomy() {
+            // owl:Nothing's node, when the taxonomy names it: its members are unsatisfiable.
+            String bottomNode = representative.containsKey(ElkCase.NOTHING) || representative.containsValue(ElkCase.NOTHING)
+                    ? find(ElkCase.NOTHING) : null;
+            Set<String> unsatisfiable = new LinkedHashSet<>();
             Map<String, Set<String>> members = new HashMap<>();
             for (String entity : entities) {
                 members.computeIfAbsent(find(entity), _ -> new LinkedHashSet<>()).add(entity);
@@ -169,6 +170,16 @@ final class TaxonomyReader {
             Map<String, Set<String>> equivalents = new LinkedHashMap<>();
             for (String entity : entities) {
                 String node = find(entity);
+                if (node.equals(bottomNode)) {
+                    unsatisfiable.add(entity);
+                    parents.put(entity, Set.of());
+                    Set<String> others = new LinkedHashSet<>(members.get(node));
+                    others.remove(entity);
+                    if (!others.isEmpty()) {
+                        equivalents.put(entity, others);
+                    }
+                    continue;
+                }
                 Set<String> entityParents = new LinkedHashSet<>();
                 for (String parentNode : parentNodes.getOrDefault(node, Set.of())) {
                     if (parentNode.equals(top)) {
@@ -187,7 +198,7 @@ final class TaxonomyReader {
                     equivalents.put(entity, others);
                 }
             }
-            return new Taxonomy(parents, equivalents);
+            return new Taxonomy(parents, equivalents, unsatisfiable);
         }
     }
 }

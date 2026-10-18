@@ -62,11 +62,17 @@ import java.util.Set;
  * stated sets each one carries, and the expected parents and equivalents of each.
  * <p>
  * Only what the logical-expression vocabulary states is read: named classes, intersection,
- * existential restriction, {@code DataHasValue}, sub-, equivalent, transitive and reflexive object
- * properties, property chains, and sub-data properties. Anything else — individuals and their
- * assertions, nominals, negation, disjunction, universal restriction, disjointness, the bottom
- * class, domains and ranges, inverses — makes the whole case {@link OutOfScope}: importing the rest
- * of it would change what its expected results mean.
+ * existential restriction, {@code DataHasValue}, disjointness of named classes, the bottom class,
+ * sub-, equivalent, transitive and reflexive object properties, property chains, and sub-data
+ * properties. Anything else — individuals and their assertions, nominals, negation, disjunction,
+ * universal restriction, domains and ranges, inverses, the bottom property, a class expression
+ * subsumed by the bottom — makes the whole case {@link OutOfScope}: importing the rest of it would
+ * change what its expected results mean.
+ * <p>
+ * {@code owl:Nothing} becomes the starter set's bottom concept, Nothing: a class equivalent to it,
+ * or subsumed by it, is necessarily a kind of it. An unsatisfiable class of the expected taxonomy
+ * (a member of owl:Nothing's node) is expected equivalent to the bottom concept and placed where the
+ * bottom concept is stated.
  * <p>
  * {@code owl:Thing} becomes the case's own top concept, which every class of the case is stated to
  * be a kind of, and {@code owl:topObjectProperty} the case's own top role, which every object
@@ -85,6 +91,7 @@ import java.util.Set;
  * @param reflexive           the reflexive object properties
  * @param chains              each object property's chains: the property sequences implying it
  * @param superDataProperties each data property's stated super-properties
+ * @param disjoint            each class's disjoint classes; a class may be disjoint with itself
  * @param classTaxonomy       the expected class taxonomy, when the case has one
  * @param propertyTaxonomy    the expected object property taxonomy, when the case has one
  */
@@ -100,12 +107,13 @@ public record ElkCase(String id,
                       Set<String> reflexive,
                       Map<String, List<List<String>>> chains,
                       Map<String, Set<String>> superDataProperties,
+                      Map<String, Set<String>> disjoint,
                       Optional<Taxonomy> classTaxonomy,
                       Optional<Taxonomy> propertyTaxonomy) {
 
     /** {@code owl:Thing}, read as the case's top concept. */
     public static final String THING = "http://www.w3.org/2002/07/owl#Thing";
-    /** {@code owl:Nothing}, which no case in scope may name. */
+    /** {@code owl:Nothing}, read as the starter set's bottom concept. */
     public static final String NOTHING = "http://www.w3.org/2002/07/owl#Nothing";
     /** {@code owl:topObjectProperty}, read as the case's top role. */
     public static final String TOP_OBJECT_PROPERTY = "http://www.w3.org/2002/07/owl#topObjectProperty";
@@ -155,10 +163,13 @@ public record ElkCase(String id,
      * it is equivalent to. A parent of {@link #THING} or {@link #TOP_OBJECT_PROPERTY} is the case's
      * top.
      *
-     * @param parents     each entity's direct parents, every member of each parent node
-     * @param equivalents each entity's equivalents, never itself; absent when it has none
+     * @param parents       each entity's direct parents, every member of each parent node; none
+     *                      for an unsatisfiable entity
+     * @param equivalents   each entity's equivalents, never itself; absent when it has none
+     * @param unsatisfiable the entities in owl:Nothing's node
      */
-    public record Taxonomy(Map<String, Set<String>> parents, Map<String, Set<String>> equivalents) {
+    public record Taxonomy(Map<String, Set<String>> parents, Map<String, Set<String>> equivalents,
+                           Set<String> unsatisfiable) {
     }
 
     /** A case that uses something outside the vocabulary, with what it uses. */
@@ -208,7 +219,7 @@ public record ElkCase(String id,
         }
         return new ElkCase(id, reader.classes, reader.objectProperties, reader.dataProperties, reader.necessary,
                 reader.sufficient, reader.inclusions, reader.superProperties, reader.transitive, reader.reflexive,
-                reader.chains, reader.superDataProperties, classTaxonomy, roleTaxonomy);
+                reader.chains, reader.superDataProperties, reader.disjoint, classTaxonomy, roleTaxonomy);
     }
 
     /**
@@ -266,6 +277,7 @@ public record ElkCase(String id,
         final Set<String> reflexive = new LinkedHashSet<>();
         final Map<String, List<List<String>>> chains = new LinkedHashMap<>();
         final Map<String, Set<String>> superDataProperties = new LinkedHashMap<>();
+        final Map<String, Set<String>> disjoint = new LinkedHashMap<>();
 
         void axiom(ElkAxiom axiom) throws OutOfScope {
             switch (axiom) {
@@ -293,6 +305,22 @@ public record ElkCase(String id,
                     String sub = dataProperty(subDataPropertyOf.getSubDataPropertyExpression());
                     String sup = dataProperty(subDataPropertyOf.getSuperDataPropertyExpression());
                     superDataProperties.computeIfAbsent(sub, _ -> new LinkedHashSet<>()).add(sup);
+                }
+                case org.semanticweb.elk.owl.interfaces.ElkDisjointClassesAxiom disjointClasses -> {
+                    List<String> members = new ArrayList<>();
+                    for (ElkClassExpression member : disjointClasses.getClassExpressions()) {
+                        if (!(expr(member) instanceof Named named) || named.iri().equals(THING)
+                                || named.iri().equals(NOTHING)) {
+                            throw new OutOfScope("DisjointClasses of class expressions");
+                        }
+                        members.add(named.iri());
+                    }
+                    // Pairwise; a class listed twice is disjoint with itself.
+                    for (int i = 0; i < members.size(); i++) {
+                        for (int j = i + 1; j < members.size(); j++) {
+                            disjoint.computeIfAbsent(members.get(i), _ -> new LinkedHashSet<>()).add(members.get(j));
+                        }
+                    }
                 }
                 case ElkAnnotationAxiom _ -> {
                     // Annotations state nothing the reasoner reads.
@@ -326,9 +354,14 @@ public record ElkCase(String id,
                 if (subIri.equals(THING)) {
                     throw new OutOfScope("SubClassOf(owl:Thing, ...)");
                 }
+                if (subIri.equals(NOTHING)) {
+                    return;
+                }
                 if (!(superExpr instanceof Named named && named.iri().equals(THING))) {
                     necessary.computeIfAbsent(subIri, _ -> new ArrayList<>()).addAll(conjuncts(superExpr));
                 }
+            } else if (sup instanceof ElkClass supClass && supClass.getIri().getFullIriAsString().equals(NOTHING)) {
+                throw new OutOfScope("SubClassOf(class expression, owl:Nothing)");
             } else if (sup instanceof ElkClass supClass && !supClass.getIri().getFullIriAsString().equals(THING)) {
                 inclusions.computeIfAbsent(namedClass(supClass), _ -> new ArrayList<>()).add(conjuncts(expr(sub)));
             } else if (!(superExpr instanceof Named named && named.iri().equals(THING))) {
@@ -349,6 +382,18 @@ public record ElkCase(String id,
                 } else {
                     complex.add(expr);
                 }
+            }
+            if (named.contains(NOTHING)) {
+                // Each is unsatisfiable: necessarily a kind of the bottom.
+                if (!complex.isEmpty()) {
+                    throw new OutOfScope("EquivalentClasses of owl:Nothing and class expressions");
+                }
+                for (String member : named) {
+                    if (!member.equals(NOTHING)) {
+                        necessary.computeIfAbsent(member, _ -> new ArrayList<>()).add(new Named(NOTHING));
+                    }
+                }
+                return;
             }
             if (named.isEmpty()) {
                 throw new OutOfScope("EquivalentClasses between class expressions");
@@ -416,10 +461,7 @@ public record ElkCase(String id,
 
         private String namedClass(ElkClass elkClass) throws OutOfScope {
             String iri = elkClass.getIri().getFullIriAsString();
-            if (iri.equals(NOTHING)) {
-                throw new OutOfScope("owl:Nothing");
-            }
-            if (!iri.equals(THING)) {
+            if (!iri.equals(THING) && !iri.equals(NOTHING)) {
                 classes.add(iri);
             }
             return iri;

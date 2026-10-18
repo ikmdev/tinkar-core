@@ -130,6 +130,7 @@ final class CaseWriter {
                 Lists.immutable.of(EntityProxy.Concept.make(PublicIds.of(shared("case identifier"))), id));
 
         Map<String, Long> nids = new HashMap<>();
+        nids.put(ElkCase.NOTHING, KernelConcept.BOTTOM.nid());
         UUID topUuid = caseUuid(id, "top");
         nids.put(ElkCase.THING, concept(stamp, topUuid, "Thing (" + id + ")", "Thing", PublicIds.of(shared("root"))));
         for (String iri : elkCase.classes()) {
@@ -155,6 +156,9 @@ final class CaseWriter {
                 necessary.add(leb.ConceptAxiom(concept(nids, ElkCase.THING)));
                 for (Expr conjunct : elkCase.necessary().getOrDefault(iri, List.of())) {
                     necessary.add(atom(leb, nids, conjunct));
+                }
+                for (String disjoint : elkCase.disjoint().getOrDefault(iri, Set.of())) {
+                    necessary.add(leb.DisjointWithAxiom(concept(nids, disjoint)));
                 }
                 leb.NecessarySet(leb.And(necessary.toArray(LogicalAxiom.Atom[]::new)));
                 for (List<Expr> set : elkCase.sufficient().getOrDefault(iri, List.of())) {
@@ -216,7 +220,9 @@ final class CaseWriter {
         for (Map.Entry<String, Set<String>> entry : children.entrySet()) {
             String iri = entry.getKey();
             long nid = nids.get(iri);
+            // An unsatisfiable entity is placed where the bottom concept is stated, under the root.
             long[] parentNids = iri.equals(top) ? new long[]{topParentNid}
+                    : taxonomy.unsatisfiable().contains(iri) ? new long[]{KernelConcept.ROOT_VERTEX.nid()}
                     : parents.get(iri).stream().mapToLong(nids::get).toArray();
             long[] childNids = entry.getValue().stream().mapToLong(nids::get).toArray();
             PublicId conceptId = dev.ikm.tinkar.common.service.PrimitiveData.publicId(nid);
@@ -225,6 +231,11 @@ final class CaseWriter {
                     KernelPattern.INFERRED_NAVIGATION_PATTERN, nid,
                     Lists.immutable.of(LongIds.set.of(childNids), LongIds.set.of(parentNids)));
             Set<String> equivalents = taxonomy.equivalents().get(iri);
+            if (taxonomy.unsatisfiable().contains(iri)) {
+                // Equivalent to the bottom concept, as well as to the case's other unsatisfiable entities.
+                equivalents = new LinkedHashSet<>(equivalents == null ? Set.of() : equivalents);
+                equivalents.add(ElkCase.NOTHING);
+            }
             if (equivalents != null) {
                 writer.semantic(stamp, PublicIds.of(UuidT5Generator.singleSemanticUuid(
                                 KernelPattern.INFERRED_EQUIVALENCE_PATTERN.publicId(), conceptId)),

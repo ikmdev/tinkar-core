@@ -89,13 +89,35 @@ class ElkCaseTest {
     }
 
     @Test
-    @DisplayName("Individuals and the bottom class put a case out of scope")
+    @DisplayName("Individuals and negation put a case out of scope")
     void outOfScope() {
         ElkCase.OutOfScope individuals = assertThrows(ElkCase.OutOfScope.class, () -> ElkCase.read("x",
                 PREFIXES + "Ontology(ClassAssertion(:A :a))", Optional.empty(), Optional.empty()));
         assertTrue(individuals.construct().contains("ClassAssertion"), individuals.construct());
         assertThrows(ElkCase.OutOfScope.class, () -> ElkCase.read("x",
-                PREFIXES + "Ontology(SubClassOf(:A owl:Nothing))", Optional.empty(), Optional.empty()));
+                PREFIXES + "Ontology(SubClassOf(:A ObjectComplementOf(:B)))", Optional.empty(), Optional.empty()));
+    }
+
+    @Test
+    @DisplayName("Disjoint classes are disjoint pairwise; the Nothing node is unsatisfiable")
+    void disjointnessAndTheBottom() throws Exception {
+        ElkCase elkCase = ElkCase.read("x", PREFIXES + """
+                Ontology(
+                SubClassOf(:A :C)
+                SubClassOf(:B :C)
+                DisjointClasses(:A :B :C)
+                SubClassOf(:D owl:Nothing)
+                )""", Optional.of(PREFIXES + """
+                Ontology(
+                EquivalentClasses(owl:Nothing :A :B :D)
+                )"""), Optional.empty());
+        assertEquals(Set.of(iri("B"), iri("C")), elkCase.disjoint().get(iri("A")));
+        assertEquals(Set.of(iri("C")), elkCase.disjoint().get(iri("B")));
+        assertTrue(elkCase.necessary().get(iri("D")).contains(new Named(ElkCase.NOTHING)));
+        ElkCase.Taxonomy taxonomy = elkCase.classTaxonomy().orElseThrow();
+        assertEquals(Set.of(iri("A"), iri("B"), iri("D")), taxonomy.unsatisfiable());
+        assertEquals(Set.of(iri("B"), iri("D")), taxonomy.equivalents().get(iri("A")));
+        assertEquals(Set.of(ElkCase.THING), taxonomy.parents().get(iri("C")));
     }
 
     @Test

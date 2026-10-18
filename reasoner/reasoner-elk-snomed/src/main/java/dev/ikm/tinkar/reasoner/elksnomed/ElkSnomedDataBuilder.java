@@ -468,6 +468,11 @@ public class ElkSnomedDataBuilder {
 			ConcreteRole role = makeIntervalRole(child, definition);
 			def.addUngroupedConcreteRole(role);
 		}
+		case DISJOINT_WITH -> {
+			// A and B have no instance in common; the reasoner states DisjointClasses(A, B).
+			long disjoint_nid = getNid(child, KernelConcept.DISJOINT_WITH);
+			def.addDisjointConcept(data.getOrCreateConcept(disjoint_nid));
+		}
 		default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
 		}
 	}

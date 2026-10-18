@@ -71,6 +71,7 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	public void loadData(TrackingCallable<?> progressTracker) throws Exception {
 		LOG.info("Create ontology");
 		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), data.getConcreteRoleTypes());
+		nameBottom(ontology);
 	};
 
 	@Override

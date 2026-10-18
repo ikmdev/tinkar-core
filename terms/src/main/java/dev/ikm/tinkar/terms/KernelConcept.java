@@ -542,6 +542,11 @@ public enum KernelConcept implements ConceptEnumerationFacade<KernelConcept> {
     SCTID("SCTID (SOLOR)", "0418a591-f75b-39ad-be2c-3ab849326da9,87360947-e603-3397-804b-efd0fcc509b9,ab9a0e0a-6359-5462-859c-96c3d4ef2341"),
 
     /**
+     * The concept with no instances, a kind of every concept: the reasoner's bottom, owl:Nothing in OWL. A concept classification finds equivalent to it is unsatisfiable: its definition contradicts itself, as when it is a kind of two disjoint concepts. Stated under the root, so unsatisfiable concepts, which share its place, show at the top of the taxonomy.
+     */
+    BOTTOM("Nothing (IkeFoundation)", "27c8360e-9654-5a2b-9a7a-aa31e9a63926"),
+
+    /**
      * The module transaction records are written to: bookkeeping about how the knowledge base changed, not knowledge. Default views and published releases leave it out; change sets exchanged between people carry it.
      */
     CHANGE_TRACKING_MODULE("Change tracking module (IkeFoundation)", "a6ef93c4-8e0b-5278-82a3-0fa30c4f1d95"),

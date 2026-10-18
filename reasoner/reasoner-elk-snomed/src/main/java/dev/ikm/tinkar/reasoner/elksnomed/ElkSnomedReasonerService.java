@@ -101,6 +101,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	public void loadData(TrackingCallable<?> progressTracker) throws Exception {
 		LOG.info("Create ontology");
 		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
+		nameBottom(ontology);
 		LOG.info("Create reasoner");
 		// createUninitialized rather than create: this has to hold the reasoner before the
 		// classification starts, or there is nothing to interrupt while it runs. It also keeps
@@ -356,6 +357,19 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		}
 		subRoles().getIfAbsent(id, LongSets.mutable::empty).forEach(children::add);
 		return toLongSet(children);
+	}
+
+	/**
+	 * Names the starter set's bottom concept, Nothing, to the ontology, when the store has it: a
+	 * reference to it is owl:Nothing, and an unsatisfiable concept is placed where it is stated.
+	 * Asked by public id, as a Rocks store cannot give a nid to a concept it does not hold.
+	 *
+	 * @param ontology the ontology about to be classified
+	 */
+	protected static void nameBottom(SnomedOntology ontology) {
+		if (PrimitiveData.get().hasPublicId(KernelConcept.BOTTOM.publicId())) {
+			ontology.setBottomConceptId(KernelConcept.BOTTOM.nid());
+		}
 	}
 
 	/** A concept's direct parents in the classified concept hierarchy. */
