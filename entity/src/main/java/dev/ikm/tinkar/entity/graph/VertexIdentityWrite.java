@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.LongFunction;
@@ -80,8 +81,9 @@ import java.util.function.Supplier;
  * history only so far as the UUIDs it held are recognized as carried; it is never the version
  * the new one continues.
  *
- * <p>Trees over another vocabulary than {@link LogicalAxiomSemantic} pass untouched: they need
- * an identity table of their own.
+ * <p>A tree is correlated by the identity table that covers every vertex of it
+ * ({@link VertexIdentityTable#forTree}): {@link LogicalAxiomSemantic}'s, or one a plugin provides
+ * for its own vocabulary. A tree no table covers passes untouched.
  */
 public final class VertexIdentityWrite {
 
@@ -121,7 +123,7 @@ public final class VertexIdentityWrite {
     public static SemanticEntity<?> forWrite(SemanticEntity<?> incoming, Supplier<SemanticEntity<?>> storedSupplier,
                                              long withdrawnStampNid, LongFunction<StampEntity<?>> stamps,
                                              DataActivity activity) {
-        if (!(incoming instanceof SemanticRecord record) || !holdsLogicalTree(record)) {
+        if (!(incoming instanceof SemanticRecord record) || !holdsIdentifiedTree(record)) {
             return incoming;
         }
         boolean carry = activity == DataActivity.LOADING_CHANGE_SET || activity == DataActivity.DATA_REPAIR;
@@ -168,12 +170,17 @@ public final class VertexIdentityWrite {
                 continue;
             }
             for (int f = 0; f < version.fields().size(); f++) {
-                if (!(version.fields().get(f) instanceof DiTreeEntity tree) || !logical(tree)) {
+                if (!(version.fields().get(f) instanceof DiTreeEntity tree)) {
                     continue;
                 }
-                List<DiTreeEntity> history = history(replaced, versions, v, f);
+                Optional<VertexIdentityTable> covering = VertexIdentityTable.forTree(tree);
+                if (covering.isEmpty()) {
+                    continue;
+                }
+                VertexIdentityTable table = covering.get();
+                List<DiTreeEntity> history = history(replaced, versions, v, f, table);
                 if (carry) {
-                    List<String> broken = invariantBreaks(history, tree);
+                    List<String> broken = invariantBreaks(history, tree, table);
                     if (!broken.isEmpty()) {
                         String message = "Vertex identity broken in " + record.publicId() + " field " + f
                                 + ": " + String.join("; ", broken);
@@ -184,13 +191,13 @@ public final class VertexIdentityWrite {
                     }
                     continue;
                 }
-                String shape = shapeBreak(tree);
+                String shape = shapeBreak(tree, table);
                 if (shape != null) {
-                    throw new IllegalStateException("Not a logical definition the identity table admits, in "
+                    throw new IllegalStateException("Not a tree the " + table + " identity table admits, in "
                             + record.publicId() + " field " + f + ": " + shape);
                 }
                 DiTreeEntity correlated = DiTreeCorrelation.correlate(history, tree,
-                        VertexDerivation.root(record.publicId(), f)).tree();
+                        VertexDerivation.root(record.publicId(), f), table).tree();
                 version.fields().set(f, correlated);
                 changed = true;
             }
@@ -202,13 +209,14 @@ public final class VertexIdentityWrite {
      * The earlier versions' trees in a field, the one a version continues last, after the trees
      * of the versions the write replaces, whose UUIDs are recognized but never continued.
      */
-    private static List<DiTreeEntity> history(List<Ordered> replaced, List<Ordered> versions, int v, int f) {
+    private static List<DiTreeEntity> history(List<Ordered> replaced, List<Ordered> versions, int v, int f,
+                                              VertexIdentityTable table) {
         long path = versions.get(v).pathNid();
         List<DiTreeEntity> earlier = new ArrayList<>();
         int previous = -1;
         for (int e = 0; e < v; e++) {
             if (f < versions.get(e).fields().size() && versions.get(e).fields().get(f) instanceof DiTreeEntity tree
-                    && logical(tree)) {
+                    && table.covers(tree)) {
                 earlier.add(tree);
                 if (versions.get(e).pathNid() == path) {
                     previous = earlier.size() - 1;
@@ -220,7 +228,7 @@ public final class VertexIdentityWrite {
         }
         List<DiTreeEntity> history = new ArrayList<>();
         for (Ordered version : replaced) {
-            if (f < version.fields().size() && version.fields().get(f) instanceof DiTreeEntity tree && logical(tree)) {
+            if (f < version.fields().size() && version.fields().get(f) instanceof DiTreeEntity tree && table.covers(tree)) {
                 history.add(tree);
             }
         }
@@ -302,10 +310,10 @@ public final class VertexIdentityWrite {
 
     // ----- what the write path checks -----
 
-    private static boolean holdsLogicalTree(SemanticRecord record) {
+    private static boolean holdsIdentifiedTree(SemanticRecord record) {
         for (SemanticVersionRecord version : record.versions()) {
             for (Object field : version.fieldValues()) {
-                if (field instanceof DiTreeEntity tree && logical(tree)) {
+                if (field instanceof DiTreeEntity tree && VertexIdentityTable.forTree(tree).isPresent()) {
                     return true;
                 }
             }
@@ -313,37 +321,44 @@ public final class VertexIdentityWrite {
         return false;
     }
 
-    /** Whether every vertex's meaning is a logical-axiom meaning the identity table covers. */
-    static boolean logical(DiTreeEntity tree) {
-        for (EntityVertex vertex : tree.vertexMap()) {
-            if (vertex == null || !isLogicalMeaning(vertex.getMeaningNid())) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static boolean isLogicalMeaning(long meaningNid) {
-        for (LogicalAxiomSemantic semantic : LogicalAxiomSemantic.values()) {
-            if (semantic.nid == meaningNid) {
-                return true;
-            }
-        }
-        return false;
+    /**
+     * Whether every vertex's meaning is a logical-axiom meaning the identity table covers.
+     *
+     * @param tree the tree
+     * @return true when the write path correlates it
+     */
+    public static boolean logical(DiTreeEntity tree) {
+        return VertexIdentityTable.LOGICAL.covers(tree);
     }
 
     /**
-     * Why a tree's shape is not the identity table's, or null when it is: a vertex whose
-     * successors are sole must have exactly one, and a leaf none (arch-vertex-identity-verification,
-     * "Shape at write").
+     * Why a logical tree's shape is not the identity table's, or null when it is.
+     *
+     * @param tree a logical tree
+     * @return the first break found, or null
+     * @see #shapeBreak(DiTreeEntity, VertexIdentityTable)
      */
-    static String shapeBreak(DiTreeEntity tree) {
+    public static String shapeBreak(DiTreeEntity tree) {
+        return shapeBreak(tree, VertexIdentityTable.LOGICAL);
+    }
+
+    /**
+     * Why a tree's shape is not its identity table's, or null when it is: a vertex whose
+     * successor is sole must have exactly one, one whose successor is optional at most one, and a
+     * leaf none (arch-vertex-identity-verification, "Shape at write").
+     *
+     * @param tree  a tree the table covers
+     * @param table its identity table
+     * @return the first break found, or null
+     */
+    public static String shapeBreak(DiTreeEntity tree, VertexIdentityTable table) {
         for (EntityVertex vertex : tree.vertexMap()) {
             int successors = tree.successors(vertex.vertexIndex()).size();
-            IdentityRule.Successors rule = IdentityRule.of(vertex.getMeaningNid()).successors();
+            IdentityRule.Successors rule = table.rule(vertex.getMeaningNid()).successors();
             if (rule == IdentityRule.Successors.SOLE && successors != 1
+                    || rule == IdentityRule.Successors.OPTIONAL && successors > 1
                     || rule == IdentityRule.Successors.NONE && successors != 0) {
-                return LogicalAxiomSemantic.get(vertex.getMeaningNid()) + " " + EntityVertexUuid.of(vertex)
+                return PrimitiveData.text(vertex.getMeaningNid()) + " " + EntityVertexUuid.of(vertex)
                         + " has " + successors + " successors";
             }
         }
@@ -353,16 +368,34 @@ public final class VertexIdentityWrite {
     /**
      * How a tree that keeps its UUIDs breaks the invariants against history: a kept UUID with
      * another meaning, or an operand's kept UUID with other identifying properties.
+     *
+     * @param history the earlier versions' trees, oldest first
+     * @param tree    the tree
+     * @return one line per break, empty when there is none
      */
-    static List<String> invariantBreaks(List<DiTreeEntity> history, DiTreeEntity tree) {
+    public static List<String> invariantBreaks(List<DiTreeEntity> history, DiTreeEntity tree) {
+        return invariantBreaks(history, tree, VertexIdentityTable.LOGICAL);
+    }
+
+    /**
+     * How a tree that keeps its UUIDs breaks the invariants against history, by its identity
+     * table's rules.
+     *
+     * @param history the earlier versions' trees, oldest first
+     * @param tree    the tree
+     * @param table   the identity table covering them
+     * @return one line per break, empty when there is none
+     */
+    public static List<String> invariantBreaks(List<DiTreeEntity> history, DiTreeEntity tree,
+                                               VertexIdentityTable table) {
         Map<UUID, Long> meanings = new HashMap<>();
         Map<UUID, List<Object>> operandKeys = new HashMap<>();
         for (DiTreeEntity earlier : history) {
             for (EntityVertex vertex : earlier.vertexMap()) {
                 UUID uuid = EntityVertexUuid.of(vertex);
                 meanings.put(uuid, vertex.getMeaningNid());
-                if (isOperand(earlier, vertex)) {
-                    operandKeys.put(uuid, identifying(vertex));
+                if (isOperand(earlier, vertex, table)) {
+                    operandKeys.put(uuid, identifying(vertex, table));
                 }
             }
         }
@@ -372,23 +405,23 @@ public final class VertexIdentityWrite {
             Long meaning = meanings.get(uuid);
             if (meaning != null && meaning != vertex.getMeaningNid()) {
                 broken.add(uuid + " changed meaning");
-            } else if (operandKeys.containsKey(uuid) && isOperand(tree, vertex)
-                    && !operandKeys.get(uuid).equals(identifying(vertex))) {
+            } else if (operandKeys.containsKey(uuid) && isOperand(tree, vertex, table)
+                    && !operandKeys.get(uuid).equals(identifying(vertex, table))) {
                 broken.add(uuid + " changed an identifying property");
             }
         }
         return broken;
     }
 
-    private static boolean isOperand(DiTreeEntity tree, EntityVertex vertex) {
+    private static boolean isOperand(DiTreeEntity tree, EntityVertex vertex, VertexIdentityTable table) {
         return tree.predecessor(vertex).map(parent ->
-                IdentityRule.of(parent.getMeaningNid()).successors() == IdentityRule.Successors.OPERANDS)
+                table.rule(parent.getMeaningNid()).successors() == IdentityRule.Successors.OPERANDS)
                 .orElse(false);
     }
 
-    private static List<Object> identifying(EntityVertex vertex) {
+    private static List<Object> identifying(EntityVertex vertex, VertexIdentityTable table) {
         List<Object> values = new ArrayList<>();
-        IdentityRule.of(vertex.getMeaningNid()).identifying().forEach(property -> {
+        table.rule(vertex.getMeaningNid()).identifying().forEach(property -> {
             Object value = vertex.properties().get(property.nid());
             values.add(value instanceof dev.ikm.tinkar.terms.ComponentWithNid component ? component.nid()
                     : Objects.requireNonNullElse(value, ""));

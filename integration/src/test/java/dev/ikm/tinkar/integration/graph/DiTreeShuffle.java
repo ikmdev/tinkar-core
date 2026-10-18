@@ -82,6 +82,20 @@ final class DiTreeShuffle {
     }
 
     /**
+     * The tree with its vertex indexes permuted and every vertex's children in their order: for a
+     * tree in which some children are a sequence, whose order carries meaning.
+     */
+    static Shuffled permute(DiTreeEntity tree, Random random) {
+        List<Integer> order = new ArrayList<>();
+        for (int i = 0; i < tree.vertexMap().size(); i++) {
+            order.add(i);
+        }
+        Collections.shuffle(order, random);
+        int[] newIndex = order.stream().mapToInt(Integer::intValue).toArray();
+        return new Shuffled(copy(tree, newIndex, null, i -> tree.vertex(i).asUuidList().getFirst()), newIndex);
+    }
+
+    /**
      * The tree with a fresh UUID on every vertex, at the same indexes in the same order: what
      * a writer that carries no vertex identity hands the write path.
      */

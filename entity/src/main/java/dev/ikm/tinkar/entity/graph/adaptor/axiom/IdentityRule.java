@@ -27,7 +27,8 @@ import org.eclipse.collections.api.list.ImmutableList;
  *
  * <p>The table is one exhaustive switch expression over {@link LogicalAxiomSemantic} with no
  * {@code default} branch, so a meaning added to the enum without an entry fails the build. Do
- * not add one: it would silence that check.
+ * not add one: it would silence that check. Trees over another vocabulary take their rules from
+ * a {@link dev.ikm.tinkar.entity.graph.VertexIdentityTable} of their own.
  *
  * @param successors  how this vertex's children are told apart
  * @param identifying what tells this vertex apart from its siblings, read only when its parent's
@@ -43,7 +44,14 @@ public record IdentityRule(Successors successors, ImmutableList<ConceptFacade> i
         /** One successor by definition, identified by its position: changing it is an update. */
         SOLE,
         /** An unordered collection, each identified by its key: changing a key is a replace. */
-        OPERANDS
+        OPERANDS,
+        /**
+         * A sequence, each identified by its position: the operands of a constructor that is not
+         * commutative, such as a comparison's left and right. Changing one is an update.
+         */
+        ORDERED,
+        /** At most one successor, identified by its position when present. */
+        OPTIONAL
     }
 
     /**

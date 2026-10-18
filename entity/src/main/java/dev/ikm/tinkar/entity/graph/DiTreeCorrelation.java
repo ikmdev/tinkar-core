@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.LongPredicate;
 
 /**
  * Carries vertex identity from the stored versions of a definition to an incoming version
@@ -168,7 +169,7 @@ public final class DiTreeCorrelation {
      * @return as {@link #correlate(List, DiTreeEntity)}
      */
     public static Correlation correlate(List<DiTreeEntity> history, DiTreeEntity incoming, double containerDice) {
-        return new Matcher(history, incoming, containerDice, null).run();
+        return new Matcher(history, incoming, containerDice, null, VertexIdentityTable.LOGICAL).run();
     }
 
     /**
@@ -180,7 +181,23 @@ public final class DiTreeCorrelation {
      * @return as {@link #correlate(List, DiTreeEntity)}
      */
     public static Correlation correlate(List<DiTreeEntity> history, DiTreeEntity incoming, UUID rootSeed) {
-        return new Matcher(history, incoming, CONTAINER_DICE, rootSeed).run();
+        return correlate(history, incoming, rootSeed, VertexIdentityTable.LOGICAL);
+    }
+
+    /**
+     * Correlates a tree over any vocabulary, by the identity table that covers it: its rules
+     * decide how each vertex's successors are told apart, and its ordered meanings make a
+     * vertex's children a sequence, hashed, paired and derived by position.
+     *
+     * @param history  as {@link #correlate(List, DiTreeEntity)}
+     * @param incoming as {@link #correlate(List, DiTreeEntity)}
+     * @param rootSeed the root's derived UUID ({@link VertexDerivation#root}), or null
+     * @param table    the identity table covering every vertex of the trees
+     * @return as {@link #correlate(List, DiTreeEntity)}
+     */
+    public static Correlation correlate(List<DiTreeEntity> history, DiTreeEntity incoming, UUID rootSeed,
+                                        VertexIdentityTable table) {
+        return new Matcher(history, incoming, CONTAINER_DICE, rootSeed, table).run();
     }
 
     // ----- the matcher -----
@@ -212,12 +229,14 @@ public final class DiTreeCorrelation {
         final int[] post;
         final long[] signature;
         final UUID[] uuid;
+        final VertexIdentityTable table;
 
-        Tree(DiTreeEntity tree) {
+        Tree(DiTreeEntity tree, VertexIdentityTable table) {
             this.tree = tree;
+            this.table = table;
             this.size = tree.vertexMap().size();
             this.root = tree.root().vertexIndex();
-            this.hashes = DiTreeIsomorphism.vertexHashes(tree);
+            this.hashes = DiTreeIsomorphism.vertexHashes(tree, table::ordered);
             this.parent = new int[size];
             this.subtreeSize = new int[size];
             this.height = new int[size];
@@ -267,8 +286,14 @@ public final class DiTreeCorrelation {
 
         /** Whether a vertex's children are operands: so the rule says, or the shape is not the rule's. */
         boolean operands(int index) {
-            return IdentityRule.of(meaning(index)).successors() == IdentityRule.Successors.OPERANDS
-                    || children(index).size() > 1;
+            IdentityRule.Successors successors = table.rule(meaning(index)).successors();
+            return successors == IdentityRule.Successors.OPERANDS
+                    || successors != IdentityRule.Successors.ORDERED && children(index).size() > 1;
+        }
+
+        /** Whether a vertex's children are a sequence, told apart by position. */
+        boolean sequence(int index) {
+            return table.ordered(meaning(index));
         }
 
         Position position(int index) {
@@ -307,13 +332,19 @@ public final class DiTreeCorrelation {
         final int[] ordinal;
         long[] publicHashes;
 
-        Matcher(List<DiTreeEntity> history, DiTreeEntity incoming, double containerDice, UUID rootSeed) {
-            this.in = new Tree(incoming);
+        final VertexIdentityTable table;
+        final LongPredicate ordered;
+
+        Matcher(List<DiTreeEntity> history, DiTreeEntity incoming, double containerDice, UUID rootSeed,
+                VertexIdentityTable table) {
+            this.table = table;
+            this.ordered = table::ordered;
+            this.in = new Tree(incoming, table);
             this.rootSeed = rootSeed;
             this.derivationKey = new String[in.size];
             this.ordinal = new int[in.size];
             Arrays.fill(ordinal, -1);
-            this.prev = history.isEmpty() ? null : new Tree(history.getLast());
+            this.prev = history.isEmpty() ? null : new Tree(history.getLast(), table);
             this.containerDice = containerDice;
             this.inToPrev = new int[in.size];
             this.prevToIn = new int[prev == null ? 0 : prev.size];
@@ -332,7 +363,7 @@ public final class DiTreeCorrelation {
         private void ledger(List<DiTreeEntity> history) {
             Map<UUID, Retired> lastSeen = new HashMap<>();
             for (int v = 0; v < history.size(); v++) {
-                Tree tree = v == history.size() - 1 ? prev : new Tree(history.get(v));
+                Tree tree = v == history.size() - 1 ? prev : new Tree(history.get(v), table);
                 for (int i = 0; i < tree.size; i++) {
                     UUID parent = tree.parent[i] < 0 ? null : tree.uuid[tree.parent[i]];
                     lastSeen.put(tree.uuid[i], new Retired(tree.uuid[i], tree, i, parent, v));
@@ -485,7 +516,7 @@ public final class DiTreeCorrelation {
                 if (in.position(a) == Position.SOLE || in.position(a) != prev.position(p)) {
                     continue;
                 }
-                int[] images = DiTreeIsomorphism.correspondence(in.tree, in.hashes, a, prev.tree, prev.hashes, p);
+                int[] images = DiTreeIsomorphism.correspondence(in.tree, in.hashes, a, prev.tree, prev.hashes, p, ordered);
                 if (images != null) {
                     matchSubtree(images, Phase.ANCHORED);
                 }
@@ -524,6 +555,20 @@ public final class DiTreeCorrelation {
             if (leftIn.isEmpty()) {
                 return;
             }
+            if (in.sequence(i) || prev.sequence(p)) {
+                // a sequence: each child continues the one at its position, as a sole successor does
+                ImmutableIntList childrenIn = in.children(i);
+                ImmutableIntList childrenPrev = prev.children(p);
+                for (int k = 0; k < Math.min(childrenIn.size(), childrenPrev.size()); k++) {
+                    int c = childrenIn.get(k);
+                    int q = childrenPrev.get(k);
+                    if (!isAssigned(c) && prevToIn[q] < 0 && in.meaning(c) == prev.meaning(q)) {
+                        match(c, q, Phase.KEYED);
+                    }
+                }
+                resurrect(i);
+                return;
+            }
             boolean operands = in.operands(i) || prev.operands(p);
             if (!operands) {
                 if (leftIn.size() == 1 && leftPrev.size() == 1 && in.meaning(leftIn.getFirst()) == prev.meaning(leftPrev.getFirst())) {
@@ -534,7 +579,7 @@ public final class DiTreeCorrelation {
                 for (int c : leftIn) {
                     for (int q : leftPrev) {
                         if (prevToIn[q] < 0 && prev.hashes[q] == in.hashes[c]) {
-                            int[] images = DiTreeIsomorphism.correspondence(in.tree, in.hashes, c, prev.tree, prev.hashes, q);
+                            int[] images = DiTreeIsomorphism.correspondence(in.tree, in.hashes, c, prev.tree, prev.hashes, q, ordered);
                             if (images != null) {
                                 matchSubtree(images, Phase.KEYED);
                                 break;
@@ -546,18 +591,18 @@ public final class DiTreeCorrelation {
                 for (int c : leftIn(i)) {
                     Integer q = prevByUuid.get(derived(c, assigned[i], 0));
                     if (q != null && prev.parent[q] == p && prevToIn[q] < 0 && prev.meaning(q) == in.meaning(c)
-                            && key(prev.vertex(q), true).equals(key(in.vertex(c), true))) {
+                            && key(prev.vertex(q), true, table).equals(key(in.vertex(c), true, table))) {
                         match(c, q, Phase.DERIVED);
                     }
                 }
                 // equal key
                 Map<Key, List<Integer>> keysIn = new LinkedHashMap<>();
                 for (int c : leftIn(i)) {
-                    keysIn.computeIfAbsent(key(in.vertex(c), true), k -> new ArrayList<>()).add(c);
+                    keysIn.computeIfAbsent(key(in.vertex(c), true, table), k -> new ArrayList<>()).add(c);
                 }
                 Map<Key, List<Integer>> keysPrev = new HashMap<>();
                 for (int q : leftPrev(p)) {
-                    keysPrev.computeIfAbsent(key(prev.vertex(q), true), k -> new ArrayList<>()).add(q);
+                    keysPrev.computeIfAbsent(key(prev.vertex(q), true, table), k -> new ArrayList<>()).add(q);
                 }
                 keysIn.forEach((key, cs) -> {
                     List<Integer> qs = keysPrev.get(key);
@@ -647,7 +692,7 @@ public final class DiTreeCorrelation {
                         continue;
                     }
                     int[] images = DiTreeIsomorphism.correspondence(in.tree, in.hashes, c,
-                            seen.tree().tree, seen.tree().hashes, seen.index());
+                            seen.tree().tree, seen.tree().hashes, seen.index(), ordered);
                     if (images != null && (best == null || seen.version() > best.version()
                             || seen.version() == best.version() && seen.uuid().compareTo(best.uuid()) < 0)) {
                         best = seen;
@@ -685,14 +730,14 @@ public final class DiTreeCorrelation {
                         }
                     }
                 }
-                Key key = key(in.vertex(i), true);
+                Key key = key(in.vertex(i), true, table);
                 Position position = in.position(i);
                 int best = -1;
                 double bestDice = 0;
                 List<Integer> candidates = new ArrayList<>(common.keySet());
                 candidates.sort(byHashAndUuid());
                 for (int a : candidates) {
-                    if (!key.equals(key(prev.vertex(a), true)) || prev.position(a) != position) {
+                    if (!key.equals(key(prev.vertex(a), true, table)) || prev.position(a) != position) {
                         continue;
                     }
                     double dice = 2.0 * common.get(a) / (in.subtreeSize[i] - 1 + prev.subtreeSize[a] - 1);
@@ -758,14 +803,23 @@ public final class DiTreeCorrelation {
         UUID derived(int i, UUID parent, int bump) {
             if (ordinal[i] < 0) {
                 if (publicHashes == null) {
-                    publicHashes = VertexDerivation.publicHashes(in.tree);
+                    publicHashes = VertexDerivation.publicHashes(in.tree, ordered);
                 }
                 int p = in.parent[i];
+                if (in.sequence(p)) {
+                    // a sequence: the key is the meaning, the ordinal the position
+                    ImmutableIntList sequence = in.children(p);
+                    for (int k = 0; k < sequence.size(); k++) {
+                        derivationKey[sequence.get(k)] = VertexDerivation.key(in.vertex(sequence.get(k)), false, table);
+                        ordinal[sequence.get(k)] = k;
+                    }
+                    return VertexDerivation.child(parent, derivationKey[i], ordinal[i] + bump);
+                }
                 boolean operand = in.operands(p);
                 List<Integer> siblings = new ArrayList<>();
                 for (int s : in.children(p).toArray()) {
                     if (derivationKey[s] == null) {
-                        derivationKey[s] = VertexDerivation.key(in.vertex(s), operand);
+                        derivationKey[s] = VertexDerivation.key(in.vertex(s), operand, table);
                     }
                     siblings.add(s);
                 }
@@ -806,12 +860,12 @@ public final class DiTreeCorrelation {
      * A vertex's key (arch-vertex-identity-table): its meaning and, as an operand, the values of
      * its identifying properties, a component by nid and a sequence of components in order.
      */
-    private static Key key(EntityVertex vertex, boolean operand) {
+    private static Key key(EntityVertex vertex, boolean operand, VertexIdentityTable table) {
         if (!operand) {
             return new Key(vertex.getMeaningNid(), List.of());
         }
         List<Object> values = new ArrayList<>();
-        for (ConceptFacade property : IdentityRule.of(vertex.getMeaningNid()).identifying()) {
+        for (ConceptFacade property : table.rule(vertex.getMeaningNid()).identifying()) {
             values.add(identifyingValue(vertex.properties().get(property.nid())));
         }
         return new Key(vertex.getMeaningNid(), values);

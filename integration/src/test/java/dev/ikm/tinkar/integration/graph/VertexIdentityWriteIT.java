@@ -263,7 +263,7 @@ class VertexIdentityWriteIT {
         writer.concept(concept);
         IllegalStateException refused = assertThrows(IllegalStateException.class, () -> writer.semantic(
                 PublicIds.newRandom(), KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.publicId(), concept, tree));
-        assertTrue(refused.getMessage().contains("NECESSARY_SET"), refused::getMessage);
+        assertTrue(refused.getMessage().contains("Necessary set"), refused::getMessage);
         writer.cancel();
     }
 

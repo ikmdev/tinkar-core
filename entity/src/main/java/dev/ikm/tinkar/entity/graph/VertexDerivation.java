@@ -19,13 +19,13 @@ import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
-import dev.ikm.tinkar.entity.graph.adaptor.axiom.IdentityRule;
 import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.function.LongPredicate;
 
 /**
  * Derivation v1 of newborn vertex UUIDs (arch-vertex-identity-birth; IKE-Network/ike-issues#1310):
@@ -83,9 +83,21 @@ public final class VertexDerivation {
      * @return the key
      */
     public static String key(EntityVertex vertex, boolean operand) {
+        return key(vertex, operand, VertexIdentityTable.LOGICAL);
+    }
+
+    /**
+     * A vertex's key, its identifying properties from a table.
+     *
+     * @param vertex  the vertex
+     * @param operand whether its parent's successors are operands
+     * @param table   the identity table of the vertex's vocabulary
+     * @return the key
+     */
+    public static String key(EntityVertex vertex, boolean operand, VertexIdentityTable table) {
         StringBuilder key = new StringBuilder(uuid(vertex.getMeaningNid()).toString());
         if (operand) {
-            for (ConceptFacade property : IdentityRule.of(vertex.getMeaningNid()).identifying()) {
+            for (ConceptFacade property : table.rule(vertex.getMeaningNid()).identifying()) {
                 key.append('|').append(text(vertex.properties().get(property.nid())));
             }
         }
@@ -100,19 +112,33 @@ public final class VertexDerivation {
      * @return the hashes, by vertex index
      */
     public static long[] publicHashes(DiTreeEntity tree) {
+        return publicHashes(tree, DiTreeIsomorphism.UNORDERED);
+    }
+
+    /**
+     * Every vertex's public canonical hash, a vertex whose meaning the predicate names hashing
+     * its children in their order.
+     *
+     * @param tree    the tree
+     * @param ordered which meanings' successors are a sequence
+     * @return the hashes, by vertex index
+     */
+    public static long[] publicHashes(DiTreeEntity tree, LongPredicate ordered) {
         long[] hashes = new long[tree.vertexMap().size()];
-        hash(tree, tree.root().vertexIndex(), hashes);
+        hash(tree, tree.root().vertexIndex(), hashes, ordered);
         return hashes;
     }
 
-    private static long hash(DiTreeEntity tree, int index, long[] hashes) {
+    private static long hash(DiTreeEntity tree, int index, long[] hashes, LongPredicate ordered) {
         EntityVertex vertex = tree.vertex(index);
         ImmutableIntList children = tree.successors(index);
         long[] childHashes = new long[children.size()];
         for (int i = 0; i < childHashes.length; i++) {
-            childHashes[i] = hash(tree, children.get(i), hashes);
+            childHashes[i] = hash(tree, children.get(i), hashes, ordered);
         }
-        Arrays.sort(childHashes);
+        if (!ordered.test(vertex.getMeaningNid())) {
+            Arrays.sort(childHashes);
+        }
         long[] properties = {0};
         vertex.properties().forEachKeyValue((key, value) ->
                 properties[0] += DiTreeIsomorphism.mix(uuidHash(uuid(key)) ^ text(value).hashCode()));

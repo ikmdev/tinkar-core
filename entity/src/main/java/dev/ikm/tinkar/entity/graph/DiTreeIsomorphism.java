@@ -23,6 +23,7 @@ import org.eclipse.collections.api.map.primitive.ImmutableLongObjectMap;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.LongPredicate;
 
 /**
  * Whether two trees are the same tree: there is a one-to-one map between their vertices,
@@ -72,7 +73,7 @@ public final class DiTreeIsomorphism {
         if (hashesA[rootA] != hashesB[rootB]) {
             return false;
         }
-        return match(a, hashesA, rootA, b, hashesB, rootB, null);
+        return match(a, hashesA, rootA, b, hashesB, rootB, null, UNORDERED);
     }
 
     /**
@@ -96,20 +97,39 @@ public final class DiTreeIsomorphism {
      * @return a new array of hashes, indexed by vertex index
      */
     public static long[] vertexHashes(DiTreeEntity tree) {
+        return vertexHashes(tree, UNORDERED);
+    }
+
+    /**
+     * Every reachable vertex's canonical hash, a vertex whose meaning the predicate names
+     * hashing its children in their order: a sequence, such as a comparison's left and right,
+     * where order carries meaning (arch-vertex-identity-rule, "Grounding").
+     *
+     * @param tree    the tree
+     * @param ordered which meanings' successors are a sequence
+     * @return a new array of hashes, indexed by vertex index
+     */
+    public static long[] vertexHashes(DiTreeEntity tree, LongPredicate ordered) {
         long[] hashes = new long[tree.vertexMap().size()];
-        vertexHash(tree, tree.root().vertexIndex(), hashes);
+        vertexHash(tree, tree.root().vertexIndex(), hashes, ordered);
         return hashes;
     }
 
-    private static long vertexHash(DiTreeEntity tree, int index, long[] hashes) {
+    /** No meaning's successors are ordered: every vertex's children are unordered. */
+    public static final LongPredicate UNORDERED = meaningNid -> false;
+
+    private static long vertexHash(DiTreeEntity tree, int index, long[] hashes, LongPredicate ordered) {
         EntityVertex vertex = tree.vertex(index);
         ImmutableIntList children = tree.successors(index);
         long[] childHashes = new long[children.size()];
         for (int i = 0; i < childHashes.length; i++) {
-            childHashes[i] = vertexHash(tree, children.get(i), hashes);
+            childHashes[i] = vertexHash(tree, children.get(i), hashes, ordered);
         }
-        Arrays.sort(childHashes);
-        long hash = mix(0x5DEECE66DL ^ vertex.getMeaningNid());
+        boolean sequence = ordered.test(vertex.getMeaningNid());
+        if (!sequence) {
+            Arrays.sort(childHashes);
+        }
+        long hash = mix(0x5DEECE66DL ^ vertex.getMeaningNid() ^ (sequence ? 0x6F7264657265644CL : 0));
         hash = mix(hash ^ propertiesHash(vertex.properties()));
         hash = mix(hash ^ childHashes.length);
         for (long childHash : childHashes) {
@@ -165,12 +185,30 @@ public final class DiTreeIsomorphism {
      */
     public static int[] correspondence(DiTreeEntity a, long[] hashesA, int indexA,
                                        DiTreeEntity b, long[] hashesB, int indexB) {
+        return correspondence(a, hashesA, indexA, b, hashesB, indexB, UNORDERED);
+    }
+
+    /**
+     * Pairs the vertices of two isomorphic subtrees, the children of a vertex whose meaning the
+     * predicate names paired by position, in their order.
+     *
+     * @param a       one tree
+     * @param hashesA its {@link #vertexHashes(DiTreeEntity, LongPredicate)}, with the same predicate
+     * @param indexA  the root of the subtree of {@code a}
+     * @param b       the other tree
+     * @param hashesB its hashes, with the same predicate
+     * @param indexB  the root of the subtree of {@code b}
+     * @param ordered which meanings' successors are a sequence
+     * @return as {@link #correspondence(DiTreeEntity, long[], int, DiTreeEntity, long[], int)}
+     */
+    public static int[] correspondence(DiTreeEntity a, long[] hashesA, int indexA,
+                                       DiTreeEntity b, long[] hashesB, int indexB, LongPredicate ordered) {
         if (hashesA[indexA] != hashesB[indexB]) {
             return null;
         }
         int[] images = new int[a.vertexMap().size()];
         Arrays.fill(images, -1);
-        return match(a, hashesA, indexA, b, hashesB, indexB, images) ? images : null;
+        return match(a, hashesA, indexA, b, hashesB, indexB, images, ordered) ? images : null;
     }
 
     /** The 64-bit finalizer of SplitMix64. */
@@ -186,12 +224,26 @@ public final class DiTreeIsomorphism {
      * image (a failed attempt may leave entries, which the successful one overwrites).
      */
     private static boolean match(DiTreeEntity a, long[] hashesA, int indexA,
-                                 DiTreeEntity b, long[] hashesB, int indexB, int[] images) {
+                                 DiTreeEntity b, long[] hashesB, int indexB, int[] images, LongPredicate ordered) {
         if (!sameVertex(a.vertex(indexA), b.vertex(indexB))) {
             return false;
         }
         if (images != null) {
             images[indexA] = indexB;
+        }
+        if (ordered.test(a.vertex(indexA).getMeaningNid())) {
+            ImmutableIntList sequenceA = a.successors(indexA);
+            ImmutableIntList sequenceB = b.successors(indexB);
+            if (sequenceA.size() != sequenceB.size()) {
+                return false;
+            }
+            for (int k = 0; k < sequenceA.size(); k++) {
+                if (hashesA[sequenceA.get(k)] != hashesB[sequenceB.get(k)]
+                        || !match(a, hashesA, sequenceA.get(k), b, hashesB, sequenceB.get(k), images, ordered)) {
+                    return false;
+                }
+            }
+            return true;
         }
         int[] childrenA = byHash(a.successors(indexA), hashesA);
         int[] childrenB = byHash(b.successors(indexB), hashesB);
@@ -213,7 +265,7 @@ public final class DiTreeIsomorphism {
             if (end < childrenB.length && hashesB[childrenB[end]] == groupHash) {
                 return false;
             }
-            if (!matchGroup(a, hashesA, childrenA, b, hashesB, childrenB, start, end, images)) {
+            if (!matchGroup(a, hashesA, childrenA, b, hashesB, childrenB, start, end, images, ordered)) {
                 return false;
             }
             start = end;
@@ -259,15 +311,15 @@ public final class DiTreeIsomorphism {
     /** Pairs the children of one hash group; greedy is exact because isomorphism is an equivalence. */
     private static boolean matchGroup(DiTreeEntity a, long[] hashesA, int[] childrenA,
                                       DiTreeEntity b, long[] hashesB, int[] childrenB, int start, int end,
-                                      int[] images) {
+                                      int[] images, LongPredicate ordered) {
         if (end - start == 1) {
-            return match(a, hashesA, childrenA[start], b, hashesB, childrenB[start], images);
+            return match(a, hashesA, childrenA[start], b, hashesB, childrenB[start], images, ordered);
         }
         boolean[] used = new boolean[end - start];
         for (int i = start; i < end; i++) {
             boolean paired = false;
             for (int j = start; j < end && !paired; j++) {
-                if (!used[j - start] && match(a, hashesA, childrenA[i], b, hashesB, childrenB[j], images)) {
+                if (!used[j - start] && match(a, hashesA, childrenA[i], b, hashesB, childrenB[j], images, ordered)) {
                     used[j - start] = true;
                     paired = true;
                 }
