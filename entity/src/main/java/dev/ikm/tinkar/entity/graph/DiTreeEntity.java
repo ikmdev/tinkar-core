@@ -15,13 +15,8 @@
  */
 package dev.ikm.tinkar.entity.graph;
 
-import dev.ikm.tinkar.common.alert.AlertStreams;
-import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.Vertex;
-import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
-import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
-import dev.ikm.tinkar.terms.KernelConcept;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -51,56 +46,6 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
         super(root, vertexMap, successorMap, predecessorMap);
     }
 
-    /**
-     * Make a correlated tree, where the vertex ids of this tree will be preserved when the ids are
-     * correlated by an isomorphic analysis.
-     *
-     * @param that The tree that is considered secondary with respect to preserving vertex ids.
-     * @return a copy of that which is updated with correlated vertex ids based on isomorphic analysis.
-     */
-    public DiTreeEntity makeCorrelatedTree(DiTreeEntity that, long referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
-
-        // A special case for correlation when this and that are equal and vertexes are indexed the same.
-        if (this.vertexMap.size() == that.vertexMap.size()) {
-            boolean maybeEqual = true;
-            for (int index = 0; index < this.vertexMap.size(); index++) {
-                if (this.vertexMap.get(index) == null || that.vertexMap.get(index) == null) {
-                    if (this.vertexMap.get(index) != that.vertexMap.get(index)) {
-                        maybeEqual = false;
-                        break;
-                    }
-                }
-                if (!this.vertexMap.get(index).equivalent(that.vertexMap.get(index))) {
-                    maybeEqual = false;
-                    break;
-                }
-                if (this.predecessorMap.containsKey(index) != that.predecessorMap.containsKey(index)) {
-                    maybeEqual = false;
-                    break;
-                }
-                if (this.predecessorMap.containsKey(index) && that.predecessorMap.containsKey(index)) {
-                    if (this.predecessorMap.get(index) != that.predecessorMap.get(index)) {
-                        maybeEqual = false;
-                        break;
-                    }
-                }
-            }
-            if (maybeEqual) {
-                // return this as the correlated tree
-                stopwatch.end(IsomorphicResults.EndPoints.INDEXES_EQUAL);
-                return this;
-            }
-        }
-        try {
-            IsomorphicResultsLeafHash isomorphicResult = new IsomorphicResultsLeafHash(this, that, referencedConceptNid, stopwatch);
-            IsomorphicResults results = isomorphicResult.call();
-            return results.getIsomorphicTree();
-        } catch (Exception e) {
-            AlertStreams.dispatchToRoot(e);
-        }
-        throw new IllegalStateException("No result");
-    }
-
     public final VertexVisitData breadthFirstProcess() {
         VertexVisitData vertexVisitData = new VertexVisitData(this.vertexMap.size());
         breadthFirstProcess(this.root.vertexIndex, vertexVisitData);
@@ -115,21 +60,14 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
         return super.equals(obj);
     }
 
-    // TODO Consider using JGraphT Isomorphic package here, and compare performance.
-    // TODO: Note implementation assumes no null values in vertex map.
+    /**
+     * Whether another tree is the same tree: {@link DiTreeIsomorphism#isomorphic}.
+     *
+     * @param another the other tree
+     * @return true when the trees are isomorphic
+     */
     public boolean isomorphic(DiTreeEntity another) {
-        if (this.vertexMap.size() != another.vertexMap.size()) {
-            return false;
-        }
-        IsomorphicResultsLeafHash isomorphicResult = new IsomorphicResultsLeafHash(this, another,
-                KernelConcept.UNINITIALIZED_COMPONENT.nid());
-        try {
-            isomorphicResult.call();
-            return isomorphicResult.equivalent();
-        } catch (Exception e) {
-            AlertStreams.dispatchToRoot(e);
-        }
-        return false;
+        return DiTreeIsomorphism.isomorphic(this, another);
     }
 
     public static DiTreeEntity make(DiTree<Vertex> tree) {

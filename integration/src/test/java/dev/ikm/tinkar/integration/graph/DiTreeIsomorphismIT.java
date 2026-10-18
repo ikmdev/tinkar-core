@@ -15,10 +15,8 @@
  */
 package dev.ikm.tinkar.integration.graph;
 
-import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeIsomorphism;
-import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.graph.RandomDefinitions.Definition;
 import dev.ikm.tinkar.integration.graph.RandomDefinitions.Feature;
@@ -49,12 +47,20 @@ import static dev.ikm.tinkar.integration.graph.RandomDefinitions.randomDefinitio
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * {@link DiTreeIsomorphism} against the definition of tree isomorphism, and against the decision
- * the reasoner's writer made before it: whether a concept's newly computed necessary normal form
- * is the same as its latest inferred form, which decides whether a new inferred version is written.
+ * {@link DiTreeIsomorphism} against the definition of tree isomorphism: the comparison the
+ * reasoner's writer makes to decide whether a concept's newly computed necessary normal form is
+ * the same as its latest inferred form, and so whether a new inferred version is written.
+ *
+ * <p>Until IKE-Network/ike-issues#1310 this test also ran the decision the writer made before
+ * ({@code DiTreeEntity.makeCorrelatedTree} then {@code equals}, two leaf-hash isomorphic
+ * analyses) beside it. That decision found a new form that only adds to the latest form (a stated
+ * parent or role added) the same, so no inferred version was written, and it matched identical
+ * siblings of the latest form to one vertex of the new form; {@link #aSupersetIsAnotherTreeEitherWay}
+ * and {@link #identicalSiblingsCountAsTwo} are those cases decided now. The leaf-hash analysis
+ * retired with #1310, when vertex UUIDs became identity across versions; the side-by-side record
+ * is in the history of this file.
  *
  * <p>Expressions are built from the small model of {@link RandomDefinitions}. The
  * oracle is a brute-force search that tries every pairing of children; it is slow and plainly
@@ -66,9 +72,6 @@ class DiTreeIsomorphismIT {
     private static final long SEED = 20261016L;
     private static final int RANDOM_CASES = 4_000;
 
-    private final MultipleEndpointTimer<IsomorphicResults.EndPoints> timer =
-            new MultipleEndpointTimer<>(IsomorphicResults.EndPoints.class);
-
     @BeforeAll
     void startStore() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
@@ -78,14 +81,6 @@ class DiTreeIsomorphismIT {
     @AfterAll
     void stopStore() {
         TestHelper.stopDatabase();
-    }
-
-    // ----- the decision before: the writer's two isomorphic analyses -----
-
-    /** Whether the writer, before, found the new form the same as the latest: write when false. */
-    private boolean previousDecisionSame(DiTreeEntity latest, DiTreeEntity normalForm) {
-        DiTreeEntity correlated = latest.makeCorrelatedTree(normalForm, KernelConcept.LANGUAGE.nid(), timer.startNew());
-        return correlated.equals(latest);
     }
 
     // ----- the oracle -----
@@ -115,29 +110,20 @@ class DiTreeIsomorphismIT {
     private static boolean oracleIsomorphic(DiTreeEntity a, int va, DiTreeEntity b, int vb) {
         return oracleSameVertex(a.vertex(va), b.vertex(vb))
                 && a.successors(va).size() == b.successors(vb).size()
-                && pairChildren(a, a.successors(va), b, b.successors(vb), 0, new boolean[b.successors(vb).size()], true);
-    }
-
-    /** Whether a embeds into b root to root: equivalent vertices, edges kept, children mapped one to one. */
-    private static boolean oracleEmbeds(DiTreeEntity a, int va, DiTreeEntity b, int vb) {
-        return oracleSameVertex(a.vertex(va), b.vertex(vb))
-                && a.successors(va).size() <= b.successors(vb).size()
-                && pairChildren(a, a.successors(va), b, b.successors(vb), 0, new boolean[b.successors(vb).size()], false);
+                && pairChildren(a, a.successors(va), b, b.successors(vb), 0, new boolean[b.successors(vb).size()]);
     }
 
     private static boolean pairChildren(DiTreeEntity a, ImmutableIntList childrenA, DiTreeEntity b,
-                                        ImmutableIntList childrenB, int next, boolean[] used, boolean isomorphic) {
+                                        ImmutableIntList childrenB, int next, boolean[] used) {
         if (next == childrenA.size()) {
             return true;
         }
         for (int j = 0; j < childrenB.size(); j++) {
             if (!used[j]) {
-                boolean pairs = isomorphic
-                        ? oracleIsomorphic(a, childrenA.get(next), b, childrenB.get(j))
-                        : oracleEmbeds(a, childrenA.get(next), b, childrenB.get(j));
+                boolean pairs = oracleIsomorphic(a, childrenA.get(next), b, childrenB.get(j));
                 if (pairs) {
                     used[j] = true;
-                    if (pairChildren(a, childrenA, b, childrenB, next + 1, used, isomorphic)) {
+                    if (pairChildren(a, childrenA, b, childrenB, next + 1, used)) {
                         return true;
                     }
                     used[j] = false;
@@ -147,41 +133,8 @@ class DiTreeIsomorphismIT {
         return false;
     }
 
-    /**
-     * Whether every vertex of a maps to an equivalent vertex of b, root to root and edges kept,
-     * two vertices of a allowed to map to one of b: what the isomorphic analysis finds when it
-     * reports every reference vertex matched, since it never checks that a comparison vertex is
-     * not matched twice.
-     */
-    private static boolean oracleMapsInto(DiTreeEntity a, int va, DiTreeEntity b, int vb) {
-        if (!oracleSameVertex(a.vertex(va), b.vertex(vb))) {
-            return false;
-        }
-        for (int childA : a.successors(va).toArray()) {
-            boolean mapped = false;
-            for (int childB : b.successors(vb).toArray()) {
-                if (oracleMapsInto(a, childA, b, childB)) {
-                    mapped = true;
-                    break;
-                }
-            }
-            if (!mapped) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static boolean oracleMapsInto(DiTreeEntity a, DiTreeEntity b) {
-        return oracleMapsInto(a, a.root().vertexIndex(), b, b.root().vertexIndex());
-    }
-
     private static boolean oracleIsomorphic(DiTreeEntity a, DiTreeEntity b) {
         return oracleIsomorphic(a, a.root().vertexIndex(), b, b.root().vertexIndex());
-    }
-
-    private static boolean oracleEmbeds(DiTreeEntity a, DiTreeEntity b) {
-        return oracleEmbeds(a, a.root().vertexIndex(), b, b.root().vertexIndex());
     }
 
     // ----- hand-picked cases -----
@@ -278,35 +231,17 @@ class DiTreeIsomorphismIT {
         assertFalse(DiTreeIsomorphism.isomorphic(more, one));
     }
 
-    /**
-     * The defect the double analysis had: a new normal form that only adds to the latest
-     * inferred form (a stated parent or role added) was found "the same", so no inferred
-     * version was written. Kept as a record of why the decision changed.
-     */
-    @Test
-    void theDecisionBeforeMissedAFormThatOnlyAdds() {
-        DiTreeEntity latest = build(parentsOnly(KernelConcept.LANGUAGE), null);
-        DiTreeEntity normalForm = build(parentsOnly(KernelConcept.LANGUAGE, KernelConcept.DESCRIPTION_TYPE), null);
-        assertTrue(previousDecisionSame(latest, normalForm), "the decision before found a superset the same");
-        assertFalse(DiTreeIsomorphism.isomorphic(latest, normalForm), "the decision now writes it");
-    }
-
     // ----- random cases -----
 
     /**
      * Random pairs, half of them the same definition built in another order, half a definition
-     * and one change to it: the comparison now must agree with the oracle on every pair. The
-     * decision before may disagree only by finding "the same" where the latest form maps into
-     * the new one without being it: the new form only adds (the defect above), or two identical
-     * siblings of the latest form were both matched to one vertex of the new form.
+     * and one change to it: the comparison must agree with the oracle on every pair.
      */
     @Test
     void randomPairsAgreeWithTheOracle() {
         Random random = new Random(SEED);
         int same = 0;
         int different = 0;
-        int previousMissedASuperset = 0;
-        int previousMergedSiblings = 0;
         for (int i = 0; i < RANDOM_CASES; i++) {
             Definition definition = randomDefinition(random);
             Definition other = random.nextBoolean() ? definition : mutate(definition, random);
@@ -327,22 +262,9 @@ class DiTreeIsomorphismIT {
             if (truth) {
                 assertEquals(DiTreeIsomorphism.hash(latest), DiTreeIsomorphism.hash(normalForm), "isomorphic trees hash alike");
             }
-
-            boolean previous = previousDecisionSame(latest, normalForm);
-            if (previous != truth) {
-                if (previous && oracleEmbeds(latest, normalForm)) {
-                    previousMissedASuperset++;
-                } else if (previous && oracleMapsInto(latest, normalForm)) {
-                    previousMergedSiblings++;
-                } else {
-                    fail("The decision before disagreed with the oracle other than by a mapping into the new form: "
-                            + describe(latest, normalForm) + " before=" + previous + " truth=" + truth);
-                }
-            }
         }
-        System.out.printf("DiTreeIsomorphismIT: %,d pairs, %,d the same, %,d different; the decision before "
-                + "missed %,d forms that only added and %,d whose identical siblings it matched to one vertex%n",
-                RANDOM_CASES, same, different, previousMissedASuperset, previousMergedSiblings);
+        System.out.printf("DiTreeIsomorphismIT: %,d pairs, %,d the same, %,d different%n",
+                RANDOM_CASES, same, different);
         assertTrue(same > RANDOM_CASES / 4 && different > RANDOM_CASES / 4, "both outcomes are exercised");
     }
 
