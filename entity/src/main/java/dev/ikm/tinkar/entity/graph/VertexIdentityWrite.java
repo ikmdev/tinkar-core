@@ -24,7 +24,6 @@ import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.IdentityRule;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
-import dev.ikm.tinkar.common.id.PublicId;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -283,9 +282,23 @@ public final class VertexIdentityWrite {
         StampEntity<?> stamp = stamps.apply(version.stampNid());
         long time = stamp == null ? Long.MAX_VALUE : stamp.time();
         long path = stamp == null ? 0 : stamp.pathNid();
-        PublicId stampId = stamp != null ? stamp.publicId() : PrimitiveData.publicId(version.stampNid());
-        return new Ordered(time, stampId.leastUuid().toString(), path, stored,
+        String stampKey = stamp != null ? stamp.publicId().leastUuid().toString() : absentStampKey(version.stampNid());
+        return new Ordered(time, stampKey, path, stored,
                 Lists.mutable.withAll(version.fieldValues()), version.stampNid());
+    }
+
+    /**
+     * The ordering key of a STAMP the store does not hold yet, as when a parallel load writes a
+     * semantic before its STAMP: the STAMP's least UUID from the identity map, or its nid from a
+     * provider that keeps no reverse map (the legacy Rocks layout). Such a version already sorts
+     * after every stored STAMP's time; the key only breaks ties among absent STAMPs.
+     */
+    private static String absentStampKey(long stampNid) {
+        try {
+            return PrimitiveData.publicId(stampNid).leastUuid().toString();
+        } catch (UnsupportedOperationException noReverseMap) {
+            return "nid " + stampNid;
+        }
     }
 
     private static SemanticRecord rebuilt(SemanticRecord record, List<Ordered> versions) {
