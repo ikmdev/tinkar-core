@@ -547,6 +547,21 @@ public enum KernelConcept implements ConceptEnumerationFacade<KernelConcept> {
     BOTTOM("Nothing (IkeFoundation)", "27c8360e-9654-5a2b-9a7a-aa31e9a63926"),
 
     /**
+     * The author of every registration: the IKE tooling that records what a knowledge base is made of whenever it imports, assembles or exports, in Komet, in a Maven goal, or anywhere else.
+     */
+    REGISTRAR("IKE Registrar (IkeFoundation)", "2899066e-1896-5511-8da7-3a45c64eee50"),
+
+    /**
+     * The module registrations are written in: bookkeeping about what the knowledge base is made of, not knowledge. Content views leave it out.
+     */
+    REGISTRY_MODULE("IKE Registry module (IkeFoundation)", "60795d0a-0c88-5af2-a6a7-f9ac2ff24359"),
+
+    /**
+     * The path every registration is written on, whatever path the content it describes is on, so the accounting of a knowledge base is in one place. Nothing is promoted to or from it.
+     */
+    REGISTRY_PATH("IKE Registry path (IkeFoundation)", "259c8239-9588-53be-a42b-cb3562eb15ed"),
+
+    /**
      * The module transaction records are written to: bookkeeping about how the knowledge base changed, not knowledge. Default views and published releases leave it out; change sets exchanged between people carry it.
      */
     CHANGE_TRACKING_MODULE("Change tracking module (IkeFoundation)", "a6ef93c4-8e0b-5278-82a3-0fa30c4f1d95"),

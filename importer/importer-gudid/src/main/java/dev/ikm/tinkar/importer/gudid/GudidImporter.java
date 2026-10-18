@@ -176,7 +176,8 @@ public final class GudidImporter implements KnowledgeImporter {
                 }
             }
             return ImportReport.of(name(), release.name(), writer.counts().tally().minus(before), details,
-                    Duration.between(start, Instant.now()));
+                    Duration.between(start, Instant.now()))
+                    .withReleaseDate(releaseDate.atStartOfDay(ZoneOffset.UTC).toInstant());
         }
     }
 

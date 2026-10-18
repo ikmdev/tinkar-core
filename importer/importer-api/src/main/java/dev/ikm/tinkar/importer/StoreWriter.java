@@ -191,6 +191,16 @@ public final class StoreWriter {
     }
 
     /**
+     * The stamps this writer has written under, by nid: every stamp a write went through, whether
+     * the stamp was new to the store or not.
+     *
+     * @return their nids
+     */
+    public java.util.Set<Long> stampsWritten() {
+        return java.util.Set.copyOf(stampNids.keySet());
+    }
+
+    /**
      * The view this writer reads existing versions under.
      *
      * @return the calculator
