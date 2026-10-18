@@ -17,6 +17,7 @@ package dev.ikm.tinkar.entity.graph;
 
 import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.terms.ComponentWithNid;
@@ -199,7 +200,7 @@ public final class VertexDerivation {
     }
 
     private static IllegalStateException unnamed(long nid, UnsupportedOperationException noReverseMap) {
-        return new IllegalStateException("Cannot derive a vertex UUID: the tree references nid " + nid
+        return new IllegalStateException("Cannot derive a vertex UUID: the tree references " + DiagnosticText.component(nid)
                 + ", a component this store does not hold, and the store keeps no reverse identity map"
                 + " to name it by its public id (" + noReverseMap.getMessage() + "). Write the component first,"
                 + " or give the vertex a value that carries its public id, such as an EntityProxy made from"
