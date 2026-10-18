@@ -835,6 +835,55 @@ public class Transaction implements Comparable<Transaction> {
     }
 
     /**
+     * The transactions still open: made in this session, or rebuilt from their records when the
+     * store opened. A surface that lets a person review pending work lists these, and commits or
+     * cancels them only when asked.
+     *
+     * @return the open transactions, in no particular order
+     */
+    public static java.util.List<Transaction> openTransactions() {
+        return activeTransactions.stream().filter(Transaction::isOpen).toList();
+    }
+
+    /**
+     * The transaction rebuilt from its record that owns an entity's pending version under the given
+     * stamp tuple: work a restart interrupted. A writer about to change the entity under that tuple
+     * continues this transaction rather than opening a second one beside it, since two uncommitted
+     * versions of one component do not supersede each other, and its change lands on the pending
+     * version's own stamp. For a writer that leaves settling to the person; one that commits at once must
+     * not take over pending work, which ends only when someone asks.
+     *
+     * @param entityNid the entity about to be changed
+     * @param state     the state of the stamp about to be made
+     * @param authorNid its author
+     * @param moduleNid its module
+     * @param pathNid   its path
+     * @return the rebuilt transaction owning the entity's pending version, if there is one
+     */
+    public static Optional<Transaction> rebuiltOwnerOfPendingVersion(long entityNid, State state, long authorNid,
+                                                                     long moduleNid, long pathNid) {
+        if (!(dev.ikm.tinkar.entity.EntityHandle.get(entityNid).orNull() instanceof Entity<?> entity)) {
+            return Optional.empty();
+        }
+        for (Object object : entity.versions()) {
+            EntityVersion version = (EntityVersion) object;
+            if (!version.uncommitted()) {
+                continue;
+            }
+            StampEntity<?> stamp = version.stamp();
+            if (stamp.authorNid() != authorNid || stamp.moduleNid() != moduleNid
+                    || stamp.pathNid() != pathNid || stamp.state() != state) {
+                continue;
+            }
+            Optional<Transaction> owner = forVersion(version).filter(Transaction::rebuiltFromRecord);
+            if (owner.isPresent()) {
+                return owner;
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
      * @param transactionUuid a transaction's UUID
      * @return the active transaction with that UUID, if any
      */
@@ -903,7 +952,10 @@ public class Transaction implements Comparable<Transaction> {
         return basisPathNid;
     }
 
-    long[] componentNids() {
+    /**
+     * @return the components this transaction has written
+     */
+    public long[] componentNids() {
         MutableLongList nids = LongLists.mutable.empty();
         componentsInTransaction.forEach(nids::add);
         return nids.toArray();

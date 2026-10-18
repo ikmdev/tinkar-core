@@ -97,6 +97,12 @@ class TransactionRecordRestartIT {
         assertEquals("false", reopened.getProperty("loaded.rebuilt"));
         assertEquals("true", reopened.getProperty("loaded.version.cancelled"),
                 "the load phase's unrecorded uncommitted stamp is cancelled at startup, as before");
+        assertEquals("true", reopened.getProperty("open.lists.rebuilt"),
+                "the open transactions include the rebuilt ones, for a person to review");
+        assertEquals("true", reopened.getProperty("pending.owner.found"),
+                "a writer under the pending version's tuple finds the rebuilt transaction to continue");
+        assertEquals("false", reopened.getProperty("pending.owner.other.author"),
+                "a writer under another author's tuple does not take it over");
         assertEquals("1", reopened.getProperty("pending.committed.stamps"), "the rebuilt transaction commits its stamp");
         assertEquals("true", reopened.getProperty("saved.lists.component"),
                 "a component written after a transaction's last record version reaches its record when the store is saved");
@@ -196,6 +202,15 @@ class TransactionRecordRestartIT {
                 out.setProperty("loaded.version.cancelled", Boolean.toString(
                         EntityHandle.get(PublicIds.of(LOADED_CONCEPT)).expectConcept().versions().isEmpty()));
 
+                long pendingNid = EntityHandle.get(PublicIds.of(PENDING_CONCEPT)).expectConcept().nid();
+                out.setProperty("open.lists.rebuilt", Boolean.toString(pending != null
+                        && Transaction.openTransactions().contains(pending)));
+                out.setProperty("pending.owner.found", Boolean.toString(Transaction.rebuiltOwnerOfPendingVersion(pendingNid,
+                        State.ACTIVE, KernelConcept.USER.nid(), KernelConcept.PRIMORDIAL_MODULE.nid(),
+                        KernelConcept.DEVELOPMENT_PATH.nid()).filter(owner -> owner == pending).isPresent()));
+                out.setProperty("pending.owner.other.author", Boolean.toString(Transaction.rebuiltOwnerOfPendingVersion(pendingNid,
+                        State.ACTIVE, KernelConcept.KOMET_USER.nid(), KernelConcept.PRIMORDIAL_MODULE.nid(),
+                        KernelConcept.DEVELOPMENT_PATH.nid()).isPresent()));
                 if (pending != null) {
                     out.setProperty("pending.committed.stamps", Integer.toString(pending.commit()));
                 }
