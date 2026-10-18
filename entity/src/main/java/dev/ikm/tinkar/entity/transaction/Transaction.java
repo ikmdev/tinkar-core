@@ -17,11 +17,6 @@ package dev.ikm.tinkar.entity.transaction;
 
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 
-import dev.ikm.tinkar.common.binary.Decoder;
-import dev.ikm.tinkar.common.binary.DecoderInput;
-import dev.ikm.tinkar.common.binary.Encodable;
-import dev.ikm.tinkar.common.binary.Encoder;
-import dev.ikm.tinkar.common.binary.EncoderOutput;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
@@ -58,16 +53,14 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * A Transaction is responsible for keeping track of its associated
  * unique identifier (UUID), name, active transactions, related stamps,
  * and components, as well as handling transactional operations.
+ * <p>
+ * A transaction that writes uncommitted versions persists as a record in the store, a semantic of
+ * the change transaction pattern (IKE-Network/ike-issues#1308, {@code TransactionRecords}); that
+ * record is its only serialized form.
  */
-public class Transaction implements Comparable<Transaction>, Encodable {
+public class Transaction implements Comparable<Transaction> {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(Transaction.class);
-    /**
-     * Version 2 writes the components in the transaction by public id, as it writes the stamps;
-     * version 1 wrote them as {@code int} nids of the store that wrote it, and is still read.
-     */
-    private static final int marshalVersion = 2;
-    private static final int marshalVersionIntNids = 1;
 
     private static ConcurrentHashSet<Transaction> activeTransactions = new ConcurrentHashSet<>();
     private final UUID transactionUuid;
@@ -113,19 +106,6 @@ public class Transaction implements Comparable<Transaction>, Encodable {
         this.transactionName = transactionName;
         this.transactionUuid = transactionUuid;
         activeTransactions.add(this);
-    }
-
-    /**
-     * Constructs a new Transaction instance with the specified UUID, name, and commit time.
-     * The created transaction is added to the list of active transactions.
-     *
-     * @param transactionUuid the unique identifier for this transaction
-     * @param transactionName the name associated with this transaction
-     * @param commitTime the commit time associated with this transaction
-     */
-    private Transaction(UUID transactionUuid, String transactionName, long commitTime) {
-        this(transactionUuid, transactionName);
-        this.commitTime = commitTime;
     }
 
     /**
@@ -229,7 +209,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     }
 
     /**
-     * @return the name the transaction was made with; saved and restored with it
+     * @return the name the transaction was made with; its record keeps it across a restart
      */
     public String name() {
         return transactionName;
@@ -750,6 +730,17 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     }
 
     /**
+     * Whether this transaction was rebuilt from its record when the store opened: work a restart
+     * interrupted, which an editor taking up one of its components continues in this transaction
+     * rather than opening a second one beside it.
+     *
+     * @return {@code true} for a transaction rebuilt at startup
+     */
+    public boolean rebuiltFromRecord() {
+        return restored;
+    }
+
+    /**
      * Rebuilds the transactions the store's records say are open, so their uncommitted versions
      * have an owner again after a restart. Called once the entity service answers reads, before
      * anything else reads from the store and before uncommitted stamps outside a transaction are
@@ -916,64 +907,6 @@ public class Transaction implements Comparable<Transaction>, Encodable {
         MutableLongList nids = LongLists.mutable.empty();
         componentsInTransaction.forEach(nids::add);
         return nids.toArray();
-    }
-
-    /**
-     * Decodes a serialized Transaction object from the provided {@code DecoderInput}.
-     * The method reads the transaction's data, including its marshal version, UUID, name,
-     * and associated stamps and components, and reconstructs a Transaction instance
-     * based on the encoded information.
-     *
-     * @param in the {@code DecoderInput} to read the serialized transaction data
-     *           including the marshalled version, transaction UUID, name,
-     *           and lists of stamps and components within the transaction
-     * @return the reconstructed {@code Transaction} object based on the input stream
-     * @throws UnsupportedOperationException if the marshalled version is unsupported
-     */
-    @Decoder
-    public static Transaction decode(DecoderInput in) {
-        int objectMarshalVersion = in.readInt();
-        return switch (objectMarshalVersion) {
-            case marshalVersion, marshalVersionIntNids -> {
-                Transaction transaction = new Transaction(in.readUuid(), in.readString(), in.readLong());
-                int stampsInTransactionCount = in.readInt();
-                for (int i = 0; i < stampsInTransactionCount; i++) {
-                    transaction.stampsInTransaction.add(in.readUuid());
-                }
-                int componentsInTransactionCount = in.readInt();
-                for (int i = 0; i < componentsInTransactionCount; i++) {
-                    long componentNid = objectMarshalVersion == marshalVersionIntNids ? in.readInt() : in.readNid();
-                    transaction.componentsInTransaction.add(componentNid);
-                }
-                yield transaction;
-            }
-            default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
-        };
-    }
-
-    /**
-     * Encodes the current transaction data to the provided {@link EncoderOutput}.
-     *
-     * @param out the {@link EncoderOutput} to write the encoded data to
-     *            including the transaction details such as marshal version,
-     *            transaction UUID, transaction name, commit time, and the list
-     *            of stamps and components involved in the transaction.
-     */
-    @Encoder
-    @Override
-    public void encode(EncoderOutput out) {
-        out.writeInt(marshalVersion);
-        out.writeUuid(this.transactionUuid);
-        out.writeString(this.transactionName);
-        out.writeLong(commitTime);
-        out.writeInt(stampsInTransaction.size());
-        for (UUID stampUuid : stampsInTransaction) {
-            out.writeUuid(stampUuid);
-        }
-        out.writeInt(componentsInTransaction.size());
-        for (long componentNid : componentsInTransaction) {
-            out.writeNid(componentNid);
-        }
     }
 
 }

@@ -36,8 +36,9 @@ import java.util.concurrent.CompletableFuture;
  *   <li>rebuilds each transaction whose record in the store says it is open;</li>
  *   <li>then, when the deployment asks for it ({@link ServiceKeys#CANCEL_UNCOMMITTED_STAMPS_AT_STARTUP}),
  *       cancels the uncommitted stamps no transaction owns, so an open transaction's are spared;</li>
- *   <li>and registers a save step that brings each open transaction's record up to date with
- *       the components it has written, which saving the store runs before it stops.</li>
+ *   <li>and registers a save step, ahead of the others, that brings each open transaction's
+ *       record up to date with the components it has written, which saving the store runs before
+ *       it stops.</li>
  * </ol>
  *
  * When the store stops, the transactions held in memory for it are let go; their records remain.
@@ -61,7 +62,9 @@ public class TransactionRecordsController implements ServiceLifecycle {
                 && entities instanceof EntityProvider provider) {
             provider.cancelUncommittedStamps();
         }
-        PrimitiveData.getStatesToSave().add(() -> {
+        // First among the save steps: the record versions it writes must reach the change-set
+        // writer before that writer's own save flushes, or they are written as the store stops.
+        PrimitiveData.getStatesToSave().add(0, () -> {
             int checkpointed = Transaction.checkpointOpen(EntityService.get());
             if (checkpointed > 0) {
                 LOG.info("Recorded {} open transaction(s) as the store was saved", checkpointed);
