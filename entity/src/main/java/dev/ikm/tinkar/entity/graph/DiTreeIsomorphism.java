@@ -72,7 +72,7 @@ public final class DiTreeIsomorphism {
         if (hashesA[rootA] != hashesB[rootB]) {
             return false;
         }
-        return match(a, hashesA, rootA, b, hashesB, rootB);
+        return match(a, hashesA, rootA, b, hashesB, rootB, null);
     }
 
     /**
@@ -87,8 +87,15 @@ public final class DiTreeIsomorphism {
         return vertexHashes(tree)[tree.root().vertexIndex()];
     }
 
-    /** Every reachable vertex's canonical hash, by vertex index; unreachable indexes stay zero. */
-    private static long[] vertexHashes(DiTreeEntity tree) {
+    /**
+     * Every reachable vertex's canonical hash, by vertex index: the hash of the subtree the
+     * vertex roots, so isomorphic subtrees anywhere in any two trees share it. Unreachable
+     * indexes stay zero.
+     *
+     * @param tree the tree
+     * @return a new array of hashes, indexed by vertex index
+     */
+    public static long[] vertexHashes(DiTreeEntity tree) {
         long[] hashes = new long[tree.vertexMap().size()];
         vertexHash(tree, tree.root().vertexIndex(), hashes);
         return hashes;
@@ -139,18 +146,52 @@ public final class DiTreeIsomorphism {
         };
     }
 
+    /**
+     * Pairs the vertices of two isomorphic subtrees.
+     *
+     * <p>The pairing is the one {@link #isomorphic} finds: children paired within groups of equal
+     * hash. It is unique, and so independent of vertex indexes and child order, unless some
+     * vertex has two isomorphic children, which a normal form never has (C ⊓ C = C); between
+     * such twins it follows child order.
+     *
+     * @param a       one tree
+     * @param hashesA its {@link #vertexHashes}
+     * @param indexA  the root of the subtree of {@code a}
+     * @param b       the other tree
+     * @param hashesB its {@link #vertexHashes}
+     * @param indexB  the root of the subtree of {@code b}
+     * @return by vertex index of {@code a}, the index of its image in {@code b}, or -1 outside the
+     *         subtree; null when the subtrees are not isomorphic
+     */
+    public static int[] correspondence(DiTreeEntity a, long[] hashesA, int indexA,
+                                       DiTreeEntity b, long[] hashesB, int indexB) {
+        if (hashesA[indexA] != hashesB[indexB]) {
+            return null;
+        }
+        int[] images = new int[a.vertexMap().size()];
+        Arrays.fill(images, -1);
+        return match(a, hashesA, indexA, b, hashesB, indexB, images) ? images : null;
+    }
+
     /** The 64-bit finalizer of SplitMix64. */
-    private static long mix(long z) {
+    static long mix(long z) {
         z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
         z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
         return z ^ (z >>> 31);
     }
 
-    /** Whether the subtrees at two vertices are isomorphic, given their hashes are equal. */
+    /**
+     * Whether the subtrees at two vertices are isomorphic, given their hashes are equal; when
+     * they are and {@code images} is given, it holds each vertex of the subtree of {@code a}'s
+     * image (a failed attempt may leave entries, which the successful one overwrites).
+     */
     private static boolean match(DiTreeEntity a, long[] hashesA, int indexA,
-                                 DiTreeEntity b, long[] hashesB, int indexB) {
+                                 DiTreeEntity b, long[] hashesB, int indexB, int[] images) {
         if (!sameVertex(a.vertex(indexA), b.vertex(indexB))) {
             return false;
+        }
+        if (images != null) {
+            images[indexA] = indexB;
         }
         int[] childrenA = byHash(a.successors(indexA), hashesA);
         int[] childrenB = byHash(b.successors(indexB), hashesB);
@@ -172,7 +213,7 @@ public final class DiTreeIsomorphism {
             if (end < childrenB.length && hashesB[childrenB[end]] == groupHash) {
                 return false;
             }
-            if (!matchGroup(a, hashesA, childrenA, b, hashesB, childrenB, start, end)) {
+            if (!matchGroup(a, hashesA, childrenA, b, hashesB, childrenB, start, end, images)) {
                 return false;
             }
             start = end;
@@ -217,15 +258,16 @@ public final class DiTreeIsomorphism {
 
     /** Pairs the children of one hash group; greedy is exact because isomorphism is an equivalence. */
     private static boolean matchGroup(DiTreeEntity a, long[] hashesA, int[] childrenA,
-                                      DiTreeEntity b, long[] hashesB, int[] childrenB, int start, int end) {
+                                      DiTreeEntity b, long[] hashesB, int[] childrenB, int start, int end,
+                                      int[] images) {
         if (end - start == 1) {
-            return match(a, hashesA, childrenA[start], b, hashesB, childrenB[start]);
+            return match(a, hashesA, childrenA[start], b, hashesB, childrenB[start], images);
         }
         boolean[] used = new boolean[end - start];
         for (int i = start; i < end; i++) {
             boolean paired = false;
             for (int j = start; j < end && !paired; j++) {
-                if (!used[j - start] && match(a, hashesA, childrenA[i], b, hashesB, childrenB[j])) {
+                if (!used[j - start] && match(a, hashesA, childrenA[i], b, hashesB, childrenB[j], images)) {
                     used[j - start] = true;
                     paired = true;
                 }
