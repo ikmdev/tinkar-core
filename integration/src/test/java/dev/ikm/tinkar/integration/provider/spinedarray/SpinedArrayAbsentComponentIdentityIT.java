@@ -84,6 +84,60 @@ class SpinedArrayAbsentComponentIdentityIT {
     }
 
     @Test
+    void aNidMintedButNotYetWrittenIsKnownAbsent_withoutASweep() throws Exception {
+        // Vertex identity derivation asks this of every component a definition references, and in
+        // a parallel load most are minted before they are written: the answer must come from what
+        // the mint recorded, never from a pass over the identity map.
+        PublicId absent = PublicIds.of(UUID.randomUUID(), UUID.randomUUID());
+        long nid = PrimitiveData.nid(absent);
+
+        org.junit.jupiter.api.Assertions.assertTrue(recordedAbsent(absent.asUuidArray()[0]), "recorded at mint");
+        assertEquals(java.util.Set.copyOf(absent.asUuidList().castToList()),
+                java.util.Set.copyOf(PrimitiveData.publicId(nid).asUuidList().castToList()));
+    }
+
+    @Test
+    void aWrittenEntityLeavesTheAbsentSet() throws Exception {
+        PublicId id = PublicIds.of(UUID.randomUUID());
+        long nid = PrimitiveData.nid(id);
+        org.junit.jupiter.api.Assertions.assertTrue(recordedAbsent(id.asUuidArray()[0]), "absent until written");
+
+        dev.ikm.tinkar.entity.StampEntity<?> stamp = dev.ikm.tinkar.entity.StampRecord.make(UUID.randomUUID(),
+                dev.ikm.tinkar.terms.State.ACTIVE, System.currentTimeMillis(),
+                dev.ikm.tinkar.terms.KernelConcept.USER.publicId(),
+                dev.ikm.tinkar.terms.KernelConcept.PRIMORDIAL_MODULE.publicId(),
+                dev.ikm.tinkar.terms.KernelConcept.DEVELOPMENT_PATH.publicId());
+        dev.ikm.tinkar.entity.EntityService.get().putEntity(stamp);
+        dev.ikm.tinkar.entity.RecordListBuilder<dev.ikm.tinkar.entity.ConceptVersionRecord> versions =
+                dev.ikm.tinkar.entity.RecordListBuilder.make();
+        dev.ikm.tinkar.entity.ConceptRecord concept = dev.ikm.tinkar.entity.ConceptRecordBuilder.builder()
+                .leastSignificantBits(id.asUuidArray()[0].getLeastSignificantBits())
+                .mostSignificantBits(id.asUuidArray()[0].getMostSignificantBits())
+                .nid(nid)
+                .versions(versions)
+                .build();
+        versions.addAndBuild(new dev.ikm.tinkar.entity.ConceptVersionRecord(concept, stamp.nid()));
+        dev.ikm.tinkar.entity.EntityService.get().putEntity(concept);
+
+        org.junit.jupiter.api.Assertions.assertFalse(recordedAbsent(id.asUuidArray()[0]), "written, so no longer absent");
+        assertEquals(id, PrimitiveData.publicId(nid));
+    }
+
+    /** Whether the store's absent-identity record names a UUID. Read through reflection: an implementation detail. */
+    private static boolean recordedAbsent(UUID uuid) throws Exception {
+        return absentUuids().values().stream().anyMatch(uuids -> uuids.contains(uuid));
+    }
+
+    /** The store's absent-identity record, by nid. */
+    @SuppressWarnings("unchecked")
+    private static java.util.Map<Integer, java.util.List<UUID>> absentUuids() throws Exception {
+        Object provider = PrimitiveData.get();
+        java.lang.reflect.Field field = provider.getClass().getDeclaredField("absentUuids");
+        field.setAccessible(true);
+        return (java.util.Map<Integer, java.util.List<UUID>>) field.get(provider);
+    }
+
+    @Test
     void everyUuidTheNidWasMintedFromIsReported() {
         PublicId absent = PublicIds.of(UUID.randomUUID(), UUID.randomUUID());
         long nid = PrimitiveData.nid(absent);
