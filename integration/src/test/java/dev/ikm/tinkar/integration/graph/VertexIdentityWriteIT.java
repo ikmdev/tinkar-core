@@ -31,6 +31,7 @@ import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
 import dev.ikm.tinkar.entity.graph.DiTreeCorrelation;
 import dev.ikm.tinkar.entity.graph.DiTreeCorrelation.Phase;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.DiTreeIsomorphism;
 import dev.ikm.tinkar.entity.graph.VertexDerivation;
 import dev.ikm.tinkar.entity.graph.VertexIdentityWrite;
@@ -250,6 +251,60 @@ class VertexIdentityWriteIT {
                 assertEquals(List.of(replayed.get(i)), List.of(uuids.get(i)), "the store derives as a replay does");
             }
         }
+    }
+
+    /**
+     * A tree may hold a vertex nothing reaches from its root. Identity never reads it, and the
+     * stored version put again under its STAMP, as the OWL transform does, is still the same
+     * version: the pairing marks the vertex -1, which is skipped, not indexed.
+     */
+    @Test
+    void aVertexNothingReachesDoesNotBreakTheSameVersionCheck() {
+        LogicalExpressionBuilder builder = new LogicalExpressionBuilder();
+        builder.NecessarySet(builder.And(builder.ConceptAxiom(KernelConcept.LANGUAGE)));
+        DiTreeEntity tree = (DiTreeEntity) builder.build().sourceGraph();
+        // The same tree, vertex by vertex and edge by edge, plus a vertex nothing reaches. The orphan
+        // has a logical meaning (the set's And), so the identity table still covers the tree.
+        DiTreeEntity.Builder withOrphan = DiTreeEntity.builder();
+        for (EntityVertex vertex : tree.vertexMap()) {
+            EntityVertex copy = vertex.copyWithUnassignedIndex();
+            withOrphan.addVertex(copy);
+            if (vertex.vertexIndex() == tree.root().vertexIndex()) {
+                withOrphan.setRoot(copy);
+            }
+        }
+        for (EntityVertex vertex : tree.vertexMap()) {
+            tree.successors(vertex.vertexIndex()).forEach(child -> withOrphan.addEdge(child, vertex.vertexIndex()));
+        }
+        int set = tree.successors(tree.root().vertexIndex()).get(0);
+        long and = tree.vertex(tree.successors(set).get(0)).getMeaningNid();
+        withOrphan.addVertex(EntityVertex.make(and));
+        DiTreeEntity orphaned = withOrphan.build();
+        assertEquals(tree.vertexMap().size() + 1, orphaned.vertexMap().size());
+        assertEquals(tree.root().vertexIndex(), orphaned.root().vertexIndex());
+        assertEquals(tree.successors(tree.root().vertexIndex()), orphaned.successors(orphaned.root().vertexIndex()));
+
+        PublicId concept = PublicIds.newRandom();
+        PublicId semantic = PublicIds.newRandom();
+        StampedWriter writer = open("unreachable vertex", 1_800_000_000_100L);
+        writer.concept(concept);
+        writer.semantic(semantic, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.publicId(), concept, orphaned);
+        long nid = EntityService.get().nidForSemantic(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.publicId(), semantic);
+        DiTreeEntity stored = firstTree(nid);
+        assertEquals(orphaned.vertexMap().size(), stored.vertexMap().size(), "the store keeps the vertex nothing reaches");
+
+        // The stored tree again, UUIDs and all, under the same STAMP: the same version.
+        writer.semantic(semantic, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.publicId(), concept, stored);
+        writer.commit();
+        DiTreeEntity kept = firstTree(nid);
+        for (int i = 0; i < stored.vertexMap().size(); i++) {
+            assertEquals(uuidAt(stored, i), uuidAt(kept, i), "identities kept");
+        }
+    }
+
+    private static DiTreeEntity firstTree(long semanticNid) {
+        SemanticEntity<SemanticEntityVersion> semantic = EntityHandle.get(semanticNid).expectSemantic();
+        return (DiTreeEntity) semantic.versions().getFirst().fieldValues().get(0);
     }
 
     /** A set with two successors is not a shape the identity table admits, and is refused. */

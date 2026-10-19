@@ -43,8 +43,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.primitive.LongLists;
-import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
@@ -64,7 +65,8 @@ public class Transaction implements Comparable<Transaction> {
 
     private static ConcurrentHashSet<Transaction> activeTransactions = new ConcurrentHashSet<>();
     private final UUID transactionUuid;
-    private final String transactionName;
+    /** Named at birth, or renamed while open by {@link #setTransactionName(String)}. */
+    private volatile String transactionName;
     ConcurrentHashSet<UUID> stampsInTransaction = new ConcurrentHashSet<>();
     ConcurrentHashSet<Long> componentsInTransaction = new ConcurrentHashSet<>();
     private long commitTime = Long.MAX_VALUE;
@@ -209,10 +211,37 @@ public class Transaction implements Comparable<Transaction> {
     }
 
     /**
-     * @return the name the transaction was made with; its record keeps it across a restart
+     * The transactions that are open: made, or restored, and neither committed nor canceled.
+     * A snapshot: transactions keep being made and ended after it is taken.
+     *
+     * @return the open transactions, in no particular order
      */
-    public String name() {
+    public static ImmutableList<Transaction> activeTransactions() {
+        return Lists.immutable.withAll(activeTransactions);
+    }
+
+    /**
+     * The name this transaction was made with, or was last given.
+     *
+     * @return the transaction name; empty when it was made without one
+     */
+    public String getTransactionName() {
         return transactionName;
+    }
+
+    /**
+     * Names this transaction while it is open. A transaction made without a name is named at
+     * publish time by the user: the name goes out with the commit
+     * ({@link CommitBroadcaster.CommitNotification#transactionName()}).
+     *
+     * @param transactionName the new name
+     * @throws IllegalStateException if the transaction has ended
+     */
+    public void setTransactionName(String transactionName) {
+        if (!isOpen()) {
+            throw new IllegalStateException("Transaction " + transactionUuid + " has ended; it cannot be renamed");
+        }
+        this.transactionName = transactionName;
     }
 
     /**

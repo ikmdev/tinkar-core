@@ -153,7 +153,7 @@ final class TransactionRecords {
         StampEntity<?> stamp = committedStamp(entities, time, authorId, moduleId, pathId);
 
         MutableValues values = new MutableValues();
-        values.set(NAME, transaction.name());
+        values.set(NAME, transaction.getTransactionName());
         values.set(STATE, EntityProxy.Concept.make(stateNid));
         values.set(BASIS, Instant.ofEpochMilli(transaction.basisTime()));
         values.set(BASIS_PATH, EntityProxy.Concept.make(transaction.basisPathNid()));

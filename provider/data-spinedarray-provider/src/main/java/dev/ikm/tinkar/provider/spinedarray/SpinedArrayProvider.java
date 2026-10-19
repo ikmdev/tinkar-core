@@ -335,8 +335,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     }
 
     /**
-     * UUIDs of nids that have no entity: loaded from {@link #absentIdentitiesFile}, and found on
-     * each save among the nids minted since the previous one. Small — such nids are rare.
+     * UUIDs of nids that have no entity: loaded from {@link #absentIdentitiesFile}, recorded as a
+     * nid is minted and dropped when its entity is written, and found on each save among any the
+     * sweep still finds absent. Holds what is referenced but not yet written, which in a parallel
+     * load is many for a moment and few for long.
      */
     private final java.util.concurrent.ConcurrentHashMap<Integer, List<UUID>> absentUuids =
             new java.util.concurrent.ConcurrentHashMap<>();
@@ -411,7 +413,12 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     @Override
     public long nidForUuids(UUID... uuids) {
         awaitUuids();
-        return SequentialNids.nidForUuids(uuidToNidMap, () -> Nid.narrowChecked(newNid()), uuids);
+        boolean[] minted = {false};
+        int nid = SequentialNids.nidForUuids(uuidToNidMap, () -> mint(minted), uuids);
+        if (minted[0]) {
+            recordAbsent(nid, List.of(uuids));
+        }
+        return nid;
     }
 
     @Override
@@ -422,7 +429,29 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     @Override
     public long nidForUuids(ImmutableList<UUID> uuidList) {
         awaitUuids();
-        return SequentialNids.nidForUuids(uuidToNidMap, () -> Nid.narrowChecked(newNid()), uuidList);
+        boolean[] minted = {false};
+        int nid = SequentialNids.nidForUuids(uuidToNidMap, () -> mint(minted), uuidList);
+        if (minted[0]) {
+            recordAbsent(nid, uuidList.castToList());
+        }
+        return nid;
+    }
+
+    private int mint(boolean[] minted) {
+        minted[0] = true;
+        return Nid.narrowChecked(newNid());
+    }
+
+    /**
+     * A nid minted for a public id has no entity until one is written, and until then the only
+     * answer to {@link #publicIdForNid} is the UUIDs it was minted from, so they are recorded as
+     * it is minted and dropped when its entity arrives ({@link #merge}). Vertex identity derivation
+     * asks for every component a definition references, and in a parallel load most are minted
+     * before they are written: left to the save-time sweep, each would have cost a pass over the
+     * whole identity map (IKE-Network/ike-issues#1310).
+     */
+    private void recordAbsent(int nid, List<UUID> uuids) {
+        absentUuids.put(nid, new java.util.concurrent.CopyOnWriteArrayList<>(uuids));
     }
 
     /** Waits for the identity map, which open rebuilds from the entities on another thread. */
@@ -466,6 +495,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         if (known != null && !known.isEmpty()) {
             return PublicIds.of(known);
         }
+        // A nid minted by some other route than nidForUuids, or one a save has not swept since
+        // its entity was erased: a pass over the identity map, which no load should reach.
         List<UUID> uuids = new ArrayList<>();
         uuidToNidMap.forEach((uuid, mappedNid) -> {
             if (mappedNid == narrowed) {
@@ -567,6 +598,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             }
         }
         byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(Nid.narrowChecked(nid), value, accumulator);
+        // Its public id is in its bytes now; the save finds any that are still absent.
+        absentUuids.remove(Nid.narrowChecked(nid));
         this.writeSequence.increment();
         this.changeSetWriterServices.forEach(writerService -> writerService.writeToChangeSet((Entity) sourceObject, activity));
 
