@@ -158,6 +158,34 @@ public interface EntityStore {
 
     void forEachSemanticNidOfPattern(long patternNid, LongProcedure procedure);
 
+    /**
+     * How many semantics of a pattern the store holds. A store that keeps the pattern's index
+     * answers from its length; a remote store asks its server, without fetching the semantics.
+     *
+     * @param patternNid the pattern
+     * @return the number of semantics of the pattern
+     */
+    default int countSemanticsOfPattern(long patternNid) {
+        return semanticNidsOfPattern(patternNid).length;
+    }
+
+    /**
+     * One page of a pattern's semantics, in the order {@link #semanticNidsOfPattern(long)} lists
+     * them. A view showing the first few of a pattern's millions reads only those; a remote store
+     * fetches only that page.
+     *
+     * @param patternNid the pattern
+     * @param offset     how many to skip
+     * @param limit      how many at most
+     * @return the nids of the page, possibly fewer than {@code limit}
+     */
+    default long[] semanticNidsOfPattern(long patternNid, int offset, int limit) {
+        long[] all = semanticNidsOfPattern(patternNid);
+        int from = Math.min(Math.max(0, offset), all.length);
+        int to = (int) Math.min((long) from + Math.max(0, limit), all.length);
+        return java.util.Arrays.copyOfRange(all, from, to);
+    }
+
     void forEachPatternNid(LongProcedure procedure);
 
     void forEachConceptNid(LongProcedure procedure);
