@@ -275,6 +275,11 @@ public final class VertexIdentityWrite {
             return false;
         }
         for (int i = 0; i < images.length; i++) {
+            if (images[i] < 0) {
+                // Not in the root's subtree: a vertex the tree holds but nothing reaches, which
+                // identity never reads. The reachable trees are isomorphic, so neither has more.
+                continue;
+            }
             if (!EntityVertexUuid.of(a.vertex(i)).equals(EntityVertexUuid.of(b.vertex(images[i])))) {
                 return false;
             }

@@ -181,7 +181,7 @@ class TransactionRecordRestartIT {
                 out.setProperty("pending.rebuilt", Boolean.toString(pending != null));
                 EntityVersion version = latest(PENDING_CONCEPT);
                 if (pending != null) {
-                    out.setProperty("pending.name", pending.name());
+                    out.setProperty("pending.name", pending.getTransactionName());
                     out.setProperty("pending.external", pending.externalBasis());
                     out.setProperty("pending.basis", Long.toString(pending.basisTime()));
                     out.setProperty("pending.initiated", Long.toString(pending.initiated()));
