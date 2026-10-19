@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.entity.constraint;
 
 import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.ConceptFacade;
 
 /**
  * The evaluator side of a member-match relation (IKE-Network/ike-issues#889): the
@@ -50,7 +50,7 @@ public interface MemberMatchEvaluator {
      *
      * @return the member-match relation concept; never null
      */
-    EntityProxy.Concept relation();
+    ConceptFacade relation();
 
     /**
      * Whether a constraint using this relation is well-formed for the given operand

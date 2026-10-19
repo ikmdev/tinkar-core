@@ -386,6 +386,7 @@ public interface EntityHandle {
      * @param entityFacade the entity facade
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
      */
+    @SuppressWarnings("facade-check") // only a proxy can hold an identity the store has not resolved
     static EntityHandle get(EntityFacade entityFacade) {
         if (entityFacade == null) {
             return absent();
@@ -414,6 +415,7 @@ public interface EntityHandle {
      * @param proxy the entity proxy
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
      */
+    @SuppressWarnings("facade-check") // the overload exists to settle a proxy's ambiguity
     static EntityHandle get(EntityProxy proxy) {
         return get((EntityFacade) proxy);
     }

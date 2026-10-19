@@ -749,6 +749,7 @@ public final class KnowledgeSet {
      * @param birthFqn the concept's fully qualified name at birth
      * @return a concept proxy carrying the identity and the given name as its description
      */
+    @SuppressWarnings("facade-check") // declared constants hold these proxies
     public EntityProxy.Concept conceptRef(String birthFqn) {
         ConceptBuilder opened = concepts.get(birthFqn);
         if (opened == null) {
@@ -768,6 +769,7 @@ public final class KnowledgeSet {
      * @param birthFqn the pattern's fully qualified name at birth
      * @return a pattern proxy carrying the identity and the given name as its description
      */
+    @SuppressWarnings("facade-check") // declared constants hold these proxies
     public EntityProxy.Pattern patternRef(String birthFqn) {
         PatternBuilder opened = patterns.get(birthFqn);
         if (opened == null) {

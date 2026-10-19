@@ -244,13 +244,12 @@ public final class StoreWriter {
             counts.written.increment();
             return nid;
         }
-        ConceptRecord record = withUuids(existing.get(), conceptId);
+        Optional<ConceptRecord> widened = withMissingUuids(existing.get(), conceptId);
+        ConceptRecord record = widened.orElse(existing.get());
         Latest<ConceptEntityVersion> latest = calculator.latest(nid);
         if (hasVersionUnder(record.versions(), stampNid)
                 || (latest.isPresent() && latest.get().active() == active(stamp))) {
-            if (record != existing.get()) {
-                EntityService.get().putEntity(record);
-            }
+            widened.ifPresent(EntityService.get()::putEntity);
             counts.unchanged.increment();
             return nid;
         }
@@ -363,11 +362,10 @@ public final class StoreWriter {
         if (existing.isEmpty()) {
             return concept(stamp, conceptId);
         }
-        ConceptRecord record = withUuids(existing.get(), conceptId);
+        Optional<ConceptRecord> widened = withMissingUuids(existing.get(), conceptId);
+        ConceptRecord record = widened.orElse(existing.get());
         if (hasVersionUnder(record.versions(), stampNid)) {
-            if (record != existing.get()) {
-                EntityService.get().putEntity(record);
-            }
+            widened.ifPresent(EntityService.get()::putEntity);
             counts.unchanged.increment();
             return nid;
         }
@@ -524,10 +522,10 @@ public final class StoreWriter {
     }
 
     /**
-     * The record with every UUID of a public id it lacks added after its own, the head kept; the
-     * record itself when it has them all.
+     * The record with every UUID of a public id it lacks added after its own, the head kept; empty
+     * when it has them all.
      */
-    private static ConceptRecord withUuids(ConceptRecord record, PublicId wanted) {
+    private static Optional<ConceptRecord> withMissingUuids(ConceptRecord record, PublicId wanted) {
         java.util.List<UUID> uuids = new java.util.ArrayList<>(java.util.Arrays.asList(record.publicId().asUuidArray()));
         boolean added = false;
         for (UUID uuid : wanted.asUuidArray()) {
@@ -537,14 +535,14 @@ public final class StoreWriter {
             }
         }
         if (!added) {
-            return record;
+            return Optional.empty();
         }
         PublicIdentifierRecord merged = PublicIdentifierRecord.make(PublicIds.of(uuids.toArray(UUID[]::new)));
-        return ConceptRecordBuilder.builder(record)
+        return Optional.of(ConceptRecordBuilder.builder(record)
                 .mostSignificantBits(merged.mostSignificantBits())
                 .leastSignificantBits(merged.leastSignificantBits())
                 .additionalUuidLongs(merged.additionalUuidLongs())
-                .build();
+                .build());
     }
 
     private static boolean active(Stamp stamp) {
