@@ -828,7 +828,7 @@ public class Transaction implements Comparable<Transaction> {
 
     /**
      * Drops every transaction held in memory, as when the store they belong to has stopped.
-     * Their records remain; {@link #restoreOpen()} rebuilds the open ones from the next start.
+     * Their records remain; {@link #restoreOpen(EntityService)} rebuilds the open ones from the next start.
      */
     public static void forgetAll() {
         activeTransactions.clear();

@@ -39,6 +39,11 @@
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
+			<artifactId>component</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>reasoner-service</artifactId>
 			<scope>test</scope>
 		</dependency>
@@ -46,6 +51,11 @@
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>importer-elk-test-cases</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>importer-api</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -59,8 +69,8 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -132,6 +142,10 @@
 						</goals>
 						<configuration>
 							<ignoreUnusedRuntime>true</ignoreUnusedRuntime>
+							<!-- tinkar-core's parent gives every module slf4j-api; these tests log nothing. -->
+							<ignoredUnusedDeclaredDependencies>
+								<ignoredUnusedDeclaredDependency>org.slf4j:slf4j-api</ignoredUnusedDeclaredDependency>
+							</ignoredUnusedDeclaredDependencies>
 						</configuration>
 					</execution>
 				</executions>

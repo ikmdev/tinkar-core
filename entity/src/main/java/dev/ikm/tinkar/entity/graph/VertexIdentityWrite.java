@@ -110,7 +110,7 @@ public final class VertexIdentityWrite {
      * The entity to write in place of the one given.
      *
      * @param incoming          the semantic being put
-     * @param stored            the semantic as stored, or null; asked for only when the incoming
+     * @param storedSupplier    the semantic as stored, or null; asked for only when the incoming
      *                          semantic holds a logical tree
      * @param withdrawnStampNid the STAMP of a version the put replaces, or 0
      * @param stamps            STAMP lookup by nid
