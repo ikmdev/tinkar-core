@@ -14,6 +14,7 @@
 		<subproject>reasoner-elk-snomed-test</subproject>
 		<subproject>reasoner-hybrid</subproject>
 		<subproject>reasoner-service</subproject>
+		<subproject>reasoner-test-kb-it</subproject>
 	</subprojects>
 
 	<properties>

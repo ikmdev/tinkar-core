@@ -28,8 +28,7 @@ import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
+import dev.ikm.tinkar.entity.graph.DiTreeEditScript;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import org.eclipse.collections.api.list.ImmutableList;
 
@@ -82,26 +81,10 @@ public record ChangeChronology(long nid, ImmutableList<VersionChangeRecord> chan
                 sb.append(formatFunction.apply(fieldChange.currentValue().value()));
                 if (fieldChange.currentValue().value() instanceof DiTreeEntity currentTree &&
                     fieldChange.priorValue().value() instanceof DiTreeEntity priorTree) {
-                    SemanticEntity theSemantic = (SemanticEntity) referencedEntity;
-                    IsomorphicResultsLeafHash<?> isomorphicResult = new IsomorphicResultsLeafHash(currentTree, priorTree, theSemantic.referencedComponentNid());
                     try {
-                        isomorphicResult.call();
                         sb.append("\n");
-                        if (!isomorphicResult.getAdditionalVertexRoots().isEmpty())  {
-                            sb.append("\nAdditions: \n\n");
-                            isomorphicResult.getAdditionalVertexRoots().forEach((EntityVertex additionRoot) -> {
-                                sb.append("  ").append(isomorphicResult.getReferenceTree().fragmentToString(additionRoot));
-                                sb.append("\n");
-                            });
-                        }
-                        if (!isomorphicResult.getDeletedVertexRoots().isEmpty()) {
-                            sb.append("\nDeletions: \n\n");
-                            isomorphicResult.getDeletedVertexRoots().forEach((EntityVertex deletionRoot) -> {
-                                sb.append("  ").append(isomorphicResult.getComparisonTree().fragmentToString(deletionRoot));
-                                sb.append("\n");
-                            });
-                        }
-                    } catch (Exception e) {
+                        sb.append(DiTreeEditScript.ofVersions(priorTree, currentTree).toText());
+                    } catch (RuntimeException e) {
                         AlertStreams.dispatchToRoot(e);
                     }
                 }

@@ -70,6 +70,11 @@ public class OwlElToLogicalExpression {
 					getConceptFacade(role_type.getChained().getId()));
 			exprs.add(builder.PropertySequenceImplicationAxiom(chain, getConceptFacade(role_type.getId())));
 		}
+		for (List<RoleType> links : role_type.getChains()) {
+			ImmutableList<ConceptFacade> chain = Lists.immutable
+					.fromStream(links.stream().map(link -> getConceptFacade(link.getId())));
+			exprs.add(builder.PropertySequenceImplicationAxiom(chain, getConceptFacade(role_type.getId())));
+		}
 		And expr = builder.And(toArray(exprs));
 		builder.PropertySet(expr);
 	}

@@ -137,7 +137,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * @param entity the entity to be written or processed based on the activity
      * @param activity the type of data activity that determines the operation
      *                 on the entity; supported activities include SYNCHRONIZABLE_EDIT,
-     *                 LOADING_CHANGE_SET, INITIALIZE, LOCAL_EDIT, and DATA_REPAIR
+     *                 LOADING_CHANGE_SET, LOADING_UNDERIVED_CHANGE_SET, INITIALIZE, LOCAL_EDIT, and DATA_REPAIR
      * @throws RuntimeException if the thread is interrupted during the operation
      */
     @Override
@@ -148,7 +148,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     this.entitiesToWrite.put(entity);
                     LOG.trace("ChangeSetWriterProvider queued entity for changeset write: {}", entity);
                 }
-                case LOADING_CHANGE_SET, INITIALIZE, LOCAL_EDIT, DATA_REPAIR -> {
+                case LOADING_CHANGE_SET, LOADING_UNDERIVED_CHANGE_SET, INITIALIZE, LOCAL_EDIT, DATA_REPAIR -> {
                 }
             }
         } catch (InterruptedException e) {

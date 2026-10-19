@@ -471,7 +471,8 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
                     zos.closeEntry();
                     zos.putNextEntry(new ZipEntry(ChangeSetFormat.MANIFEST));
                     zos.write(ChangeSetWriter.manifestContent(ChangeSetWriter.counts(byKind), writtenEntries, numbering.rows.size(),
-                            ChangeSetWriter.sections(manifest)).getBytes(StandardCharsets.UTF_8));
+                            ChangeSetWriter.sections(manifest),
+                            ChangeSetFormat.vertexIdentityDerived(manifest.getMainAttributes())).getBytes(StandardCharsets.UTF_8));
                     zos.closeEntry();
                 }
             } finally {

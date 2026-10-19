@@ -165,8 +165,9 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
             if (source.option("owlTransform").map(Boolean::parseBoolean).orElse(true) && axioms.sum() > 0) {
                 transformOwl(stamps, ids, axiomConcepts);
             }
-            return ImportReport.of(name(), version, writer.counts().tally().minus(before), details,
+            ImportReport report = ImportReport.of(name(), version, writer.counts().tally().minus(before), details,
                     Duration.between(start, Instant.now()));
+            return release.releaseDate().map(report::withReleaseDate).orElse(report);
         }
     }
 

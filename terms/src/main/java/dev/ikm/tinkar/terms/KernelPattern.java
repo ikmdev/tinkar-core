@@ -89,7 +89,32 @@ public enum KernelPattern implements PatternEnumerationFacade<KernelPattern> {
     /**
      * Path origins pattern (SOLOR)
      */
-    PATH_ORIGINS_PATTERN("Path origins pattern (SOLOR)", "70f89dd5-2cdb-59bb-bbaa-98527513547c");
+    PATH_ORIGINS_PATTERN("Path origins pattern (SOLOR)", "70f89dd5-2cdb-59bb-bbaa-98527513547c"),
+
+    /**
+     * The concepts classification found the referenced concept logically equivalent to, never including the concept itself. Written beside the inferred navigation semantic only for a concept with equivalents; when a later classification finds none, the set is empty.
+     */
+    INFERRED_EQUIVALENCE_PATTERN("Inferred equivalence pattern (IkeFoundation)", "749e039b-33c1-587c-83f0-a72a6e9eabef"),
+
+    /**
+     * A release imported into the knowledge base, referencing this pattern: the release's name and publisher date, the artifact as named, its resolved version and checksum, the importer and the options that change what it writes, the stamps it wrote under, its counts, and the release registrations it was layered on. Written by the IKE Registrar in the Registry module on the Registry path, stamped at the release date.
+     */
+    RELEASE_REGISTRATION_PATTERN("Release registration pattern (IkeFoundation)", "65667d31-898b-5351-8bd2-1b89950b7139"),
+
+    /**
+     * An assembly of the knowledge base, referencing this pattern: its inputs in load order, each with its role, artifact as named, resolved version and checksum; the release registrations in the order they arrived; and the classifier. Written by the IKE Registrar in the Registry module on the Registry path, stamped when the assembly ran.
+     */
+    ASSEMBLY_REGISTRATION_PATTERN("Assembly registration pattern (IkeFoundation)", "a7bea31c-ed52-59b5-99fb-3cbb6c1ec33d"),
+
+    /**
+     * An export from the knowledge base, referencing this pattern: the file written, what it selected, the checksum of what it wrote, and how many components it wrote. Written by the IKE Registrar in the Registry module on the Registry path, stamped when the export ran.
+     */
+    EXPORT_REGISTRATION_PATTERN("Export registration pattern (IkeFoundation)", "af1f8c12-4297-55d8-ae6f-c7ded4996a09"),
+
+    /**
+     * A transaction that wrote uncommitted versions, referencing the change tracking module, with the transaction's UUID as its identity and its author on every version's stamp: its name, its state, its basis (time, path, and any external basis such as a git commit), and, while it is open, the components it has written. Its uncommitted stamps are not listed: each derives from the transaction's UUID. Written in the change tracking module under committed stamps of its own, one version per lifecycle event.
+     */
+    CHANGE_TRANSACTION_PATTERN("Change transaction pattern (IkeFoundation)", "ad41bbd5-e973-5779-9975-e4b6206ef3ed");
 
     private final EntityProxy.Pattern proxy;
 

@@ -18,6 +18,7 @@ package dev.ikm.tinkar.integration.diagnostic;
 import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Calculators;
@@ -107,7 +108,11 @@ class ExceptionMessageIT {
         SemanticRecord definition = SemanticRecord.build(fixtureUuid("malformed definition"),
                 KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(), malformedNid, version,
                 Lists.immutable.of(aNecessarySetWithTwoChildren()));
-        put(transaction, definition);
+        // Written as a change set is loaded: the write path refuses this shape from an editor or
+        // builder (IKE-Network/ike-issues#1310), and malformed definitions reach a store only from
+        // elsewhere, which is what reading one must report well.
+        EntityService.get().putEntity(definition, DataActivity.LOADING_CHANGE_SET);
+        transaction.addComponent(definition);
         transaction.commit();
         malformedDefinition = (SemanticEntityVersion) definition.versions().get(0);
     }

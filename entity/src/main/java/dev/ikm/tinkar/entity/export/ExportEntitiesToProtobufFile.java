@@ -986,6 +986,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                                   Collection<PublicId> moduleList, Collection<PublicId> authorList) {
         StringBuilder manifest = new StringBuilder()
                 .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.CURRENT_VERSION).append("\n")
+                // A store's trees carry the identities the write path derived or kept.
+                .append(ChangeSetFormat.vertexIdentityLine(true))
                 .append("Packager-Name: ").append(KernelConcept.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
                 .append("Total-Count: ").append(counts.getTotalCount()).append("\n")
@@ -1019,6 +1021,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                                            Collection<PublicId> authorList){
         StringBuilder manifestContent = new StringBuilder()
                 .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.IDENTITY_INDEX_VERSION).append("\n")
+                .append(ChangeSetFormat.vertexIdentityLine(true))
                 // TODO: Dynamically populate this user
                 .append("Packager-Name: ").append(KernelConcept.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")

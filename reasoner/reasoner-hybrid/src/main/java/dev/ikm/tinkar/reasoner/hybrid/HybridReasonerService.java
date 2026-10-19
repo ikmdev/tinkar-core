@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
 import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 
 import dev.ikm.tinkar.common.service.TrackingCallable;
@@ -70,6 +71,7 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	public void loadData(TrackingCallable<?> progressTracker) throws Exception {
 		LOG.info("Create ontology");
 		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), data.getConcreteRoleTypes());
+		nameBottom(ontology);
 	};
 
 	@Override
@@ -99,16 +101,21 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 		return sso.getEquivalentConcepts(id).toImmutable();
 	}
 
+	// The reasoner's ids are the nids. Parents and children are answered as the ELK service answers
+	// them, a role's from the role hierarchy, from this reasoner's classification.
 	@Override
-	public ImmutableLongSet getParents(long id) {
-		// the reasoner's ids are the nids
+	protected ImmutableLongSet conceptParents(long id) {
 		return sso.getSuperConcepts(id).toImmutable();
 	}
 
 	@Override
-	public ImmutableLongSet getChildren(long id) {
-		// the reasoner's ids are the nids
+	protected ImmutableLongSet conceptChildren(long id) {
 		return sso.getSubConcepts(id).toImmutable();
+	}
+
+	@Override
+	protected MutableLongObjectMap<MutableLongSet> classifiedSuperRoles() {
+		return sso.getSuperRoleTypes(true);
 	}
 
 }

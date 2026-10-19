@@ -539,7 +539,47 @@ public enum KernelConcept implements ConceptEnumerationFacade<KernelConcept> {
     /**
      * The identifier source of SNOMED CT identifiers (SCTIDs): an identifier semantic whose source is this concept carries the SNOMED CT identifier of the component it identifies.
      */
-    SCTID("SCTID (SOLOR)", "0418a591-f75b-39ad-be2c-3ab849326da9,87360947-e603-3397-804b-efd0fcc509b9,ab9a0e0a-6359-5462-859c-96c3d4ef2341");
+    SCTID("SCTID (SOLOR)", "0418a591-f75b-39ad-be2c-3ab849326da9,87360947-e603-3397-804b-efd0fcc509b9,ab9a0e0a-6359-5462-859c-96c3d4ef2341"),
+
+    /**
+     * The concept with no instances, a kind of every concept: the reasoner's bottom, owl:Nothing in OWL. A concept classification finds equivalent to it is unsatisfiable: its definition contradicts itself, as when it is a kind of two disjoint concepts. Stated under the root, so unsatisfiable concepts, which share its place, show at the top of the taxonomy.
+     */
+    BOTTOM("Nothing (IkeFoundation)", "27c8360e-9654-5a2b-9a7a-aa31e9a63926"),
+
+    /**
+     * The author of every registration: the IKE tooling that records what a knowledge base is made of whenever it imports, assembles or exports, in Komet, in a Maven goal, or anywhere else.
+     */
+    REGISTRAR("IKE Registrar (IkeFoundation)", "2899066e-1896-5511-8da7-3a45c64eee50"),
+
+    /**
+     * The module registrations are written in: bookkeeping about what the knowledge base is made of, not knowledge. Content views leave it out.
+     */
+    REGISTRY_MODULE("IKE Registry module (IkeFoundation)", "60795d0a-0c88-5af2-a6a7-f9ac2ff24359"),
+
+    /**
+     * The path every registration is written on, whatever path the content it describes is on, so the accounting of a knowledge base is in one place. Nothing is promoted to or from it.
+     */
+    REGISTRY_PATH("IKE Registry path (IkeFoundation)", "259c8239-9588-53be-a42b-cb3562eb15ed"),
+
+    /**
+     * The module transaction records are written to: bookkeeping about how the knowledge base changed, not knowledge. Default views and published releases leave it out; change sets exchanged between people carry it.
+     */
+    CHANGE_TRACKING_MODULE("Change tracking module (IkeFoundation)", "a6ef93c4-8e0b-5278-82a3-0fa30c4f1d95"),
+
+    /**
+     * The transaction may still write; what it wrote is uncommitted.
+     */
+    TRANSACTION_OPEN("Transaction open (IkeFoundation)", "ccad0c40-10f4-552d-a610-64a78d7aaa0d"),
+
+    /**
+     * The transaction ended by committing what it wrote.
+     */
+    TRANSACTION_COMMITTED("Transaction committed (IkeFoundation)", "c417eb2f-e971-543e-9eb0-4e175c8c4583"),
+
+    /**
+     * The transaction ended by cancelling what it wrote; its versions are withdrawn, its record remains.
+     */
+    TRANSACTION_CANCELLED("Transaction cancelled (IkeFoundation)", "93693d17-7fa5-57ae-9f25-e9bf3f709b06");
 
     private final EntityProxy.Concept proxy;
 

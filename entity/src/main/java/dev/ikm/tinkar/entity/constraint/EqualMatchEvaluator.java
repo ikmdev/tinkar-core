@@ -18,9 +18,9 @@ package dev.ikm.tinkar.entity.constraint;
 import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.component.FieldDataType;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.ConstraintTerm;
 import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -59,7 +59,7 @@ public final class EqualMatchEvaluator implements MemberMatchEvaluator {
     }
 
     @Override
-    public EntityProxy.Concept relation() {
+    public ConceptFacade relation() {
         return ConstraintTerm.EQUAL_MATCH_RELATION;
     }
 

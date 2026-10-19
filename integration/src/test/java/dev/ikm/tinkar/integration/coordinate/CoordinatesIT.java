@@ -51,9 +51,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import static dev.ikm.tinkar.terms.KernelPattern.PATH_ORIGINS_PATTERN;
+import static dev.ikm.tinkar.terms.KernelPattern.PATHS_PATTERN;
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -73,13 +76,20 @@ class CoordinatesIT {
     @Test
     @Order(2)
     void countPathOrigins() {
-        // There are 4 Paths and 3 PathOrigins:
-        //      MasterPath originates from DevelopmentPath
-        //      DevelopmentPath originates from SandboxPath
-        //      SandboxPath originates from PrimordialPath
-        //      PrimordialPath is, by definition, the origin and therefore does not have a PathOrigin
-        int expectedPathOriginsCount = 3;
-        Assertions.assertEquals(expectedPathOriginsCount, EntityService.get().semanticsOfPattern(PATH_ORIGINS_PATTERN.nid()).count());
+        // Every path originates from another but the primordial path, which is by definition
+        // the origin and so has no path origin: master from development, development from
+        // sandbox, sandbox from primordial, and any path the store's content adds (the
+        // registry's, for one). Counted from the store as loaded, not hard-coded.
+        Set<Long> paths = new HashSet<>();
+        EntityService.get().semanticsOfPattern(PATHS_PATTERN.nid()).forEach(path -> paths.add(path.referencedComponentNid()));
+        Assertions.assertTrue(paths.containsAll(Set.of(KernelConcept.PRIMORDIAL_PATH.nid(), KernelConcept.SANDBOX_PATH.nid(),
+                KernelConcept.DEVELOPMENT_PATH.nid(), KernelConcept.MASTER_PATH.nid())), "the four kernel paths are paths");
+        Set<Long> originated = new HashSet<>();
+        EntityService.get().semanticsOfPattern(PATH_ORIGINS_PATTERN.nid())
+                .forEach(origin -> Assertions.assertTrue(originated.add(origin.referencedComponentNid()),
+                        "one path origin semantic per path"));
+        paths.remove(KernelConcept.PRIMORDIAL_PATH.nid());
+        Assertions.assertEquals(paths, originated, "every path but the primordial one has a path origin");
     }
 
     @Test

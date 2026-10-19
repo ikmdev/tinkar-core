@@ -121,7 +121,8 @@ public final class ChangeSetExpansion extends TrackingCallable<ChangeSetExpansio
                 identities.writeTo(zos);
                 zos.putNextEntry(new ZipEntry(ChangeSetFormat.MANIFEST));
                 zos.write(ChangeSetWriter.identityIndexManifestContent(ChangeSetWriter.counts(byKind),
-                        ChangeSetWriter.sections(manifest)).getBytes(StandardCharsets.UTF_8));
+                        ChangeSetWriter.sections(manifest),
+                        ChangeSetFormat.vertexIdentityDerived(manifest.getMainAttributes())).getBytes(StandardCharsets.UTF_8));
                 zos.closeEntry();
             }
             updateProgress(1, 1);

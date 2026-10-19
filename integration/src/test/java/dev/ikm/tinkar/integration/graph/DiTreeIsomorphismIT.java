@@ -1,0 +1,274 @@
+/*
+ * Copyright © 2015 Integrated Knowledge Management (support@ikm.dev)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package dev.ikm.tinkar.integration.graph;
+
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.DiTreeIsomorphism;
+import dev.ikm.tinkar.fixtures.TestConstants;
+import dev.ikm.tinkar.integration.graph.RandomDefinitions.Definition;
+import dev.ikm.tinkar.integration.graph.RandomDefinitions.Feature;
+import dev.ikm.tinkar.integration.graph.RandomDefinitions.Group;
+import dev.ikm.tinkar.integration.graph.RandomDefinitions.Ref;
+import dev.ikm.tinkar.integration.graph.RandomDefinitions.Role;
+import dev.ikm.tinkar.integration.graph.RandomDefinitions.Set;
+import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.integration.helper.TestHelper;
+import dev.ikm.tinkar.entity.graph.EntityVertex;
+import dev.ikm.tinkar.terms.ComponentWithNid;
+import dev.ikm.tinkar.terms.KernelConcept;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Random;
+
+import static dev.ikm.tinkar.integration.graph.RandomDefinitions.asProxies;
+import static dev.ikm.tinkar.integration.graph.RandomDefinitions.build;
+import static dev.ikm.tinkar.integration.graph.RandomDefinitions.mutate;
+import static dev.ikm.tinkar.integration.graph.RandomDefinitions.parentsOnly;
+import static dev.ikm.tinkar.integration.graph.RandomDefinitions.randomDefinition;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * {@link DiTreeIsomorphism} against the definition of tree isomorphism: the comparison the
+ * reasoner's writer makes to decide whether a concept's newly computed necessary normal form is
+ * the same as its latest inferred form, and so whether a new inferred version is written.
+ *
+ * <p>Until IKE-Network/ike-issues#1310 this test also ran the decision the writer made before
+ * ({@code DiTreeEntity.makeCorrelatedTree} then {@code equals}, two leaf-hash isomorphic
+ * analyses) beside it. That decision found a new form that only adds to the latest form (a stated
+ * parent or role added) the same, so no inferred version was written, and it matched identical
+ * siblings of the latest form to one vertex of the new form; {@link #aSupersetIsAnotherTreeEitherWay}
+ * and {@link #identicalSiblingsCountAsTwo} are those cases decided now. The leaf-hash analysis
+ * retired with #1310, when vertex UUIDs became identity across versions; the side-by-side record
+ * is in the history of this file.
+ *
+ * <p>Expressions are built from the small model of {@link RandomDefinitions}. The
+ * oracle is a brute-force search that tries every pairing of children; it is slow and plainly
+ * right.
+ */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class DiTreeIsomorphismIT {
+
+    private static final long SEED = 20261016L;
+    private static final int RANDOM_CASES = 4_000;
+
+    @BeforeAll
+    void startStore() {
+        TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
+    }
+
+    @AfterAll
+    void stopStore() {
+        TestHelper.stopDatabase();
+    }
+
+    // ----- the oracle -----
+
+    /** The same meaning and properties, a component value the same as any other form of it. */
+    private static boolean oracleSameVertex(EntityVertex a, EntityVertex b) {
+        if (a.getMeaningNid() != b.getMeaningNid() || a.properties().size() != b.properties().size()) {
+            return false;
+        }
+        for (long key : a.properties().keySet().toArray()) {
+            if (!b.properties().containsKey(key)) {
+                return false;
+            }
+            Object valueA = a.properties().get(key);
+            Object valueB = b.properties().get(key);
+            boolean same = valueA instanceof ComponentWithNid componentA && valueB instanceof ComponentWithNid componentB
+                    ? componentA.nid() == componentB.nid()
+                    : Objects.equals(valueA, valueB);
+            if (!same) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Isomorphism by brute force: every pairing of children is tried. */
+    private static boolean oracleIsomorphic(DiTreeEntity a, int va, DiTreeEntity b, int vb) {
+        return oracleSameVertex(a.vertex(va), b.vertex(vb))
+                && a.successors(va).size() == b.successors(vb).size()
+                && pairChildren(a, a.successors(va), b, b.successors(vb), 0, new boolean[b.successors(vb).size()]);
+    }
+
+    private static boolean pairChildren(DiTreeEntity a, ImmutableIntList childrenA, DiTreeEntity b,
+                                        ImmutableIntList childrenB, int next, boolean[] used) {
+        if (next == childrenA.size()) {
+            return true;
+        }
+        for (int j = 0; j < childrenB.size(); j++) {
+            if (!used[j]) {
+                boolean pairs = oracleIsomorphic(a, childrenA.get(next), b, childrenB.get(j));
+                if (pairs) {
+                    used[j] = true;
+                    if (pairChildren(a, childrenA, b, childrenB, next + 1, used)) {
+                        return true;
+                    }
+                    used[j] = false;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean oracleIsomorphic(DiTreeEntity a, DiTreeEntity b) {
+        return oracleIsomorphic(a, a.root().vertexIndex(), b, b.root().vertexIndex());
+    }
+
+    // ----- hand-picked cases -----
+
+    @Test
+    void theSameDefinitionBuiltTwiceIsTheSameTree() {
+        Definition definition = new Definition(List.of(
+                new Set(true, List.of(new Ref(KernelConcept.LANGUAGE),
+                        new Group(List.of(new Role(KernelConcept.EXISTENTIAL_RESTRICTION, KernelConcept.ROLE_TYPE, KernelConcept.PHENOMENON)))))));
+        DiTreeEntity one = build(definition, null);
+        DiTreeEntity two = build(definition, null);
+        assertTrue(DiTreeIsomorphism.isomorphic(one, two));
+        assertEquals(DiTreeIsomorphism.hash(one), DiTreeIsomorphism.hash(two));
+    }
+
+    @Test
+    void childrenInAnotherOrderAreTheSameTree() {
+        Definition definition = parentsOnly(KernelConcept.LANGUAGE, KernelConcept.DESCRIPTION_TYPE, KernelConcept.PHENOMENON);
+        DiTreeEntity one = build(definition, null);
+        DiTreeEntity shuffled = build(definition, new Random(7));
+        assertTrue(DiTreeIsomorphism.isomorphic(one, shuffled));
+        assertEquals(DiTreeIsomorphism.hash(one), DiTreeIsomorphism.hash(shuffled));
+    }
+
+    /**
+     * The reasoner builds its normal form with binding enums; a form read back from the store
+     * holds proxies. They are the same tree. {@link EntityVertex#equivalent} disagrees with itself
+     * across the two, which is why the comparison does not rest on it.
+     */
+    @Test
+    void enumsAndProxiesOfOneConceptAreTheSameTree() {
+        Definition definition = new Definition(List.of(new Set(true, List.of(new Ref(KernelConcept.LANGUAGE),
+                new Role(KernelConcept.EXISTENTIAL_RESTRICTION, KernelConcept.ROLE_TYPE, KernelConcept.PHENOMENON)))));
+        DiTreeEntity enums = build(definition, null);
+        DiTreeEntity proxies = build(asProxies(definition), null);
+        assertTrue(DiTreeIsomorphism.isomorphic(enums, proxies));
+        assertTrue(DiTreeIsomorphism.isomorphic(proxies, enums));
+        assertEquals(DiTreeIsomorphism.hash(enums), DiTreeIsomorphism.hash(proxies));
+
+        EntityVertex roleWithEnums = enums.vertexMap().detect(v -> v.properties().size() == 2);
+        EntityVertex roleWithProxies = proxies.vertexMap().detect(v -> v.properties().size() == 2);
+        assertTrue(roleWithProxies.equivalent(roleWithEnums), "a proxy equals an enum of its concept");
+        assertFalse(roleWithEnums.equivalent(roleWithProxies), "an enum equals only itself");
+    }
+
+    @Test
+    void anotherParentIsAnotherTree() {
+        assertFalse(DiTreeIsomorphism.isomorphic(build(parentsOnly(KernelConcept.LANGUAGE), null),
+                build(parentsOnly(KernelConcept.PHENOMENON), null)));
+    }
+
+    @Test
+    void anotherRoleOperatorIsAnotherTree() {
+        Definition existential = new Definition(List.of(new Set(true, List.of(
+                new Role(KernelConcept.EXISTENTIAL_RESTRICTION, KernelConcept.ROLE_TYPE, KernelConcept.LANGUAGE)))));
+        Definition universal = new Definition(List.of(new Set(true, List.of(
+                new Role(KernelConcept.UNIVERSAL_RESTRICTION, KernelConcept.ROLE_TYPE, KernelConcept.LANGUAGE)))));
+        assertFalse(DiTreeIsomorphism.isomorphic(build(existential, null), build(universal, null)));
+    }
+
+    @Test
+    void anotherLiteralIsAnotherTree() {
+        Definition one = new Definition(List.of(new Set(true, List.of(new Feature(KernelConcept.FEATURE_TYPE, 100)))));
+        Definition two = new Definition(List.of(new Set(true, List.of(new Feature(KernelConcept.FEATURE_TYPE, 200)))));
+        assertFalse(DiTreeIsomorphism.isomorphic(build(one, null), build(two, null)));
+    }
+
+    @Test
+    void aRoleMovedToAnotherGroupIsAnotherTree() {
+        Role a = new Role(KernelConcept.EXISTENTIAL_RESTRICTION, KernelConcept.ROLE_TYPE, KernelConcept.LANGUAGE);
+        Role b = new Role(KernelConcept.EXISTENTIAL_RESTRICTION, KernelConcept.ROLE_TYPE, KernelConcept.PHENOMENON);
+        Definition together = new Definition(List.of(new Set(true, List.of(new Group(List.of(a, b)), new Group(List.of(a))))));
+        Definition apart = new Definition(List.of(new Set(true, List.of(new Group(List.of(a)), new Group(List.of(a, b))))));
+        Definition moved = new Definition(List.of(new Set(true, List.of(new Group(List.of(a, a)), new Group(List.of(b))))));
+        assertTrue(DiTreeIsomorphism.isomorphic(build(together, null), build(apart, null)));
+        assertFalse(DiTreeIsomorphism.isomorphic(build(together, null), build(moved, null)));
+    }
+
+    @Test
+    void identicalSiblingsCountAsTwo() {
+        Role a = new Role(KernelConcept.EXISTENTIAL_RESTRICTION, KernelConcept.ROLE_TYPE, KernelConcept.LANGUAGE);
+        Definition once = new Definition(List.of(new Set(true, List.of(new Group(List.of(a)), new Ref(KernelConcept.PHENOMENON)))));
+        Definition twice = new Definition(List.of(new Set(true, List.of(new Group(List.of(a)), new Group(List.of(a)),
+                new Ref(KernelConcept.PHENOMENON)))));
+        assertFalse(DiTreeIsomorphism.isomorphic(build(once, null), build(twice, null)));
+        assertTrue(DiTreeIsomorphism.isomorphic(build(twice, null), build(twice, new Random(3))));
+    }
+
+    @Test
+    void aSupersetIsAnotherTreeEitherWay() {
+        DiTreeEntity one = build(parentsOnly(KernelConcept.LANGUAGE), null);
+        DiTreeEntity more = build(parentsOnly(KernelConcept.LANGUAGE, KernelConcept.DESCRIPTION_TYPE), null);
+        assertFalse(DiTreeIsomorphism.isomorphic(one, more));
+        assertFalse(DiTreeIsomorphism.isomorphic(more, one));
+    }
+
+    // ----- random cases -----
+
+    /**
+     * Random pairs, half of them the same definition built in another order, half a definition
+     * and one change to it: the comparison must agree with the oracle on every pair.
+     */
+    @Test
+    void randomPairsAgreeWithTheOracle() {
+        Random random = new Random(SEED);
+        int same = 0;
+        int different = 0;
+        for (int i = 0; i < RANDOM_CASES; i++) {
+            Definition definition = randomDefinition(random);
+            Definition other = random.nextBoolean() ? definition : mutate(definition, random);
+            // As in the writer: the latest form, read from a store, holds proxies (half the time
+            // here, so enums against enums is covered too); the normal form holds enums.
+            DiTreeEntity latest = build(random.nextBoolean() ? asProxies(definition) : definition, random);
+            DiTreeEntity normalForm = build(other, random);
+
+            boolean truth = oracleIsomorphic(latest, normalForm);
+            if (truth) {
+                same++;
+            } else {
+                different++;
+            }
+            assertEquals(truth, DiTreeIsomorphism.isomorphic(latest, normalForm),
+                    () -> describe(latest, normalForm));
+            assertEquals(truth, DiTreeIsomorphism.isomorphic(normalForm, latest), "symmetric");
+            if (truth) {
+                assertEquals(DiTreeIsomorphism.hash(latest), DiTreeIsomorphism.hash(normalForm), "isomorphic trees hash alike");
+            }
+        }
+        System.out.printf("DiTreeIsomorphismIT: %,d pairs, %,d the same, %,d different%n",
+                RANDOM_CASES, same, different);
+        assertTrue(same > RANDOM_CASES / 4 && different > RANDOM_CASES / 4, "both outcomes are exercised");
+    }
+
+    private static String describe(DiTreeEntity a, DiTreeEntity b) {
+        return "\n" + a + "\n" + b;
+    }
+}

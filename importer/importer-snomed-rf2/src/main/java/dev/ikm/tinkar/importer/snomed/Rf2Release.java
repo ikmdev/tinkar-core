@@ -173,6 +173,24 @@ final class Rf2Release implements AutoCloseable {
     }
 
     /**
+     * The date the publisher gave the release: the effective date in its concept file's name
+     * ({@code sct2_Concept_Full_INT_20260601.txt}), at the start of that day in UTC.
+     *
+     * @return the date, when the concept file's name carries one
+     */
+    Optional<java.time.Instant> releaseDate() {
+        List<File> concepts = files(Kind.CONCEPT);
+        if (concepts.isEmpty()) {
+            return Optional.empty();
+        }
+        Matcher date = FILE_DATE.matcher(concepts.getFirst().name());
+        return date.find()
+                ? Optional.of(java.time.LocalDate.parse(date.group(1), java.time.format.DateTimeFormatter.BASIC_ISO_DATE)
+                        .atStartOfDay(java.time.ZoneOffset.UTC).toInstant())
+                : Optional.empty();
+    }
+
+    /**
      * The release's name as its publisher gives it ({@code SnomedCT_InternationalRF2_PRODUCTION_20250801T120000Z}),
      * or, failing that, the effective date in its concept file's name.
      *

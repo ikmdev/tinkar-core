@@ -166,7 +166,7 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
             }
         }
         return ImportReport.of(name(), owl.name(), writer.counts().tally().minus(before), details,
-                Duration.between(start, Instant.now()));
+                Duration.between(start, Instant.now())).withReleaseDate(Instant.ofEpochMilli(time));
     }
 
     private static void writeAuthor(StoreWriter writer, Stamp stamp, ConceptFacade author) {

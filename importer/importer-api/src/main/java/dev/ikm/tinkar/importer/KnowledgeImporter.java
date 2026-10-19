@@ -52,4 +52,17 @@ public interface KnowledgeImporter {
      * @throws ImportException when the source cannot be read or does not say what the importer needs
      */
     ImportReport importInto(ImportSource source, StoreWriter writer);
+
+    /**
+     * Whether an option changes what the importer writes. Such options are part of a release
+     * registration's identity (IKE-Network/ike-issues#1304): the same release read with different
+     * ones is a different registration. Every option counts unless the importer says otherwise; an
+     * importer overrides this to leave out options that only change how it runs.
+     *
+     * @param option the option's name
+     * @return true when the option changes what is written
+     */
+    default boolean changesOutput(String option) {
+        return true;
+    }
 }

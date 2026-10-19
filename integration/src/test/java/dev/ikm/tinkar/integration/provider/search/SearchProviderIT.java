@@ -17,7 +17,12 @@ package dev.ikm.tinkar.integration.provider.search;
 
 import network.ike.foundation.ike.bindings.IkeConcept;
 import dev.ikm.tinkar.terms.KernelConcept;
+import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.coordinate.Calculators;
+import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
@@ -29,11 +34,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SearchProviderIT {
@@ -48,7 +55,11 @@ public class SearchProviderIT {
 
     @Test
     public void getChildrenIT() {
-        List<PublicId> expectedUserChildren = Arrays.asList(
+        // The children the store holds, read from the inferred navigation semantics directly
+        // rather than through a navigation calculator, as the searcher reads them; the starter
+        // set gains users as it gains content (the registry's Registrar, for one).
+        List<PublicId> expectedUserChildren = inferredChildrenOf(KernelConcept.USER.nid());
+        List<PublicId> knownUsers = List.of(
                 KernelConcept.KOMET_USER.publicId(),
                 IkeConcept.IKE_COMMUNITY.publicId(),
                 IkeConcept.BASELINE_STARTER_DATA_AUTHOR.publicId(),
@@ -56,6 +67,7 @@ public class SearchProviderIT {
                 IkeConcept.GIT_AUTHOR.publicId(),
                 IkeConcept.KOMET_ASSISTANT.publicId()
         );
+        assertTrue(expectedUserChildren.containsAll(knownUsers), "the store's users include " + knownUsers);
 
         List<PublicId> actualUserChildren = Searcher.childrenOf(KernelConcept.USER.publicId());
 
@@ -109,6 +121,26 @@ public class SearchProviderIT {
                         "   Expected: " + expectedFQNs + "\n" +
                         "   Actual: " + actualFQNs
         );
+    }
+
+    /**
+     * The concepts whose latest active inferred navigation names the parent among their
+     * parents (the pattern's "origin" field; navigation runs root to leaf).
+     */
+    private static List<PublicId> inferredChildrenOf(long parentNid) {
+        List<PublicId> children = new ArrayList<>();
+        Calculators.Stamp.DevelopmentLatestActiveOnly().forEachSemanticVersionOfPattern(
+                KernelPattern.INFERRED_NAVIGATION_PATTERN, (version, pattern) -> {
+                    for (int index = 0; index < pattern.fieldDefinitions().size(); index++) {
+                        String meaning = PrimitiveData.text(pattern.fieldDefinitions().get(index).meaningNid());
+                        if (meaning.toLowerCase().contains("origin")
+                                && version.fieldValues().get(index) instanceof LongIdSet parents
+                                && parents.contains(parentNid)) {
+                            children.add(EntityHandle.get(version.referencedComponentNid()).expectEntity().publicId());
+                        }
+                    }
+                });
+        return children;
     }
 
     private void setupSnomedLoincLidrData() {

@@ -91,6 +91,7 @@ module dev.ikm.tinkar.entity {
 
     uses dev.ikm.tinkar.entity.builder.KnowledgeSetSource;
     uses dev.ikm.tinkar.entity.constraint.MemberMatchEvaluator;
+    uses dev.ikm.tinkar.entity.graph.VertexIdentityTable;
 
     provides CachingService with
             LanguageCalculatorWithCache.CacheProvider,

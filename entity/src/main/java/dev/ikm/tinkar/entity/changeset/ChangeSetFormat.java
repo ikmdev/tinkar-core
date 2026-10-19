@@ -87,8 +87,32 @@ public final class ChangeSetFormat {
     public static final String IDENTITY_INDEX = "META-INF/identities.pb";
     /** The one record entry of a format-1 or format-2 change set, as the incremental writer names it. */
     public static final String IDENTITY_INDEX_RECORDS = "Entities";
+    /**
+     * The manifest attribute saying a change set's vertex UUIDs were derived by the identity rule
+     * (arch-vertex-identity-rule; IKE-Network/ike-issues#1310), its value the derivation version.
+     * A loader keeps the UUIDs of a change set that names it; one that does not, as IKM's data
+     * and every change set written before derivation do not, is correlated as it loads.
+     */
+    public static final String VERTEX_IDENTITY_ATTRIBUTE = "Ike-Vertex-Identity";
+    /** The derivation version this release writes under {@value #VERTEX_IDENTITY_ATTRIBUTE}. */
+    public static final int VERTEX_IDENTITY_VERSION = 1;
 
     private ChangeSetFormat() {
+    }
+
+    /**
+     * Whether a manifest says its change set's vertex UUIDs were derived.
+     *
+     * @param manifest the manifest's main attributes
+     * @return true when it names {@value #VERTEX_IDENTITY_ATTRIBUTE}
+     */
+    public static boolean vertexIdentityDerived(Attributes manifest) {
+        return manifest.getValue(VERTEX_IDENTITY_ATTRIBUTE) != null;
+    }
+
+    /** The manifest line naming the derivation version, or nothing when {@code derived} is false. */
+    public static String vertexIdentityLine(boolean derived) {
+        return derived ? VERTEX_IDENTITY_ATTRIBUTE + ": " + VERTEX_IDENTITY_VERSION + "\n" : "";
     }
 
     /**

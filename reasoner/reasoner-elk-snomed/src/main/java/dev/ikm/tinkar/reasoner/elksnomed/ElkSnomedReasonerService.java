@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.NecessaryNormalFormBuilder;
+import dev.ikm.elk.snomed.SnomedIsa;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.SnomedOntologyReasoner;
 import dev.ikm.elk.snomed.model.Concept;
@@ -60,6 +61,16 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	protected NecessaryNormalFormBuilder nnfb;
 
+	/**
+	 * The classified taxonomy the necessary normal form was built from: every concept's direct
+	 * parents, and their inverse, the direct children. The writer asks for both for every concept,
+	 * and asking ELK costs a query each (an IRI built and parsed per class, and ELK's
+	 * incompleteness check), about half the writer's time on a knowledge base of millions of
+	 * concepts; these are the same sets, already computed. Null whenever the reasoner has changed
+	 * since, so a query then goes to the reasoner.
+	 */
+	private volatile SnomedIsa taxonomy;
+
 	@Override
 	public String getName() {
 		return "Elk Snomed Reasoner";
@@ -74,6 +85,8 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		this.ontology = null;
 		this.reasoner = null;
 		this.nnfb = null;
+		resetRoleHierarchy();
+		this.taxonomy = null;
 	}
 
 	@Override
@@ -88,17 +101,21 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	public void loadData(TrackingCallable<?> progressTracker) throws Exception {
 		LOG.info("Create ontology");
 		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
+		nameBottom(ontology);
 		LOG.info("Create reasoner");
 		// createUninitialized rather than create: this has to hold the reasoner before the
 		// classification starts, or there is nothing to interrupt while it runs. It also keeps
 		// the pipeline's phases honest — the classification now happens in computeInferences,
 		// which is what the caller reports it as.
 		reasoner = SnomedOntologyReasoner.createUninitialized(ontology);
+		taxonomy = null;
 	}
 
 	@Override
 	public void computeInferences(TrackingCallable<?> progressTracker) {
 		LOG.info("Compute inferences");
+		resetRoleHierarchy();
+		taxonomy = null;
 		try (CancelWatcher ignored = new CancelWatcher(progressTracker, reasoner)) {
 			reasoner.computeInferences();
 		} catch (RuntimeException e) {
@@ -199,6 +216,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	@Override
 	public void processIncremental(List<Long> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater) {
+		taxonomy = null;
 		for (long delete : deletes) {
 			Concept concept = builder.processDelete(delete);
 			if (concept != null) {
@@ -213,6 +231,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 			reasoner.processUpdate(concept);
 		}
 		data.initializeReasonerConceptSet();
+		resetRoleHierarchy();
 		try {
 			reasoner.flush();
 		} catch (Exception ex) {
@@ -232,6 +251,15 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 			KernelConcept.ROOT_VERTEX.nid(), 
 			(int workDone, int max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
+		useTaxonomyOf(nnfb);
+	}
+
+	/**
+	 * Answers parents and children from the taxonomy this builder was made from, which must be
+	 * the reasoner's current direct super concepts of every concept.
+	 */
+	protected void useTaxonomyOf(NecessaryNormalFormBuilder builder) {
+		taxonomy = builder.getIsa();
 	}
 
 	private void logMissingReasonerConcepts(MutableLongObjectMap<MutableLongSet> superConcepts) {
@@ -294,16 +322,111 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		return toLongSet(eqs);
 	}
 
+	/**
+	 * A concept's direct parents; for a role type, its direct super-roles in the classified role
+	 * hierarchy, which also holds what property chains entail (with a reflexive role, R ∘ S ⊑ H
+	 * makes R a kind of H). A role's concept is classified only from the super-roles it is stated
+	 * with, so it is the answer only for a role directly under the top role.
+	 */
 	@Override
 	public ImmutableLongSet getParents(long id) {
-		MutableLongSet supers = reasoner.getSuperConcepts(id);
-		return toLongSet(supers);
+		MutableLongSet superRoles = directSuperRoles().get(id);
+		if (superRoles != null && superRoles.notEmpty()) {
+			return toLongSet(superRoles);
+		}
+		return conceptParents(id);
 	}
 
+	/**
+	 * A concept's direct children; for a role type, its direct sub-roles in the classified role
+	 * hierarchy, with any concept that is not a role beneath the role's concept.
+	 */
 	@Override
 	public ImmutableLongSet getChildren(long id) {
-		MutableLongSet subs = reasoner.getSubConcepts(id);
-		return toLongSet(subs);
+		ImmutableLongSet subs = conceptChildren(id);
+		if (!directSuperRoles().containsKey(id)) {
+			return subs;
+		}
+		MutableLongSet children = LongSets.mutable.empty();
+		if (subs != null) {
+			subs.forEach(sub -> {
+				if (!directSuperRoles().containsKey(sub)) {
+					children.add(sub);
+				}
+			});
+		}
+		subRoles().getIfAbsent(id, LongSets.mutable::empty).forEach(children::add);
+		return toLongSet(children);
+	}
+
+	/**
+	 * Names the starter set's bottom concept, Nothing, to the ontology, when the store has it: a
+	 * reference to it is owl:Nothing, and an unsatisfiable concept is placed where it is stated.
+	 * Asked by public id, as a Rocks store cannot give a nid to a concept it does not hold.
+	 *
+	 * @param ontology the ontology about to be classified
+	 */
+	protected static void nameBottom(SnomedOntology ontology) {
+		if (PrimitiveData.get().hasPublicId(KernelConcept.BOTTOM.publicId())) {
+			ontology.setBottomConceptId(KernelConcept.BOTTOM.nid());
+		}
+	}
+
+	/** A concept's direct parents in the classified concept hierarchy. */
+	protected ImmutableLongSet conceptParents(long id) {
+		SnomedIsa isa = taxonomy;
+		if (isa == null) {
+			return toLongSet(reasoner.getSuperConcepts(id));
+		}
+		// Keyed by every concept of the ontology, as the reasoner's answer is null for any other.
+		MutableLongSet parents = isa.getParentsMap().get(id);
+		return parents == null ? null : parents.toImmutable();
+	}
+
+	/** A concept's direct children in the classified concept hierarchy. */
+	protected ImmutableLongSet conceptChildren(long id) {
+		SnomedIsa isa = taxonomy;
+		if (isa == null) {
+			return toLongSet(reasoner.getSubConcepts(id));
+		}
+		if (!isa.getParentsMap().containsKey(id)) {
+			return null;
+		}
+		// ELK's direct sub classes of a class are exactly the classes it is a direct super class
+		// of, so the inverse of the parents holds them; a concept with none has no entry.
+		MutableLongSet children = isa.getChildrenMap().get(id);
+		return children == null ? LongSets.immutable.empty() : children.toImmutable();
+	}
+
+	/** Each role type's direct super-roles in the classified role hierarchy. */
+	protected MutableLongObjectMap<MutableLongSet> classifiedSuperRoles() {
+		return reasoner.getSuperRoleTypes(true);
+	}
+
+	private MutableLongObjectMap<MutableLongSet> directSuperRoles;
+	private MutableLongObjectMap<MutableLongSet> subRoles;
+
+	/** Forgets the role hierarchy read from an earlier classification. */
+	protected synchronized void resetRoleHierarchy() {
+		directSuperRoles = null;
+		subRoles = null;
+	}
+
+	private synchronized MutableLongObjectMap<MutableLongSet> directSuperRoles() {
+		if (directSuperRoles == null) {
+			directSuperRoles = classifiedSuperRoles();
+		}
+		return directSuperRoles;
+	}
+
+	/** Each role type's direct sub-roles, inverted from the classified role hierarchy once. */
+	private synchronized MutableLongObjectMap<MutableLongSet> subRoles() {
+		if (subRoles == null) {
+			subRoles = LongObjectMaps.mutable.empty();
+			directSuperRoles().forEachKeyValue((role, superRoles) -> superRoles
+					.forEach(superRole -> subRoles.getIfAbsentPut(superRole, LongSets.mutable::empty).add(role)));
+		}
+		return subRoles;
 	}
 
 	@Override

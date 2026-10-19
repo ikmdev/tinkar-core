@@ -24,6 +24,7 @@ module dev.ikm.tinkar.importer {
     requires org.eclipse.collections.api;
 
     exports dev.ikm.tinkar.importer;
+    exports dev.ikm.tinkar.importer.registry;
 
     uses dev.ikm.tinkar.importer.KnowledgeImporter;
 }

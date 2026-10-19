@@ -17,19 +17,13 @@ package dev.ikm.tinkar.entity.transaction;
 
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 
-import dev.ikm.tinkar.common.binary.Decoder;
-import dev.ikm.tinkar.common.binary.DecoderInput;
-import dev.ikm.tinkar.common.binary.Encodable;
-import dev.ikm.tinkar.common.binary.Encoder;
-import dev.ikm.tinkar.common.binary.EncoderOutput;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.broadcast.CommitBroadcaster;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.StampAnalogueBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -40,17 +34,9 @@ import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.State;
-import io.activej.bytebuf.ByteBuf;
-import io.activej.bytebuf.ByteBufPool;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -67,14 +53,14 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * A Transaction is responsible for keeping track of its associated
  * unique identifier (UUID), name, active transactions, related stamps,
  * and components, as well as handling transactional operations.
+ * <p>
+ * A transaction that writes uncommitted versions persists as a record in the store, a semantic of
+ * the change transaction pattern (IKE-Network/ike-issues#1308, {@code TransactionRecords}); that
+ * record is its only serialized form.
  */
-public class Transaction implements Comparable<Transaction>, Encodable {
-    /**
-     * Version 2 writes the components in the transaction by public id, as it writes the stamps;
-     * version 1 wrote them as {@code int} nids of the store that wrote it, and is still read.
-     */
-    private static final int marshalVersion = 2;
-    private static final int marshalVersionIntNids = 1;
+public class Transaction implements Comparable<Transaction> {
+
+    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(Transaction.class);
 
     private static ConcurrentHashSet<Transaction> activeTransactions = new ConcurrentHashSet<>();
     private final UUID transactionUuid;
@@ -82,6 +68,22 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     ConcurrentHashSet<UUID> stampsInTransaction = new ConcurrentHashSet<>();
     ConcurrentHashSet<Long> componentsInTransaction = new ConcurrentHashSet<>();
     private long commitTime = Long.MAX_VALUE;
+
+    /*
+     * The transaction's record (IKE-Network/ike-issues#1308, TransactionRecords): written once the
+     * transaction mints its first uncommitted stamp outside a load phase, then on each lifecycle
+     * event. A transaction that only writes under committed stamps, or only in a load phase, has
+     * none and lives in memory, as before.
+     */
+    private volatile long basisTime = System.currentTimeMillis();
+    private volatile String externalBasis = "";
+    private volatile long basisPathNid;
+    private volatile long recordAuthorNid;
+    private volatile boolean recorded;
+    /** Rebuilt from its record at startup: its versions are matched by stamp alone. */
+    private volatile boolean restored;
+    /** How many components the record's latest version lists; -1 before the first. */
+    private volatile int recordedComponents = -1;
 
     /**
      * How far this transaction is toward its one ending (IKE-Network/ike-issues#1243). It ends
@@ -104,19 +106,6 @@ public class Transaction implements Comparable<Transaction>, Encodable {
         this.transactionName = transactionName;
         this.transactionUuid = transactionUuid;
         activeTransactions.add(this);
-    }
-
-    /**
-     * Constructs a new Transaction instance with the specified UUID, name, and commit time.
-     * The created transaction is added to the list of active transactions.
-     *
-     * @param transactionUuid the unique identifier for this transaction
-     * @param transactionName the name associated with this transaction
-     * @param commitTime the commit time associated with this transaction
-     */
-    private Transaction(UUID transactionUuid, String transactionName, long commitTime) {
-        this(transactionUuid, transactionName);
-        this.commitTime = commitTime;
     }
 
     /**
@@ -182,6 +171,12 @@ public class Transaction implements Comparable<Transaction>, Encodable {
         StampEntity stamp = version.stamp();
         UUID[] stampUuids = stamp.asUuidArray();
         for (Transaction transaction : activeTransactions) {
+            if (transaction.restored && transaction.ownsStamp(stampUuids)) {
+                // Rebuilt from its record: its stamps are uncommitted and derive from its UUID,
+                // so the stamp alone names it; a component the record did not list joins it.
+                transaction.componentsInTransaction.add(version.nid());
+                return Optional.of(transaction);
+            }
             if (transaction.componentsInTransaction.contains(version.nid())) {
                 // A stamp has one UUID (getStamp mints it); the loop only avoids reading it by position.
                 for (UUID stampUuid : stampUuids) {
@@ -211,6 +206,13 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      */
     public static Transaction make(String transactionName) {
         return new Transaction(transactionName);
+    }
+
+    /**
+     * @return the name the transaction was made with; its record keeps it across a restart
+     */
+    public String name() {
+        return transactionName;
     }
 
     /**
@@ -323,7 +325,15 @@ public class Transaction implements Comparable<Transaction>, Encodable {
         UUID stampUuid = time == Long.MAX_VALUE
                 ? UuidT5Generator.forTransaction(transactionUuid, state.publicId(), time, authorId, moduleId, pathId)
                 : Stamp.stampUuidOf(state, time, authorId, moduleId, pathId);
-        stampsInTransaction.add(stampUuid);
+        boolean newStamp = stampsInTransaction.add(stampUuid);
+        StampEntity stamp = findOrMakeStamp(stampUuid, state, time, authorId, moduleId, pathId);
+        if (newStamp && time == Long.MAX_VALUE) {
+            uncommittedStampAdded(authorId, pathId);
+        }
+        return stamp;
+    }
+
+    private StampEntity findOrMakeStamp(UUID stampUuid, State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         if (PrimitiveData.get().hasUuid(stampUuid)) {
             StampEntity existing = Entity.getStamp(PrimitiveData.nid(stampUuid));
             if (existing != null) {
@@ -490,6 +500,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
             MutableLongList changedComponentNids = LongLists.mutable.empty();
             forEachComponentInTransaction(componentNid -> changedComponentNids.add(componentNid));
             ending.set(Ending.COMMITTED);
+            record(KernelConcept.TRANSACTION_COMMITTED.nid());
             CommitBroadcaster.publish(new CommitBroadcaster.CommitNotification(
                     this.transactionUuid, this.transactionName, this.commitTime,
                     finalizedStampNids.toArray(), changedComponentNids.toArray(), stampCount.get()));
@@ -650,149 +661,304 @@ public class Transaction implements Comparable<Transaction>, Encodable {
 //        }
         activeTransactions.remove(this);
         ending.set(Ending.CANCELED);
+        record(KernelConcept.TRANSACTION_CANCELLED.nid());
         Entity.provider().notifyRefreshRequired(this);
         return stampCount.get();
     }
 
+    // ── The record (IKE-Network/ike-issues#1308) ─────────────────────────────
+
     /**
-     * Decodes a serialized Transaction object from the provided {@code DecoderInput}.
-     * The method reads the transaction's data, including its marshal version, UUID, name,
-     * and associated stamps and components, and reconstructs a Transaction instance
-     * based on the encoded information.
+     * When the transaction began: its record's first version, or when it was made for a
+     * transaction without one.
      *
-     * @param in the {@code DecoderInput} to read the serialized transaction data
-     *           including the marshalled version, transaction UUID, name,
-     *           and lists of stamps and components within the transaction
-     * @return the reconstructed {@code Transaction} object based on the input stream
-     * @throws UnsupportedOperationException if the marshalled version is unsupported
+     * @return the transaction's initiation, in epoch milliseconds
      */
-    @Decoder
-    public static Transaction decode(DecoderInput in) {
-        int objectMarshalVersion = in.readInt();
-        return switch (objectMarshalVersion) {
-            case marshalVersion, marshalVersionIntNids -> {
-                Transaction transaction = new Transaction(in.readUuid(), in.readString(), in.readLong());
-                int stampsInTransactionCount = in.readInt();
-                for (int i = 0; i < stampsInTransactionCount; i++) {
-                    transaction.stampsInTransaction.add(in.readUuid());
-                }
-                int componentsInTransactionCount = in.readInt();
-                for (int i = 0; i < componentsInTransactionCount; i++) {
-                    long componentNid = objectMarshalVersion == marshalVersionIntNids ? in.readInt() : in.readNid();
-                    transaction.componentsInTransaction.add(componentNid);
-                }
-                yield transaction;
-            }
-            default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
-        };
+    public long initiated() {
+        long fromRecord = recorded ? TransactionRecords.initiated(transactionUuid) : Long.MAX_VALUE;
+        return fromRecord == Long.MAX_VALUE ? Math.min(basisTime, System.currentTimeMillis()) : fromRecord;
     }
 
     /**
-     * Encodes the current transaction data to the provided {@link EncoderOutput}.
+     * The time of the point in the store this transaction's changes were made against: what its
+     * author could see. Two versions of one component are concurrent when neither change's basis
+     * includes the other.
      *
-     * @param out the {@link EncoderOutput} to write the encoded data to
-     *            including the transaction details such as marshal version,
-     *            transaction UUID, transaction name, commit time, and the list
-     *            of stamps and components involved in the transaction.
+     * @return the basis time, in epoch milliseconds
      */
-    @Encoder
-    @Override
-    public void encode(EncoderOutput out) {
-        out.writeInt(marshalVersion);
-        out.writeUuid(this.transactionUuid);
-        out.writeString(this.transactionName);
-        out.writeLong(commitTime);
-        out.writeInt(stampsInTransaction.size());
-        for (UUID stampUuid : stampsInTransaction) {
-            out.writeUuid(stampUuid);
-        }
-        out.writeInt(componentsInTransaction.size());
-        for (long componentNid : componentsInTransaction) {
-            out.writeNid(componentNid);
+    public long basisTime() {
+        return basisTime;
+    }
+
+    /**
+     * @return what the changes were made against outside the store, such as the git commit a
+     *         document edit started from; empty when there is none
+     */
+    public String externalBasis() {
+        return externalBasis;
+    }
+
+    /**
+     * Moves the basis forward: the transaction's author has taken in what changed up to
+     * {@code time}, as a rebase onto a newer commit does. A basis never moves back.
+     *
+     * @param time          the new basis time, in epoch milliseconds
+     * @param externalBasis what the changes are now made against outside the store, or empty
+     */
+    public void moveBasis(long time, String externalBasis) {
+        this.basisTime = Math.max(this.basisTime, time);
+        this.externalBasis = externalBasis == null ? "" : externalBasis;
+        if (isOpen()) {
+            record(KernelConcept.TRANSACTION_OPEN.nid());
         }
     }
 
     /**
-     * Saves the current active transactions to a file within the configured data store root directory.
-     * <p>     * This method retrieves the root directory from {@link ServiceProperties} using the
-     * {@link ServiceKeys#DATA_STORE_ROOT} key. If the root directory is configured, it creates
-     * or overwrites a file named "transactions.encoded" in this directory. The method then
-     * serializes the transactions from the `activeTransactions` collection, encoding their data
-     * and writing each transaction to the file.
-     * <p>     * Preconditions:
-     * <p> - The `ServiceKeys.DATA_STORE_ROOT` must be properly configured and accessible.
-     * <p> - The `activeTransactions` collection must contain valid transaction objects.
-     * <p>     * Postconditions:
-     * <p> - A file named "transactions.encoded" will be created or overwritten in the configured root directory.
-     * <p> - The file will contain serialized data for all currently active transactions.
-     * <p>     * Exceptions:
-     * <p> - Throws {@link RuntimeException} if an I/O error or unexpected encoding issue occurs during the process.
-     * <p>     * Dependencies:
-     * <p> - Relies on the configuration provided by {@link ServiceProperties} for determining the data store root directory.
-     * <p> - Each transaction within the `activeTransactions` collection is expected to implement the `encode` method
-     *   for proper serialization.
+     * Sets what the changes are made against outside the store, keeping the basis time.
+     *
+     * @param externalBasis such as the git commit a document edit starts from
      */
-    public static void save() {
-        Optional<File> configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT);
-        if (configuredRoot.isPresent()) {
-            File transactionFile = new File(configuredRoot.get(), "transactions.encoded");
-            try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(transactionFile))) {
-                outputStream.writeInt(activeTransactions.size());
-                for (Transaction transaction : activeTransactions) {
-                    ByteBuf buf = ByteBufPool.allocate(1024);
-                    EncoderOutput encoder = new EncoderOutput(buf);
-                    transaction.encode(encoder);
-                    byte[] bytes = buf.array();
-                    outputStream.writeInt(bytes.length);
-                    outputStream.write(bytes);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+    public void externalBasis(String externalBasis) {
+        moveBasis(this.basisTime, externalBasis);
+    }
+
+    /**
+     * @return whether the transaction keeps a record in the store, and so survives a restart
+     */
+    public boolean recorded() {
+        return recorded;
+    }
+
+    /**
+     * Whether this transaction was rebuilt from its record when the store opened: work a restart
+     * interrupted, which an editor taking up one of its components continues in this transaction
+     * rather than opening a second one beside it.
+     *
+     * @return {@code true} for a transaction rebuilt at startup
+     */
+    public boolean rebuiltFromRecord() {
+        return restored;
+    }
+
+    /**
+     * Rebuilds the transactions the store's records say are open, so their uncommitted versions
+     * have an owner again after a restart. Called once the entity service answers reads, before
+     * anything else reads from the store and before uncommitted stamps outside a transaction are
+     * cancelled.
+     *
+     * @param entities the entity service of the store just opened
+     * @return the number of transactions rebuilt
+     */
+    public static int restoreOpen(EntityService entities) {
+        TransactionRecords.storeStarted();
+        int restored = 0;
+        java.util.List<Transaction> rebuilt = new java.util.ArrayList<>();
+        for (TransactionRecords.Snapshot snapshot : TransactionRecords.open(entities)) {
+            if (forUuid(snapshot.transactionUuid()).isPresent()) {
+                continue;
             }
+            Transaction transaction = new Transaction(snapshot.transactionUuid(), snapshot.name());
+            transaction.basisTime = snapshot.basisTime();
+            transaction.externalBasis = snapshot.externalBasis();
+            transaction.basisPathNid = snapshot.basisPathNid();
+            transaction.recordAuthorNid = snapshot.authorNid();
+            transaction.recorded = true;
+            transaction.restored = true;
+            for (long componentNid : snapshot.componentNids()) {
+                transaction.componentsInTransaction.add(componentNid);
+            }
+            transaction.recordedComponents = snapshot.componentNids().length;
+            rebuilt.add(transaction);
+            restored++;
         }
+        if (!rebuilt.isEmpty()) {
+            reclaimStamps(entities, rebuilt);
+        }
+        return restored;
     }
 
     /**
-     * Restores previously saved transactions from a specified file in the data store root directory.
-     * <p>     * This method retrieves the root directory from the service properties and looks for a file named
-     * "transactions.encoded". If the file exists, it reads the transaction data, decodes each transaction,
-     * and populates the list of active transactions.
-     * <p>     * Any errors during the file reading process are logged, and an {@link UncheckedIOException}
-     * is thrown with detailed information about the failure.
-     * <p>     * <p> Preconditions:
-     * <p> - The "transactions.encoded" file must be present in the configured data store root directory.
-     * <p> - The file format must match the expected encoding of transaction data.
-     * <p>     * Postconditions:
-     * <p> - Decoded transactions are added to the active transactions list.
-     * <p>     * Exceptions:
-     * <p> - Throws {@link UncheckedIOException} if file reading or parsing encounters an I/O error.
-     * <p>     * Dependencies:
-     * <p> - The method depends on the configuration provided by {@link ServiceProperties}.
-     * <p> - The transactions are decoded using the {@link Transaction#decode(DecoderInput)} method.
+     * Gives rebuilt transactions back their uncommitted stamps. A record does not list them: an
+     * uncommitted stamp's UUID derives from its transaction's UUID and the stamp's own state,
+     * author, module and path, so each uncommitted stamp in the store is matched by deriving its
+     * UUID for each rebuilt transaction. Uncommitted stamps are few, and only they are tried.
      */
-    public static void restore() {
-        // Retrieve the configured root directory from the service properties
-        Optional<File> configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT);
-
-        if (configuredRoot.isPresent()) {
-            File transactionFile = new File(configuredRoot.get(), "transactions.encoded");
-            if (transactionFile.exists()) {
-                try (DataInputStream dis = new DataInputStream(new FileInputStream(configuredRoot.get()))) {
-                    int transactionCount = dis.readInt();
-                    byte[] data = new byte[(int) transactionFile.length() - 4];
-                    dis.readFully(data);
-                    DecoderInput decoder = new DecoderInput(data);
-                    for (int i = 0; i < transactionCount; i++) {
-                        Transaction transaction = Transaction.decode(decoder);
-                        activeTransactions.add(transaction);
+    private static void reclaimStamps(EntityService entities, java.util.List<Transaction> rebuilt) {
+        dev.ikm.tinkar.common.service.internal.EntityStore.current().forEachStampNid(stampNid -> {
+            StampEntity<?> stamp = entities.getStampFast(stampNid);
+            if (stamp == null || stamp.lastVersion() == null || stamp.time() != Long.MAX_VALUE) {
+                return;
+            }
+            PublicId state = stamp.state().publicId();
+            PublicId author = PrimitiveData.publicId(stamp.authorNid());
+            PublicId module = PrimitiveData.publicId(stamp.moduleNid());
+            PublicId path = PrimitiveData.publicId(stamp.pathNid());
+            UUID[] stampUuids = stamp.asUuidArray();
+            for (Transaction transaction : rebuilt) {
+                UUID derived = UuidT5Generator.forTransaction(transaction.transactionUuid, state, Long.MAX_VALUE, author, module, path);
+                for (UUID stampUuid : stampUuids) {
+                    if (stampUuid.equals(derived)) {
+                        transaction.stampsInTransaction.add(stampUuid);
+                        return;
                     }
-                } catch (IOException e) {
-                    // Handle file reading errors and log the exception
-                    throw new UncheckedIOException("Failed to restore transactions from file: " + transactionFile, e);
                 }
             }
-
-        }
-
+        });
     }
+
+    /**
+     * Writes a version of each open, recorded transaction's record whose components have grown
+     * since its last version, so a restart rebuilds it whole. Run when the store is saved, while
+     * its services are still running: as it stops, they no longer answer.
+     *
+     * @param entities the entity service to write through
+     * @return the number of records written
+     */
+    public static int checkpointOpen(EntityService entities) {
+        int written = 0;
+        for (Transaction transaction : activeTransactions) {
+            if (transaction.recorded && transaction.isOpen()
+                    && transaction.componentsInTransaction.size() != transaction.recordedComponents
+                    && transaction.record(entities, KernelConcept.TRANSACTION_OPEN.nid())) {
+                written++;
+            }
+        }
+        return written;
+    }
+
+    /**
+     * Drops every transaction held in memory, as when the store they belong to has stopped.
+     * Their records remain; {@link #restoreOpen(EntityService)} rebuilds the open ones from the next start.
+     */
+    public static void forgetAll() {
+        activeTransactions.clear();
+    }
+
+    /**
+     * The transactions still open: made in this session, or rebuilt from their records when the
+     * store opened. A surface that lets a person review pending work lists these, and commits or
+     * cancels them only when asked.
+     *
+     * @return the open transactions, in no particular order
+     */
+    public static java.util.List<Transaction> openTransactions() {
+        return activeTransactions.stream().filter(Transaction::isOpen).toList();
+    }
+
+    /**
+     * The transaction rebuilt from its record that owns an entity's pending version under the given
+     * stamp tuple: work a restart interrupted. A writer about to change the entity under that tuple
+     * continues this transaction rather than opening a second one beside it, since two uncommitted
+     * versions of one component do not supersede each other, and its change lands on the pending
+     * version's own stamp. For a writer that leaves settling to the person; one that commits at once must
+     * not take over pending work, which ends only when someone asks.
+     *
+     * @param entityNid the entity about to be changed
+     * @param state     the state of the stamp about to be made
+     * @param authorNid its author
+     * @param moduleNid its module
+     * @param pathNid   its path
+     * @return the rebuilt transaction owning the entity's pending version, if there is one
+     */
+    public static Optional<Transaction> rebuiltOwnerOfPendingVersion(long entityNid, State state, long authorNid,
+                                                                     long moduleNid, long pathNid) {
+        if (!(dev.ikm.tinkar.entity.EntityHandle.get(entityNid).orNull() instanceof Entity<?> entity)) {
+            return Optional.empty();
+        }
+        for (Object object : entity.versions()) {
+            EntityVersion version = (EntityVersion) object;
+            if (!version.uncommitted()) {
+                continue;
+            }
+            StampEntity<?> stamp = version.stamp();
+            if (stamp.authorNid() != authorNid || stamp.moduleNid() != moduleNid
+                    || stamp.pathNid() != pathNid || stamp.state() != state) {
+                continue;
+            }
+            Optional<Transaction> owner = forVersion(version).filter(Transaction::rebuiltFromRecord);
+            if (owner.isPresent()) {
+                return owner;
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * @param transactionUuid a transaction's UUID
+     * @return the active transaction with that UUID, if any
+     */
+    public static Optional<Transaction> forUuid(UUID transactionUuid) {
+        for (Transaction transaction : activeTransactions) {
+            if (transaction.transactionUuid.equals(transactionUuid)) {
+                return Optional.of(transaction);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private boolean ownsStamp(UUID[] stampUuids) {
+        for (UUID stampUuid : stampUuids) {
+            if (stampsInTransaction.contains(stampUuid)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The first uncommitted stamp records the transaction. Later ones need no version: a record
+     * does not list its stamps, which a restart finds by their derived UUIDs.
+     */
+    private void uncommittedStampAdded(PublicId authorId, PublicId pathId) {
+        if (recorded || EntityService.get().isLoadPhase() || !TransactionRecords.available()) {
+            return;
+        }
+        recordAuthorNid = PrimitiveData.nid(authorId);
+        basisPathNid = PrimitiveData.nid(pathId);
+        recorded = true;
+        record(KernelConcept.TRANSACTION_OPEN.nid());
+    }
+
+    /** Writes a version of the record, when the transaction has one; a failure is reported, not thrown. */
+    private void record(long stateNid) {
+        if (recorded) {
+            record(EntityService.get(), stateNid);
+        }
+    }
+
+    /** @return whether the version was written */
+    private boolean record(EntityService entities, long stateNid) {
+        if (!recorded) {
+            return false;
+        }
+        try {
+            TransactionRecords.write(entities, this, stateNid);
+            return true;
+        } catch (RuntimeException e) {
+            LOG.error("Could not record transaction {} ({})", transactionName, transactionUuid, e);
+            return false;
+        }
+    }
+
+    void recordedComponents(int count) {
+        this.recordedComponents = count;
+    }
+
+    long recordAuthorNid() {
+        return recordAuthorNid;
+    }
+
+    long basisPathNid() {
+        return basisPathNid;
+    }
+
+    /**
+     * @return the components this transaction has written
+     */
+    public long[] componentNids() {
+        MutableLongList nids = LongLists.mutable.empty();
+        componentsInTransaction.forEach(nids::add);
+        return nids.toArray();
+    }
+
 }

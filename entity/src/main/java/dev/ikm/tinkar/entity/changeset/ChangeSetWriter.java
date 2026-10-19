@@ -131,13 +131,16 @@ public final class ChangeSetWriter {
     }
 
     /**
-     * The format-3 manifest: the version, the counts, the component count, the record entries
-     * with their counts and hashes, then {@code sections}: the module and author entries, as
-     * the exporter renders them from the store or the compaction copies them from its source.
+     * The format-3 manifest: the version, whether vertex identity was derived, the counts, the
+     * component count, the record entries with their counts and hashes, then {@code sections}:
+     * the module and author entries, as the exporter renders them from the store or the
+     * compaction copies them from its source.
      */
-    public static String manifestContent(EntityCountSummary counts, List<Entry> entries, long componentCount, String sections) {
+    public static String manifestContent(EntityCountSummary counts, List<Entry> entries, long componentCount, String sections,
+                                         boolean vertexIdentityDerived) {
         StringBuilder manifest = new StringBuilder()
                 .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.CURRENT_VERSION).append("\n")
+                .append(ChangeSetFormat.vertexIdentityLine(vertexIdentityDerived))
                 .append("Packager-Name: ").append(KernelConcept.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
                 .append("Total-Count: ").append(counts.getTotalCount()).append("\n")
@@ -158,11 +161,13 @@ public final class ChangeSetWriter {
 
     /**
      * The format-2 manifest an expansion writes: version {@value ChangeSetFormat#IDENTITY_INDEX_VERSION},
-     * the counts, then {@code sections}.
+     * whether vertex identity was derived, the counts, then {@code sections}.
      */
-    public static String identityIndexManifestContent(EntityCountSummary counts, String sections) {
+    public static String identityIndexManifestContent(EntityCountSummary counts, String sections,
+                                                      boolean vertexIdentityDerived) {
         return new StringBuilder()
                 .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.IDENTITY_INDEX_VERSION).append("\n")
+                .append(ChangeSetFormat.vertexIdentityLine(vertexIdentityDerived))
                 .append("Packager-Name: ").append(KernelConcept.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
                 .append("Total-Count: ").append(counts.getTotalCount()).append("\n")

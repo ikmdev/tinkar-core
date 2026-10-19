@@ -19,6 +19,7 @@ import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.entity.graph.DiTreeAbstract;
 import dev.ikm.tinkar.entity.graph.DiTreeText;
@@ -58,8 +59,29 @@ public class SetElementKey
         processVertexAndChildren(vertexIndex, expression, conceptsReferencedAtNodeOrBelowCollector);
         this.conceptsReferencedAtNodeOrBelow = LongIds.list.of(conceptsReferencedAtNodeOrBelowCollector.toSortedList().toArray());
         this.hashCode = Objects.hash(enclosingSetType,
-                IsomorphicResultsLeafHash.makeNidListHash(expression.vertex(vertexIndex).getMeaningNid(),
+                makeNidListHash(expression.vertex(vertexIndex).getMeaningNid(),
                         this.conceptsReferencedAtNodeOrBelow.toArray()));
+    }
+
+    /**
+     * A hash of a vertex meaning and the sorted nids referenced at or below the vertex.
+     *
+     * @param vertexMeaning the vertex's meaning
+     * @param sortedNids    a sorted array of nids
+     * @return a hashcode, other than -1
+     */
+    private static int makeNidListHash(long vertexMeaning, long[] sortedNids) {
+        // Arrays.hashCode of the nids as they were when nids were int: Nid.hash of a nid that fits
+        // an int is the int, so the hash is unchanged.
+        int arrayHash = 1;
+        for (long nid : sortedNids) {
+            arrayHash = 31 * arrayHash + Nid.hash(nid);
+        }
+        arrayHash = 31 * arrayHash + Nid.hash(vertexMeaning);
+        while (arrayHash == -1) {
+            arrayHash = 31 * arrayHash + 7;
+        }
+        return arrayHash;
     }
 
     /**

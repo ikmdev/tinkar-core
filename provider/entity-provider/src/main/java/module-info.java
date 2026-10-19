@@ -37,7 +37,8 @@ module dev.ikm.tinkar.provider.entity {
     requires dev.ikm.tinkar.terms;
 
     provides CachingService with EntityProvider.CacheProvider;
-    provides ServiceLifecycle with EntityProvider.Controller, StampProvider.Controller;
+    provides ServiceLifecycle with EntityProvider.Controller, StampProvider.Controller,
+            dev.ikm.tinkar.provider.entity.TransactionRecordsController;
 
 	uses PrimitiveDataService;
 }

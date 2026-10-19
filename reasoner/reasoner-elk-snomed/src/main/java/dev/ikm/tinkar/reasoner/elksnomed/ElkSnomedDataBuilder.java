@@ -17,6 +17,8 @@ package dev.ikm.tinkar.reasoner.elksnomed;
 
 import dev.ikm.tinkar.terms.KernelConcept;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,6 +34,7 @@ import dev.ikm.elk.snomed.model.ConcreteRole.ValueType;
 import dev.ikm.elk.snomed.model.ConcreteRoleType;
 import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.elk.snomed.model.DefinitionType;
+import dev.ikm.elk.snomed.model.NestedRole;
 import dev.ikm.elk.snomed.model.Role;
 import dev.ikm.elk.snomed.model.RoleGroup;
 import dev.ikm.elk.snomed.model.RoleType;
@@ -391,18 +394,20 @@ public class ElkSnomedDataBuilder {
 							"Property chain malformed. Expected " + DiagnosticText.name(KernelConcept.PROPERTY_SEQUENCE.nid())
 									+ " Concept: " + DiagnosticText.component(conceptNid)
 									+ " definition:\n" + DiTreeText.diagnostic(definition));
-				if (ps.size() != 2)
-					throw new IllegalStateException("Property chain " + ps.size() + " != 2. Concept: " + DiagnosticText.component(conceptNid)
-							+ " definition:\n" + DiTreeText.diagnostic(definition));
-				if (ps.get(0) != conceptNid)
-					throw new IllegalStateException(
-							"Property chain malformed. Concept: " + DiagnosticText.component(conceptNid)
-									+ " definition:\n" + DiTreeText.diagnostic(definition));
-				RoleType prop1 = data.getOrCreateRoleType(ps.get(0));
-				RoleType prop2 = data.getOrCreateRoleType(ps.get(1));
-				if (!roleType.equals(prop1))
-					throw new IllegalStateException("This is a bug.");
-				roleType.setChained(prop2);
+				if (ps.size() < 2)
+					throw new IllegalStateException("Property chain of " + ps.size() + " role. Concept: "
+							+ DiagnosticText.component(conceptNid) + " definition:\n" + DiTreeText.diagnostic(definition));
+				if (ps.size() == 2 && ps.get(0) == conceptNid && roleType.getChained() == null) {
+					// The right identity SNOMED CT states, R ∘ S ⊑ R, which the normal form reads.
+					roleType.setChained(data.getOrCreateRoleType(ps.get(1)));
+				} else {
+					// Any other chain implying this role, R1 ∘ … ∘ Rn ⊑ R.
+					List<RoleType> chain = new ArrayList<>(ps.size());
+					for (int i = 0; i < ps.size(); i++) {
+						chain.add(data.getOrCreateRoleType(ps.get(i)));
+					}
+					roleType.addChain(chain);
+				}
 			}
 			default -> throw new UnsupportedOperationException("Can't handle: " + DiTreeText.diagnostic(node) + " in:\n" + DiTreeText.diagnostic(definition));
 			}
@@ -427,40 +432,70 @@ public class ElkSnomedDataBuilder {
 
 	private void processAnd(Definition def, EntityVertex node, DiTreeEntity definition) {
 		for (EntityVertex child : definition.successors(node)) {
-			switch (getMeaning(child)) {
-			case CONCEPT -> {
-				long concept_nid = getNid(child, KernelConcept.CONCEPT_REFERENCE);
-				def.addSuperConcept(data.getOrCreateConcept(concept_nid));
-			}
-			case ROLE -> {
-				checkRoleOperator(child);
-				long role_type_nid = getNid(child, KernelConcept.ROLE_TYPE);
-				if (role_type_nid == KernelConcept.ROLE_GROUP.nid()) {
-					// TODO Placeholder for now so the tests work
-//					data.getOrCreateRoleType(role_type_nid);
-					processRoleGroup(def, child, definition);
+			processAtom(def, child, definition);
+		}
+	}
+
+	private void processAtom(Definition def, EntityVertex child, DiTreeEntity definition) {
+		switch (getMeaning(child)) {
+		case CONCEPT -> {
+			long concept_nid = getNid(child, KernelConcept.CONCEPT_REFERENCE);
+			def.addSuperConcept(data.getOrCreateConcept(concept_nid));
+		}
+		case ROLE -> {
+			checkRoleOperator(child);
+			long role_type_nid = getNid(child, KernelConcept.ROLE_TYPE);
+			if (role_type_nid == KernelConcept.ROLE_GROUP.nid()) {
+				// TODO Placeholder for now so the tests work
+//				data.getOrCreateRoleType(role_type_nid);
+				processRoleGroup(def, child, definition);
+			} else {
+				EntityVertex restriction = getFirstChildCheck(-1, child, definition, null);
+				if (getMeaning(restriction) == LogicalAxiomSemantic.CONCEPT) {
+					def.addUngroupedRole(makeRole(child, definition));
 				} else {
-					Role role = makeRole(child, definition);
-					def.addUngroupedRole(role);
+					// ∃R.(…): the filler is an expression, read as a definition's content.
+					RoleType role_type = data.getOrCreateRoleType(role_type_nid);
+					def.addNestedRole(new NestedRole(role_type, filler(restriction, definition)));
 				}
 			}
-			case FEATURE -> {
-				ConcreteRole role = makeConcreteRole(child, definition);
-				def.addUngroupedConcreteRole(role);
-			}
-			case INTERVAL_ROLE -> {
-				ConcreteRole role = makeIntervalRole(child, definition);
-				def.addUngroupedConcreteRole(role);
-			}
-			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
-			}
 		}
+		case FEATURE -> {
+			ConcreteRole role = makeConcreteRole(child, definition);
+			def.addUngroupedConcreteRole(role);
+		}
+		case INTERVAL_ROLE -> {
+			ConcreteRole role = makeIntervalRole(child, definition);
+			def.addUngroupedConcreteRole(role);
+		}
+		case DISJOINT_WITH -> {
+			// A and B have no instance in common; the reasoner states DisjointClasses(A, B).
+			long disjoint_nid = getNid(child, KernelConcept.DISJOINT_WITH);
+			def.addDisjointConcept(data.getOrCreateConcept(disjoint_nid));
+		}
+		default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
+		}
+	}
+
+	/** A nested restriction's filler: a conjunction, or a single role or feature. */
+	private Definition filler(EntityVertex restriction, DiTreeEntity definition) {
+		Definition filler = new Definition();
+		if (getMeaning(restriction) == LogicalAxiomSemantic.AND) {
+			processAnd(filler, restriction, definition);
+		} else {
+			processAtom(filler, restriction, definition);
+		}
+		return filler;
 	}
 
 	private Role makeRole(EntityVertex node, DiTreeEntity definition) {
 		EntityVertex child = getFirstChildCheck(-1, node, definition, null);
 		long role_type_nid = getNid(node, KernelConcept.ROLE_TYPE);
 		RoleType role_type = data.getOrCreateRoleType(role_type_nid);
+		if (getMeaning(child) != LogicalAxiomSemantic.CONCEPT)
+			throw new UnsupportedOperationException("A role's restriction must be a concept, not "
+					+ getMeaning(child) + " (role groups do not nest restrictions): "
+					+ DiTreeText.diagnostic(definition));
 		long concept_nid = getNid(child, KernelConcept.CONCEPT_REFERENCE);
 		return new Role(role_type, data.getOrCreateConcept(concept_nid));
 	}

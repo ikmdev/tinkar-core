@@ -231,31 +231,21 @@
  * });
  * }</pre>
  *
- * <p><b>Isomorphic Analysis</b></p>
+ * <p><b>Isomorphism and Change Analysis</b></p>
  *
- * <p>The {@link dev.ikm.tinkar.entity.graph.isomorphic} subpackage provides algorithms for
- * determining if two graphs are structurally equivalent:</p>
+ * <p>{@link dev.ikm.tinkar.entity.graph.DiTreeIsomorphism} decides whether two trees are the same
+ * tree. Vertex UUIDs carry identity across versions of a definition
+ * ({@link dev.ikm.tinkar.entity.graph.DiTreeCorrelation}, run by the write path), so history
+ * questions are set operations on UUIDs:</p>
  *
  * <pre>{@code
- * DiTreeEntity tree1 = ...;
- * DiTreeEntity tree2 = ...;
+ * DiTreeEditScript script = DiTreeEditScript.between(earlier, later);
+ * script.moves();    // the same UUID under another parent
+ * script.updates();  // the same UUID with other properties
  *
- * IsomorphicResults results = tree1.isomorphicResults(tree2);
- *
- * if (results.isIsomorphic()) {
- *     // Trees have same structure
- *     // Get vertex mapping
- *     ImmutableIntIntMap vertexMap = results.getVertexMapping();
- * }
+ * DiTreeCommonGraph common = DiTreeCommonGraph.of(List.of(v1, v2, v3));
+ * common.commonTree(); // content-common vertices reachable through common edges
  * }</pre>
- *
- * <p>Isomorphic analysis is useful for:</p>
- * <ul>
- * <li>Comparing stated vs. inferred axioms</li>
- * <li>Detecting duplicate definitions</li>
- * <li>Merging equivalent axioms from different sources</li>
- * <li>Quality assurance of terminology content</li>
- * </ul>
  *
  * <p><b>Graph Utilities</b></p>
  *
