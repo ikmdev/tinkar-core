@@ -21,6 +21,15 @@ public enum DataActivity {
     LOADING_CHANGE_SET,
 
     /**
+     * Loading a change set whose vertex identities were not derived by the identity rule: IKM's
+     * data, or one written before derivation (IKE-Network/ike-issues#1310). Like
+     * {@link #LOADING_CHANGE_SET} it applies changes prepared elsewhere and is not written to
+     * change sets again; unlike it, the trees it carries are correlated as an edit's are, so
+     * their UUIDs are derived rather than kept.
+     */
+    LOADING_UNDERIVED_CHANGE_SET,
+
+    /**
      * Represents an edit operation which is persistent to the database and are also
      * written to—and sharable via—changes sets.
      */

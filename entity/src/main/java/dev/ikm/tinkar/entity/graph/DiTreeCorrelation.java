@@ -169,7 +169,7 @@ public final class DiTreeCorrelation {
      * @return as {@link #correlate(List, DiTreeEntity)}
      */
     public static Correlation correlate(List<DiTreeEntity> history, DiTreeEntity incoming, double containerDice) {
-        return new Matcher(history, incoming, containerDice, null, VertexIdentityTable.LOGICAL).run();
+        return new Matcher(history, incoming, containerDice, null, VertexIdentityTable.LOGICAL, true).run();
     }
 
     /**
@@ -197,7 +197,24 @@ public final class DiTreeCorrelation {
      */
     public static Correlation correlate(List<DiTreeEntity> history, DiTreeEntity incoming, UUID rootSeed,
                                         VertexIdentityTable table) {
-        return new Matcher(history, incoming, CONTAINER_DICE, rootSeed, table).run();
+        return correlate(history, incoming, rootSeed, table, true);
+    }
+
+    /**
+     * Correlates, deciding whether the incoming tree's own UUIDs carry identity.
+     *
+     * @param history  as {@link #correlate(List, DiTreeEntity)}
+     * @param incoming as {@link #correlate(List, DiTreeEntity)}
+     * @param rootSeed as {@link #correlate(List, DiTreeEntity, UUID, VertexIdentityTable)}
+     * @param table    as {@link #correlate(List, DiTreeEntity, UUID, VertexIdentityTable)}
+     * @param carried  whether {@link Phase#CARRIED} runs; false for a tree whose UUIDs were minted
+     *                 by no rule this one recognizes, such as a change set whose identities were
+     *                 not derived, so a UUID history happens to share is not taken as continuity
+     * @return as {@link #correlate(List, DiTreeEntity)}
+     */
+    public static Correlation correlate(List<DiTreeEntity> history, DiTreeEntity incoming, UUID rootSeed,
+                                        VertexIdentityTable table, boolean carried) {
+        return new Matcher(history, incoming, CONTAINER_DICE, rootSeed, table, carried).run();
     }
 
     // ----- the matcher -----
@@ -334,10 +351,12 @@ public final class DiTreeCorrelation {
 
         final VertexIdentityTable table;
         final LongPredicate ordered;
+        final boolean carriedPhase;
 
         Matcher(List<DiTreeEntity> history, DiTreeEntity incoming, double containerDice, UUID rootSeed,
-                VertexIdentityTable table) {
+                VertexIdentityTable table, boolean carriedPhase) {
             this.table = table;
+            this.carriedPhase = carriedPhase;
             this.ordered = table::ordered;
             this.in = new Tree(incoming, table);
             this.rootSeed = rootSeed;
@@ -386,7 +405,9 @@ public final class DiTreeCorrelation {
         }
 
         Correlation run() {
-            carried();
+            if (carriedPhase) {
+                carried();
+            }
             if (prev != null) {
                 anchors();
                 if (!isAssigned(in.root) && prevToIn[prev.root] < 0 && in.meaning(in.root) == prev.meaning(prev.root)) {

@@ -146,6 +146,9 @@ class ChangeSetWriterFormatVersion3IT {
 
         assertAll(
                 () -> assertEquals("3", manifest(changeSet).getValue(ChangeSetFormat.VERSION_ATTRIBUTE), "The manifest's format version"),
+                () -> assertEquals(String.valueOf(ChangeSetFormat.VERTEX_IDENTITY_VERSION),
+                        manifest(changeSet).getValue(ChangeSetFormat.VERTEX_IDENTITY_ATTRIBUTE),
+                        "The manifest says its vertex identities were derived, through the spool and its compaction"),
                 () -> assertTrue(verified.ok(), verified.text()),
                 () -> assertEquals(written - 1, records.size(), "Records: each component once, the repeated concept by its last record"),
                 () -> assertEquals(List.of(), textUuids.stream().limit(5).toList(),

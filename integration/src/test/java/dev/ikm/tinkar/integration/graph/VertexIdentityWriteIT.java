@@ -269,14 +269,20 @@ class VertexIdentityWriteIT {
 
     /**
      * A change set keeps its UUIDs, never re-derived, and one that gives a kept UUID another
-     * meaning is refused when refusal is on ({@link VertexIdentityWrite#CARRIED_BREAKS}).
+     * meaning is refused: refusal is the default ({@link VertexIdentityWrite#CARRIED_BREAKS}).
      */
     @Test
     void aChangeSetKeepsItsUuidsAndIsHeldToTheInvariants() {
+        assertTrue(changeSetGivingAKeptUuidAnotherMeaning(0).contains("changed meaning"));
+    }
+
+    /** With {@link VertexIdentityWrite#CARRIED_BREAKS} set to {@code warn}, the broken version is kept. */
+    @Test
+    void aBrokenChangeSetIsKeptWhenBreaksOnlyWarn() {
         String before = System.getProperty(VertexIdentityWrite.CARRIED_BREAKS);
-        System.setProperty(VertexIdentityWrite.CARRIED_BREAKS, "refuse");
+        System.setProperty(VertexIdentityWrite.CARRIED_BREAKS, "warn");
         try {
-            changeSetKeepsItsUuidsAndIsHeldToTheInvariants();
+            assertEquals(null, changeSetGivingAKeptUuidAnotherMeaning(1));
         } finally {
             if (before == null) {
                 System.clearProperty(VertexIdentityWrite.CARRIED_BREAKS);
@@ -286,21 +292,63 @@ class VertexIdentityWriteIT {
         }
     }
 
-    private void changeSetKeepsItsUuidsAndIsHeldToTheInvariants() {
+    /**
+     * A change set whose identities were not derived, as IKM's are not, is correlated as it
+     * loads: its UUIDs are derived, and a later version that gives one of its UUIDs another
+     * meaning is no break, since the UUIDs it arrives with are not kept.
+     */
+    @Test
+    void anUnderivedChangeSetIsCorrelated() {
         List<Version> chain = chains.getFirst();
         PublicId concept = PublicIds.newRandom();
         PublicId semantic = PublicIds.newRandom();
         DiTreeEntity first = VertexIdentityChains.build(chain.get(0).root());
         DiTreeEntity second = VertexIdentityChains.build(chain.get(1).root());
 
-        StampedWriter writer = open("change set", 1_900_000_000_000L);
+        StampedWriter writer = open("underived change set", 1_950_000_000_000L);
+        writer.concept(concept);
+        writer.commit();
+        long nid = EntityService.get().nidForSemantic(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.publicId(), semantic);
+
+        StampedWriter loading = open("underived change set, loaded", 1_950_000_000_001L);
+        putLoaded(nid, semantic, concept, loading.stamp().nid(), first, DataActivity.LOADING_UNDERIVED_CHANGE_SET);
+        DiTreeEntity stored = storedTree(nid, loading.stamp().nid());
+        assertNotNull(stored);
+        assertEquals(VertexDerivation.root(semantic, 0), uuidAt(stored, stored.root().vertexIndex()),
+                "the root's UUID is derived, not the one the change set carried");
+        loading.commit();
+
+        DiTreeEntity swapped = withUuids(second, j -> j == second.root().vertexIndex()
+                ? uuidAt(first, first.successors(first.root().vertexIndex()).get(0)) : uuidAt(second, j));
+        StampedWriter later = open("underived change set, later", 1_950_000_000_002L);
+        putLoaded(nid, semantic, concept, later.stamp().nid(), swapped, DataActivity.LOADING_UNDERIVED_CHANGE_SET);
+        DiTreeEntity correlated = storedTree(nid, later.stamp().nid());
+        assertNotNull(correlated);
+        assertEquals(VertexDerivation.root(semantic, 0), uuidAt(correlated, correlated.root().vertexIndex()),
+                "the root keeps its identity across versions");
+        later.commit();
+    }
+
+    /**
+     * Loads a change set's version, then a later one that gives the root's UUID to another
+     * vertex; returns the refusal's message, or null when the later version was kept.
+     */
+    private String changeSetGivingAKeptUuidAnotherMeaning(long offset) {
+        long time = 1_900_000_000_000L + offset * 10;
+        List<Version> chain = chains.getFirst();
+        PublicId concept = PublicIds.newRandom();
+        PublicId semantic = PublicIds.newRandom();
+        DiTreeEntity first = VertexIdentityChains.build(chain.get(0).root());
+        DiTreeEntity second = VertexIdentityChains.build(chain.get(1).root());
+
+        StampedWriter writer = open("change set " + offset, time);
         writer.concept(concept);
         writer.commit();
         long nid = EntityService.get().nidForSemantic(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.publicId(), semantic);
 
         // a change set: kept as it arrives, its own UUIDs
-        StampedWriter loading = open("change set, loaded", 1_900_000_000_001L);
-        putLoaded(nid, semantic, concept, loading.stamp().nid(), first);
+        StampedWriter loading = open("change set " + offset + ", loaded", time + 1);
+        putLoaded(nid, semantic, concept, loading.stamp().nid(), first, DataActivity.LOADING_CHANGE_SET);
         DiTreeEntity stored = storedTree(nid, loading.stamp().nid());
         assertNotNull(stored);
         for (int j = 0; j < first.vertexMap().size(); j++) {
@@ -311,14 +359,21 @@ class VertexIdentityWriteIT {
         // a later version that gives the root's UUID to another vertex
         DiTreeEntity swapped = withUuids(second, j -> j == second.root().vertexIndex()
                 ? uuidAt(first, first.successors(first.root().vertexIndex()).get(0)) : uuidAt(second, j));
-        StampedWriter breaking = open("change set, broken", 1_900_000_000_002L);
-        IllegalStateException refused = assertThrows(IllegalStateException.class,
-                () -> putLoaded(nid, semantic, concept, breaking.stamp().nid(), swapped));
-        assertTrue(refused.getMessage().contains("changed meaning"), refused::getMessage);
+        StampedWriter breaking = open("change set " + offset + ", broken", time + 2);
+        try {
+            putLoaded(nid, semantic, concept, breaking.stamp().nid(), swapped, DataActivity.LOADING_CHANGE_SET);
+        } catch (IllegalStateException refused) {
+            breaking.cancel();
+            return refused.getMessage();
+        }
+        assertEquals(uuidAt(swapped, swapped.root().vertexIndex()),
+                uuidAt(storedTree(nid, breaking.stamp().nid()), swapped.root().vertexIndex()), "kept as it arrived");
         breaking.cancel();
+        return null;
     }
 
-    private static void putLoaded(long nid, PublicId semantic, PublicId concept, long stampNid, DiTreeEntity tree) {
+    private static void putLoaded(long nid, PublicId semantic, PublicId concept, long stampNid, DiTreeEntity tree,
+                                  DataActivity activity) {
         PublicIdentifierRecord identifier = PublicIdentifierRecord.make(semantic);
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord record = SemanticRecordBuilder.builder()
@@ -333,7 +388,7 @@ class VertexIdentityWriteIT {
         versions.add(SemanticVersionRecordBuilder.builder().chronology(record).stampNid(stampNid)
                 .fieldValues(Lists.immutable.of(tree)).build());
         EntityService.get().putEntity(SemanticRecordBuilder.builder(record).versions(versions.toImmutable()).build(),
-                DataActivity.LOADING_CHANGE_SET);
+                activity);
     }
 
     private static DiTreeEntity storedTree(long nid, long stampNid) {

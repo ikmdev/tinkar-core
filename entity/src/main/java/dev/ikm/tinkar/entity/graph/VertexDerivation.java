@@ -23,6 +23,7 @@ import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.KernelConcept;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 
 import java.util.Arrays;
@@ -188,23 +189,42 @@ public final class VertexDerivation {
     /**
      * A component's least UUID by its nid: the stored entity's or, for a component the store does
      * not hold, the identity map's. A store with no reverse identity map (the legacy 8-bit Rocks
-     * layout) cannot name an absent component, and derivation never falls back to the nid, which
-     * would derive another UUID in every store.
+     * layout) cannot name an absent component, so a kernel concept, the vocabulary of meanings and
+     * property keys, is named by its own public id, which its nid is found from in that direction;
+     * anything else is unnamed, and derivation never falls back to the nid, which would derive
+     * another UUID in every store. A change set loaded with its references forward (its axioms
+     * before the concepts they name) reaches this.
      */
     private static UUID uuid(long nid) {
         try {
             return PrimitiveData.publicId(nid).leastUuid();
         } catch (UnsupportedOperationException noReverseMap) {
+            for (KernelConcept concept : KernelConcept.values()) {
+                if (concept.nid() == nid) {
+                    return concept.publicId().leastUuid();
+                }
+            }
             throw unnamed(nid, noReverseMap);
         }
     }
 
     private static IllegalStateException unnamed(long nid, UnsupportedOperationException noReverseMap) {
-        return new IllegalStateException("Cannot derive a vertex UUID: the tree references " + DiagnosticText.component(nid)
+        return new UnnamedComponentException("Cannot derive a vertex UUID: the tree references " + DiagnosticText.component(nid)
                 + ", a component this store does not hold, and the store keeps no reverse identity map"
                 + " to name it by its public id (" + noReverseMap.getMessage() + "). Write the component first,"
                 + " or give the vertex a value that carries its public id, such as an EntityProxy made from"
                 + " its UUIDs.", noReverseMap);
+    }
+
+    /**
+     * Derivation could not name a component the tree references: the store does not hold it and
+     * keeps no reverse identity map. Writing the component first resolves it, which is how a
+     * change-set loader recovers from a forward reference.
+     */
+    public static final class UnnamedComponentException extends IllegalStateException {
+        UnnamedComponentException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     private static long uuidHash(UUID uuid) {

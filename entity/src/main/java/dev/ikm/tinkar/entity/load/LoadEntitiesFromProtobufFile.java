@@ -45,6 +45,7 @@ import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.entity.changeset.ComponentTable;
+import dev.ikm.tinkar.entity.graph.VertexDerivation;
 import java.util.zip.GZIPInputStream;
 import java.io.InputStream;
 import org.slf4j.Logger;
@@ -61,6 +62,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -118,6 +120,17 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     private volatile int formatVersion;
     /** Whether the import took every component's identity from the changeset's identity index. */
     private volatile boolean usedIdentityIndex;
+    /**
+     * What the import's writes are: a changeset whose manifest says its vertex identities were
+     * derived keeps them; any other, IKM's data and those written before derivation among them,
+     * is correlated (IKE-Network/ike-issues#1310). Known once {@link #compute()} has read the manifest.
+     */
+    private volatile DataActivity activity = DataActivity.LOADING_UNDERIVED_CHANGE_SET;
+    /**
+     * Entities whose trees name a component the store could not name yet: a forward reference in a
+     * store with no reverse identity map. Written again once the rest of the change set is in.
+     */
+    private final Queue<Entity<? extends EntityVersion>> deferred = new ConcurrentLinkedQueue<>();
     private final Set<UUID> watchList = new CopyOnWriteArraySet<>(watchListFromProperty());
 
     /**
@@ -377,6 +390,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 }
                 importRecords(zis, () -> updateProgress(fileLength + countingIn.getBytesRead(), fileLength * 2));
             }
+            putDeferred();
             updateProgress(fileLength * 2, fileLength * 2);
             StringBuilder stringBuilder = new StringBuilder();
 
@@ -426,15 +440,53 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     }
 
     /**
+     * Stores an entity, or defers it when its trees name a component the store cannot name yet.
+     *
+     * @return whether it was stored
+     */
+    private boolean put(Entity<? extends EntityVersion> entity) {
+        try {
+            EntityService.get().putEntityNoCache(entity, activity);
+            return true;
+        } catch (VertexDerivation.UnnamedComponentException forwardReference) {
+            deferred.add(entity);
+            return false;
+        }
+    }
+
+    /**
+     * Stores the deferred entities, the components they name now written. One that still names a
+     * component the change set does not carry is not imported, and the count check reports it.
+     */
+    private void putDeferred() {
+        if (deferred.isEmpty()) {
+            return;
+        }
+        LOG.info("Writing {} record(s) deferred for a forward reference", String.format("%,d", deferred.size()));
+        Entity<? extends EntityVersion> entity;
+        while ((entity = deferred.poll()) != null) {
+            try {
+                EntityService.get().putEntityNoCache(entity, activity);
+                updateCounts(entity);
+                traceIfWatched(entity);
+            } catch (VertexDerivation.UnnamedComponentException unnamed) {
+                importCount.decrementAndGet();
+                LOG.error("Not imported: {}", unnamed.getMessage());
+            }
+        }
+    }
+
+    /**
      * Imports the records of one stream: each is transformed on the pool and stored, with
      * {@code tick} run every thousand records for progress. Shared by the format-2 records
      * pass and every record entry of a format-3 changeset.
      */
     private void importRecords(InputStream in, Runnable tick) throws Exception {
         Consumer<Entity<? extends EntityVersion>> entityConsumer = entity -> {
-            EntityService.get().putEntityNoCache(entity, DataActivity.LOADING_CHANGE_SET);
-            updateCounts(entity);
-            traceIfWatched(entity);
+            if (put(entity)) {
+                updateCounts(entity);
+                traceIfWatched(entity);
+            }
         };
         final AtomicInteger errorCount = new AtomicInteger();
         try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
@@ -546,6 +598,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 }
                 readers.join();
             }
+            putDeferred();
             updateProgress(total, total);
             LOG.info("Imported {} entities", String.format("%,d", importCount.get()));
             verifyManifest(manifestEntryData);
@@ -622,9 +675,10 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(importFile))) {
             // Consumer to be run for each transformed Entity
             Consumer<Entity<? extends EntityVersion>> entityConsumer = entity -> {
-                EntityService.get().putEntityNoCache(entity, DataActivity.LOADING_CHANGE_SET);
-                updateCounts(entity);
-                traceIfWatched(entity);
+                if (put(entity)) {
+                    updateCounts(entity);
+                    traceIfWatched(entity);
+                }
             };
 
             ZipEntry zipEntry;
@@ -653,6 +707,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                     }
                 }
             }
+            putDeferred();
         } catch (Exception e) {
             LOG.error("1-pass - Entity loading failed", e);
             updateTitle("Failed: Import Protobuf data from " + importFile.getName());
@@ -807,6 +862,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             }
             Manifest manifest = read.get();
             formatVersion = ChangeSetFormat.version(manifest.getMainAttributes(), importFile.getName());
+            if (ChangeSetFormat.vertexIdentityDerived(manifest.getMainAttributes())) {
+                activity = DataActivity.LOADING_CHANGE_SET;
+            }
             long expectedImports = Long.parseLong(manifest.getMainAttributes().getValue("Total-Count"));
             // Get Dependent Module / Author PublicIds and Descriptions
             manifest.getEntries().keySet().forEach((publicIdKey) -> {

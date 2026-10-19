@@ -53,18 +53,20 @@ import java.util.function.Supplier;
  * <p>What happens depends on where the version comes from (arch-vertex-identity-rederivation,
  * "The Import Boundary"):
  * <ul>
- *   <li><em>Derived sources</em> -- edits, builders, importers, the reasoner: each new version's
+ *   <li><em>Derived sources</em> -- edits, builders, importers, the reasoner, and a change set
+ *       whose manifest does not say its identities were derived
+ *       ({@link dev.ikm.tinkar.common.service.DataActivity#LOADING_UNDERIVED_CHANGE_SET}: IKM's
+ *       data, and anything written before derivation): each new version's
  *       trees are correlated ({@link DiTreeCorrelation}) against the semantic's earlier versions,
  *       which are the identity ledger, and their newborns derived ({@link VertexDerivation}). A
  *       tree whose shape is not the identity table's (a set or a role with other than one
  *       successor, a leaf with any) is refused.
- *   <li><em>Tinkar-native input</em> -- a change set being loaded, or a repair: identity minted
- *       elsewhere must survive the trip, so its UUIDs are kept and never re-derived, and checked
- *       against the invariants: a UUID's meaning never changes, and an operand's identifying
- *       properties never change under a kept UUID. A version that breaks one is logged, or
- *       refused when {@value #CARRIED_BREAKS} is {@code refuse}: stores built before derivation
- *       carry the false continuity of ordinal minting (a published GUDID or SNOMED archive does),
- *       so refusing waits until they are re-derived (arch-vertex-identity-rederivation).
+ *   <li><em>Tinkar-native input</em> -- a change set whose manifest says its identities were
+ *       derived ({@link dev.ikm.tinkar.entity.changeset.ChangeSetFormat#VERTEX_IDENTITY_ATTRIBUTE}),
+ *       or a repair: identity minted elsewhere must survive the trip, so its UUIDs are kept and
+ *       never re-derived, and checked against the invariants: a UUID's meaning never changes,
+ *       and an operand's identifying properties never change under a kept UUID. A version that
+ *       breaks one is refused, or only logged when {@value #CARRIED_BREAKS} is {@code warn}.
  * </ul>
  *
  * <p>Earlier versions are ordered by STAMP time, then STAMP UUID (an uncommitted version, its time
@@ -88,7 +90,7 @@ public final class VertexIdentityWrite {
 
     /**
      * The system property that decides what a broken invariant in Tinkar-native input does:
-     * {@code refuse} throws; anything else, or nothing, logs a warning.
+     * {@code warn} logs a warning; anything else, or nothing, throws.
      */
     public static final String CARRIED_BREAKS = "ike.vertexIdentity.carriedBreaks";
 
@@ -125,6 +127,7 @@ public final class VertexIdentityWrite {
         if (!(incoming instanceof SemanticRecord record) || !holdsIdentifiedTree(record)) {
             return incoming;
         }
+        // LOADING_UNDERIVED_CHANGE_SET is not carried: its trees correlate as a derived source's do.
         boolean carry = activity == DataActivity.LOADING_CHANGE_SET || activity == DataActivity.DATA_REPAIR;
         SemanticEntity<?> stored = storedSupplier.get();
 
@@ -183,7 +186,7 @@ public final class VertexIdentityWrite {
                     if (!broken.isEmpty()) {
                         String message = "Vertex identity broken in " + record.publicId() + " field " + f
                                 + ": " + String.join("; ", broken);
-                        if ("refuse".equals(System.getProperty(CARRIED_BREAKS))) {
+                        if (!"warn".equals(System.getProperty(CARRIED_BREAKS))) {
                             throw new IllegalStateException(message);
                         }
                         LOG.warn(message);
@@ -195,8 +198,10 @@ public final class VertexIdentityWrite {
                     throw new IllegalStateException("Not a tree the " + table + " identity table admits, in "
                             + record.publicId() + " field " + f + ": " + shape);
                 }
+                // An underived change set's UUIDs say nothing of identity: none is carried.
                 DiTreeEntity correlated = DiTreeCorrelation.correlate(history, tree,
-                        VertexDerivation.root(record.publicId(), f), table).tree();
+                        VertexDerivation.root(record.publicId(), f), table,
+                        activity != DataActivity.LOADING_UNDERIVED_CHANGE_SET).tree();
                 version.fields().set(f, correlated);
                 changed = true;
             }
