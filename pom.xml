@@ -126,10 +126,10 @@
         <nid-check.report>error</nid-check.report>
         <nid-check.allow>dev.ikm.tinkar.provider.,dev.ikm.tinkar.common.id.EntityKey,dev.ikm.tinkar.common.id.impl.NidLayout,dev.ikm.tinkar.entity.EntityRecordFactory,dev.ikm.tinkar.entity.graph.EntityVertex,dev.ikm.tinkar.common.id.NidTest,dev.ikm.tinkar.integration.coordinate.CoordinateEncodingIT,dev.ikm.tinkar.reasoner.elksnomed.test.,dev.ikm.tinkar.reasoner.hybrid.test.</nid-check.allow>
         <!-- The facade build check (FacadeCheck, beside NidCheck in nid-check): how it reports
-             (warning while the census of its findings is worked down, then error) and which
+             (error, or warning for a census) and which
              top-level classes it skips (prefixes; dev.ikm.tinkar.terms. always is): the
              decoders and generators that build proxies from serialized ids. -->
-        <facade-check.report>warning</facade-check.report>
+        <facade-check.report>error</facade-check.report>
         <facade-check.allow>dev.ikm.tinkar.entity.VersionProxyFactory,dev.ikm.tinkar.entity.builder.BindingsWriter,dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer</facade-check.allow>
         <javac.maxwarns>10000</javac.maxwarns>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
