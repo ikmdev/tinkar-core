@@ -9,6 +9,9 @@
 		class path, and compares each case entity's parents and equivalents with the inferred navigation
 		and equivalence semantics the case expects.</description>
 	<properties>
+		<!-- Tests only: no jar is made, so there is nothing to install or deploy. -->
+		<maven.install.skip>true</maven.install.skip>
+		<maven.deploy.skip>true</maven.deploy.skip>
 		<failsafeArgLine>
 			--enable-preview
 			-Xmx8G
@@ -119,6 +122,13 @@
 	</dependencies>
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<skipIfEmpty>true</skipIfEmpty>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
