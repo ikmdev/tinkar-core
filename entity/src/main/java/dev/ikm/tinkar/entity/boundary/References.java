@@ -37,6 +37,12 @@ import java.util.List;
  */
 public final class References {
 
+    /** Where a semantic's pattern is found: what the pattern index holds. */
+    public static final String PATTERN = "pattern";
+
+    /** Where a semantic's referenced component is found: what the referencing index holds. */
+    public static final String REFERENCED_COMPONENT = "referenced component";
+
     /** Receives one reference: where it was found, and the nid it leads to. */
     @FunctionalInterface
     public interface Sink {
@@ -56,8 +62,8 @@ public final class References {
         switch (version) {
             case SemanticEntityVersion semantic -> {
                 SemanticEntity<?> chronology = semantic.chronology();
-                sink.accept("pattern", chronology.patternNid());
-                sink.accept("referenced component", chronology.referencedComponentNid());
+                sink.accept(PATTERN, chronology.patternNid());
+                sink.accept(REFERENCED_COMPONENT, chronology.referencedComponentNid());
                 List<Object> values = semantic.fieldValues().castToList();
                 for (int i = 0; i < values.size(); i++) {
                     String where = "field " + (i + 1);

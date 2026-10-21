@@ -57,7 +57,7 @@ import java.util.Optional;
  * imported scope would point at what the target store lacks; a <em>dangling</em> one, to a
  * component the store no longer holds, blocks an export too. A reference into the scope carried in
  * a field of a component outside it is not in the referencing index, so resolution cannot see it;
- * {@link ScopeOperations#delete(Scope)} finds those in the pass it makes anyway.
+ * {@link ScopeOperations#delete(Scope)} asks the store's {@link DataUseIndex} for those.
  *
  * @param kind      the scope's kind, never knowledge
  * @param roots     the roots it was resolved from

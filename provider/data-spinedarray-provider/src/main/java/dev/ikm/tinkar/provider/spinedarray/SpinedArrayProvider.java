@@ -42,6 +42,7 @@ import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
 import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.scope.DataUseIndex;
 import dev.ikm.tinkar.common.service.SearchService;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
@@ -155,6 +156,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     /** The {@link #name()} of an ephemeral store, the same text the retired ephemeral provider showed. */
     static final String EPHEMERAL_NAME = "Ephemeral data";
     final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
+    /** What uses the store's instance and ephemeral data, for scope deletes (IKE-Network/ike-issues#1313). */
+    final DataUseIndex dataUseIndex;
+    /** The store's root, which holds the data-use index's file; null for an ephemeral store. */
+    final File dataRoot;
 
     private SpinedArrayProvider() throws IOException, ExecutionException, InterruptedException {
         this(false);
@@ -175,6 +180,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         this.ephemeral = ephemeral;
         if (ephemeral) {
             name = EPHEMERAL_NAME;
+            this.dataRoot = null;
             this.nidToByteArrayMapDirectory = null;
             this.nidToCitingComponentNidMapDirectory = null;
             this.nextNidKeyFile = null;
@@ -191,6 +197,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             }
             name = configuredRoot.getName();
             configuredRoot.mkdirs();
+            this.dataRoot = configuredRoot;
             LOG.info("Datastore root: " + configuredRoot.getAbsolutePath());
 
             this.nidToByteArrayMapDirectory = new File(configuredRoot, "nidToByteArrayMap");
@@ -255,6 +262,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             }
         }
 
+        // The spines are written only by a save, so the files as opened are what the index's file was written against.
+        this.dataUseIndex = ephemeral
+                ? DataUseIndex.memoryOnly(this::forEachParallel)
+                : DataUseIndex.open(dataRoot, storeFingerprint(), uuidToNidMap.isEmpty(), this::forEachParallel);
+
         // Index recreation is now handled by SearchProvider in INDEXING phase
         stopwatch.stop();
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
@@ -303,6 +315,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
 
 
                 entityToBytesMap.close();
+                if (!ephemeral) {
+                    dataUseIndex.save(storeFingerprint());
+                }
             } catch (Exception e) {
                 LOG.error("Error closing SpinedArrayProvider", e);
             } finally {
@@ -318,6 +333,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     public void save() {
         if (ephemeral) {
             LOG.debug("Ephemeral SpinedArrayProvider: nothing to save");
+            return;
+        }
+        if (lifecycle.get() == Lifecycle.STOPPED) {
+            // The close saved everything, then wrote the data-use index against the files as saved.
+            LOG.debug("SpinedArrayProvider is closed: nothing to save");
             return;
         }
         Stopwatch stopwatch = new Stopwatch();
@@ -601,6 +621,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(Nid.narrowChecked(nid), value, accumulator);
         // Its public id is in its bytes now; the save finds any that are still absent.
         absentUuids.remove(Nid.narrowChecked(nid));
+        this.dataUseIndex.merged(sourceObject);
         this.writeSequence.increment();
         this.changeSetWriterServices.forEach(writerService -> writerService.writeToChangeSet((Entity) sourceObject, activity));
 
@@ -651,6 +672,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
     @Override
     public void setLoadPhase(boolean loadPhase) {
         this.loadPhase = loadPhase;
+        this.dataUseIndex.loadPhase(loadPhase);
     }
 
     @Override
@@ -770,6 +792,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
 
     @Override
     public void erase(long nid) {
+        this.dataUseIndex.invalidate("a repair erased " + nid);
         this.entityToBytesMap.put(Nid.narrowChecked(nid), null);
         this.nidToCitingComponentsNidMap.put(Nid.narrowChecked(nid), null);
         this.conceptNids.remove(Nid.narrowChecked(nid));
@@ -810,6 +833,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
                 continue;
             }
             Entity<?> entity = EntityRecordFactory.make(bytes);
+            this.dataUseIndex.erased(entity);
             if (entity instanceof SemanticEntity<?> semantic) {
                 int pattern = Nid.narrowChecked(semantic.patternNid());
                 long citation = IntsInLong.ints2Long(n, pattern);
@@ -845,6 +869,16 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             this.entityToBytesMap.put(n, null);
             writeSequence.increment();
         }
+    }
+
+    @Override
+    public java.util.Optional<DataUse> dataUse() {
+        return java.util.Optional.of(dataUseIndex);
+    }
+
+    /** The files the store's records and citations are saved in, as a fingerprint for the data-use index. */
+    private long storeFingerprint() {
+        return DataUseIndex.fingerprintOf(nidToByteArrayMapDirectory, nidToCitingComponentNidMapDirectory, nextNidKeyFile);
     }
 
     /** Removes the components' records from what each of this store's change-set writers keeps. */
@@ -965,6 +999,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
 
     @Override
     public void put(long nid, byte[] bytesToOverwrite) {
+        this.dataUseIndex.invalidate("a repair overwrote " + nid);
         this.entityToBytesMap.put(Nid.narrowChecked(nid), bytesToOverwrite);
     }
 

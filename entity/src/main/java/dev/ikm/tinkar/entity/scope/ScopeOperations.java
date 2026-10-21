@@ -17,6 +17,7 @@ package dev.ikm.tinkar.entity.scope;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.DataUse;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ScopeErasure;
@@ -33,7 +34,9 @@ import dev.ikm.tinkar.entity.boundary.EntityBoundaries;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import org.eclipse.collections.api.factory.primitive.LongLists;
+import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,8 +67,9 @@ import java.util.function.LongConsumer;
  * then delete. A move between stores is an archive here and an import there.
  *
  * <p>Export refuses a scope with references leading out of it, and delete one with references
- * leading into it; a delete reads every other component once to find the second kind, which the
- * referencing index holds only for referenced components. Delete is not journaled: the knowledge change sets never carry instance or ephemeral data,
+ * leading into it; a delete asks the store's data-use index ({@link DataUse}) for the second kind,
+ * which the referencing index holds only for referenced components, and reads every other
+ * component once instead where the store keeps no index. Delete is not journaled: the knowledge change sets never carry instance or ephemeral data,
  * and the instance and ephemeral change-set files, which no store replays on its own, still hold
  * the scope's records until they are rewritten.
  */
@@ -76,6 +81,14 @@ public final class ScopeOperations {
     private static final String KIND = "Scope-Kind: ";
     private static final String ROOT = "Root: ";
     private static final String REFERENCE = "Reference: ";
+
+    /**
+     * The system property that allows a delete, on a store with no current data-use index, to read
+     * every other component instead: {@code true} by default, {@code false} refuses the delete, and
+     * {@code always} reads every component even where an index answers, to measure one against the
+     * other.
+     */
+    public static final String FULL_PASS_PROPERTY = "ike.scope.fullPass";
 
     private ScopeOperations() {
     }
@@ -234,16 +247,20 @@ public final class ScopeOperations {
      * @param stampsKept the scope's instance or ephemeral STAMPs kept, since something else is written under them
      * @param outgoing   the references the scope made to other scopes, gone with it
      * @param changeSets what removing the erased components from the instance and ephemeral change sets did
+     * @param indexed    whether the store's data-use index answered what else uses the scope, rather than a read of every component
      */
-    public record Deleted(int components, int stamps, int stampsKept, int outgoing, ScopeErasure.ChangeSetRemoval changeSets) { }
+    public record Deleted(int components, int stamps, int stampsKept, int outgoing, ScopeErasure.ChangeSetRemoval changeSets,
+                          boolean indexed) { }
 
     /**
      * Deletes a scope nothing outside it references: erases its members, then collects its
      * instance and ephemeral STAMPs that no remaining component is written under. A knowledge
-     * STAMP is never collected. One pass reads every other component's versions, for the STAMPs
-     * they are written under and for every reference they carry: a reference into the scope, in a
-     * field the referencing index does not hold, refuses the delete before anything is erased. A
-     * reference the scope makes to another scope does not: it goes with the scope.
+     * STAMP is never collected. The store's data-use index says who else is written under each
+     * of the scope's data STAMPs and who references each member through a field, which the
+     * referencing index does not hold; a reference into the scope refuses the delete before
+     * anything is erased. A store with no index has every other component read once instead,
+     * unless {@value #FULL_PASS_PROPERTY} is {@code false}. A reference the scope makes to another
+     * scope does not refuse it: it goes with the scope.
      *
      * @param scope the scope, resolved just before
      * @return what was erased
@@ -282,30 +299,22 @@ public final class ScopeOperations {
             }
         }
         int dataStamps = candidates.size();
-        java.util.concurrent.atomic.AtomicLong into = new java.util.concurrent.atomic.AtomicLong();
-        java.util.concurrent.atomic.AtomicReference<String> firstInto = new java.util.concurrent.atomic.AtomicReference<>();
-        EntityStore.current().forEachParallel((bytes, nid) -> {
-            if (bytes == null || scope.members().contains(nid) || scope.stamps().contains(nid)) {
-                return;
-            }
-            Entity<?> entity = EntityRecordFactory.make(bytes);
-            if (entity instanceof StampEntity<?>) {
-                return;
-            }
-            for (Object o : entity.versions()) {
-                EntityVersion version = (EntityVersion) o;
-                candidates.remove(version.stampNid());
-                dev.ikm.tinkar.entity.boundary.References.of(version, (where, target) -> {
-                    if (scope.members().contains(target)) {
-                        into.incrementAndGet();
-                        firstInto.compareAndSet(null, Scope.describe(nid) + " references " + Scope.describe(target) + " by its " + where);
-                    }
-                });
-            }
-        });
-        if (into.get() > 0) {
-            throw new IllegalStateException("The scope cannot be deleted: " + into.get()
-                    + " reference(s) from outside it lead into it, first: " + firstInto.get());
+        MutableLongSet members = LongSets.mutable.of(scope.members().toArray());
+        String fullPass = System.getProperty(FULL_PASS_PROPERTY, "true").strip();
+        Optional<DataUse> index = erasure.dataUse();
+        boolean indexed = !"always".equalsIgnoreCase(fullPass) && index.isPresent() && index.get().current();
+        Into into;
+        if (indexed) {
+            into = askTheIndex(index.get(), members, candidates);
+        } else if (!"false".equalsIgnoreCase(fullPass)) {
+            into = readEveryComponent(scope, members, candidates);
+        } else {
+            throw new IllegalStateException("The " + PrimitiveData.get().getClass().getSimpleName()
+                    + " store keeps no current data-use index, and " + FULL_PASS_PROPERTY + "=false refuses reading every component instead");
+        }
+        if (into.count() > 0) {
+            throw new IllegalStateException("The scope cannot be deleted: " + into.count()
+                    + " reference(s) from outside it lead into it, first: " + into.first());
         }
         MutableLongList erased = LongLists.mutable.withAll(scope.members());
         candidates.forEach(erased::add);
@@ -318,7 +327,107 @@ public final class ScopeOperations {
         EntityService.get().invalidateCaches(nids);
         EntityBoundaries.clear();
         ScopeErasure.ChangeSetRemoval changeSets = remover.apply(uuids);
-        return new Deleted(scope.members().size(), candidates.size(), dataStamps - candidates.size(), scope.outgoing().size(), changeSets);
+        return new Deleted(scope.members().size(), candidates.size(), dataStamps - candidates.size(), scope.outgoing().size(), changeSets,
+                indexed);
+    }
+
+    /** The references into a scope from outside it: how many, and the first in words. */
+    private record Into(long count, String first) { }
+
+    /**
+     * Asks the store's data-use index who else is written under each candidate STAMP and who
+     * references each member, confirming each hit outside the scope by reading that one component:
+     * an entry may outlive what it recorded.
+     */
+    private static Into askTheIndex(DataUse index, MutableLongSet members, Set<Long> candidates) {
+        for (Long stamp : List.copyOf(candidates)) {
+            index.forEachWrittenUnder(stamp, user -> {
+                if (!members.contains(user) && candidates.contains(stamp) && writtenUnder(user, stamp)) {
+                    candidates.remove(stamp);
+                }
+            });
+        }
+        long[] count = {0};
+        String[] first = {null};
+        members.forEach(member -> index.forEachReferrer(member, referrer -> {
+            if (members.contains(referrer)) {
+                return;
+            }
+            String where = whereReferenced(referrer, member);
+            if (where != null) {
+                count[0]++;
+                if (first[0] == null) {
+                    first[0] = Scope.describe(referrer) + " references " + Scope.describe(member) + " by its " + where;
+                }
+            }
+        }));
+        return new Into(count[0], first[0]);
+    }
+
+    /**
+     * Reads every other component once, for the STAMPs its versions are written under and every
+     * reference it carries: the fallback for a store that keeps no data-use index.
+     */
+    private static Into readEveryComponent(Scope scope, MutableLongSet members, Set<Long> candidates) {
+        java.util.concurrent.atomic.AtomicLong into = new java.util.concurrent.atomic.AtomicLong();
+        java.util.concurrent.atomic.AtomicReference<String> firstInto = new java.util.concurrent.atomic.AtomicReference<>();
+        MutableLongSet stamps = LongSets.mutable.of(scope.stamps().toArray());
+        EntityStore.current().forEachParallel((bytes, nid) -> {
+            if (bytes == null || members.contains(nid) || stamps.contains(nid)) {
+                return;
+            }
+            Entity<?> entity = EntityRecordFactory.make(bytes);
+            if (entity instanceof StampEntity<?>) {
+                return;
+            }
+            for (Object o : entity.versions()) {
+                EntityVersion version = (EntityVersion) o;
+                candidates.remove(version.stampNid());
+                dev.ikm.tinkar.entity.boundary.References.of(version, (where, target) -> {
+                    if (members.contains(target)) {
+                        into.incrementAndGet();
+                        firstInto.compareAndSet(null, Scope.describe(nid) + " references " + Scope.describe(target) + " by its " + where);
+                    }
+                });
+            }
+        });
+        return new Into(into.get(), firstInto.get());
+    }
+
+    private static boolean writtenUnder(long nid, long stamp) {
+        Optional<? extends Entity<? extends EntityVersion>> held = read(nid);
+        if (held.isPresent()) {
+            for (EntityVersion version : held.get().versions()) {
+                if (version.stampNid() == stamp) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Where a component's versions reference a target, or null when they no longer do. */
+    private static String whereReferenced(long nid, long target) {
+        Optional<? extends Entity<? extends EntityVersion>> held = read(nid);
+        String[] where = {null};
+        held.ifPresent(entity -> {
+            for (EntityVersion version : entity.versions()) {
+                dev.ikm.tinkar.entity.boundary.References.of(version, (w, t) -> {
+                    if (t == target && where[0] == null) {
+                        where[0] = w;
+                    }
+                });
+            }
+        });
+        return where[0];
+    }
+
+    private static Optional<? extends Entity<? extends EntityVersion>> read(long nid) {
+        try {
+            return EntityHandle.get(nid).entity();
+        } catch (RuntimeException absent) {
+            return Optional.empty();
+        }
     }
 
     /**

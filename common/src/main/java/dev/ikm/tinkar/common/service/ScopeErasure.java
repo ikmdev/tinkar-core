@@ -67,4 +67,15 @@ public interface ScopeErasure {
     default ChangeSetRemoval removeFromChangeSets(java.util.Set<java.util.UUID> components) {
         return ChangeSetRemoval.NONE;
     }
+
+    /**
+     * The store's index of what uses its instance and ephemeral data, which a scope delete asks
+     * instead of reading every other component. A store that keeps none answers empty, and a
+     * delete there reads every other component.
+     *
+     * @return the index, if the store keeps one
+     */
+    default java.util.Optional<DataUse> dataUse() {
+        return java.util.Optional.empty();
+    }
 }
