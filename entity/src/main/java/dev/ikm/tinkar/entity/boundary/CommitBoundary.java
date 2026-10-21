@@ -46,9 +46,11 @@ import java.util.stream.Collectors;
  * <li><em>The parents are disjoint.</em> No module is a kind of both.</li>
  * </ul>
  *
- * <p>The mode is the system property {@value #MODE_PROPERTY}: {@code warn} (the default) logs what
- * a commit crosses and lets it proceed, {@code fail} refuses the commit with a
- * {@link BoundaryViolationException}, and {@code off} skips the check. The check costs nothing
+ * <p>The mode is the system property {@value #MODE_PROPERTY}: {@code fail} (the default since
+ * 2026-10-21, when the tinkar-core and komet-claude-plugin suites ran clean under it) refuses the
+ * commit with a {@link BoundaryViolationException}, {@code warn} logs what a commit crosses and
+ * lets it proceed, and {@code off} skips the check. A value it does not know is read as
+ * {@code fail}, so a mistyped setting never loosens the boundary. The check costs nothing
  * until the store holds one of the two module parents, since before then every module is
  * knowledge and nothing can cross.
  */
@@ -68,11 +70,11 @@ public final class CommitBoundary {
 
     /** @return the mode in force now */
     public static Mode mode() {
-        String value = System.getProperty(MODE_PROPERTY, "warn").strip().toUpperCase();
+        String value = System.getProperty(MODE_PROPERTY, "fail").strip().toUpperCase();
         try {
             return Mode.valueOf(value);
         } catch (IllegalArgumentException e) {
-            return Mode.WARN;
+            return Mode.FAIL;
         }
     }
 
