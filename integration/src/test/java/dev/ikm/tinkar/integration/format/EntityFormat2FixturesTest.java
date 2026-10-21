@@ -54,6 +54,7 @@ import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -114,9 +115,17 @@ class EntityFormat2FixturesTest {
     private static final UUID UUID_1 = UUID.fromString("0f6c6a6e-6b1d-4c0c-8b8e-3f1a2b3c4d01");
     private static final UUID UUID_2 = UUID.fromString("0f6c6a6e-6b1d-4c0c-8b8e-3f1a2b3c4d02");
 
+    /** The layout the store opened with, restored after each test, whichever store the fixture opened. */
+    private NidLayout opened;
+
+    @BeforeEach
+    void rememberTheLayout() {
+        opened = NidLayout.active();
+    }
+
     @AfterEach
     void restoreTheLayout() {
-        NidLayout.activate(NidLayout.SEQUENTIAL);
+        NidLayout.activate(opened);
     }
 
     // ---------- fields ----------

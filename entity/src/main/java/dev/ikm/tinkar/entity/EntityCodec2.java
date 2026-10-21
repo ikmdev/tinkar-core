@@ -173,6 +173,19 @@ public final class EntityCodec2 {
     }
 
     /**
+     * The nid of a component a field names by public id: its own when the store knows it, else
+     * one minted under the concept pattern. A field value carries no kind, a 64-bit store cannot
+     * mint without one, and a component a field names before it is written is a concept, as the
+     * KnowledgeSet builder takes it (IKE-Network/ike-issues#1313).
+     */
+    private static long referencedNid(PublicId publicId) {
+        if (PrimitiveData.get().hasPublicId(publicId)) {
+            return PrimitiveData.get().nidForPublicId(publicId);
+        }
+        return EntityService.get().nidForConcept(publicId);
+    }
+
+    /**
      * Writes a field value with its type token.
      *
      * @param buf   the buffer
@@ -227,16 +240,16 @@ public final class EntityCodec2 {
                 value.forEach(id -> EntityRecordFormat2.writeNid(buf, id));
             }
             case LongIdSet value -> { token(buf, FieldDataType.COMPONENT_ID_SET); writeIdSet(buf, value.toArray()); }
-            case PublicId value -> { token(buf, FieldDataType.IDENTIFIED_THING); EntityRecordFormat2.writeNid(buf, Entity.nid(value)); }
+            case PublicId value -> { token(buf, FieldDataType.IDENTIFIED_THING); EntityRecordFormat2.writeNid(buf, referencedNid(value)); }
             case PublicIdList value -> {
                 token(buf, FieldDataType.COMPONENT_ID_LIST);
                 buf.writeVarInt(value.size());
-                value.forEach(publicId -> EntityRecordFormat2.writeNid(buf, PrimitiveData.get().nidForPublicId((PublicId) publicId)));
+                value.forEach(publicId -> EntityRecordFormat2.writeNid(buf, referencedNid((PublicId) publicId)));
             }
             case PublicIdSet value -> {
                 long[] nids = new long[value.size()];
                 int[] i = {0};
-                value.forEach(publicId -> nids[i[0]++] = PrimitiveData.get().nidForPublicId((PublicId) publicId));
+                value.forEach(publicId -> nids[i[0]++] = referencedNid((PublicId) publicId));
                 token(buf, FieldDataType.COMPONENT_ID_SET);
                 writeIdSet(buf, nids);
             }

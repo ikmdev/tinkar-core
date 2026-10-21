@@ -658,8 +658,14 @@ final class ComponentLedger {
 
     // ------------------------------------------------------------------ replay
 
-    long componentNid() {
-        return nidFor(componentId);
+    /** The nid of this ledger's component as a concept, minted under the concept pattern if it is new. */
+    long conceptNid() {
+        return conceptNidFor(componentId);
+    }
+
+    /** The nid of this ledger's component as a pattern, minted under the pattern-of-patterns if it is new. */
+    long patternNid() {
+        return EntityService.get().nidForPattern(componentId);
     }
 
     /**
@@ -700,8 +706,8 @@ final class ComponentLedger {
                 stampIdRecord.leastSignificantBits(), stampIdRecord.additionalUuidLongs(), stampNid,
                 versionRecords);
         versionRecords.add(new StampVersionRecord(stampEntity, stamp.state().nid(), stamp.time(),
-                nidFor(stamp.author().publicId()), nidFor(stamp.module().publicId()),
-                nidFor(stamp.path().publicId())));
+                conceptNidFor(stamp.author().publicId()), conceptNidFor(stamp.module().publicId()),
+                conceptNidFor(stamp.path().publicId())));
         versionRecords.build();
         EntityService.get().putEntity(stampEntity);
     }
@@ -715,10 +721,10 @@ final class ComponentLedger {
     }
 
     private void writeDescription(DescriptionLedger description, long componentNid) {
-        long descriptionNid = nidFor(description.uuid);
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(PublicIds.of(description.uuid),
                 KernelPattern.DESCRIPTION_PATTERN, componentNid, versions);
+        long descriptionNid = bootstrap.nid();
         for (VersionEntry<String> version : description.versions) {
             versions.add(SemanticVersionRecordBuilder.builder()
                     .chronology(bootstrap)
@@ -797,7 +803,7 @@ final class ComponentLedger {
         for (GenericSemanticLedger semantic : genericSemantics) {
             long referencedNid = semantic.referencedComponent == null
                     ? componentNid
-                    : nidFor(semantic.referencedComponent);
+                    : referencedNidFor(semantic.referencedComponent);
             RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
             SemanticRecord bootstrap = newSemantic(semantic.semanticId,
                     semantic.pattern, referencedNid, versions);
@@ -833,12 +839,26 @@ final class ComponentLedger {
         };
     }
 
-    static long nidFor(UUID uuid) {
-        return PrimitiveData.nid(PublicIds.of(uuid));
+    /**
+     * The nid of a concept, minted under the concept pattern if the store does not know it: a
+     * store that keys nids by pattern refuses a mint with no pattern in scope, where a
+     * sequential store minted any UUID (IKE-Network/ike-issues#1313).
+     */
+    static long conceptNidFor(PublicId publicId) {
+        return EntityService.get().nidForConcept(publicId);
     }
 
-    static long nidFor(PublicId publicId) {
-        return PrimitiveData.nid(publicId);
+    /**
+     * The nid of a component a semantic references: its own when the store knows it, else one
+     * minted under the concept pattern. A declaration names the referenced component by public
+     * id only, without its kind, and a reference not yet written is a concept in every
+     * declaration the builder makes; a semantic or pattern it references is written first.
+     */
+    static long referencedNidFor(PublicId publicId) {
+        if (PrimitiveData.get().hasPublicId(publicId)) {
+            return PrimitiveData.nid(publicId);
+        }
+        return conceptNidFor(publicId);
     }
 
     /**
@@ -858,7 +878,7 @@ final class ComponentLedger {
                 .leastSignificantBits(identifier.leastSignificantBits())
                 .additionalUuidLongs(identifier.additionalUuidLongs())
                 .nid(nid)
-                .patternNid(nidFor(pattern.publicId()))
+                .patternNid(EntityService.get().nidForPattern(pattern.publicId()))
                 .referencedComponentNid(referencedComponentNid)
                 .versions(versions)
                 .build();

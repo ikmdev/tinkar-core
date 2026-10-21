@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityVersion;
@@ -96,9 +97,9 @@ public class TestProtobufToEntityFieldDefinitionTransformIT {
         assertNotNull(patternEntity);
         var fieldDefs = patternEntity.versions().get(0).fieldDefinitions();
         assertEquals(1, fieldDefs.size());
-        assertEquals(Entity.nid(meaningConcept.publicId()), fieldDefs.get(0).meaningNid());
-        assertEquals(Entity.nid(dataTypeConcept.publicId()), fieldDefs.get(0).dataTypeNid());
-        assertEquals(Entity.nid(purposeConcept.publicId()), fieldDefs.get(0).purposeNid());
+        assertEquals(NidsByKind.concept(meaningConcept.publicId()), fieldDefs.get(0).meaningNid());
+        assertEquals(NidsByKind.concept(dataTypeConcept.publicId()), fieldDefs.get(0).dataTypeNid());
+        assertEquals(NidsByKind.concept(purposeConcept.publicId()), fieldDefs.get(0).purposeNid());
     }
 
     @Test

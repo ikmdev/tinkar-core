@@ -36,7 +36,7 @@ class SpinedArrayAbsentComponentIdentityIT {
     @BeforeAll
     static void startEmptySpinedArrayStore() {
         FileUtil.recursiveDelete(DATASTORE_ROOT);
-        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
+        TestHelper.startDataBase(DataStore.SEQUENTIAL_SPINED_ARRAY_STORE, DATASTORE_ROOT);   // a test of the sequential store itself
     }
 
     @AfterAll

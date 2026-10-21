@@ -193,7 +193,7 @@ public final class PatternBuilder {
             throw new IllegalStateException(
                     "A pattern declaration requires meaning and purpose in its birth scope: " + ledger.birthFqn);
         }
-        long patternNid = ledger.componentNid();
+        long patternNid = ledger.patternNid();
         writePattern(patternNid);
         ledger.writeDescriptions(patternNid);
         ledger.writeGenericSemantics(patternNid);

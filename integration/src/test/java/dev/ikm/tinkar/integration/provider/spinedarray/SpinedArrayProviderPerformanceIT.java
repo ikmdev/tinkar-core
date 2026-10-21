@@ -51,7 +51,7 @@ class SpinedArrayProviderPerformanceIT {
         }
         LOG.info("Reloading Spined Array Provider");
         Stopwatch reloadStopwatch = new Stopwatch();
-        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
+        TestHelper.startDataBase(DataStore.SEQUENTIAL_SPINED_ARRAY_STORE, DATASTORE_ROOT);   // a test of the sequential store itself
         LOG.info("SAP Reloading in: " + reloadStopwatch.durationString() + "\n\n");
         EntityProcessor processor = new EntityCounter();
         EntityStore.current().forEach(processor);

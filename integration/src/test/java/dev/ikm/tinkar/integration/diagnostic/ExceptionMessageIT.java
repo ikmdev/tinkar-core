@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.diagnostic;
 
+import dev.ikm.tinkar.integration.helper.StoreNids;
 import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -79,7 +80,6 @@ class ExceptionMessageIT {
     private static final Pattern ANGLE_BRACKET_NID = Pattern.compile("<-?\\d+>");
 
     /** A nid of the test store in decimal: the store numbers components up from the bottom of the int range. */
-    private static final Pattern STORE_NID = Pattern.compile("-2147[34]\\d{5}(?!\\d)");
 
     private ViewCalculator view;
 
@@ -288,17 +288,16 @@ class ExceptionMessageIT {
     private static UUID fixtureUuid(String what) {
         UUID uuid = UUID.nameUUIDFromBytes(
                 ("tinkar-core exception message test: " + what).getBytes(StandardCharsets.UTF_8));
-        assertTrue(!STORE_NID.matcher(uuid.toString()).find(), "a UUID written by the test looks like a nid: " + uuid);
+        assertTrue(StoreNids.find(uuid.toString()).isEmpty(), "a UUID written by the test looks like a nid: " + uuid);
         return uuid;
     }
 
     /** Fails when the text holds a nid in either of the forms one is written in. */
     private static void assertNoNid(String text) {
-        for (Pattern form : new Pattern[]{ANGLE_BRACKET_NID, STORE_NID}) {
-            Matcher matcher = form.matcher(text);
-            if (matcher.find()) {
-                fail("the message holds a nid: \"" + matcher.group() + "\" in:\n" + text);
-            }
+        Matcher matcher = ANGLE_BRACKET_NID.matcher(text);
+        if (matcher.find()) {
+            fail("the message holds a nid: \"" + matcher.group() + "\" in:\n" + text);
         }
+        StoreNids.find(text).ifPresent(nid -> fail("the message holds a nid: \"" + nid + "\" in:\n" + text));
     }
 }

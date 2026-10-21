@@ -440,7 +440,8 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
     }
 
     private boolean isEphemeralController(String controllerName) {
-        return SpinedArrayProvider.LoadController.CONTROLLER_NAME.equals(controllerName);
+        return SpinedArrayProvider.LoadController.CONTROLLER_NAME.equals(controllerName)
+                || dev.ikm.tinkar.provider.spinedarray64.SpinedArray64Provider.LoadController.CONTROLLER_NAME.equals(controllerName);
     }
 
     private void cleanDirectory(String pathStr) {

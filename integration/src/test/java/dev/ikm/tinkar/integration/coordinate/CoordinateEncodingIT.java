@@ -34,6 +34,7 @@ import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -137,6 +138,7 @@ class CoordinateEncodingIT {
 
     @Test
     void aStampPositionOfTheFirstVersionIsStillRead() throws IOException {
+        assumeIntNids();
         long time = 1_600_000_000_000L;
         long pathNid = KernelConcept.DEVELOPMENT_PATH.nid();
 
@@ -159,14 +161,16 @@ class CoordinateEncodingIT {
         assertEquals(Encodable.LATEST_VERSION, ByteBuffer.wrap(stream).getInt());
         assertEquals(view, Encodable.<ViewCoordinateRecord>decode(stream));
 
-        assertFalse(contains(stream, intBytes(Nid.narrowChecked(pathNid))),
-                "the stream written now does not hold the path's nid");
-        assertTrue(contains(firstVersionStream(view), intBytes(Nid.narrowChecked(pathNid))),
-                "the first version's stream did, which is what the search above would have found");
+        assertFalse(contains(stream, nidBytes(pathNid)), "the stream written now does not hold the path's nid");
+        if (holdsIntNids()) {
+            assertTrue(contains(firstVersionStream(view), nidBytes(pathNid)),
+                    "the first version's stream did, which is what the search above would have found");
+        }
     }
 
     @Test
     void aViewCoordinateOfTheFirstVersionIsStillRead() {
+        assumeIntNids();
         ViewCoordinateRecord view = Coordinates.View.DefaultView();
         ViewCoordinateRecord decoded = Encodable.decode(firstVersionStream(view));
         assertEquals(view, decoded);
@@ -290,6 +294,24 @@ class CoordinateEncodingIT {
 
     private static byte[] intBytes(int value) {
         return ByteBuffer.allocate(Integer.BYTES).putInt(value).array();
+    }
+
+    /** A nid as the bytes a stream would hold it in: four for an {@code int} nid, eight for a 64-bit one. */
+    private static byte[] nidBytes(long nid) {
+        return holdsIntNids() ? intBytes(Nid.narrowChecked(nid)) : ByteBuffer.allocate(Long.BYTES).putLong(nid).array();
+    }
+
+    /**
+     * Whether the open store's nids fit an {@code int}. Only such a store wrote first-version
+     * streams, which hold the path as an {@code int} nid; a 64-bit store never had one to read
+     * (IKE-Network/ike-issues#1313).
+     */
+    private static boolean holdsIntNids() {
+        return dev.ikm.tinkar.common.id.impl.NidLayout.active() != dev.ikm.tinkar.common.id.impl.NidLayout.SIXTY_FOUR_BIT;
+    }
+
+    private static void assumeIntNids() {
+        Assumptions.assumeTrue(holdsIntNids(), "a first-version stream holds int nids, which a 64-bit store never wrote");
     }
 
     /** Whether {@code bytes} holds {@code part} anywhere. */

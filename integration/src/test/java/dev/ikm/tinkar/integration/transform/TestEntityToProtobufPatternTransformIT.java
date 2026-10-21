@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.component.Concept;
@@ -57,7 +58,7 @@ public class TestEntityToProtobufPatternTransformIT {
     private PatternRecord createPatternWithVersions(int numVersions) {
         UUID patternUuid = UUID.randomUUID();
         PublicId patternPublicId = PublicIds.of(patternUuid);
-        long patternNid = Entity.nid(patternPublicId);
+        long patternNid = NidsByKind.pattern(patternPublicId);
 
         Concept purposeConcept = conceptMap.get(REF_COMP_PURPOSE_CONCEPT_NAME);
         Concept meaningConcept = conceptMap.get(REF_COMP_MEANING_CONCEPT_NAME);
@@ -76,9 +77,9 @@ public class TestEntityToProtobufPatternTransformIT {
         for (int i = 0; i < numVersions; i++) {
             long stampNid = createAndStoreStamp();
             FieldDefinitionRecord fieldDef = FieldDefinitionRecordBuilder.builder()
-                    .dataTypeNid(Entity.nid(dataTypeConcept.publicId()))
-                    .purposeNid(Entity.nid(fieldPurposeConcept.publicId()))
-                    .meaningNid(Entity.nid(fieldMeaningConcept.publicId()))
+                    .dataTypeNid(NidsByKind.concept(dataTypeConcept.publicId()))
+                    .purposeNid(NidsByKind.concept(fieldPurposeConcept.publicId()))
+                    .meaningNid(NidsByKind.concept(fieldMeaningConcept.publicId()))
                     .patternVersionStampNid(stampNid)
                     .patternNid(patternNid)
                     .indexInPattern(0)
@@ -87,8 +88,8 @@ public class TestEntityToProtobufPatternTransformIT {
             PatternVersionRecord pvr = PatternVersionRecordBuilder.builder()
                     .chronology(patternRecord)
                     .stampNid(stampNid)
-                    .semanticPurposeNid(Entity.nid(purposeConcept.publicId()))
-                    .semanticMeaningNid(Entity.nid(meaningConcept.publicId()))
+                    .semanticPurposeNid(NidsByKind.concept(purposeConcept.publicId()))
+                    .semanticMeaningNid(NidsByKind.concept(meaningConcept.publicId()))
                     .fieldDefinitions(Lists.immutable.of(fieldDef))
                     .build();
             patternVersions.add(pvr);
@@ -134,7 +135,7 @@ public class TestEntityToProtobufPatternTransformIT {
         assertThrows(Throwable.class, () -> {
             UUID patternUuid = UUID.randomUUID();
             PublicId patternPublicId = PublicIds.of(patternUuid);
-            long patternNid = Entity.nid(patternPublicId);
+            long patternNid = NidsByKind.pattern(patternPublicId);
 
             RecordListBuilder<PatternVersionRecord> patternVersions = RecordListBuilder.make();
             PatternRecord patternRecord = PatternRecordBuilder.builder()
@@ -148,7 +149,7 @@ public class TestEntityToProtobufPatternTransformIT {
             PatternVersionRecordBuilder.builder()
                     .chronology(patternRecord)
                     .stampNid(stampNid)
-                    .semanticPurposeNid(Entity.nid(conceptMap.get(REF_COMP_PURPOSE_CONCEPT_NAME).publicId()))
+                    .semanticPurposeNid(NidsByKind.concept(conceptMap.get(REF_COMP_PURPOSE_CONCEPT_NAME).publicId()))
                     .semanticMeaningNid(0)
                     .fieldDefinitions(Lists.immutable.empty())
                     .build();
@@ -161,7 +162,7 @@ public class TestEntityToProtobufPatternTransformIT {
         assertThrows(Throwable.class, () -> {
             UUID patternUuid = UUID.randomUUID();
             PublicId patternPublicId = PublicIds.of(patternUuid);
-            long patternNid = Entity.nid(patternPublicId);
+            long patternNid = NidsByKind.pattern(patternPublicId);
 
             RecordListBuilder<PatternVersionRecord> patternVersions = RecordListBuilder.make();
             PatternRecord patternRecord = PatternRecordBuilder.builder()
@@ -176,7 +177,7 @@ public class TestEntityToProtobufPatternTransformIT {
                     .chronology(patternRecord)
                     .stampNid(stampNid)
                     .semanticPurposeNid(0)
-                    .semanticMeaningNid(Entity.nid(conceptMap.get(REF_COMP_MEANING_CONCEPT_NAME).publicId()))
+                    .semanticMeaningNid(NidsByKind.concept(conceptMap.get(REF_COMP_MEANING_CONCEPT_NAME).publicId()))
                     .fieldDefinitions(Lists.immutable.empty())
                     .build();
         }, "Should not allow zero semanticPurposeNid");

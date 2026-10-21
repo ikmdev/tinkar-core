@@ -85,6 +85,10 @@ public class ReasonerIT {
             });
             // Compute
             rs.computeInferences();
+            // Build the necessary normal form the inferred semantics are written from. Writing
+            // without it failed on a null builder; the sequential store's parallel visit dropped
+            // the failure, so no inferred semantic was written there either (IKE-Network/ike-issues#1313).
+            rs.buildNecessaryNormalForm();
             // Process Results
             ClassifierResults results = rs.writeInferredResults();
 

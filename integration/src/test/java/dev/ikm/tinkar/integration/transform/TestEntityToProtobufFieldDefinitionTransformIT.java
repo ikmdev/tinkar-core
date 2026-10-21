@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.component.Concept;
@@ -64,13 +65,13 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
 
         UUID patternUuid = UUID.randomUUID();
         PublicId patternPublicId = PublicIds.of(patternUuid);
-        long patternNid = Entity.nid(patternPublicId);
+        long patternNid = NidsByKind.pattern(patternPublicId);
         long stampNid = createAndStoreStamp();
 
         FieldDefinitionRecord fieldDef = FieldDefinitionRecordBuilder.builder()
-                .dataTypeNid(Entity.nid(dataTypeConcept.publicId()))
-                .purposeNid(Entity.nid(purposeConcept.publicId()))
-                .meaningNid(Entity.nid(meaningConcept.publicId()))
+                .dataTypeNid(NidsByKind.concept(dataTypeConcept.publicId()))
+                .purposeNid(NidsByKind.concept(purposeConcept.publicId()))
+                .meaningNid(NidsByKind.concept(meaningConcept.publicId()))
                 .patternVersionStampNid(stampNid)
                 .patternNid(patternNid)
                 .indexInPattern(0)
@@ -87,8 +88,8 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
         PatternVersionRecord pvr = PatternVersionRecordBuilder.builder()
                 .chronology(patternRecord)
                 .stampNid(stampNid)
-                .semanticPurposeNid(Entity.nid(conceptMap.get(REF_COMP_PURPOSE_CONCEPT_NAME).publicId()))
-                .semanticMeaningNid(Entity.nid(conceptMap.get(REF_COMP_MEANING_CONCEPT_NAME).publicId()))
+                .semanticPurposeNid(NidsByKind.concept(conceptMap.get(REF_COMP_PURPOSE_CONCEPT_NAME).publicId()))
+                .semanticMeaningNid(NidsByKind.concept(conceptMap.get(REF_COMP_MEANING_CONCEPT_NAME).publicId()))
                 .fieldDefinitions(Lists.immutable.of(fieldDef))
                 .build();
         patternVersions.add(pvr);
@@ -115,10 +116,10 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
             long stampNid = createAndStoreStamp();
             FieldDefinitionRecordBuilder.builder()
                     .dataTypeNid(0)
-                    .purposeNid(Entity.nid(conceptMap.get(PURPOSE_CONCEPT_NAME).publicId()))
-                    .meaningNid(Entity.nid(conceptMap.get(MEANING_CONCEPT_NAME).publicId()))
+                    .purposeNid(NidsByKind.concept(conceptMap.get(PURPOSE_CONCEPT_NAME).publicId()))
+                    .meaningNid(NidsByKind.concept(conceptMap.get(MEANING_CONCEPT_NAME).publicId()))
                     .patternVersionStampNid(stampNid)
-                    .patternNid(Entity.nid(PublicIds.newRandom()))
+                    .patternNid(NidsByKind.pattern(PublicIds.newRandom()))
                     .indexInPattern(0)
                     .build();
         }, "Should not allow zero dataTypeNid");
@@ -130,11 +131,11 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
         assertThrows(Throwable.class, () -> {
             long stampNid = createAndStoreStamp();
             FieldDefinitionRecordBuilder.builder()
-                    .dataTypeNid(Entity.nid(conceptMap.get(DATATYPE_CONCEPT_NAME).publicId()))
-                    .purposeNid(Entity.nid(conceptMap.get(PURPOSE_CONCEPT_NAME).publicId()))
+                    .dataTypeNid(NidsByKind.concept(conceptMap.get(DATATYPE_CONCEPT_NAME).publicId()))
+                    .purposeNid(NidsByKind.concept(conceptMap.get(PURPOSE_CONCEPT_NAME).publicId()))
                     .meaningNid(0)
                     .patternVersionStampNid(stampNid)
-                    .patternNid(Entity.nid(PublicIds.newRandom()))
+                    .patternNid(NidsByKind.pattern(PublicIds.newRandom()))
                     .indexInPattern(0)
                     .build();
         }, "Should not allow zero meaningNid");
@@ -146,11 +147,11 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
         assertThrows(Throwable.class, () -> {
             long stampNid = createAndStoreStamp();
             FieldDefinitionRecordBuilder.builder()
-                    .dataTypeNid(Entity.nid(conceptMap.get(DATATYPE_CONCEPT_NAME).publicId()))
+                    .dataTypeNid(NidsByKind.concept(conceptMap.get(DATATYPE_CONCEPT_NAME).publicId()))
                     .purposeNid(0)
-                    .meaningNid(Entity.nid(conceptMap.get(MEANING_CONCEPT_NAME).publicId()))
+                    .meaningNid(NidsByKind.concept(conceptMap.get(MEANING_CONCEPT_NAME).publicId()))
                     .patternVersionStampNid(stampNid)
-                    .patternNid(Entity.nid(PublicIds.newRandom()))
+                    .patternNid(NidsByKind.pattern(PublicIds.newRandom()))
                     .indexInPattern(0)
                     .build();
         }, "Should not allow zero purposeNid");

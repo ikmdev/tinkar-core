@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.snomed.relationship;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.RecordListBuilder;
@@ -88,9 +89,9 @@ public class SnomedCTRelationshipSemantic {
         SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
                 .mostSignificantBits(semanticUUID.getMostSignificantBits())
                 .leastSignificantBits(semanticUUID.getLeastSignificantBits())
-                .patternNid(EntityService.get().nidForUuids(patternUUID))
-                .referencedComponentNid(EntityService.get().nidForUuids(referenceComponenetUUID))
-                .nid(EntityService.get().nidForUuids(semanticUUID))
+                .patternNid(NidsByKind.pattern(patternUUID))
+                .referencedComponentNid(NidsByKind.concept(referenceComponenetUUID))
+                .nid(NidsByKind.semantic(patternUUID, semanticUUID))
                 .versions(RecordListBuilder.make())
                 .build();
         SemanticVersionRecord versionsRecord = createRelationshipSemanticVersion(semanticRecord,rowNumber, snomedCTData);
@@ -103,7 +104,7 @@ public class SnomedCTRelationshipSemantic {
         SemanticVersionRecordBuilder semanticVersionRecordBuilder = SemanticVersionRecordBuilder.builder();
         return semanticVersionRecordBuilder
                 .chronology(semanticRecord)
-                .stampNid(EntityService.get().nidForUuids(stampRecord.asUuidArray()))
+                .stampNid(NidsByKind.stamp(stampRecord.asUuidArray()))
                 .fieldValues(RecordListBuilder.make().newWith(fields))
                 .build();
     }

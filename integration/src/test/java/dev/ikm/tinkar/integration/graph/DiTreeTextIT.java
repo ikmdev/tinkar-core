@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.graph;
 
+import dev.ikm.tinkar.integration.helper.StoreNids;
 import java.util.function.LongFunction;
 import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
 import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
@@ -69,13 +70,6 @@ class DiTreeTextIT {
 
     /** The form {@code PrimitiveData.text} writes for a component with no description. */
     private static final Pattern ANGLE_BRACKET_NID = Pattern.compile("<-?\\d+>");
-
-    /**
-     * A nid of the test store in decimal. The store numbers components upward from the bottom
-     * of the int range, so every nid it assigns is a minus sign and ten digits beginning
-     * {@code 21474} or {@code 21473}.
-     */
-    private static final Pattern STORE_NID = Pattern.compile("-2147[34]\\d{5}(?!\\d)");
 
     /** Names a component by its UUIDs, every one, as text for another store does when it has no description. */
     private static final LongFunction<String> BY_UUID =
@@ -346,11 +340,10 @@ class DiTreeTextIT {
 
     /** Fails when the text holds a nid in either of the forms one is written in. */
     private static void assertNoNid(String what, String text) {
-        for (Pattern form : new Pattern[]{ANGLE_BRACKET_NID, STORE_NID}) {
-            Matcher matcher = form.matcher(text);
-            if (matcher.find()) {
-                fail(what + " holds a nid: \"" + matcher.group() + "\" in:\n" + text);
-            }
+        Matcher matcher = ANGLE_BRACKET_NID.matcher(text);
+        if (matcher.find()) {
+            fail(what + " holds a nid: \"" + matcher.group() + "\" in:\n" + text);
         }
+        StoreNids.find(text).ifPresent(nid -> fail(what + " holds a nid: \"" + nid + "\" in:\n" + text));
     }
 }

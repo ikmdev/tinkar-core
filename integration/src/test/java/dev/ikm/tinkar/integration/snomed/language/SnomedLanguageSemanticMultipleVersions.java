@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.snomed.language;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.EntityService;
@@ -78,11 +79,9 @@ public class SnomedLanguageSemanticMultipleVersions {
                 SemanticRecordBuilder.builder(existingSemanticRecord).versions(existingSemanticRecord.versions());
         recordBuilder.leastSignificantBits(semanticUUID.getLeastSignificantBits())
                 .mostSignificantBits(semanticUUID.getMostSignificantBits())
-                .nid(EntityService.get().nidForUuids(semanticUUID))
-                .patternNid(EntityService.get()
-                        .nidForUuids(patternUUID))
-                .referencedComponentNid(EntityService.get()
-                        .nidForUuids(referencedComponentUUID));
+                .nid(NidsByKind.semantic(patternUUID, semanticUUID))
+                .patternNid(NidsByKind.pattern(patternUUID))
+                .referencedComponentNid(NidsByKind.concept(referencedComponentUUID));
         SemanticVersionRecord semanticVersionRecord = createLanguageAcceptabilitySemanticVersion(recordBuilder.build(), input, rowFile.getAcceptabilityId());
 
         SemanticRecord newSemanticRecord = SemanticRecordBuilder
@@ -108,7 +107,7 @@ public class SnomedLanguageSemanticMultipleVersions {
         LanguageData rowFile = new LanguageData(input);
         UUID stampUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, rowFile.getId() + rowFile.getEffectiveTime() + rowFile.getActive() + rowFile.getModuleId() + rowFile.getRefsetId() + rowFile.getReferencedComponentId() + rowFile.getAcceptabilityId());
         MockEntity.populateMockData(stampUUID.toString(), ENTITYREF);
-        StampRecord stampRecord = StampRecordBuilder.builder().mostSignificantBits(stampUUID.getMostSignificantBits()).leastSignificantBits(stampUUID.getLeastSignificantBits()).nid(EntityService.get().nidForUuids(stampUUID)).versions(RecordListBuilder.make()).build();
+        StampRecord stampRecord = StampRecordBuilder.builder().mostSignificantBits(stampUUID.getMostSignificantBits()).leastSignificantBits(stampUUID.getLeastSignificantBits()).nid(NidsByKind.stamp(stampUUID)).versions(RecordListBuilder.make()).build();
 
         StampVersionRecord versionsRecord = createSTAMPVersion(stampRecord, input);
         return stampRecord.withVersions(RecordListBuilder.make().newWith(versionsRecord));
@@ -119,9 +118,9 @@ public class SnomedLanguageSemanticMultipleVersions {
         LanguageData input = new LanguageData(row);
         long timeStamp = Instant.ofEpochSecond(Long.parseLong(input.getEffectiveTime())).toEpochMilli();
         StampVersionRecordBuilder recordBuilder = StampVersionRecordBuilder.builder();
-        if (input.getActive() == 1) recordBuilder.stateNid(EntityService.get().nidForUuids(ACTIVE));
-        if (input.getActive() == 0) recordBuilder.stateNid(EntityService.get().nidForUuids(INACTIVE));
-        return recordBuilder.authorNid(EntityService.get().nidForUuids(SNOMED_CT_AUTHOR)).pathNid(EntityService.get().nidForUuids(DEVELOPMENT_PATH)).moduleNid(EntityService.get().nidForUuids(UuidT5Generator.get(SNOMED_CT_NAMESPACE, String.valueOf(input.getModuleId())))).chronology(record).time(timeStamp).build();
+        if (input.getActive() == 1) recordBuilder.stateNid(NidsByKind.concept(ACTIVE));
+        if (input.getActive() == 0) recordBuilder.stateNid(NidsByKind.concept(INACTIVE));
+        return recordBuilder.authorNid(NidsByKind.concept(SNOMED_CT_AUTHOR)).pathNid(NidsByKind.concept(DEVELOPMENT_PATH)).moduleNid(NidsByKind.concept(UuidT5Generator.get(SNOMED_CT_NAMESPACE, String.valueOf(input.getModuleId())))).chronology(record).time(timeStamp).build();
 
 
     }

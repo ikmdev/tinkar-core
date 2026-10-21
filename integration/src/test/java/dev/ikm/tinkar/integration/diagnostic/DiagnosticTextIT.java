@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.diagnostic;
 
+import dev.ikm.tinkar.integration.helper.StoreNids;
 import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.common.id.LongIds;
@@ -74,8 +75,6 @@ class DiagnosticTextIT {
     /** The form {@code PrimitiveData.text} writes for a component with no description. */
     private static final Pattern ANGLE_BRACKET_NID = Pattern.compile("<-?\\d+>");
 
-    /** A nid of the test store in decimal: the store numbers components up from the bottom of the int range. */
-    private static final Pattern STORE_NID = Pattern.compile("-2147[34]\\d{5}(?!\\d)");
 
     private long undescribedNid;
 
@@ -144,7 +143,7 @@ class DiagnosticTextIT {
         // This store keeps an index from nid to UUID beside its entities, so it has the public
         // id of a nid for which no entity was written.
         String referredTo = UUID.randomUUID().toString();
-        long nid = PrimitiveData.nid(PublicIds.of(referredTo));
+        long nid = EntityService.get().nidForConcept(PublicIds.of(referredTo));   // a concept referred to, never written
 
         assertEquals("UUID " + referredTo, DiagnosticText.component(nid));
         assertEquals(referredTo, DiagnosticText.name(nid));
@@ -181,7 +180,7 @@ class DiagnosticTextIT {
         assertTrue(text.contains("nid " + UNASSIGNED_NID + " in this store"),
                 "a nid with no public id is written as a nid of this store:\n" + text);
         assertFalse(ANGLE_BRACKET_NID.matcher(text).find(), text);
-        assertFalse(STORE_NID.matcher(text).find(), text);
+        assertFalse(StoreNids.find(text).isPresent(), text);
 
         // The tree's own text writes a nid for each element of an id list, and for the
         // concept with no description.
@@ -259,6 +258,6 @@ class DiagnosticTextIT {
 
     private static void assertNoNid(String text) {
         assertFalse(ANGLE_BRACKET_NID.matcher(text).find(), text);
-        assertFalse(STORE_NID.matcher(text).find(), text);
+        assertFalse(StoreNids.find(text).isPresent(), text);
     }
 }

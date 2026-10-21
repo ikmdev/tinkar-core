@@ -17,13 +17,21 @@ package dev.ikm.tinkar.fixtures;
 
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
+import dev.ikm.tinkar.provider.spinedarray64.SpinedArray64Provider;
 
 import java.io.File;
 import java.util.function.Function;
 
 public class TestConstants {
     // Type-safe controller class references (preferred)
+    /**
+     * The memory-only store a test loads: the 64-bit spined array's since the memory-only role
+     * moved to it (IKE-Network/ike-issues#1313).
+     */
     public static final Class<? extends DataServiceController<?>> LOAD_EPHEMERAL_STORE =
+            SpinedArray64Provider.LoadController.class;
+    /** The sequential spined array's memory-only mode, for the tests of that store itself. */
+    public static final Class<? extends DataServiceController<?>> LOAD_SEQUENTIAL_EPHEMERAL_STORE =
             SpinedArrayProvider.LoadController.class;
     public static final Class<? extends DataServiceController<?>> OPEN_SPINED_ARRAY_STORE =
             SpinedArrayProvider.OpenController.class;

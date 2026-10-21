@@ -486,6 +486,10 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
         PatternTable table = table(Nid.patternSequence64(nid));
         byte[] merged = table.records.accumulateAndGet(PatternTable.slotOf(nid), value, accumulator);
         identities.written(nid);
+        if (sourceObject instanceof Entity<?> entity && entity.additionalUuidLongs() != null
+                && entity.additionalUuidLongs().notEmpty()) {
+            identities.mapIfAbsent(nid, entity.publicId().asUuidArray());
+        }
         dataUseIndex.merged(sourceObject);
         // The citation after the record: a reader following citations from the referenced
         // component finds a record at every nid it is given.

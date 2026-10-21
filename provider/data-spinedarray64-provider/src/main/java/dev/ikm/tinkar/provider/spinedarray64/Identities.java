@@ -97,6 +97,17 @@ final class Identities {
         }
     }
 
+    /**
+     * Maps every UUID no component holds to a nid: the UUIDs a written record names, so that a
+     * component given one more UUID by a later source is found by it in this session, as it is
+     * after the store reopens and rebuilds the map from the records.
+     */
+    void mapIfAbsent(long nid, UUID[] uuids) {
+        for (UUID uuid : uuids) {
+            uuidToNid.putIfAbsent(uuid, nid);
+        }
+    }
+
     /** Restores the UUIDs of a nid minted before and never written, read from the store's file. */
     void restoreUnwritten(long nid, UUID[] uuids) {
         unwritten.put(nid, uuids);
@@ -185,6 +196,11 @@ final class Identities {
         for (UUID uuid : ordered) {
             Long known = uuidToNid.get(uuid);
             if (known != null) {
+                // Every UUID no component holds is mapped to the one found, as the sequential
+                // store maps them: a later lookup by any of them finds the component.
+                if (uuids.length > 1) {
+                    mapIfAbsent(known, uuids);
+                }
                 return known;
             }
         }

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.snomed.language;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.RecordListBuilder;
@@ -93,7 +94,7 @@ public class SnomedToLanguageTransform {
         StampRecord record = StampRecordBuilder.builder()
                 .mostSignificantBits(stampUUID.getMostSignificantBits())
                 .leastSignificantBits(stampUUID.getLeastSignificantBits())
-                .nid(EntityService.get().nidForUuids(stampUUID))
+                .nid(NidsByKind.stamp(stampUUID))
                 .versions(RecordListBuilder.make())
                 .build();
 
@@ -111,17 +112,17 @@ public class SnomedToLanguageTransform {
 
         StampVersionRecordBuilder recordBuilder = StampVersionRecordBuilder.builder();
         if (textLanguageEntity.active == 1){
-            recordBuilder.stateNid(EntityService.get().nidForUuids(ACTIVE));
+            recordBuilder.stateNid(NidsByKind.concept(ACTIVE));
         } else {
-            recordBuilder.stateNid(EntityService.get().nidForUuids(INACTIVE));
+            recordBuilder.stateNid(NidsByKind.concept(INACTIVE));
         }
 
         return recordBuilder
                 .chronology(record)
                 .time(Instant.ofEpochSecond(textLanguageEntity.effectiveTime).toEpochMilli())
-                .authorNid(EntityService.get().nidForUuids(SNOMED_CT_AUTHOR))
-                .moduleNid(EntityService.get().nidForUuids(UuidT5Generator.get(SNOMED_CT_NAMESPACE, textLanguageEntity.moduleId)))
-                .pathNid(EntityService.get().nidForUuids(DEVELOPMENT_PATH))
+                .authorNid(NidsByKind.concept(SNOMED_CT_AUTHOR))
+                .moduleNid(NidsByKind.concept(UuidT5Generator.get(SNOMED_CT_NAMESPACE, textLanguageEntity.moduleId)))
+                .pathNid(NidsByKind.concept(DEVELOPMENT_PATH))
                 .build();
 
     }
@@ -174,9 +175,9 @@ public class SnomedToLanguageTransform {
     private static SemanticRecord createSemantic(UUID patternUUID, UUID semanticUUID, UUID referencedComponentUUID) {
         return SemanticRecordBuilder.builder()
                 .versions(RecordListBuilder.make())
-                .nid(EntityService.get().nidForUuids(semanticUUID))
-                .referencedComponentNid(EntityService.get().nidForUuids(referencedComponentUUID))
-                .patternNid(EntityService.get().nidForUuids(patternUUID))
+                .nid(NidsByKind.semantic(patternUUID, semanticUUID))
+                .referencedComponentNid(NidsByKind.concept(referencedComponentUUID))
+                .patternNid(NidsByKind.pattern(patternUUID))
                 .leastSignificantBits(semanticUUID.getLeastSignificantBits())
                 .mostSignificantBits(semanticUUID.getMostSignificantBits())
                 .build();

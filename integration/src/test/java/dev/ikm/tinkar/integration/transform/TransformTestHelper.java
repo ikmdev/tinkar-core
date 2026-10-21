@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.ikm.tinkar.common.id.PublicId;
@@ -136,7 +137,7 @@ public class TransformTestHelper {
     }
 
     /**
-     * Loads test concepts from JSON, assigns real NIDs via Entity.nid(),
+     * Loads test concepts from JSON, assigns real NIDs via NidsByKind.concept(),
      * and stores ConceptRecord entities in the ephemeral provider so
      * EntityHandle.get(nid) finds them for entity-to-protobuf tests.
      */
@@ -152,8 +153,8 @@ public class TransformTestHelper {
             String uuidStr = conceptJson.get(JSON_CONCEPT_UUID_PROP).asText();
             Concept concept = createSimpleConcept(name, uuidStr);
 
-            // Entity.nid() assigns a real NID via the running provider
-            long nid = Entity.nid(concept.publicId());
+            // A concept nid from the running provider, minted under the concept pattern
+            long nid = NidsByKind.concept(concept.publicId());
 
             // Store a real ConceptRecord so EntityHandle.get(nid) finds it
             storeConceptEntity(concept.publicId(), nid);
@@ -193,7 +194,7 @@ public class TransformTestHelper {
     public static long createAndStoreStamp() {
         UUID stampUuid = UUID.randomUUID();
         PublicId stampPublicId = PublicIds.of(stampUuid);
-        long stampNid = Entity.nid(stampPublicId);
+        long stampNid = NidsByKind.stamp(stampPublicId);
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()
@@ -205,9 +206,9 @@ public class TransformTestHelper {
 
         // Use real concept NIDs from known kernel UUIDs for STAMP fields
         long stateNid = State.ACTIVE.nid();
-        long authorNid = Entity.nid(PublicIds.of(UUID.fromString("76fdab49-b0ee-4c83-900e-8064103ef3b0")));
-        long moduleNid = Entity.nid(PublicIds.of(UUID.fromString("840928b5-480c-4e8d-af77-7c817e880aed")));
-        long pathNid = Entity.nid(PublicIds.of(UUID.fromString("4fa15e05-5c48-470a-a6f0-2080e725e6fb")));
+        long authorNid = NidsByKind.concept(PublicIds.of(UUID.fromString("76fdab49-b0ee-4c83-900e-8064103ef3b0")));
+        long moduleNid = NidsByKind.concept(PublicIds.of(UUID.fromString("840928b5-480c-4e8d-af77-7c817e880aed")));
+        long pathNid = NidsByKind.concept(PublicIds.of(UUID.fromString("4fa15e05-5c48-470a-a6f0-2080e725e6fb")));
 
         StampVersionRecord svr = StampVersionRecordBuilder.builder()
                 .chronology(stampRecord)
@@ -230,7 +231,7 @@ public class TransformTestHelper {
     public static long createAndStoreStamp(long stateNid, long authorNid, long moduleNid, long pathNid) {
         UUID stampUuid = UUID.randomUUID();
         PublicId stampPublicId = PublicIds.of(stampUuid);
-        long stampNid = Entity.nid(stampPublicId);
+        long stampNid = NidsByKind.stamp(stampPublicId);
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()
@@ -261,7 +262,7 @@ public class TransformTestHelper {
     public static long createAndStoreStamp(long stateNid, long time, long authorNid, long moduleNid, long pathNid) {
         UUID stampUuid = UUID.randomUUID();
         PublicId stampPublicId = PublicIds.of(stampUuid);
-        long stampNid = Entity.nid(stampPublicId);
+        long stampNid = NidsByKind.stamp(stampPublicId);
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()
@@ -299,7 +300,7 @@ public class TransformTestHelper {
     public static long createAndStorePattern(Map<String, Concept> conceptMap) {
         UUID patternUuid = UUID.randomUUID();
         PublicId patternPublicId = PublicIds.of(patternUuid);
-        long patternNid = Entity.nid(patternPublicId);
+        long patternNid = NidsByKind.pattern(patternPublicId);
 
         long stampNid = createAndStoreStamp();
         Concept purposeConcept = conceptMap.get(PURPOSE_CONCEPT_NAME);
@@ -316,8 +317,8 @@ public class TransformTestHelper {
         PatternVersionRecord pvr = PatternVersionRecordBuilder.builder()
                 .chronology(patternRecord)
                 .stampNid(stampNid)
-                .semanticPurposeNid(Entity.nid(purposeConcept.publicId()))
-                .semanticMeaningNid(Entity.nid(meaningConcept.publicId()))
+                .semanticPurposeNid(NidsByKind.concept(purposeConcept.publicId()))
+                .semanticMeaningNid(NidsByKind.concept(meaningConcept.publicId()))
                 .fieldDefinitions(Lists.immutable.empty())
                 .build();
         patternVersions.add(pvr);

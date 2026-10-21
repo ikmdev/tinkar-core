@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.diagnostic;
 
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -80,7 +81,7 @@ class DiagnosticTextSpinedArrayIT {
     @Test
     void aComponentThatIsReferredToButWasNeverWrittenIsItsUuidInThisStore() {
         String referredTo = UUID.randomUUID().toString();
-        long nid = PrimitiveData.nid(PublicIds.of(referredTo));
+        long nid = EntityService.get().nidForConcept(PublicIds.of(referredTo));   // a concept referred to, never written
 
         assertEquals("UUID " + referredTo, DiagnosticText.component(nid));
         assertEquals(referredTo, DiagnosticText.name(nid));
@@ -89,7 +90,7 @@ class DiagnosticTextSpinedArrayIT {
     @Test
     void aHandleForAComponentThatWasNeverWrittenSaysWhichUuidWasAskedFor() {
         String referredTo = UUID.randomUUID().toString();
-        long nid = PrimitiveData.nid(PublicIds.of(referredTo));
+        long nid = EntityService.get().nidForConcept(PublicIds.of(referredTo));   // a concept referred to, never written
 
         IllegalStateException failure = assertThrows(IllegalStateException.class,
                 () -> EntityHandle.get(nid).expectEntity());

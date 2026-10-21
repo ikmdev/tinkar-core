@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.ConceptEntity;
@@ -87,7 +88,7 @@ public class TestProtobufToEntityConceptTransformIT {
                 .setConceptChronology(pbConceptChronology)
                 .build();
 
-        // When we transform - Entity.nid() works with ephemeral provider
+        // When we transform: the nid of a component the test does not model by kind
         AtomicReference<Entity<? extends EntityVersion>> result = new AtomicReference<>();
         Consumer<Entity<? extends EntityVersion>> entityConsumer = result::set;
         Consumer<StampEntity<StampEntityVersion>> stampConsumer = (s) -> {};

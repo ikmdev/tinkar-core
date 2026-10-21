@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.component.Concept;
@@ -55,10 +56,10 @@ public class TestEntityToProtobufSemanticTransformIT {
     private SemanticRecord createSemanticWithFields(int numVersions, int fieldsPerVersion) {
         UUID semanticUuid = UUID.randomUUID();
         PublicId semanticPublicId = PublicIds.of(semanticUuid);
-        long semanticNid = Entity.nid(semanticPublicId);
+        long semanticNid = NidsByKind.any(semanticPublicId);
 
         long patternNid = createAndStorePattern(conceptMap);
-        long referencedComponentNid = Entity.nid(conceptMap.get(MODULE_CONCEPT_NAME).publicId());
+        long referencedComponentNid = NidsByKind.any(conceptMap.get(MODULE_CONCEPT_NAME).publicId());
 
         RecordListBuilder<SemanticVersionRecord> semanticVersions = RecordListBuilder.make();
         SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
@@ -122,15 +123,15 @@ public class TestEntityToProtobufSemanticTransformIT {
         assertThrows(Throwable.class, () -> {
             UUID semanticUuid = UUID.randomUUID();
             PublicId semanticPublicId = PublicIds.of(semanticUuid);
-            long semanticNid = Entity.nid(semanticPublicId);
+            long semanticNid = NidsByKind.any(semanticPublicId);
 
             RecordListBuilder<SemanticVersionRecord> semanticVersions = RecordListBuilder.make();
             SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
                     .mostSignificantBits(semanticUuid.getMostSignificantBits())
                     .leastSignificantBits(semanticUuid.getLeastSignificantBits())
                     .nid(semanticNid)
-                    .patternNid(Entity.nid(conceptMap.get(PATH_CONCEPT_NAME).publicId()))
-                    .referencedComponentNid(Entity.nid(conceptMap.get(MODULE_CONCEPT_NAME).publicId()))
+                    .patternNid(NidsByKind.any(conceptMap.get(PATH_CONCEPT_NAME).publicId()))
+                    .referencedComponentNid(NidsByKind.any(conceptMap.get(MODULE_CONCEPT_NAME).publicId()))
                     .versions(semanticVersions)
                     .build();
 
@@ -148,15 +149,15 @@ public class TestEntityToProtobufSemanticTransformIT {
         assertThrows(Throwable.class, () -> {
             UUID semanticUuid = UUID.randomUUID();
             PublicId semanticPublicId = PublicIds.of(semanticUuid);
-            long semanticNid = Entity.nid(semanticPublicId);
+            long semanticNid = NidsByKind.any(semanticPublicId);
 
             RecordListBuilder<SemanticVersionRecord> semanticVersions = RecordListBuilder.make();
             SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
                     .mostSignificantBits(semanticUuid.getMostSignificantBits())
                     .leastSignificantBits(semanticUuid.getLeastSignificantBits())
                     .nid(semanticNid)
-                    .patternNid(Entity.nid(conceptMap.get(PATH_CONCEPT_NAME).publicId()))
-                    .referencedComponentNid(Entity.nid(conceptMap.get(MODULE_CONCEPT_NAME).publicId()))
+                    .patternNid(NidsByKind.any(conceptMap.get(PATH_CONCEPT_NAME).publicId()))
+                    .referencedComponentNid(NidsByKind.any(conceptMap.get(MODULE_CONCEPT_NAME).publicId()))
                     .versions(semanticVersions)
                     .build();
 

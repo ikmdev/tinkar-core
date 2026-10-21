@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.ConceptRecord;
@@ -54,7 +55,7 @@ public class TestEntityToProtobufConceptTransformIT {
     public void conceptChronologyTransformWithOneVersion() {
         // Given a ConceptRecord with one version that has a real stamp stored in the provider
         Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
-        long conceptNid = Entity.nid(testConcept.publicId());
+        long conceptNid = NidsByKind.concept(testConcept.publicId());
         PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(testConcept.publicId());
 
         long stampNid = createAndStoreStamp();
@@ -88,7 +89,7 @@ public class TestEntityToProtobufConceptTransformIT {
     public void conceptVersionTransformWithTwoVersions() {
         // Given a ConceptRecord with two versions, each with a stored stamp
         Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
-        long conceptNid = Entity.nid(testConcept.publicId());
+        long conceptNid = NidsByKind.concept(testConcept.publicId());
         PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(testConcept.publicId());
 
         long stampNid1 = createAndStoreStamp();

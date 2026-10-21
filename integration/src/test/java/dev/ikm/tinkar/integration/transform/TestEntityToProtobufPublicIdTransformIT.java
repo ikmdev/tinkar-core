@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.component.Concept;
@@ -57,7 +58,7 @@ public class TestEntityToProtobufPublicIdTransformIT {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         PublicId combinedPublicId = PublicIds.of(uuid1, uuid2);
-        long nid = Entity.nid(combinedPublicId);
+        long nid = NidsByKind.any(combinedPublicId);
 
         // Create a ConceptRecord with this multi-UUID public ID and transform via public API
         long stampNid = createAndStoreStamp();

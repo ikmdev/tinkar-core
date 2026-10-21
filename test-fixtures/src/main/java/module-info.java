@@ -26,6 +26,7 @@ open module dev.ikm.tinkar.fixtures {
     requires dev.ikm.tinkar.terms;
     requires dev.ikm.tinkar.provider.entity;
     requires dev.ikm.tinkar.provider.spinedarray;
+    requires dev.ikm.tinkar.provider.spinedarray64;
     requires java.management;
     requires org.junit.jupiter.api;
     requires org.slf4j;

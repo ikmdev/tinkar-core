@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.component.Concept;
@@ -58,7 +59,7 @@ public class TestEntityToProtobufStampTransformIT {
 
         UUID stampUuid = UUID.randomUUID();
         PublicId stampPublicId = PublicIds.of(stampUuid);
-        long stampNid = Entity.nid(stampPublicId);
+        long stampNid = NidsByKind.stamp(stampPublicId);
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()
@@ -72,9 +73,9 @@ public class TestEntityToProtobufStampTransformIT {
                 .chronology(stampRecord)
                 .stateNid(State.ACTIVE.nid())
                 .time(time)
-                .authorNid(Entity.nid(authorConcept.publicId()))
-                .moduleNid(Entity.nid(moduleConcept.publicId()))
-                .pathNid(Entity.nid(pathConcept.publicId()))
+                .authorNid(NidsByKind.concept(authorConcept.publicId()))
+                .moduleNid(NidsByKind.concept(moduleConcept.publicId()))
+                .pathNid(NidsByKind.concept(pathConcept.publicId()))
                 .build();
         stampVersions.add(svr);
         return StampRecordBuilder.builder(stampRecord).versions(stampVersions).build();
@@ -110,9 +111,9 @@ public class TestEntityToProtobufStampTransformIT {
                     .chronology(stampRecord)
                     .stateNid(0)
                     .time(nowEpochMillis())
-                    .authorNid(Entity.nid(conceptMap.get(AUTHOR_CONCEPT_NAME).publicId()))
-                    .moduleNid(Entity.nid(conceptMap.get(MODULE_CONCEPT_NAME).publicId()))
-                    .pathNid(Entity.nid(conceptMap.get(PATH_CONCEPT_NAME).publicId()))
+                    .authorNid(NidsByKind.concept(conceptMap.get(AUTHOR_CONCEPT_NAME).publicId()))
+                    .moduleNid(NidsByKind.concept(conceptMap.get(MODULE_CONCEPT_NAME).publicId()))
+                    .pathNid(NidsByKind.concept(conceptMap.get(PATH_CONCEPT_NAME).publicId()))
                     .build();
         }, "Should not allow zero stateNid");
     }
@@ -127,8 +128,8 @@ public class TestEntityToProtobufStampTransformIT {
                     .stateNid(State.ACTIVE.nid())
                     .time(nowEpochMillis())
                     .authorNid(0)
-                    .moduleNid(Entity.nid(conceptMap.get(MODULE_CONCEPT_NAME).publicId()))
-                    .pathNid(Entity.nid(conceptMap.get(PATH_CONCEPT_NAME).publicId()))
+                    .moduleNid(NidsByKind.concept(conceptMap.get(MODULE_CONCEPT_NAME).publicId()))
+                    .pathNid(NidsByKind.concept(conceptMap.get(PATH_CONCEPT_NAME).publicId()))
                     .build();
         }, "Should not allow zero authorNid");
     }
@@ -142,9 +143,9 @@ public class TestEntityToProtobufStampTransformIT {
                     .chronology(stampRecord)
                     .stateNid(State.ACTIVE.nid())
                     .time(nowEpochMillis())
-                    .authorNid(Entity.nid(conceptMap.get(AUTHOR_CONCEPT_NAME).publicId()))
+                    .authorNid(NidsByKind.concept(conceptMap.get(AUTHOR_CONCEPT_NAME).publicId()))
                     .moduleNid(0)
-                    .pathNid(Entity.nid(conceptMap.get(PATH_CONCEPT_NAME).publicId()))
+                    .pathNid(NidsByKind.concept(conceptMap.get(PATH_CONCEPT_NAME).publicId()))
                     .build();
         }, "Should not allow zero moduleNid");
     }
@@ -158,8 +159,8 @@ public class TestEntityToProtobufStampTransformIT {
                     .chronology(stampRecord)
                     .stateNid(State.ACTIVE.nid())
                     .time(nowEpochMillis())
-                    .authorNid(Entity.nid(conceptMap.get(AUTHOR_CONCEPT_NAME).publicId()))
-                    .moduleNid(Entity.nid(conceptMap.get(MODULE_CONCEPT_NAME).publicId()))
+                    .authorNid(NidsByKind.concept(conceptMap.get(AUTHOR_CONCEPT_NAME).publicId()))
+                    .moduleNid(NidsByKind.concept(conceptMap.get(MODULE_CONCEPT_NAME).publicId()))
                     .pathNid(0)
                     .build();
         }, "Should not allow zero pathNid");
@@ -192,7 +193,7 @@ public class TestEntityToProtobufStampTransformIT {
 
         UUID stampUuid = UUID.randomUUID();
         PublicId stampPublicId = PublicIds.of(stampUuid);
-        long stampNid = Entity.nid(stampPublicId);
+        long stampNid = NidsByKind.stamp(stampPublicId);
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()
@@ -206,17 +207,17 @@ public class TestEntityToProtobufStampTransformIT {
                 .chronology(stampRecord)
                 .stateNid(State.ACTIVE.nid())
                 .time(time1)
-                .authorNid(Entity.nid(authorConcept.publicId()))
-                .moduleNid(Entity.nid(moduleConcept.publicId()))
-                .pathNid(Entity.nid(pathConcept.publicId()))
+                .authorNid(NidsByKind.concept(authorConcept.publicId()))
+                .moduleNid(NidsByKind.concept(moduleConcept.publicId()))
+                .pathNid(NidsByKind.concept(pathConcept.publicId()))
                 .build());
         stampVersions.add(StampVersionRecordBuilder.builder()
                 .chronology(stampRecord)
                 .stateNid(State.ACTIVE.nid())
                 .time(time2)
-                .authorNid(Entity.nid(authorConcept.publicId()))
-                .moduleNid(Entity.nid(moduleConcept.publicId()))
-                .pathNid(Entity.nid(pathConcept.publicId()))
+                .authorNid(NidsByKind.concept(authorConcept.publicId()))
+                .moduleNid(NidsByKind.concept(moduleConcept.publicId()))
+                .pathNid(NidsByKind.concept(pathConcept.publicId()))
                 .build());
 
         StampRecord finalStamp = StampRecordBuilder.builder(stampRecord).versions(stampVersions).build();

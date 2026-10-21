@@ -165,8 +165,18 @@ public class EntityProxy implements EntityFacade, PublicId {
                 result = cachedNid;
                 if (result == 0) {
                     ImmutableList<UUID> list = getUuidList();
-                    if (this instanceof EntityProxy.Concept) {
-                        ScopedValue.where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId()).run(() ->
+                    // A proxy of a concept, pattern or STAMP names its kind, so an unknown one is
+                    // minted under that kind's pattern; a pattern-keyed store refuses a mint with
+                    // no pattern in scope (IKE-Network/ike-issues#1313). A semantic's pattern is
+                    // not in its proxy, so an unknown semantic is not minted here.
+                    PatternFacade kind = switch (this) {
+                        case EntityProxy.Concept _ -> EntityBinding.Concept.pattern();
+                        case EntityProxy.Pattern _ -> EntityBinding.Pattern.pattern();
+                        case EntityProxy.Stamp _ -> EntityBinding.Stamp.pattern();
+                        default -> null;
+                    };
+                    if (kind != null) {
+                        ScopedValue.where(SCOPED_PATTERN_PUBLICID_FOR_NID, kind.publicId()).run(() ->
                                 cachedNid = PrimitiveData.nid(this.publicId()));
                         result = cachedNid;
                     } else {

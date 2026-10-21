@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.Entity;
@@ -89,10 +90,10 @@ public class TestProtobufToEntityStampTransformIT {
         assertEquals(1, stampRecord.versions().size());
         StampVersionRecord svr = stampRecord.versions().get(0);
         assertEquals(expectedTime, svr.time());
-        assertEquals(Entity.nid(statusConcept.publicId()), svr.stateNid());
-        assertEquals(Entity.nid(authorConcept.publicId()), svr.authorNid());
-        assertEquals(Entity.nid(moduleConcept.publicId()), svr.moduleNid());
-        assertEquals(Entity.nid(pathConcept.publicId()), svr.pathNid());
+        assertEquals(NidsByKind.concept(statusConcept.publicId()), svr.stateNid());
+        assertEquals(NidsByKind.concept(authorConcept.publicId()), svr.authorNid());
+        assertEquals(NidsByKind.concept(moduleConcept.publicId()), svr.moduleNid());
+        assertEquals(NidsByKind.concept(pathConcept.publicId()), svr.pathNid());
     }
 
     @Test

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.snomed.core;
 
+import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.RecordListBuilder;
@@ -54,7 +55,7 @@ public class SnomedCTStampChronology {
         StampRecord record = StampRecordBuilder.builder()
                 .mostSignificantBits(stampUUID.getMostSignificantBits())
                 .leastSignificantBits(stampUUID.getLeastSignificantBits())
-                .nid(EntityService.get().nidForUuids(stampUUID))
+                .nid(NidsByKind.stamp(stampUUID))
                 .versions(RecordListBuilder.make())
                 .build();
         StampVersionRecord versionsRecord = createSTAMPVersion(record,rowNumber, snomedCTData);
@@ -64,17 +65,17 @@ public class SnomedCTStampChronology {
     public static StampVersionRecord createSTAMPVersion(StampRecord record, int rowNumber, SnomedCTData snomedCTData) {
         StampVersionRecordBuilder recordBuilder = StampVersionRecordBuilder.builder();
         if(snomedCTData.getActive(rowNumber) == 1){
-            recordBuilder.stateNid(EntityService.get().nidForUuids(ACTIVE_UUID));
+            recordBuilder.stateNid(NidsByKind.concept(ACTIVE_UUID));
         }
         else if(snomedCTData.getActive(rowNumber) == 0){
-            recordBuilder.stateNid(EntityService.get().nidForUuids(INACTIVE_UUID));
+            recordBuilder.stateNid(NidsByKind.concept(INACTIVE_UUID));
         }
         return recordBuilder
                 .chronology(record)
                 .time(snomedCTData.getEffectiveTime(rowNumber))
-                .authorNid(EntityService.get().nidForUuids(SNOMED_CT_AUTHOR_UUID))
-                .moduleNid(EntityService.get().nidForUuids(getSnomedTextModuleId(snomedCTData,rowNumber)))
-                .pathNid(EntityService.get().nidForUuids(DEVELOPMENT_PATH_UUID))
+                .authorNid(NidsByKind.concept(SNOMED_CT_AUTHOR_UUID))
+                .moduleNid(NidsByKind.concept(getSnomedTextModuleId(snomedCTData,rowNumber)))
+                .pathNid(NidsByKind.concept(DEVELOPMENT_PATH_UUID))
                 .build();
     }
 

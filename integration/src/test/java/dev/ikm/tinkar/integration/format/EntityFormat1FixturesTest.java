@@ -19,6 +19,7 @@ import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
 import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
 import dev.ikm.tinkar.common.id.LongIds;
 import dev.ikm.tinkar.common.id.impl.NidCodec8;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
@@ -50,6 +51,8 @@ import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -111,6 +114,25 @@ class EntityFormat1FixturesTest {
 
     private static final UUID UUID_1 = UUID.fromString("0f6c6a6e-6b1d-4c0c-8b8e-3f1a2b3c4d01");
     private static final UUID UUID_2 = UUID.fromString("0f6c6a6e-6b1d-4c0c-8b8e-3f1a2b3c4d02");
+
+    /** The layout the store opened with, restored after each test. */
+    private NidLayout opened;
+
+    /**
+     * Format 1 is the format of the 6-bit, 8-bit and sequential layouts, and the facade writes the
+     * format the active layout names: each test names the 8-bit layout its nids are packed in,
+     * whatever store the fixture opened (IKE-Network/ike-issues#1313).
+     */
+    @BeforeEach
+    void nameTheLayout() {
+        opened = NidLayout.active();
+        NidLayout.activate(NidLayout.EIGHT_BIT);
+    }
+
+    @AfterEach
+    void restoreTheLayout() {
+        NidLayout.activate(opened);
+    }
 
     // ---------- fields ----------
 
@@ -253,7 +275,13 @@ class EntityFormat1FixturesTest {
 
     /** The format 1 bytes of the semantic fixture, for the size comparison of {@link EntityFormat2FixturesTest}. */
     static byte[] semanticBytes() {
-        return EntityRecordFactory.getBytes(semantic());
+        NidLayout active = NidLayout.active();
+        NidLayout.activate(NidLayout.EIGHT_BIT);
+        try {
+            return EntityRecordFactory.getBytes(semantic());
+        } finally {
+            NidLayout.activate(active);
+        }
     }
 
     /** A semantic with one version whose fields reference components on both sides of the sign bit. */

@@ -62,8 +62,9 @@ class ExportSkipsStampWithLostAuthorIT {
         set.concept("Lost probe module (Probe)").at(stamp).synonym("Lost probe module");
         set.write();
 
-        // A nid well past any this store has minted, so it has no public id.
-        long lostAuthorNid = PrimitiveData.nid(PublicIds.of(UUID.randomUUID())) + 100_000;
+        // A nid well past any this store has minted, so it has no public id: a concept's, far up
+        // its range, so it is a nid of the concept pattern in a store that keys nids by pattern.
+        long lostAuthorNid = EntityService.get().nidForConcept(PublicIds.of(UUID.randomUUID())) + 100_000;
         assertThrows(IllegalStateException.class, () -> PrimitiveData.publicId(lostAuthorNid));
         EntityService.get().putEntity(stampWithAuthor(lostAuthorNid,
                 Instant.parse("2026-07-04T00:00:00Z").toEpochMilli()));
@@ -81,7 +82,7 @@ class ExportSkipsStampWithLostAuthorIT {
         UUID stampUuid = UUID.randomUUID();
         RecordListBuilder<StampVersionRecord> versions = RecordListBuilder.make();
         StampRecord stamp = new StampRecord(stampUuid.getMostSignificantBits(),
-                stampUuid.getLeastSignificantBits(), null, PrimitiveData.nid(PublicIds.of(stampUuid)), versions);
+                stampUuid.getLeastSignificantBits(), null, EntityService.get().nidForStamp(PublicIds.of(stampUuid)), versions);
         versions.add(new StampVersionRecord(stamp, State.ACTIVE.nid(), time, authorNid,
                 KernelConcept.PRIMORDIAL_MODULE.nid(), KernelConcept.DEVELOPMENT_PATH.nid()));
         versions.build();

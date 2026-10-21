@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.integrity;
 
+import dev.ikm.tinkar.common.id.PublicIds;
 import network.ike.foundation.ike.bindings.IkeConcept;
 import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.KernelPattern;
@@ -797,7 +798,7 @@ public class DataIntegrityIT {
 
             UUID navigationSemanticUUID = UUID.randomUUID();
             SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
-                    .nid(EntityService.get().nidForUuids(navigationSemanticUUID))
+                    .nid(EntityService.get().nidFor(patternNid, PublicIds.of(navigationSemanticUUID)))
                     .leastSignificantBits(navigationSemanticUUID.getLeastSignificantBits())
                     .mostSignificantBits(navigationSemanticUUID.getMostSignificantBits())
                     .additionalUuidLongs(null)

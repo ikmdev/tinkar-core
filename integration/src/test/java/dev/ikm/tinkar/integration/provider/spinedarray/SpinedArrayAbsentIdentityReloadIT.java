@@ -36,7 +36,7 @@ class SpinedArrayAbsentIdentityReloadIT {
         Files.createDirectories(DATASTORE_ROOT.toPath());
         Files.writeString(DATASTORE_ROOT.toPath().resolve("absentIdentities.txt"),
                 NID + " " + ABSENT.asUuidArray()[0] + "\n");
-        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
+        TestHelper.startDataBase(DataStore.SEQUENTIAL_SPINED_ARRAY_STORE, DATASTORE_ROOT);   // a test of the sequential store itself
     }
 
     @AfterAll

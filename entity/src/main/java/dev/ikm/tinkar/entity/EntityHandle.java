@@ -354,6 +354,12 @@ public interface EntityHandle {
         if (publicId == null) {
             return absent();
         }
+        // A lookup allocates nothing, as for a proxy below: a public id the store does not know is
+        // absent, where resolving it would mint a nid, and fail on a pattern-keyed store with no
+        // pattern in scope (IKE-Network/ike-issues#1313).
+        if (!PrimitiveData.get().hasPublicId(publicId)) {
+            return new AbsentHandle(() -> DiagnosticText.component(publicId));
+        }
         EntityHandle handle = get(Entity.nid(publicId));
         if (handle.isAbsent()) {
             return new AbsentHandle(() -> DiagnosticText.component(publicId));
@@ -371,6 +377,9 @@ public interface EntityHandle {
     static EntityHandle get(UUID... uuids) {
         if (uuids == null) {
             return absent();
+        }
+        if (uuids.length > 0 && !PrimitiveData.get().hasPublicId(PublicIds.of(uuids))) {
+            return new AbsentHandle(() -> DiagnosticText.component(PublicIds.of(uuids)));
         }
         EntityHandle handle = get(PrimitiveData.nid(uuids));
         if (handle.isAbsent() && uuids.length > 0) {
