@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.entity.util;
 
 import dev.ikm.tinkar.common.util.time.Stopwatch;
-import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.entity.*;
 
 import java.util.concurrent.atomic.LongAdder;
@@ -44,28 +43,20 @@ public abstract class EntityProcessor<E extends Entity<V>, V extends EntityVersi
 
     /**
      * Entry point from ObjLongConsumer for byte-based processing (legacy mode).
-     * Converts bytes to entity and delegates to {@link #process(Entity)}.
+     * Converts bytes to entity and counts and processes it as {@link #accept(Entity)} does: the
+     * kind is the entity's, read in whichever entity format the store holds, where reading it
+     * at a fixed offset was right for format 1 only (IKE-Network/ike-issues#1313). Bytes that do
+     * not unmarshal are counted as other.
      */
     @Override
     public final void accept(byte[] bytes, long nid) {
-        // Parse the entity type from bytes
-        FieldDataType componentType = FieldDataType.fromToken(bytes[9]);
-        totalCount.increment();
-
-        // Update type-specific counters
-        switch (componentType) {
-            case PATTERN_CHRONOLOGY -> patternCount.increment();
-            case CONCEPT_CHRONOLOGY -> conceptCount.increment();
-            case SEMANTIC_CHRONOLOGY -> semanticCount.increment();
-            case STAMP -> stampCount.increment();
-            default -> other.increment();
-        }
-
-        // Convert bytes to entity and process
         E entity = unmarshalEntity(bytes);
-        if (entity != null) {
-            process(entity);
+        if (entity == null) {
+            totalCount.increment();
+            other.increment();
+            return;
         }
+        accept(entity);
     }
 
     /**

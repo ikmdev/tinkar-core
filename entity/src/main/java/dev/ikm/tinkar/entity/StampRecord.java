@@ -80,8 +80,13 @@ public record StampRecord(
             stampUuid.getLeastSignificantBits(), null, stampNid,
             versionRecords);
 
-        StampVersionRecord stampVersion = new StampVersionRecord(stampEntity, state.nid(), time, PrimitiveData.nid(authorId),
-            PrimitiveData.nid(moduleId), PrimitiveData.nid(pathId));
+        // The author, module and path are concepts: a provider that keys nids by pattern mints one
+        // not yet written under the concept pattern, and refuses one with no pattern in scope.
+        long[] fields = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                .call(() -> new long[]{PrimitiveData.nid(authorId), PrimitiveData.nid(moduleId), PrimitiveData.nid(pathId)});
+        StampVersionRecord stampVersion = new StampVersionRecord(stampEntity, state.nid(), time, fields[0],
+            fields[1], fields[2]);
             versionRecords.add(stampVersion);
             versionRecords.build();
         return stampEntity;

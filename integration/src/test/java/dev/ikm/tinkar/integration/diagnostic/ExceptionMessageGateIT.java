@@ -103,7 +103,8 @@ class ExceptionMessageGateIT {
             "common/src/main/java/dev/ikm/tinkar/common/id/impl/NidCodec8.java", 1,
             "common/src/main/java/dev/ikm/tinkar/common/id/impl/NidLayout.java", 1,
             // publicIdForNid: the one message with no public id to name the component by.
-            "provider/data-spinedarray-provider/src/main/java/dev/ikm/tinkar/provider/spinedarray/SpinedArrayProvider.java", 1);
+            "provider/data-spinedarray-provider/src/main/java/dev/ikm/tinkar/provider/spinedarray/SpinedArrayProvider.java", 1,
+            "provider/data-spinedarray64-provider/src/main/java/dev/ikm/tinkar/provider/spinedarray64/SpinedArray64Provider.java", 1);
 
     /** The start of an exception being made; its arguments follow. */
     private static final Pattern NEW_EXCEPTION = Pattern.compile("new\\s+\\w*(?:Exception|Error)\\s*\\(");

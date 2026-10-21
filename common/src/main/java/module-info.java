@@ -59,6 +59,7 @@ module dev.ikm.tinkar.common {
             dev.ikm.tinkar.entity,
             dev.ikm.tinkar.provider.entity,
             dev.ikm.tinkar.provider.spinedarray,
+            dev.ikm.tinkar.provider.spinedarray64,
             dev.ikm.tinkar.provider.grpc,
             dev.ikm.rocks.engine,
             // Tests of the stores themselves. DataIntegrity asks whether every nid a store's

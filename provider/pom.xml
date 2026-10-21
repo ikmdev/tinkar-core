@@ -11,6 +11,7 @@
 
     <subprojects>
         <subproject>data-spinedarray-provider</subproject>
+        <subproject>data-spinedarray64-provider</subproject>
         <subproject>entity-provider</subproject>
         <subproject>executor-provider</subproject>
         <subproject>search-provider</subproject>

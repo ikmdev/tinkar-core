@@ -50,7 +50,7 @@ public class TestHelper {
         LOG.info("JVM Version: " + System.getProperty("java.version"));
         LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
         LOG.info(ServiceProperties.jvmUuid());
-        PrimitiveData.selectControllerByName(dataStore.CONTROLLER_NAME);
+        PrimitiveData.selectControllerByName(dataStore.effective().CONTROLLER_NAME);
         PrimitiveData.start();
     }
 
