@@ -122,6 +122,13 @@ public final class EntityBoundaries {
      * @return its kind
      */
     public static DataKind kindOf(long nid) {
+        java.util.OptionalLong keyedUnder = patternFromNid(nid);
+        if (keyedUnder.isPresent()) {
+            // The layout carries the pattern in the nid: its kind, cached by the pattern's nid,
+            // answers without reading the element (IKE-Network/ike-issues#1313).
+            DataKind patternKind = birthKind(keyedUnder.getAsLong());
+            return patternKind != DataKind.KNOWLEDGE ? patternKind : birthKind(nid);
+        }
         Optional<? extends Entity<? extends EntityVersion>> held = read(nid);
         if (held.isPresent() && held.get() instanceof SemanticEntity<?> semantic) {
             DataKind patternKind = birthKind(semantic.patternNid());
@@ -130,6 +137,32 @@ public final class EntityBoundaries {
             }
         }
         return birthKind(nid);
+    }
+
+    /**
+     * The nid of the pattern a component is keyed under, from its nid alone where the layout
+     * carries the pattern: the 6-bit, 8-bit and 64-bit layouts. Empty in a sequential store, whose
+     * nids carry no pattern, and for a pattern itself, keyed under the pattern-of-patterns.
+     *
+     * @param nid the component's nid
+     * @return its pattern's nid, if the nid says
+     */
+    static java.util.OptionalLong patternFromNid(long nid) {
+        dev.ikm.tinkar.common.id.impl.NidLayout layout = dev.ikm.tinkar.common.id.impl.NidLayout.active();
+        if (layout == dev.ikm.tinkar.common.id.impl.NidLayout.SEQUENTIAL) {
+            return java.util.OptionalLong.empty();
+        }
+        int patternOfPatterns = layout.patternPatternSequence();
+        int sequence;
+        try {
+            sequence = layout.decodePatternSequence(nid);
+            if (sequence <= 0 || sequence == patternOfPatterns) {
+                return java.util.OptionalLong.empty();
+            }
+            return java.util.OptionalLong.of(layout.encode(patternOfPatterns, sequence));
+        } catch (RuntimeException notANidOfTheLayout) {
+            return java.util.OptionalLong.empty();
+        }
     }
 
     /** The latest version of a pattern, uncommitted included, or {@code null}. */
