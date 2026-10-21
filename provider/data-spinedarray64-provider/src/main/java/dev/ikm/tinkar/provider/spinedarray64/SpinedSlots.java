@@ -127,6 +127,32 @@ final class SpinedSlots<T> {
         }
     }
 
+    /**
+     * Visits every slot that holds a value, giving only the slot: for walks that list nids and never
+     * read a value. A slot is tested with a plain read, so a value written while the walk runs may or
+     * may not be seen, as with the other enumerations; nothing is read through the reference, so no
+     * ordering stronger than the reference's own atomicity is needed. The volatile reads of
+     * {@link #forEach} cost a SNOMED-sized pattern enumeration about 1.7 times the sequential
+     * engine's set iteration (IKE-Network/ike-issues#1313).
+     */
+    void forEachPresentSlot(java.util.function.IntConsumer consumer) {
+        int count = spineCount();
+        for (int index = 0; index < count; index++) {
+            Spine<T> spine = spineIfPresent(index);
+            if (spine == null) {
+                continue;
+            }
+            int first = (int) geometry.firstSlotOf(index);
+            AtomicReferenceArray<T> slots = spine.slots;
+            int length = slots.length();
+            for (int offset = 0; offset < length; offset++) {
+                if (slots.getPlain(offset) != null) {
+                    consumer.accept(first + offset);
+                }
+            }
+        }
+    }
+
     /** Visits the slots of one spine that hold a value. */
     void forEachOnSpine(int index, SlotConsumer<T> consumer) {
         Spine<T> spine = spineIfPresent(index);

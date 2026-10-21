@@ -695,7 +695,7 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
     private void forEachElementOf(int sequence, LongProcedure procedure) {
         PatternTable table = tableIfPresent(sequence);
         if (table != null) {
-            table.records.forEach((slot, record) -> procedure.accept(table.nidOf(slot)));
+            table.records.forEachPresentSlot(slot -> procedure.accept(table.nidOf(slot)));
         }
     }
 
