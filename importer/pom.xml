@@ -13,6 +13,7 @@
 		<subproject>importer-snomed-rf2</subproject>
 		<subproject>importer-rxnorm-owl</subproject>
 		<subproject>importer-gudid</subproject>
+		<subproject>importer-ncbi-gene</subproject>
 		<subproject>importer-elk-test-cases</subproject>
 	</subprojects>
 </project>

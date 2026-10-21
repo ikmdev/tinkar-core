@@ -30,6 +30,14 @@ import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.FieldDefinitionForEntity;
+import dev.ikm.tinkar.entity.FieldDefinitionRecord;
+import dev.ikm.tinkar.entity.FieldDefinitionRecordBuilder;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.PatternRecord;
+import dev.ikm.tinkar.entity.PatternRecordBuilder;
+import dev.ikm.tinkar.entity.PatternVersionRecord;
+import dev.ikm.tinkar.entity.PatternVersionRecordBuilder;
 import dev.ikm.tinkar.entity.PublicIdentifierRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
@@ -47,8 +55,10 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.*;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,8 +66,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Writes knowledge into the running store from code: concepts, stated parents, semantics,
- * descriptions with their dialects, and retirement, each under the stamp the call names. Every
+ * Writes knowledge into the running store from code: concepts, stated parents, patterns,
+ * semantics, descriptions with their dialects, and retirement, each under the stamp the call
+ * names. Every
  * identity is the caller's, derived and never random, so writing the same thing twice finds the
  * same component (IKE-Network/ike-issues#1112, #1114).
  *
@@ -75,6 +86,30 @@ import java.util.concurrent.atomic.LongAdder;
  * <p>A writer may be shared by threads writing disjoint components; its counts are thread safe.
  */
 public final class StoreWriter {
+
+    /**
+     * One field of a pattern, for
+     * {@link #pattern(Stamp, PublicId, ConceptFacade, ConceptFacade, List)}. A field's meaning
+     * says what a value of the field is; its purpose says why the value is recorded. A pattern's
+     * referenced-component meaning must differ from every field meaning, and each field carries
+     * its own purpose (IKE-Network/ike-issues#891).
+     *
+     * @param meaning  what a value of the field is
+     * @param purpose  why the field's value is recorded
+     * @param dataType the field's data type, such as {@link KernelConcept#STRING},
+     *                 {@link KernelConcept#INTEGER_FIELD} or {@link KernelConcept#COMPONENT_FIELD}
+     */
+    public record FieldDefinition(ConceptFacade meaning, ConceptFacade purpose, ConceptFacade dataType) {
+
+        /**
+         * Validates.
+         */
+        public FieldDefinition {
+            Objects.requireNonNull(meaning, "meaning");
+            Objects.requireNonNull(purpose, "purpose");
+            Objects.requireNonNull(dataType, "dataType");
+        }
+    }
 
     /** What the writer did, counted since it was created. */
     public static final class Counts {
@@ -345,6 +380,59 @@ public final class StoreWriter {
     }
 
     /**
+     * Writes a pattern version under a stamp, version-aware like a semantic: nothing when the
+     * latest version has the stamp's state, the same meaning and purpose, and the same field
+     * definitions (meaning, purpose and data type, in order), or when a version under this stamp
+     * already exists; a new version when any of those differs; a new pattern when none exists.
+     * The meaning, purpose and every field's concepts must already be in the store.
+     *
+     * @param stamp     the stamp the version is written under
+     * @param patternId the pattern's public id
+     * @param meaning   what a semantic of the pattern's referenced component is
+     * @param purpose   why a semantic of the pattern exists
+     * @param fields    the field definitions, in field order; none for a membership pattern
+     * @return the pattern's nid
+     */
+    public long pattern(Stamp stamp, PublicId patternId, ConceptFacade meaning, ConceptFacade purpose,
+                        List<FieldDefinition> fields) {
+        long stampNid = stamp(stamp);
+        PublicIdentifierRecord identifier = PublicIdentifierRecord.make(patternId);
+        long nid = EntityService.get().nidForPattern(patternId);
+        Optional<PatternRecord> existing = EntityHandle.get(nid).entity().filter(e -> !e.canceled())
+                .map(e -> (PatternRecord) e);
+        if (existing.isPresent()) {
+            PatternRecord record = existing.get();
+            if (hasVersionUnder(record.versions(), stampNid)) {
+                counts.unchanged.increment();
+                return nid;
+            }
+            Latest<PatternEntityVersion> latest = calculator.latest(nid);
+            if (latest.isPresent() && latest.get().active() == active(stamp)
+                    && samePattern(latest.get(), meaning, purpose, fields)) {
+                counts.unchanged.increment();
+                return nid;
+            }
+            PatternVersionRecord version = patternVersion(record, stampNid, meaning, purpose, fields);
+            EntityService.get().putEntity(PatternRecordBuilder.builder(record)
+                    .versions(record.versions().newWith(version)).build());
+            counts.versioned.increment();
+            return nid;
+        }
+        RecordListBuilder<PatternVersionRecord> versions = RecordListBuilder.make();
+        PatternRecord bootstrap = PatternRecordBuilder.builder()
+                .mostSignificantBits(identifier.mostSignificantBits())
+                .leastSignificantBits(identifier.leastSignificantBits())
+                .additionalUuidLongs(identifier.additionalUuidLongs())
+                .nid(nid)
+                .versions(versions)
+                .build();
+        versions.add(patternVersion(bootstrap, stampNid, meaning, purpose, fields));
+        EntityService.get().putEntity(PatternRecordBuilder.builder(bootstrap).versions(versions.toImmutable()).build());
+        counts.written.increment();
+        return nid;
+    }
+
+    /**
      * Records the concept version a source states under a stamp, as history: appended unless a
      * version under that stamp already exists, with no comparison to the latest version. For a
      * source that carries its own history, such as an RF2 full release, where every row is a
@@ -543,6 +631,52 @@ public final class StoreWriter {
                 .leastSignificantBits(merged.leastSignificantBits())
                 .additionalUuidLongs(merged.additionalUuidLongs())
                 .build());
+    }
+
+    /**
+     * Whether a pattern version says what the caller asks for: the same meaning and purpose, and
+     * field for field the same meaning, purpose and data type.
+     */
+    private static boolean samePattern(PatternEntityVersion version, ConceptFacade meaning, ConceptFacade purpose,
+                                       List<FieldDefinition> fields) {
+        if (version.semanticMeaningNid() != meaning.nid() || version.semanticPurposeNid() != purpose.nid()
+                || version.fieldDefinitions().size() != fields.size()) {
+            return false;
+        }
+        for (int i = 0; i < fields.size(); i++) {
+            FieldDefinitionForEntity existing = version.fieldDefinitions().get(i);
+            FieldDefinition wanted = fields.get(i);
+            if (existing.meaningNid() != wanted.meaning().nid()
+                    || existing.purposeNid() != wanted.purpose().nid()
+                    || existing.dataTypeNid() != wanted.dataType().nid()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** A pattern version under a stamp, its field definitions stamped alike and indexed in order. */
+    private static PatternVersionRecord patternVersion(PatternRecord pattern, long stampNid, ConceptFacade meaning,
+                                                       ConceptFacade purpose, List<FieldDefinition> fields) {
+        MutableList<FieldDefinitionRecord> definitions = Lists.mutable.empty();
+        for (int index = 0; index < fields.size(); index++) {
+            FieldDefinition field = fields.get(index);
+            definitions.add(FieldDefinitionRecordBuilder.builder()
+                    .patternNid(pattern.nid())
+                    .meaningNid(field.meaning().nid())
+                    .purposeNid(field.purpose().nid())
+                    .dataTypeNid(field.dataType().nid())
+                    .indexInPattern(index)
+                    .patternVersionStampNid(stampNid)
+                    .build());
+        }
+        return PatternVersionRecordBuilder.builder()
+                .chronology(pattern)
+                .stampNid(stampNid)
+                .semanticMeaningNid(meaning.nid())
+                .semanticPurposeNid(purpose.nid())
+                .fieldDefinitions(definitions.toImmutable())
+                .build();
     }
 
     private static boolean active(Stamp stamp) {
