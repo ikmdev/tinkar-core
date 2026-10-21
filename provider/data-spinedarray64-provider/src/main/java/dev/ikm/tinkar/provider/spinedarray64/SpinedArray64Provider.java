@@ -193,17 +193,8 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
             table(sequence);
         }
         files.readCounters().forEach((sequence, next) -> table(sequence).raiseTo(next));
-        List<Future<?>> reads = new ArrayList<>();
-        for (int sequence : patternSequences()) {
-            PatternTable table = table(sequence);
-            int spines = table.records.spineCount();
-            for (int spine = 0; spine < spines; spine++) {
-                int index = spine;
-                reads.add(TinkExecutor.threadPool().submit(() -> table.records.forEachOnSpine(index, (slot, record) ->
-                        identities.opened(table.nidOf(slot), EntityRecordFormat2.uuids(record).castToList()))));
-            }
-        }
-        await(reads);
+        await(spineBatches((table, index) -> table.records.forEachOnSpine(index, (slot, record) ->
+                identities.opened(table.nidOf(slot), EntityRecordFormat2.uuids(record).castToList()))));
         for (int sequence : patternSequences()) {
             PatternTable table = table(sequence);
             table.raiseTo(table.records.end() + 1);
@@ -435,7 +426,12 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
         return identities.nid(uuid).map(EntityKey::ofNid);
     }
 
-    /** Patterns are discovered before elements are keyed under them, so an import takes two passes. */
+    /**
+     * Every nid names its pattern, so a component's pattern must be known before it is keyed. A
+     * format 2 or 3 change set lists every component's pattern in its identity index or component
+     * table, and the loader keys every nid from that before reading the records once; only a
+     * format 1 file, which has neither, has its records read twice, the first time for identities.
+     */
     @Override
     public boolean requiresMultiPassImport() {
         return true;
@@ -570,20 +566,60 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
         }
     }
 
-    /** Visits every record, a spine per task on the shared pool, so the action must be safe to call concurrently. */
+    /** Visits every record, in batches of spines on the shared pool, so the action must be safe to call concurrently. */
     @Override
     public void forEachParallel(ObjLongConsumer<byte[]> action) {
+        await(spineBatches((table, index) ->
+                table.records.forEachOnSpine(index, (slot, record) -> action.accept(record, table.nidOf(slot)))));
+    }
+
+    /** The fewest slots a parallel task over records is given: small patterns' spines are batched up to it. */
+    static final int BATCH_SLOTS = Integer.getInteger("spinedarray64.batch.slots", 16_384);
+
+    /** A record spine to visit: the table and the spine's index in it. */
+    @FunctionalInterface
+    private interface SpineVisit {
+        void visit(PatternTable table, int index);
+    }
+
+    /**
+     * Submits a visit of every record spine to the shared pool, in batches of at least
+     * {@link #BATCH_SLOTS} slots. Spines grow geometrically from a small first size, so a store of
+     * many small patterns has many small spines; a task per spine spent the scan on submitting
+     * tasks. A large pattern's full-size spines are a batch each.
+     */
+    private List<Future<?>> spineBatches(SpineVisit visit) {
         List<Future<?>> tasks = new ArrayList<>();
+        List<PatternTable> batchTables = new ArrayList<>();
+        List<Integer> batchSpines = new ArrayList<>();
+        long batchSlots = 0;
         for (int sequence : patternSequences()) {
             PatternTable table = table(sequence);
             int spines = table.records.spineCount();
             for (int spine = 0; spine < spines; spine++) {
-                int index = spine;
-                tasks.add(TinkExecutor.threadPool().submit(() ->
-                        table.records.forEachOnSpine(index, (slot, record) -> action.accept(record, table.nidOf(slot)))));
+                batchTables.add(table);
+                batchSpines.add(spine);
+                batchSlots += table.records.geometry().sizeOf(spine);
+                if (batchSlots >= BATCH_SLOTS) {
+                    tasks.add(submit(visit, batchTables, batchSpines));
+                    batchTables = new ArrayList<>();
+                    batchSpines = new ArrayList<>();
+                    batchSlots = 0;
+                }
             }
         }
-        await(tasks);
+        if (!batchTables.isEmpty()) {
+            tasks.add(submit(visit, batchTables, batchSpines));
+        }
+        return tasks;
+    }
+
+    private static Future<?> submit(SpineVisit visit, List<PatternTable> tables, List<Integer> spines) {
+        return TinkExecutor.threadPool().submit(() -> {
+            for (int i = 0; i < tables.size(); i++) {
+                visit.visit(tables.get(i), spines.get(i));
+            }
+        });
     }
 
     @Override
