@@ -73,7 +73,7 @@ class InferredEquivalenceWriteIT {
         CachingService.clearAll();
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT,
                 Files.createDirectories(Path.of("target", "stores", getClass().getSimpleName())).toFile());
-        PrimitiveData.selectControllerByName("Load Ephemeral Store");
+        PrimitiveData.selectControllerByName("Load Memory-Only 64-bit Store");
         PrimitiveData.start();
         new LoadEntitiesFromProtobufFile(Path.of("target", "data", "ike-starter-set-unreasoned-pb.zip").toFile())
                 .compute();

@@ -44,10 +44,14 @@ public class ElkSnomedData {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedData.class);
 
+	/**
+	 * The nid of the concept a SNOMED CT identifier names, minted under the concept pattern if the
+	 * store does not hold it: an SCTID names a concept, and a store that keys nids by pattern
+	 * refuses a mint with no pattern in scope (IKE-Network/ike-issues#1313).
+	 */
 	public static long getNid(long sctid) {
 		UUID uuid = UuidUtil.fromSNOMED("" + sctid);
-		long nid = PrimitiveData.nid(uuid);
-		return nid;
+		return dev.ikm.tinkar.entity.EntityService.get().nidForConcept(dev.ikm.tinkar.common.id.PublicIds.of(uuid));
 	}
 
 	public static OptionalLong tryGetNid(long sctid) {

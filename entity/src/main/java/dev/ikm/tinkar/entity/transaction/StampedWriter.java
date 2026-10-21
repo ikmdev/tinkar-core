@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.entity.transaction;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.ConceptRecord;
@@ -249,7 +250,10 @@ public final class StampedWriter implements AutoCloseable {
      *
      * @param semanticId          the semantic's identity
      * @param patternId           the pattern the semantic instantiates
-     * @param referencedComponent the component the semantic is about, which must already have a nid
+     * @param referencedComponent the component the semantic is about; one the store does not know
+     *                            yet is taken as a concept and minted under the concept pattern,
+     *                            as the KnowledgeSet builder takes a reference not yet written
+     *                            (IKE-Network/ike-issues#1313)
      * @param fieldValues         the field values, in the pattern's field order
      * @return the semantic's nid
      */
@@ -265,7 +269,9 @@ public final class StampedWriter implements AutoCloseable {
                 .leastSignificantBits(identifier.leastSignificantBits())
                 .additionalUuidLongs(identifier.additionalUuidLongs())
                 .patternNid(EntityService.get().nidForPattern(patternId))
-                .referencedComponentNid(EntityService.get().nidForPublicId(referencedComponent))
+                .referencedComponentNid(PrimitiveData.get().hasPublicId(referencedComponent)
+                        ? EntityService.get().nidForPublicId(referencedComponent)
+                        : EntityService.get().nidForConcept(referencedComponent))
                 .versions(versions)
                 .build();
         ImmutableList<Object> values = Lists.immutable.of(fieldValues);

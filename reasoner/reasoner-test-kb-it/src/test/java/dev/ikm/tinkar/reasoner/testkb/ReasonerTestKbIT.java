@@ -91,7 +91,7 @@ class ReasonerTestKbIT {
         CachingService.clearAll();
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT,
                 Files.createDirectories(Path.of("target", "stores", getClass().getSimpleName())).toFile());
-        PrimitiveData.selectControllerByName("Load Ephemeral Store");
+        PrimitiveData.selectControllerByName("Load Memory-Only 64-bit Store");
         PrimitiveData.start();
         load(DATA.resolve("ike-starter-set-unreasoned-pb.zip").toFile());
         load(DATA.resolve("reasoner-test-kb-unreasoned-pb.zip").toFile());
