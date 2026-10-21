@@ -449,7 +449,7 @@ public class EntityRecordFactory {
             return null;
         }
         if (EntityRecordFormat2.isFormat2(bytes)) {
-            if (EntityRecordFormat2.parts(bytes).chronology()[0] == PrimitiveDataService.STAMP_DATA_TYPE) {
+            if (EntityRecordFormat2.chronologyType(bytes) == PrimitiveDataService.STAMP_DATA_TYPE) {
                 throw new IllegalArgumentException("A stamp's versions are not withdrawn: nid "
                         + EntityRecordFormat2.nid(bytes));
             }
@@ -700,7 +700,7 @@ public class EntityRecordFactory {
             case FLOAT -> readBuf.readFloat();
             case BYTE_ARRAY -> readBytes(readBuf);
             case INTEGER -> readBuf.readInt();
-            case STRING -> new String(readBytes(readBuf), UTF_8);
+            case STRING -> readString(readBuf);
             case DITREE -> DiTreeEntity.make(readBuf, formatVersion);
             case VERTEX -> EntityVertex.make(readBuf, formatVersion);
             case DIGRAPH -> DiGraphEntity.make(readBuf, formatVersion);
@@ -729,6 +729,14 @@ public class EntityRecordFactory {
             }
             default -> throw new UnsupportedOperationException("Can't handle field read of type: " + dataType);
         };
+    }
+
+    /** A string decoded straight from the buffer's array, with no intermediate copy of its bytes. */
+    private static String readString(ByteBuf readBuf) {
+        int length = readBuf.readInt();
+        String text = new String(readBuf.array(), readBuf.head(), length, UTF_8);
+        readBuf.moveHead(length);
+        return text;
     }
 
     private static byte[] readBytes(ByteBuf readBuf) {

@@ -151,7 +151,18 @@ public final class EntityRecordFormat2 {
      * @return its identity
      */
     public static Identity readIdentity(byte[] chronology) {
-        ByteBuf buf = ByteBuf.wrapForReading(chronology);
+        return readIdentity(ByteBuf.wrapForReading(chronology));
+    }
+
+    /**
+     * Reads the identity at the buffer's head, type token included, leaving the head after it:
+     * the reader's way to the identity in place, without first taking the record apart. The
+     * identity's {@linkplain Identity#restOffset() rest offset} is the buffer's head after it.
+     *
+     * @param buf the buffer, its head at a chronology's type token
+     * @return the identity
+     */
+    public static Identity readIdentity(ByteBuf buf) {
         byte token = buf.readByte();
         long nid = readNid(buf);
         long msb = buf.readLong();
@@ -171,7 +182,8 @@ public final class EntityRecordFormat2 {
     }
 
     /**
-     * Takes a record apart.
+     * Takes a record apart, copying each part out of it: for the merge, which reassembles parts.
+     * A read decodes in place from {@link #chronologyReader} instead.
      *
      * @param record a format 2 record
      * @return its chronology and versions
@@ -265,7 +277,37 @@ public final class EntityRecordFormat2 {
      * @return its UUIDs, the first one first
      */
     public static ImmutableList<UUID> uuids(byte[] record) {
-        return readIdentity(parts(record).chronology()).uuids();
+        return readIdentity(chronologyReader(record)).uuids();
+    }
+
+    /**
+     * The type token of the entity a record holds: the first byte of its chronology.
+     *
+     * @param record a format 2 record
+     * @return the chronology's type token
+     */
+    public static byte chronologyType(byte[] record) {
+        return chronologyReader(record).readByte();
+    }
+
+    /**
+     * A buffer over a record, its head at the chronology's type token: past the format byte and
+     * the chronology's length. A read in place goes on from here, so nothing is copied out of
+     * the record (IKE-Network/ike-issues#1313).
+     *
+     * @param record a format 2 record
+     * @return the buffer
+     * @throws IllegalArgumentException if the record is not in format 2
+     */
+    public static ByteBuf chronologyReader(byte[] record) {
+        if (!isFormat2(record)) {
+            throw new IllegalArgumentException("Not a format 2 entity record: "
+                    + (record == null ? "null" : "first byte " + record[0]));
+        }
+        ByteBuf buf = ByteBuf.wrapForReading(record);
+        buf.readByte();
+        buf.readVarInt();
+        return buf;
     }
 
     /**

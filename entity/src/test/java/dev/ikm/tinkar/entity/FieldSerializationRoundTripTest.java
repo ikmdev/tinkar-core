@@ -181,6 +181,40 @@ class FieldSerializationRoundTripTest {
                 "the field after the vertex must read back intact in format 2");
     }
 
+    @Test
+    @DisplayName("Format 2 reads id sets, strings and decimals in place, and the field after each stays aligned")
+    void format2FieldsReadInPlace() {
+        // IKE-Network/ike-issues#1313: strings decode from the record's own array, and an id set
+        // of one pattern fills its result directly; a set across patterns still merges its groups.
+        long[] onePattern = {dev.ikm.tinkar.common.id.Nid.compose64(2, 7), dev.ikm.tinkar.common.id.Nid.compose64(2, 300),
+                dev.ikm.tinkar.common.id.Nid.compose64(2, 70_000)};
+        long[] threePatterns = {dev.ikm.tinkar.common.id.Nid.compose64(2, 5), dev.ikm.tinkar.common.id.Nid.compose64(2, 9),
+                dev.ikm.tinkar.common.id.Nid.compose64(3, 1), dev.ikm.tinkar.common.id.Nid.compose64(40, 2_000_000)};
+        String text = "Größe — ≥ 3 µm ✓";
+        java.math.BigDecimal decimal = new java.math.BigDecimal("-12345.678900");
+        ByteBuf writeBuf = ByteBufPool.allocate(4096);
+        EntityCodec2.writeField(writeBuf, dev.ikm.tinkar.common.id.LongIds.set.of(onePattern));
+        EntityCodec2.writeField(writeBuf, text);
+        EntityCodec2.writeField(writeBuf, dev.ikm.tinkar.common.id.LongIds.set.of(threePatterns));
+        EntityCodec2.writeField(writeBuf, decimal);
+        EntityCodec2.writeField(writeBuf, "");
+        EntityCodec2.writeField(writeBuf, "after");
+        ByteBuf readBuf = ByteBuf.wrapForReading(writeBuf.asArray());
+        assertArrayEquals(onePattern, ((dev.ikm.tinkar.common.id.LongIdSet) next(readBuf)).toArray(),
+                "a one-pattern id set reads back in order");
+        assertEquals(text, next(readBuf), "a non-ASCII string reads back whole");
+        assertArrayEquals(threePatterns, ((dev.ikm.tinkar.common.id.LongIdSet) next(readBuf)).toArray(),
+                "an id set across patterns reads back in order");
+        assertEquals(decimal, next(readBuf), "a decimal keeps its scale");
+        assertEquals("", next(readBuf), "an empty string reads back");
+        assertEquals("after", next(readBuf), "the field after them must read back intact");
+        assertEquals(0, readBuf.readRemaining(), "and nothing is left");
+    }
+
+    private static Object next(ByteBuf readBuf) {
+        return EntityCodec2.readField(readBuf, FieldDataType.fromToken(readBuf.readByte()));
+    }
+
     /** A vertex whose meaning is nids[0], with a string under nids[1] and an integer under nids[2]. */
     private static EntityVertex vertex(UUID id, long[] nids) {
         EntityVertex vertex = EntityVertex.make(id, nids[0]);

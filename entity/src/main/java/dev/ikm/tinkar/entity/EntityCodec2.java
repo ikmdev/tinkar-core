@@ -332,8 +332,17 @@ public final class EntityCodec2 {
      */
     @SuppressWarnings("unchecked")
     public static <T extends Entity<V>, V extends EntityVersion> T read(byte[] record) {
-        EntityRecordFormat2.Parts parts = EntityRecordFormat2.parts(record);
-        ByteBuf buf = ByteBuf.wrapForReading(parts.chronology());
+        // One buffer over the record, each part decoded where it lies: the parts are never
+        // copied out of the record, which made a format 2 decode 1.3 to 2.4 times format 1's
+        // (IKE-Network/ike-issues#1313). A part's length marks where the next one begins.
+        if (!EntityRecordFormat2.isFormat2(record)) {
+            throw new IllegalArgumentException("Not a format 2 entity record: "
+                    + (record == null ? "null" : "first byte " + record[0]));
+        }
+        ByteBuf buf = ByteBuf.wrapForReading(record);
+        buf.readByte();
+        int chronologyLength = buf.readVarInt();
+        int chronologyEnd = buf.head() + chronologyLength;
         FieldDataType type = FieldDataType.fromToken(buf.readByte());
         long nid = EntityRecordFormat2.readNid(buf);
         long msb = buf.readLong();
@@ -348,13 +357,7 @@ public final class EntityCodec2 {
             case CONCEPT_CHRONOLOGY -> {
                 RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
                 ConceptRecord concept = new ConceptRecord(msb, lsb, additionalLongs, nid, versions);
-                for (byte[] version : parts.versions()) {
-                    ConceptVersionRecord v = (ConceptVersionRecord) version(version, concept);
-                    if (!PrimitiveData.get().isCanceledStampNid(v.stampNid())) {
-                        versions.add(v);
-                    }
-                }
-                versions.build();
+                readVersions(buf, chronologyEnd, concept, versions, true);
                 yield (T) concept;
             }
             case SEMANTIC_CHRONOLOGY -> {
@@ -362,42 +365,54 @@ public final class EntityCodec2 {
                 long patternNid = EntityRecordFormat2.readNid(buf);
                 RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
                 SemanticRecord semantic = new SemanticRecord(msb, lsb, additionalLongs, nid, patternNid, referencedComponentNid, versions);
-                for (byte[] version : parts.versions()) {
-                    SemanticVersionRecord v = (SemanticVersionRecord) version(version, semantic);
-                    if (!PrimitiveData.get().isCanceledStampNid(v.stampNid())) {
-                        versions.add(v);
-                    }
-                }
-                versions.build();
+                readVersions(buf, chronologyEnd, semantic, versions, true);
                 yield (T) semantic;
             }
             case PATTERN_CHRONOLOGY -> {
                 RecordListBuilder<PatternVersionRecord> versions = RecordListBuilder.make();
                 PatternRecord pattern = new PatternRecord(msb, lsb, additionalLongs, nid, versions);
-                for (byte[] version : parts.versions()) {
-                    PatternVersionRecord v = (PatternVersionRecord) version(version, pattern);
-                    if (!PrimitiveData.get().isCanceledStampNid(v.stampNid())) {
-                        versions.add(v);
-                    }
-                }
-                versions.build();
+                readVersions(buf, chronologyEnd, pattern, versions, true);
                 yield (T) pattern;
             }
             case STAMP -> {
                 RecordListBuilder<StampVersionRecord> versions = RecordListBuilder.make();
                 StampRecord stamp = new StampRecord(msb, lsb, additionalLongs, nid, versions);
-                for (byte[] version : parts.versions()) {
-                    versions.add((StampVersionRecord) version(version, stamp));
-                }
-                versions.build();
+                readVersions(buf, chronologyEnd, stamp, versions, false);
                 yield (T) stamp;
             }
             default -> throw new IllegalStateException("Unexpected chronology type: " + type);
         };
     }
 
-    private static EntityVersion version(byte[] bytes, Entity<? extends EntityVersion> entity) {
-        ByteBuf buf = ByteBuf.wrapForReading(bytes);
+    /**
+     * Reads a record's versions in place into the builder, then builds it.
+     *
+     * @param buf           the buffer over the record
+     * @param chronologyEnd where the chronology ends and the version count begins
+     * @param entity        the entity the versions belong to
+     * @param versions      the builder
+     * @param dropCanceled  whether a version whose stamp is canceled is left out
+     */
+    @SuppressWarnings("unchecked")
+    private static <V extends EntityVersion> void readVersions(ByteBuf buf, int chronologyEnd,
+                                                               Entity<? extends EntityVersion> entity,
+                                                               RecordListBuilder<V> versions, boolean dropCanceled) {
+        buf.head(chronologyEnd);
+        int versionCount = buf.readVarInt();
+        for (int i = 0; i < versionCount; i++) {
+            int length = buf.readVarInt();
+            int versionEnd = buf.head() + length;
+            V version = (V) version(buf, entity);
+            buf.head(versionEnd);
+            if (!dropCanceled || !PrimitiveData.get().isCanceledStampNid(version.stampNid())) {
+                versions.add(version);
+            }
+        }
+        versions.build();
+    }
+
+    /** Reads one version at the buffer's head, after its length. */
+    private static EntityVersion version(ByteBuf buf, Entity<? extends EntityVersion> entity) {
         byte token = buf.readByte();
         if (entity.versionDataType().token != token) {
             throw new IllegalStateException("Wrong version token " + token + " (" + FieldDataType.fromToken(token)
@@ -452,9 +467,9 @@ public final class EntityCodec2 {
             case BYTE_ARRAY -> readBytes(buf);
             case INTEGER -> buf.readInt();
             case LONG -> buf.readLong();
-            case DECIMAL -> new BigDecimal(new String(readBytes(buf), UTF_8));
+            case DECIMAL -> new BigDecimal(readString(buf));
             case INSTANT -> Instant.ofEpochSecond(buf.readLong(), buf.readInt());
-            case STRING -> new String(readBytes(buf), UTF_8);
+            case STRING -> readString(buf);
             case CONCEPT -> EntityProxy.Concept.make(EntityRecordFormat2.readNid(buf));
             case SEMANTIC -> EntityProxy.Semantic.make(EntityRecordFormat2.readNid(buf));
             case PATTERN -> EntityProxy.Pattern.make(EntityRecordFormat2.readNid(buf));
@@ -488,6 +503,17 @@ public final class EntityCodec2 {
     /** The members of an id set as {@link #writeIdSet} wrote them, in ascending order. */
     private static long[] readIdSet(ByteBuf buf) {
         int patterns = buf.readVarInt();
+        if (patterns == 1) {
+            // The usual case, every member in one pattern: its group is the result, uncopied.
+            int pattern = buf.readVarInt();
+            long[] members = new long[buf.readVarInt()];
+            int element = 0;
+            for (int i = 0; i < members.length; i++) {
+                element += buf.readVarInt();
+                members[i] = Nid.compose64(pattern, element);
+            }
+            return members;
+        }
         List<long[]> groups = new ArrayList<>(patterns);
         int total = 0;
         for (int p = 0; p < patterns; p++) {
@@ -511,6 +537,14 @@ public final class EntityCodec2 {
         return members;
     }
 
+    /** A string decoded straight from the buffer's array, with no intermediate copy of its bytes. */
+    private static String readString(ByteBuf buf) {
+        int length = buf.readVarInt();
+        String text = new String(buf.array(), buf.head(), length, UTF_8);
+        buf.moveHead(length);
+        return text;
+    }
+
     private static byte[] readBytes(ByteBuf buf) {
         byte[] bytes = new byte[buf.readVarInt()];
         buf.read(bytes);
@@ -522,10 +556,10 @@ public final class EntityCodec2 {
      * records: the entity's nid and UUIDs.
      *
      * @param record a format 2 record
-     * @return the identity at the head of its chronology
+     * @return the identity at the head of its chronology, its rest offset counted from the record's start
      */
     public static EntityRecordFormat2.Identity identity(byte[] record) {
-        return EntityRecordFormat2.readIdentity(EntityRecordFormat2.parts(record).chronology());
+        return EntityRecordFormat2.readIdentity(EntityRecordFormat2.chronologyReader(record));
     }
 
     /** Unused parameter kept for symmetry with the format 1 reader's signature. */
