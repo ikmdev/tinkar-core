@@ -18,6 +18,9 @@ import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.boundary.DataKind;
+import dev.ikm.tinkar.entity.boundary.EntityBoundaries;
+import dev.ikm.tinkar.entity.boundary.ModuleKinds;
 import dev.ikm.tinkar.entity.changeset.ChangeSetCompaction;
 import dev.ikm.tinkar.entity.changeset.IdentityIndex;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
@@ -38,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,12 +66,38 @@ import java.util.zip.ZipOutputStream;
  * proper handling of change set files using zip compression and metadata generation. The class
  * is designed to handle entities efficiently through a service thread, leveraging internal queues
  * for processing and persistence.
+ *
+ * <h2>Three streams (IKE-Network/ike-issues#1313)</h2>
+ *
+ * Each entity goes to the stream of the kind of the module its latest version is written under,
+ * read through {@link ModuleKinds}: knowledge to {@code changeSets/src/main/resources} under the
+ * store root, as before, the folder a release packages and Komet's sync adds to git; instance
+ * data to {@code instanceChangeSets}; ephemeral data to {@code ephemeralChangeSets}. An instance
+ * or ephemeral stream is one file per module per session, named
+ * {@code <module name> [<module public id>] <user> <time> <random> ike-cs.zip}, so a module's
+ * files can be found, replayed or deleted together. A STAMP goes with the entities written under
+ * it, so each file's journal keeps its ordering contract. Until a store holds a module parent,
+ * every module is knowledge and everything goes to the knowledge stream, as it always has.
  */
 public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveState {
     private static final Logger LOG = LoggerFactory.getLogger(ChangeSetWriterProvider.class);
     private static final long INACTIVITY_THRESHOLD_MILLIS = TimeUnit.MINUTES.toMillis(5);
     /** The suffix of a session's journal while it is being written; the sync layer matches only the finished name. */
     static final String SPOOL_SUFFIX = ".spool";
+    /** The folder under the store root instance change sets are written to. */
+    public static final String INSTANCE_FOLDER = "instanceChangeSets";
+    /** The folder under the store root ephemeral change sets are written to. */
+    public static final String EPHEMERAL_FOLDER = "ephemeralChangeSets";
+
+    /**
+     * Where an entity is written: the knowledge stream, or one module's instance or ephemeral stream.
+     *
+     * @param kind      the kind of the entity's module
+     * @param moduleNid the module, for an instance or ephemeral stream; {@code 0} for knowledge
+     */
+    record Stream(DataKind kind, long moduleNid) {
+        static final Stream KNOWLEDGE = new Stream(DataKind.KNOWLEDGE, 0);
+    }
 
     /**
      * Represents the various states of the ChangeSetWriterProvider during its lifecycle.
@@ -110,6 +140,10 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     }
 
     private final File changeSetFolder;
+    /** Where instance change sets go: beside the knowledge folder, never packaged or synced with it. */
+    private final File instanceChangeSetFolder;
+    /** Where ephemeral change sets go, one stream per module. */
+    private final File ephemeralChangeSetFolder;
     private final LinkedBlockingQueue<Entity<EntityVersion>> entitiesToWrite = new LinkedBlockingQueue<>();
 
     private ChangeSetWriterProvider() {
@@ -117,6 +151,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         if (optionalDataStoreRoot.isPresent()) {
             // TODO: Use Paths and Files classes to simplify code and handle file creation errors
             this.changeSetFolder = optionalDataStoreRoot.get().toPath().resolve("changeSets", "src", "main", "resources").toFile();
+            this.instanceChangeSetFolder = optionalDataStoreRoot.get().toPath().resolve(INSTANCE_FOLDER).toFile();
+            this.ephemeralChangeSetFolder = optionalDataStoreRoot.get().toPath().resolve(EPHEMERAL_FOLDER).toFile();
             if (!changeSetFolder.exists()) {
                 changeSetFolder.mkdirs();
             }
@@ -222,6 +258,67 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     }
 
     /**
+     * The file a session's stream is written to. Knowledge keeps its name and folder; an instance
+     * or ephemeral stream is named for its module, by name for a person and by public id for a
+     * program, in its kind's folder.
+     */
+    File newZipFile(Stream stream) {
+        if (stream.kind() == DataKind.KNOWLEDGE) {
+            return newZipFile();
+        }
+        File folder = stream.kind() == DataKind.INSTANCE ? instanceChangeSetFolder : ephemeralChangeSetFolder;
+        if (!folder.exists() && !folder.mkdirs()) {
+            LOG.warn("Could not create the change set folder {}", folder);
+        }
+        return new File(folder, moduleFileName(stream.moduleNid()) + " " + KernelConcept.USER.description() + " "
+                + DateTimeUtil.nowWithZoneCompact().replace(':', '\uA789') + " " + generateRandomString(3) + " ike-cs.zip");
+    }
+
+    /**
+     * A module's part of a file name: its name made safe for a file system, and its public id.
+     *
+     * @param moduleNid the module
+     * @return {@code <name> [<uuid>]}
+     */
+    static String moduleFileName(long moduleNid) {
+        String name;
+        String id;
+        try {
+            name = PrimitiveData.text(moduleNid);
+            id = PrimitiveData.publicId(moduleNid).leastUuid().toString();
+        } catch (RuntimeException e) {
+            name = "module";
+            id = Long.toString(moduleNid);
+        }
+        String safe = (name == null ? "module" : name).replace(':', '\uA789').replaceAll("[/\\\\*?\"<>|\\p{Cntrl}]", "-").strip();
+        if (safe.length() > 80) {
+            safe = safe.substring(0, 80).strip();
+        }
+        return (safe.isEmpty() ? "module" : safe) + " [" + id + "]";
+    }
+
+    /**
+     * The stream an entity goes to: the kind of the module its latest version is written under,
+     * a STAMP's own module for a STAMP, so a STAMP and the versions written under it share a file.
+     */
+    static Stream streamOf(Entity<EntityVersion> entity) {
+        long module;
+        if (entity instanceof StampEntity<?> stamp) {
+            module = stamp.moduleNid();
+        } else {
+            EntityVersion latest = null;
+            for (EntityVersion version : entity.versions()) {
+                if (latest == null || version.time() >= latest.time()) {
+                    latest = version;
+                }
+            }
+            module = latest == null ? 0 : EntityBoundaries.moduleOf(latest.stampNid());
+        }
+        DataKind kind = ModuleKinds.resolve(module).kind();
+        return kind == DataKind.KNOWLEDGE ? Stream.KNOWLEDGE : new Stream(kind, module);
+    }
+
+    /**
      * Starts the main service thread responsible for processing and writing entity data changes
      * into a ZIP file format. This method creates and manages a virtual thread, utilizing the
      * Thread API with a specific thread name for identification. The service remains operational
@@ -269,64 +366,12 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         Thread thread = Thread.ofVirtual().name("ChangeSetWriterProvider-ServiceThread").unstarted(() -> {
             LOG.trace("Starting ChangeSetWriterProvider on service thread: {}", Thread.currentThread());
             try {
-                final MutableMultimap<Long, Entity<EntityVersion>> uncommittedEntitiesByStamp = Multimaps.mutable.set.empty();
-                final LongAdder entityCount = new LongAdder();
-                final LongAdder conceptsCount = new LongAdder();
-                final LongAdder semanticsCount = new LongAdder();
-                final LongAdder patternsCount = new LongAdder();
-                final LongAdder stampsCount = new LongAdder();
-
-                // By nid: a public id is never a hash key.
-                final Set<Long> moduleList = new HashSet<>();
-                final Set<Long> authorList = new HashSet<>();
-                final EntityToTinkarSchemaTransformer entityTransformer =
-                        EntityToTinkarSchemaTransformer.getInstance();
-
-                final File zipfile = newZipFile();
-                // The journal is spooled in the format-2 layout as entities arrive, under a name
-                // the sync layer does not match, and compacted into the change set at close.
-                final File spool = new File(zipfile.getParentFile(), zipfile.getName() + SPOOL_SUFFIX);
-                LOG.trace("ChangeSetWriterProvider starting new zip file: {}", zipfile.getAbsolutePath());
-                try (FileOutputStream fos = new FileOutputStream(spool);
-                     BufferedOutputStream bos = new BufferedOutputStream(fos);
-                     ZipOutputStream zos = new ZipOutputStream(bos);
-                     // A component is written at each commit; the index lists it once.
-                     IdentityIndex.Writer identities = new IdentityIndex.Writer(true)) {
-                    // Create a single entry for all changes in this zip file
-                    final ZipEntry zipEntry = new ZipEntry("Entities");
-                    zos.putNextEntry(zipEntry);
-                    // Writes one entity into this file, or holds it back while it is uncommitted.
-                    final Consumer<Entity<EntityVersion>> write = entityToWrite -> {
-                        if (entityToWrite.uncommitted()) {
-                            // We will write uncommitted versions at the end of the thread to prevent bloat from uncommitted changes,
-                            // unless they are committed before the thread stops.
-                            ImmutableLongList uncommittedStampNids = entityToWrite.uncommittedStampNids();
-                            uncommittedStampNids.forEach(stampNid -> {
-                                LOG.trace("ChangeSetWriterProvider caching uncommitted entity for stampNid {}:\n{}", stampNid, entityToWrite);
-                                uncommittedEntitiesByStamp.remove(stampNid, entityToWrite);
-                                uncommittedEntitiesByStamp.put(stampNid, entityToWrite);
-                            });
-                        } else {
-                            // Ordering contract: when a stamp commits, drain its
-                            // held-back uncommitted history first (snapshots of the
-                            // stamp itself, then the dependent concept / semantic /
-                            // pattern versions), then write the now-committed stamp.
-                            // The on-disk journal therefore reads as
-                            //   uncommitted-snapshot → dependents → commit
-                            // for every stamp that committed during the session.
-                            // Importers (LoadEntitiesFromProtobufFile) merge by
-                            // PublicId and are order-insensitive — the contract is
-                            // for human readers and downstream diagnostic tools.
-                            if (entityToWrite instanceof StampEntity stampEntity
-                                    && uncommittedEntitiesByStamp.containsKey(stampEntity.nid())) {
-                                writeStampSnapshotsThenDependents(
-                                        uncommittedEntitiesByStamp.removeAll(stampEntity.nid()),
-                                        entityCount, conceptsCount, semanticsCount, patternsCount,
-                                        stampsCount, moduleList, authorList, entityTransformer, identities, zos);
-                            }
-                            writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, identities, zos);
-                        }
-                    };
+                // One journal per stream, opened when its first entity arrives.
+                final Map<Stream, Journal> journals = new LinkedHashMap<>();
+                final Consumer<Entity<EntityVersion>> write = entityToWrite ->
+                        journals.computeIfAbsent(streamOf(entityToWrite), stream -> new Journal(newZipFile(stream)))
+                                .write(entityToWrite);
+                try {
                     try {
                         AtomicLong lastWriteTimeMillis = new AtomicLong(System.currentTimeMillis());
                         // A thread that is no longer the service thread stops, should one be left over.
@@ -347,57 +392,30 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                         }
                     } catch (InterruptedException e) {
                     }
-                    // Drain: every entity queued before this checkpoint goes into this file,
-                    // so that when save() or shutdown() completes, everything written to the
-                    // changeset before it is in a closed file. The next thread starts only
-                    // after this one has closed its file (see checkpoint).
+                    // Drain: every entity queued before this checkpoint goes into this session's
+                    // files, so that when save() or shutdown() completes, everything written to the
+                    // changeset before it is in a closed file. The next thread starts only after
+                    // this one has closed its files (see checkpoint).
                     List<Entity<EntityVersion>> queued = new ArrayList<>();
                     this.entitiesToWrite.drainTo(queued);
                     queued.forEach(write);
-                    // Rollover / shutdown flush. Group held-back entities by stamp nid
-                    // so each stamp's snapshot is followed by the dependent uncommitted
-                    // entities that referenced it — same per-stamp shape as the on-commit
-                    // drain above. Groups themselves can appear in any order (no commit
-                    // event anchors them in time), but within each group the ordering
-                    // contract ("snapshot → dependents") still holds.
-                    // Snapshot the key set before iterating, since removeAll mutates it.
-                    List<Long> stampNidsSnapshot = new ArrayList<>();
-                    uncommittedEntitiesByStamp.keySet().forEach(stampNidsSnapshot::add);
-                    for (Long stampNid : stampNidsSnapshot) {
-                        writeStampSnapshotsThenDependents(
-                                uncommittedEntitiesByStamp.removeAll(stampNid),
-                                entityCount, conceptsCount, semanticsCount, patternsCount,
-                                stampsCount, moduleList, authorList, entityTransformer, identities, zos);
-                    }
-                    zos.closeEntry();
-                    if (entityCount.sum() > 0) {
-                        LOG.debug("Data zipEntry size: " + zipEntry.getSize());
-                        LOG.debug("Data zipEntry compressed size: " + zipEntry.getCompressedSize());
-
-                        // So a store whose nids encode the pattern loads this changeset in one pass.
-                        identities.writeTo(zos);
-
-                        // Write Manifest File
-                        final ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
-                        zos.putNextEntry(manifestEntry);
-                        zos.write(generateManifestContent(entityCount,
-                                conceptsCount,
-                                semanticsCount,
-                                patternsCount,
-                                stampsCount,
-                                moduleList,
-                                authorList).getBytes(StandardCharsets.UTF_8));
-                        zos.closeEntry();
-                    }
-                    // Cleanup
-                    zos.flush();
-                    zos.finish();
-
-                } catch (IOException e) {
-                    threadStateMap.put(Thread.currentThread(), STATE.FAILED);
-                    throw new RuntimeException(e);
                 } finally {
-                    finishSpool(spool, zipfile, entityCount.sum());
+                    RuntimeException failure = null;
+                    for (Journal journal : journals.values()) {
+                        try {
+                            journal.close();
+                        } catch (RuntimeException e) {
+                            threadStateMap.put(Thread.currentThread(), STATE.FAILED);
+                            if (failure == null) {
+                                failure = e;
+                            } else {
+                                failure.addSuppressed(e);
+                            }
+                        }
+                    }
+                    if (failure != null) {
+                        throw failure;
+                    }
                 }
             } finally {
                 changeSetWriter.release();
@@ -408,6 +426,125 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         threadStateMap.put(thread, STATE.RUNNING);
         serviceThread.set(thread);
         thread.start();
+    }
+
+    /**
+     * One session's change set for one stream: the spooled journal and everything its manifest
+     * counts. Entities arrive one at a time; uncommitted ones are held back by STAMP and written
+     * when their STAMP commits or the journal closes, so the file keeps the ordering contract
+     * described on {@link #startService()}.
+     */
+    private final class Journal {
+        private final File zipfile;
+        private final File spool;
+        private final ZipOutputStream zos;
+        private final IdentityIndex.Writer identities;
+        private final ZipEntry zipEntry = new ZipEntry("Entities");
+        private final MutableMultimap<Long, Entity<EntityVersion>> uncommittedEntitiesByStamp = Multimaps.mutable.set.empty();
+        private final LongAdder entityCount = new LongAdder();
+        private final LongAdder conceptsCount = new LongAdder();
+        private final LongAdder semanticsCount = new LongAdder();
+        private final LongAdder patternsCount = new LongAdder();
+        private final LongAdder stampsCount = new LongAdder();
+        // By nid: a public id is never a hash key.
+        private final Set<Long> moduleList = new HashSet<>();
+        private final Set<Long> authorList = new HashSet<>();
+        private final EntityToTinkarSchemaTransformer entityTransformer = EntityToTinkarSchemaTransformer.getInstance();
+
+        Journal(File zipfile) {
+            this.zipfile = zipfile;
+            // The journal is spooled in the format-2 layout as entities arrive, under a name
+            // the sync layer does not match, and compacted into the change set at close.
+            this.spool = new File(zipfile.getParentFile(), zipfile.getName() + SPOOL_SUFFIX);
+            LOG.trace("ChangeSetWriterProvider starting new zip file: {}", zipfile.getAbsolutePath());
+            try {
+                this.zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(spool)));
+                // A component is written at each commit; the index lists it once.
+                this.identities = new IdentityIndex.Writer(true);
+                zos.putNextEntry(zipEntry);
+            } catch (IOException e) {
+                threadStateMap.put(Thread.currentThread(), STATE.FAILED);
+                throw new RuntimeException(e);
+            }
+        }
+
+        /** Writes one entity into this file, or holds it back while it is uncommitted. */
+        void write(Entity<EntityVersion> entityToWrite) {
+            if (entityToWrite.uncommitted()) {
+                // We will write uncommitted versions at the end of the thread to prevent bloat from uncommitted changes,
+                // unless they are committed before the thread stops.
+                ImmutableLongList uncommittedStampNids = entityToWrite.uncommittedStampNids();
+                uncommittedStampNids.forEach(stampNid -> {
+                    LOG.trace("ChangeSetWriterProvider caching uncommitted entity for stampNid {}:\n{}", stampNid, entityToWrite);
+                    uncommittedEntitiesByStamp.remove(stampNid, entityToWrite);
+                    uncommittedEntitiesByStamp.put(stampNid, entityToWrite);
+                });
+            } else {
+                // Ordering contract: when a stamp commits, drain its held-back uncommitted
+                // history first (snapshots of the stamp itself, then the dependent concept /
+                // semantic / pattern versions), then write the now-committed stamp.
+                if (entityToWrite instanceof StampEntity stampEntity
+                        && uncommittedEntitiesByStamp.containsKey(stampEntity.nid())) {
+                    writeStampSnapshotsThenDependents(
+                            uncommittedEntitiesByStamp.removeAll(stampEntity.nid()),
+                            entityCount, conceptsCount, semanticsCount, patternsCount,
+                            stampsCount, moduleList, authorList, entityTransformer, identities, zos);
+                }
+                writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount,
+                        moduleList, authorList, entityTransformer, identities, zos);
+            }
+        }
+
+        /**
+         * Flushes what is held back, writes the identity index and the manifest, and turns the
+         * spool into the change set, or removes it when nothing was written.
+         */
+        void close() {
+            try {
+                // Rollover / shutdown flush. Group held-back entities by stamp nid so each
+                // stamp's snapshot is followed by the dependent uncommitted entities that
+                // referenced it — the same per-stamp shape as the on-commit drain. Snapshot the
+                // key set before iterating, since removeAll mutates it.
+                List<Long> stampNidsSnapshot = new ArrayList<>();
+                uncommittedEntitiesByStamp.keySet().forEach(stampNidsSnapshot::add);
+                for (Long stampNid : stampNidsSnapshot) {
+                    writeStampSnapshotsThenDependents(
+                            uncommittedEntitiesByStamp.removeAll(stampNid),
+                            entityCount, conceptsCount, semanticsCount, patternsCount,
+                            stampsCount, moduleList, authorList, entityTransformer, identities, zos);
+                }
+                zos.closeEntry();
+                if (entityCount.sum() > 0) {
+                    LOG.debug("Data zipEntry size: " + zipEntry.getSize());
+                    LOG.debug("Data zipEntry compressed size: " + zipEntry.getCompressedSize());
+                    // So a store whose nids encode the pattern loads this changeset in one pass.
+                    identities.writeTo(zos);
+                    final ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
+                    zos.putNextEntry(manifestEntry);
+                    zos.write(generateManifestContent(entityCount, conceptsCount, semanticsCount, patternsCount,
+                            stampsCount, moduleList, authorList).getBytes(StandardCharsets.UTF_8));
+                    zos.closeEntry();
+                }
+                zos.flush();
+                zos.finish();
+                zos.close();
+                identities.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                closeQuietly(zos);
+                closeQuietly(identities);
+                finishSpool(spool, zipfile, entityCount.sum());
+            }
+        }
+    }
+
+    private static void closeQuietly(java.io.Closeable closeable) {
+        try {
+            closeable.close();
+        } catch (IOException | RuntimeException e) {
+            LOG.debug("Closing {} after a failed close", closeable, e);
+        }
     }
 
     /**
@@ -558,6 +695,49 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      *   by calling the {@code startService} method, effectively resetting the processing
      *   state. The reset writer will write to a new zip file.
      */
+    /**
+     * Removes components' records from the instance and ephemeral change sets
+     * (IKE-Network/ike-issues#1313). The session's journals are closed first, so every record
+     * queued before is in a finished file; each finished file of the two folders is then written
+     * again without the components' records, or deleted when nothing is left in it. The knowledge
+     * folder is never touched: its change sets are immutable and exchanged.
+     */
+    @Override
+    public dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval removeComponents(java.util.Set<java.util.UUID> components) {
+        dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval removal = dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval.NONE;
+        if (components.isEmpty()) {
+            return removal;
+        }
+        try {
+            save().get(5, TimeUnit.MINUTES);
+        } catch (InterruptedException | ExecutionException | java.util.concurrent.TimeoutException e) {
+            throw new IllegalStateException("Could not close the change-set journals before removing records", e);
+        }
+        for (File folder : new File[] {instanceChangeSetFolder, ephemeralChangeSetFolder}) {
+            if (folder == null || !folder.isDirectory()) {
+                continue;
+            }
+            File[] changeSets = folder.listFiles((dir, name) -> name.endsWith("ike-cs.zip"));
+            if (changeSets == null) {
+                continue;
+            }
+            java.util.Arrays.sort(changeSets);
+            for (File changeSet : changeSets) {
+                try {
+                    dev.ikm.tinkar.entity.changeset.ChangeSetRemoval.Result result =
+                            dev.ikm.tinkar.entity.changeset.ChangeSetRemoval.remove(changeSet, components);
+                    removal = removal.plus(new dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval(1,
+                            result.rewritten() ? 1 : 0, result.deleted() ? 1 : 0, result.removed()));
+                } catch (IOException | RuntimeException e) {
+                    throw new IllegalStateException("Could not remove records from " + changeSet.getName(), e);
+                }
+            }
+        }
+        LOG.info("Removed {} record(s) from instance and ephemeral change sets: {} file(s) rewritten, {} deleted",
+                removal.records(), removal.rewritten(), removal.deleted());
+        return removal;
+    }
+
     @Override
     public CompletableFuture<Void> save() {
         if (serviceThread.get() != null) {

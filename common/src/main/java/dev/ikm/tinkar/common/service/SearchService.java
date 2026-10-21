@@ -35,6 +35,16 @@ public interface SearchService {
     void index(Object object);
 
     /**
+     * Removes a semantic's text from the index, when a scope it belongs to is deleted
+     * (IKE-Network/ike-issues#1313). A search service that keeps no per-semantic text has nothing
+     * to remove.
+     *
+     * @param nid the semantic's nid
+     */
+    default void remove(long nid) {
+    }
+
+    /**
      * Tells the search service whether a load phase is in progress. Outside a
      * load phase, {@link #index} makes each new document visible to searches
      * at once. During a load phase it only writes the document, and ending the

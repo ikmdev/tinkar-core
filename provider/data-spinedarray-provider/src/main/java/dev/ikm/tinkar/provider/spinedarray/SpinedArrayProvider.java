@@ -88,7 +88,8 @@ import java.util.function.ObjIntConsumer;
  * retrieval path and the one with no native dependency; the Rocks plugin provider takes over
  * at the scale that outgrows it (IKE-Network/ike-issues#1267).
  */
-public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, NidGenerator, PrimitiveDataRepair {
+public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, NidGenerator, PrimitiveDataRepair,
+        dev.ikm.tinkar.common.service.ScopeErasure {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
     protected static final File defaultDataDirectory = new File("target/spinedarrays/");
 
@@ -791,6 +792,69 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
             }
         });
 
+    }
+
+    /**
+     * Erases a closed set of components (IKE-Network/ike-issues#1313): each component's bytes say
+     * which index entries it made, so only those are touched, never the whole referencing map.
+     * The public-id map, the kind sets and the pattern element sets are rebuilt from the bytes at
+     * startup and are kept in step here; the referencing map is saved, so a semantic's citation is
+     * taken out of its referenced component's list.
+     */
+    @Override
+    public void eraseComponents(long[] nids) {
+        for (long nid : nids) {
+            int n = Nid.narrowChecked(nid);
+            byte[] bytes = this.entityToBytesMap.get(n);
+            if (bytes == null) {
+                continue;
+            }
+            Entity<?> entity = EntityRecordFactory.make(bytes);
+            if (entity instanceof SemanticEntity<?> semantic) {
+                int pattern = Nid.narrowChecked(semantic.patternNid());
+                long citation = IntsInLong.ints2Long(n, pattern);
+                int referenced = Nid.narrowChecked(semantic.referencedComponentNid());
+                long[] citing = this.nidToCitingComponentsNidMap.get(referenced);
+                if (citing != null) {
+                    MutableLongSet remaining = LongSets.mutable.of(citing);
+                    if (remaining.remove(citation)) {
+                        this.nidToCitingComponentsNidMap.put(referenced, remaining.isEmpty() ? null : remaining.toArray());
+                    }
+                }
+                ConcurrentHashSet<Integer> elements = this.patternElementNidsMap.get(pattern);
+                if (elements != null) {
+                    elements.remove(n);
+                }
+                try {
+                    getSearchService().remove(nid);
+                } catch (IllegalStateException noSearch) {
+                    LOG.debug("No search service to remove {} from", nid);
+                }
+            } else if (entity instanceof PatternEntity<?>) {
+                this.patternElementNidsMap.remove(n);
+            }
+            for (UUID uuid : entity.publicId().asUuidArray()) {
+                this.uuidToNidMap.remove(uuid, n);
+            }
+            this.absentUuids.remove(n);
+            this.conceptNids.remove(n);
+            this.semanticNids.remove(n);
+            this.patternNids.remove(n);
+            this.stampNids.remove(n);
+            this.nidToCitingComponentsNidMap.put(n, null);
+            this.entityToBytesMap.put(n, null);
+            writeSequence.increment();
+        }
+    }
+
+    /** Removes the components' records from what each of this store's change-set writers keeps. */
+    @Override
+    public ChangeSetRemoval removeFromChangeSets(java.util.Set<UUID> components) {
+        ChangeSetRemoval removal = ChangeSetRemoval.NONE;
+        for (ChangeSetWriterService writer : this.changeSetWriterServices) {
+            removal = removal.plus(writer.removeComponents(components));
+        }
+        return removal;
     }
 
     @Override

@@ -70,6 +70,8 @@ module dev.ikm.tinkar.entity {
     exports dev.ikm.tinkar.coordinate.view;
     exports dev.ikm.tinkar.coordinate;
     exports dev.ikm.tinkar.entity.aggregator;
+    exports dev.ikm.tinkar.entity.boundary;
+    exports dev.ikm.tinkar.entity.scope;
     exports dev.ikm.tinkar.entity.builder;
     exports dev.ikm.tinkar.entity.changeset;
     exports dev.ikm.tinkar.entity.constraint;

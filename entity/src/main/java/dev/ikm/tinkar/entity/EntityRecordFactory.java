@@ -51,6 +51,7 @@ import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.terms.*;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
@@ -288,6 +289,11 @@ public class EntityRecordFactory {
             case DiGraphEntity<?> diGraphEntityField ->
                     writeTokenAndField(writeBuf, FieldDataType.DIGRAPH, () ->
                             writeBuf.write(diGraphEntityField.getBytes()));
+            // VERTEX write case: one vertex as a field value, the field of a semantic vertex
+            // (IKE-Network/ike-issues#1313); readFieldData reads it back.
+            case EntityVertex vertexField ->
+                    writeTokenAndField(writeBuf, FieldDataType.VERTEX, () ->
+                            writeBuf.write(vertexField.getBytes()));
             // OBJECT_ARRAY write case: element count, then each element recursively as
             // an ordinary token-prefixed field (IKE-Network/ike-issues#885).
             case Object[] objectArrayField ->
@@ -696,6 +702,7 @@ public class EntityRecordFactory {
             case INTEGER -> readBuf.readInt();
             case STRING -> new String(readBytes(readBuf), UTF_8);
             case DITREE -> DiTreeEntity.make(readBuf, formatVersion);
+            case VERTEX -> EntityVertex.make(readBuf, formatVersion);
             case DIGRAPH -> DiGraphEntity.make(readBuf, formatVersion);
             case CONCEPT -> EntityProxy.Concept.make(readBuf.readInt());
             case SEMANTIC -> EntityProxy.Semantic.make(readBuf.readInt());
@@ -756,7 +763,9 @@ public class EntityRecordFactory {
             case BigDecimal bigDecimalField -> bigDecimalField;
             case LongIdSet intIdSet -> intIdSet;
             case LongIdList intIdList -> intIdList;
+            case EntityVertex vertexField -> vertexField;
             // conversions
+            case dev.ikm.tinkar.component.graph.Vertex vertexField -> EntityVertex.make(vertexField);
             case Concept conceptField -> EntityProxy.Concept.make(Entity.nid(conceptField));
             case Semantic semanticField -> EntityProxy.Semantic.make(Entity.nid(semanticField));
             case Pattern patternField -> EntityProxy.Pattern.make(Entity.nid(patternField));

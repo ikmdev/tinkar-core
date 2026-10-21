@@ -517,6 +517,7 @@ public class Transaction implements Comparable<Transaction> {
             return 0;
         }
         try {
+            checkBoundary();
             AtomicInteger stampCount = new AtomicInteger();
             this.commitTime = System.currentTimeMillis();
             activeTransactions.remove(this);
@@ -539,6 +540,36 @@ public class Transaction implements Comparable<Transaction> {
             this.commitTime = Long.MAX_VALUE;
             throw failure;
         }
+    }
+
+    /**
+     * Checks every version written under this transaction's stamps against the boundary between
+     * knowledge, ephemeral and instance data before any stamp is finalized
+     * (IKE-Network/ike-issues#1313). In fail mode a violation refuses the commit, which leaves the
+     * transaction open for its caller to cancel.
+     */
+    private void checkBoundary() {
+        if (!dev.ikm.tinkar.entity.boundary.CommitBoundary.active()) {
+            return;
+        }
+        org.eclipse.collections.api.set.primitive.MutableLongSet stampNids =
+                new org.eclipse.collections.impl.set.mutable.primitive.LongHashSet();
+        for (UUID stampUuid : stampsInTransaction) {
+            stampNids.add(ScopedValue
+                    .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern().publicId())
+                    .call(() -> PrimitiveData.nid(stampUuid)));
+        }
+        java.util.List<EntityVersion> versions = new java.util.ArrayList<>();
+        for (Long componentNid : componentsInTransaction) {
+            dev.ikm.tinkar.entity.EntityHandle.get(componentNid).entity().ifPresent(entity -> {
+                for (EntityVersion version : entity.versions()) {
+                    if (stampNids.contains(version.stampNid())) {
+                        versions.add(version);
+                    }
+                }
+            });
+        }
+        dev.ikm.tinkar.entity.boundary.CommitBoundary.enforce(transactionName, versions);
     }
 
     /**

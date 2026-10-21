@@ -39,6 +39,9 @@ public class ConceptToDataType {
         if (KernelConcept.DIGRAPH_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.DIGRAPH;
         }
+        if (KernelConcept.VERTEX_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+            return FieldDataType.VERTEX;
+        }
         if (KernelConcept.CONCEPT_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.CONCEPT;
         }

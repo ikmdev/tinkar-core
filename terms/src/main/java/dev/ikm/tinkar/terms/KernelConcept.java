@@ -562,7 +562,7 @@ public enum KernelConcept implements ConceptEnumerationFacade<KernelConcept> {
     REGISTRY_PATH("IKE Registry path (IkeFoundation)", "259c8239-9588-53be-a42b-cb3562eb15ed"),
 
     /**
-     * The module transaction records are written to: bookkeeping about how the knowledge base changed, not knowledge. Default views and published releases leave it out; change sets exchanged between people carry it.
+     * The module transaction records are written to: bookkeeping about how the knowledge base changed, not knowledge. It is an instance module: its records are the store's own, written to the instance change sets and never published with knowledge (IKE-Network/ike-issues#1313).
      */
     CHANGE_TRACKING_MODULE("Change tracking module (IkeFoundation)", "a6ef93c4-8e0b-5278-82a3-0fa30c4f1d95"),
 
@@ -579,7 +579,22 @@ public enum KernelConcept implements ConceptEnumerationFacade<KernelConcept> {
     /**
      * The transaction ended by cancelling what it wrote; its versions are withdrawn, its record remains.
      */
-    TRANSACTION_CANCELLED("Transaction cancelled (IkeFoundation)", "93693d17-7fa5-57ae-9f25-e9bf3f709b06");
+    TRANSACTION_CANCELLED("Transaction cancelled (IkeFoundation)", "93693d17-7fa5-57ae-9f25-e9bf3f709b06"),
+
+    /**
+     * A field data type whose value is one vertex: its meaning concept and its properties keyed by concept, with no edges of its own. A semantic whose one field is a vertex is a vertex with an identity, its own STAMP versions and an address, which a directed tree held in one field does not give its vertices.
+     */
+    VERTEX_FIELD("Vertex data type (IkeFoundation)", "91795efd-042a-5e37-9bde-b649a72f0b5a"),
+
+    /**
+     * A module whose data has its record elsewhere and can be rebuilt from it, as a document persisted in git is materialized from its repository. A module that is a kind of this one, at any depth, is ephemeral. Its data is written to ephemeral change sets named for the module, replays what happened since its record last held it, and can be dropped at any time; knowledge never references it.
+     */
+    EPHEMERAL_MODULE("Ephemeral module (IkeFoundation)", "a0c10c95-fdd1-5a2a-83c5-4b34c1f019fb"),
+
+    /**
+     * A module whose data has no record but the store: a conversation journal, a document not persisted in git, the record a transaction keeps. A module that is a kind of this one, at any depth, is an instance module. Its data is written to instance change sets, never published with knowledge, and can be deleted as a unit; knowledge never references it.
+     */
+    INSTANCE_MODULE("Instance module (IkeFoundation)", "e6b26869-7335-5d29-9346-1b44d8423fbf");
 
     private final EntityProxy.Concept proxy;
 

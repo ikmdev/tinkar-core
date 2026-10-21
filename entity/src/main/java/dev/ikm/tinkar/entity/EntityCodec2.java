@@ -34,6 +34,7 @@ import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -205,6 +206,7 @@ public final class EntityCodec2 {
             case Component value -> { token(buf, FieldDataType.IDENTIFIED_THING); EntityRecordFormat2.writeNid(buf, Entity.nid(value)); }
             case DiTreeEntity value -> { token(buf, FieldDataType.DITREE); buf.write(value.getBytes(FORMAT)); }
             case DiGraphEntity<?> value -> { token(buf, FieldDataType.DIGRAPH); buf.write(value.getBytes(FORMAT)); }
+            case EntityVertex value -> { token(buf, FieldDataType.VERTEX); buf.write(value.getBytes(FORMAT)); }
             case Object[] value -> {
                 token(buf, FieldDataType.OBJECT_ARRAY);
                 buf.writeVarInt(value.length);
@@ -446,6 +448,7 @@ public final class EntityCodec2 {
             case IDENTIFIED_THING -> EntityProxy.make(EntityRecordFormat2.readNid(buf));
             case DITREE -> DiTreeEntity.make(buf, FORMAT);
             case DIGRAPH -> DiGraphEntity.make(buf, FORMAT);
+            case VERTEX -> EntityVertex.make(buf, FORMAT);
             case OBJECT_ARRAY -> {
                 int count = buf.readVarInt();
                 Object[] elements = new Object[count];

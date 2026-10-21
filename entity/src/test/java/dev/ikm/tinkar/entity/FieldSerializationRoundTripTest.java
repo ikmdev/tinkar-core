@@ -160,4 +160,43 @@ class FieldSerializationRoundTripTest {
         assertTrue(readTree.successorMap().isEmpty(), "a single-vertex tree has no successors");
         assertEquals("after", readBack[1], "the field after the tree must read back intact");
     }
+    @Test
+    @DisplayName("A vertex field round-trips with its meaning and properties in both formats, and a field after it stays aligned")
+    void vertexFieldRoundTripsInBothFormats() {
+        UUID id = UUID.fromString("66666666-6666-6666-6666-666666666666");
+        // Format 1 holds the nids of a sequential or packed store; format 2 the 64-bit nids of a 64-bit store.
+        long[] format1Nids = {-200, -201, -202};
+        Object[] format1 = roundTrip(vertex(id, format1Nids), "after");
+        assertVertex(id, format1Nids, (EntityVertex) format1[0]);
+        assertEquals("after", format1[1], "the field after the vertex must read back intact in format 1");
+
+        long[] format2Nids = {dev.ikm.tinkar.common.id.Nid.compose64(2, 200), dev.ikm.tinkar.common.id.Nid.compose64(2, 201),
+                dev.ikm.tinkar.common.id.Nid.compose64(2, 202)};
+        ByteBuf writeBuf = ByteBufPool.allocate(4096);
+        EntityCodec2.writeField(writeBuf, vertex(id, format2Nids));
+        EntityCodec2.writeField(writeBuf, "after");
+        ByteBuf readBuf = ByteBuf.wrapForReading(writeBuf.asArray());
+        assertVertex(id, format2Nids, (EntityVertex) EntityCodec2.readField(readBuf, FieldDataType.fromToken(readBuf.readByte())));
+        assertEquals("after", EntityCodec2.readField(readBuf, FieldDataType.fromToken(readBuf.readByte())),
+                "the field after the vertex must read back intact in format 2");
+    }
+
+    /** A vertex whose meaning is nids[0], with a string under nids[1] and an integer under nids[2]. */
+    private static EntityVertex vertex(UUID id, long[] nids) {
+        EntityVertex vertex = EntityVertex.make(id, nids[0]);
+        vertex.setVertexIndex(0);
+        org.eclipse.collections.api.map.primitive.MutableLongObjectMap<Object> properties =
+                org.eclipse.collections.impl.factory.primitive.LongObjectMaps.mutable.empty();
+        properties.put(nids[1], "== Machine identity");
+        properties.put(nids[2], 2);
+        vertex.setProperties(properties);
+        return vertex;
+    }
+
+    private static void assertVertex(UUID id, long[] nids, EntityVertex read) {
+        assertEquals(id, read.asUuidArray()[0], "the vertex keeps its identity");
+        assertEquals(nids[0], read.getMeaningNid(), "and its meaning");
+        assertEquals("== Machine identity", read.properties().get(nids[1]), "a string property survives");
+        assertEquals(2, read.properties().get(nids[2]), "an integer property survives");
+    }
 }

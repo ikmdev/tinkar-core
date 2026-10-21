@@ -247,6 +247,19 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
     }
 
     @Override
+    public void remove(long nid) {
+        if (closed.get()) {
+            return;
+        }
+        try {
+            Indexer.indexWriter().deleteDocuments(IndexerSchema.nidQuery(nid));
+            Searcher.refreshAfterIndex();
+        } catch (IOException e) {
+            throw new java.io.UncheckedIOException("Could not remove " + nid + " from the search index", e);
+        }
+    }
+
+    @Override
     public void setLoadPhase(boolean loadPhase) {
         boolean ending = this.loadPhase && !loadPhase;
         this.loadPhase = loadPhase;

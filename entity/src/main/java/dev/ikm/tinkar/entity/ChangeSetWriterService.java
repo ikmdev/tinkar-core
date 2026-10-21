@@ -24,4 +24,16 @@ public interface ChangeSetWriterService {
      */
     void shutdown();
 
+    /**
+     * Removes components' records from the change sets this writer keeps that hold instance or
+     * ephemeral data (IKE-Network/ike-issues#1313), once a scope of them has been deleted from the
+     * store. Knowledge change sets are immutable and exchanged, and are never rewritten. A writer
+     * that keeps no such change sets removes nothing.
+     *
+     * @param components the UUIDs of the deleted components
+     * @return what was removed
+     */
+    default dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval removeComponents(java.util.Set<java.util.UUID> components) {
+        return dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval.NONE;
+    }
 }
