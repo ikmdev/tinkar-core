@@ -173,11 +173,11 @@ class FieldSerializationRoundTripTest {
         long[] format2Nids = {dev.ikm.tinkar.common.id.Nid.compose64(2, 200), dev.ikm.tinkar.common.id.Nid.compose64(2, 201),
                 dev.ikm.tinkar.common.id.Nid.compose64(2, 202)};
         ByteBuf writeBuf = ByteBufPool.allocate(4096);
-        EntityCodec2.writeField(writeBuf, vertex(id, format2Nids));
-        EntityCodec2.writeField(writeBuf, "after");
+        EntityCodec3.writeField(writeBuf, vertex(id, format2Nids));
+        EntityCodec3.writeField(writeBuf, "after");
         ByteBuf readBuf = ByteBuf.wrapForReading(writeBuf.asArray());
-        assertVertex(id, format2Nids, (EntityVertex) EntityCodec2.readField(readBuf, FieldDataType.fromToken(readBuf.readByte())));
-        assertEquals("after", EntityCodec2.readField(readBuf, FieldDataType.fromToken(readBuf.readByte())),
+        assertVertex(id, format2Nids, (EntityVertex) EntityCodec3.readField(readBuf, FieldDataType.fromToken(readBuf.readByte())));
+        assertEquals("after", EntityCodec3.readField(readBuf, FieldDataType.fromToken(readBuf.readByte())),
                 "the field after the vertex must read back intact in format 2");
     }
 
@@ -193,12 +193,12 @@ class FieldSerializationRoundTripTest {
         String text = "Größe — ≥ 3 µm ✓";
         java.math.BigDecimal decimal = new java.math.BigDecimal("-12345.678900");
         ByteBuf writeBuf = ByteBufPool.allocate(4096);
-        EntityCodec2.writeField(writeBuf, dev.ikm.tinkar.common.id.LongIds.set.of(onePattern));
-        EntityCodec2.writeField(writeBuf, text);
-        EntityCodec2.writeField(writeBuf, dev.ikm.tinkar.common.id.LongIds.set.of(threePatterns));
-        EntityCodec2.writeField(writeBuf, decimal);
-        EntityCodec2.writeField(writeBuf, "");
-        EntityCodec2.writeField(writeBuf, "after");
+        EntityCodec3.writeField(writeBuf, dev.ikm.tinkar.common.id.LongIds.set.of(onePattern));
+        EntityCodec3.writeField(writeBuf, text);
+        EntityCodec3.writeField(writeBuf, dev.ikm.tinkar.common.id.LongIds.set.of(threePatterns));
+        EntityCodec3.writeField(writeBuf, decimal);
+        EntityCodec3.writeField(writeBuf, "");
+        EntityCodec3.writeField(writeBuf, "after");
         ByteBuf readBuf = ByteBuf.wrapForReading(writeBuf.asArray());
         assertArrayEquals(onePattern, ((dev.ikm.tinkar.common.id.LongIdSet) next(readBuf)).toArray(),
                 "a one-pattern id set reads back in order");
@@ -211,8 +211,33 @@ class FieldSerializationRoundTripTest {
         assertEquals(0, readBuf.readRemaining(), "and nothing is left");
     }
 
+    @Test
+    @DisplayName("Format 3 keeps a tree's predecessors as recorded when its successors do not give them")
+    void format3KeepsPredecessorsTheSuccessorsDoNotGive() {
+        // As in two SNOMED axiom trees: a vertex the root no longer reaches, its predecessor -1.
+        long concept = dev.ikm.tinkar.common.id.Nid.compose64(2, 9);
+        EntityVertex root = EntityVertex.make(UUID.fromString("77777777-7777-7777-7777-777777777701"), concept);
+        root.setVertexIndex(0);
+        EntityVertex child = EntityVertex.make(UUID.fromString("77777777-7777-7777-7777-777777777702"), concept);
+        child.setVertexIndex(1);
+        EntityVertex orphan = EntityVertex.make(UUID.fromString("77777777-7777-7777-7777-777777777703"), concept);
+        orphan.setVertexIndex(2);
+        MutableIntObjectMap<ImmutableIntList> successors = IntObjectMaps.mutable.empty();
+        successors.put(0, IntLists.immutable.of(1));
+        DiTreeEntity tree = new DiTreeEntity(root, Lists.immutable.of(root, child, orphan), successors.toImmutable(),
+                IntIntMaps.mutable.empty().withKeyValue(1, 0).withKeyValue(2, -1).toImmutable());
+        ByteBuf writeBuf = ByteBufPool.allocate(4096);
+        EntityCodec3.writeField(writeBuf, tree);
+        EntityCodec3.writeField(writeBuf, "after");
+        ByteBuf readBuf = ByteBuf.wrapForReading(writeBuf.asArray());
+        DiTreeEntity read = (DiTreeEntity) next(readBuf);
+        assertEquals(tree.predecessorMap(), read.predecessorMap(), "the recorded predecessors, the orphan's -1 included");
+        assertEquals(tree.successorMap(), read.successorMap());
+        assertEquals("after", next(readBuf), "and the field after it stays aligned");
+    }
+
     private static Object next(ByteBuf readBuf) {
-        return EntityCodec2.readField(readBuf, FieldDataType.fromToken(readBuf.readByte()));
+        return EntityCodec3.readField(readBuf, FieldDataType.fromToken(readBuf.readByte()));
     }
 
     /** A vertex whose meaning is nids[0], with a string under nids[1] and an integer under nids[2]. */

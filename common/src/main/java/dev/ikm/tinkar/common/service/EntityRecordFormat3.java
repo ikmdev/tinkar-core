@@ -33,49 +33,93 @@ import java.util.UUID;
 import java.util.function.LongPredicate;
 
 /**
- * The envelope of an entity record in format 2, the format of a 64-bit store (design
- * {@code design-2026-10-07-64-bit-rocks-store}; IKE-Network/ike-issues#1258). The store holds
- * one such record per entity, chronology and versions in one value, and treats it as opaque
- * bytes; this class is what the store's merge and the entity codec agree on.
+ * The envelope of an entity record in format 3, the format of a 64-bit store
+ * (IKE-Network/ike-issues#1313, after format 2 of design {@code design-2026-10-07-64-bit-rocks-store}
+ * and IKE-Network/ike-issues#1258). The store holds one such record per entity, chronology and
+ * versions in one value, and treats it as opaque bytes; this class is what the store's merge and
+ * the entity codec agree on.
  *
  * <p>A record is
  * <pre>
- *   [byte 2]                              the format
+ *   [byte 3]                              the format
  *   [varint length][chronology bytes]
  *   [varint count]([varint length][version bytes])*
  * </pre>
  * and a chronology begins with its identity,
  * <pre>
- *   [byte type token]
  *   [varint patternSequence][varint elementSequence]      the entity's nid, its two halves
  *   [long msb][long lsb]                                  its first UUID
- *   [varint n][long × n]                                  n further longs, two per further UUID
+ *   [varint n][long &times; n]                               n further longs, two per further UUID
  * </pre>
- * followed by what the entity codec writes for the entity's kind. A version begins with its
- * type token and its stamp's nid as two varints. Every nid in a format 2 record is a 64-bit nid,
- * both halves from 1 through {@value Nid#MAX_SEQUENCE_64}; the writer refuses any other.
- * Varints are the unsigned LEB128 of activej's {@link ByteBuf}; counts and lengths are never
- * negative, and a nid's halves are positive.
+ * followed by what the entity codec writes for the entity's kind.
+ *
+ * <p>The nid gives the kind: under the 64-bit layout a pattern's nid has the pattern-of-patterns'
+ * sequence as its pattern half, a concept's the concept pattern's, a STAMP's the stamp pattern's,
+ * and a semantic's its own pattern's element sequence, so a semantic's pattern is
+ * {@code compose64(1, its pattern half)}. Nothing in a record says its kind or a semantic's
+ * pattern; the writer refuses a record whose nid does not give them, which a nid minted for a
+ * component of another kind would be (IKE-Network/ike-issues#1313).
+ *
+ * <p>A reference whose kind fixes its pattern half (a version's stamp, a STAMP's concepts, a
+ * pattern's concepts) is a <em>typed</em> reference: the element half alone, a varint. The
+ * writer refuses a typed reference whose pattern half is not the one its kind fixes. Every
+ * other reference is the nid's two halves. Every nid is a 64-bit nid, both halves from 1 through
+ * {@value Nid#MAX_SEQUENCE_64}; the writer refuses any other. Varints are the unsigned LEB128 of
+ * activej's {@link ByteBuf}; counts and lengths are never negative.
  *
  * <p>A format 1 record begins with the high byte of its part count, which is 0, so the first
- * byte tells the formats apart.
+ * byte tells the formats apart. A record that begins with 2 is one of format 2, retired on
+ * 2026-10-21 before any store but a test's held it, and is refused.
  */
-public final class EntityRecordFormat2 {
+public final class EntityRecordFormat3 {
 
     /** The format byte at the head of every record. */
-    public static final byte FORMAT = 2;
+    public static final byte FORMAT = 3;
 
-    private EntityRecordFormat2() {
+    /** The format byte of the retired format 2. */
+    public static final byte RETIRED_FORMAT_2 = 2;
+
+    /** The type token of a concept chronology. */
+    public static final byte CONCEPT_TOKEN = 1;
+    /** The type token of a pattern chronology. */
+    public static final byte PATTERN_TOKEN = 2;
+    /** The type token of a semantic chronology. */
+    public static final byte SEMANTIC_TOKEN = 3;
+    /** The type token of a STAMP. */
+    public static final byte STAMP_TOKEN = PrimitiveDataService.STAMP_DATA_TYPE;
+
+    private EntityRecordFormat3() {
     }
 
     /**
-     * Whether a record is in format 2.
+     * Whether a record is in format 3.
      *
      * @param record the record, possibly null
-     * @return true if it begins with the format 2 byte
+     * @return true if it begins with the format 3 byte
      */
-    public static boolean isFormat2(byte[] record) {
+    public static boolean isFormat3(byte[] record) {
         return record != null && record.length > 0 && record[0] == FORMAT;
+    }
+
+    /**
+     * Refuses a record not in format 3, naming a record of the retired format 2 as one.
+     *
+     * @param record the record
+     * @throws IllegalArgumentException if the record is not in format 3
+     */
+    public static void requireFormat3(byte[] record) {
+        if (!isFormat3(record)) {
+            throw notFormat3(record);
+        }
+    }
+
+    private static IllegalArgumentException notFormat3(byte[] record) {
+        if (record != null && record.length > 0 && record[0] == RETIRED_FORMAT_2) {
+            return new IllegalArgumentException("A record of entity format 2, retired on 2026-10-21 "
+                    + "(IKE-Network/ike-issues#1313): rebuild the store from its change sets");
+        }
+        return new IllegalArgumentException("Not a format 3 entity record: "
+                + (record == null ? "null" : record.length == 0 ? "empty" : "first byte " + record[0]));
     }
 
     // ---------------------------------------------------------------- nids
@@ -105,20 +149,160 @@ public final class EntityRecordFormat2 {
         return Nid.compose64(patternSequence, elementSequence);
     }
 
+    /**
+     * Writes a typed reference: the element half alone, the pattern half being the one the
+     * reference's kind fixes.
+     *
+     * @param buf             the buffer
+     * @param nid             a 64-bit nid
+     * @param patternSequence the pattern half the reference's kind fixes
+     * @throws IllegalArgumentException if the nid is not a valid 64-bit nid, or its pattern half
+     *                                  is not the one the reference's kind fixes
+     */
+    public static void writeTypedNid(ByteBuf buf, long nid, int patternSequence) {
+        Nid.validate64(nid);
+        if (Nid.patternSequence64(nid) != patternSequence) {
+            throw new IllegalArgumentException("A reference to " + kindWord(patternSequence) + " names "
+                    + DiagnosticText.component(nid) + ", which its nid makes " + kindWord(Nid.patternSequence64(nid))
+                    + " (IKE-Network/ike-issues#1313)");
+        }
+        buf.writeVarInt(Nid.elementSequence64(nid));
+    }
+
+    /**
+     * Reads a typed reference written by {@link #writeTypedNid}.
+     *
+     * @param buf             the buffer
+     * @param patternSequence the pattern half the reference's kind fixes
+     * @return the nid
+     */
+    public static long readTypedNid(ByteBuf buf, int patternSequence) {
+        return Nid.compose64(patternSequence, buf.readVarInt());
+    }
+
+    private static String kindWord(int patternSequence) {
+        return switch (patternSequence) {
+            case Nid.PATTERN_OF_PATTERNS_SEQUENCE_64 -> "a pattern";
+            case Nid.CONCEPT_SEQUENCE_64 -> "a concept";
+            case Nid.STAMP_SEQUENCE_64 -> "a STAMP";
+            default -> "a semantic of pattern sequence " + patternSequence;
+        };
+    }
+
+    /** Writes a reference to a concept: {@link #writeTypedNid} under the concept pattern. */
+    public static void writeConceptNid(ByteBuf buf, long nid) {
+        writeTypedNid(buf, nid, Nid.CONCEPT_SEQUENCE_64);
+    }
+
+    /** Reads a reference written by {@link #writeConceptNid}. */
+    public static long readConceptNid(ByteBuf buf) {
+        return readTypedNid(buf, Nid.CONCEPT_SEQUENCE_64);
+    }
+
+    /** Writes a reference to a STAMP: {@link #writeTypedNid} under the stamp pattern. */
+    public static void writeStampNid(ByteBuf buf, long nid) {
+        writeTypedNid(buf, nid, Nid.STAMP_SEQUENCE_64);
+    }
+
+    /** Reads a reference written by {@link #writeStampNid}. */
+    public static long readStampNid(ByteBuf buf) {
+        return readTypedNid(buf, Nid.STAMP_SEQUENCE_64);
+    }
+
+    /** Writes a reference to a pattern: {@link #writeTypedNid} under the pattern-of-patterns. */
+    public static void writePatternNid(ByteBuf buf, long nid) {
+        writeTypedNid(buf, nid, Nid.PATTERN_OF_PATTERNS_SEQUENCE_64);
+    }
+
+    /** Reads a reference written by {@link #writePatternNid}. */
+    public static long readPatternNid(ByteBuf buf) {
+        return readTypedNid(buf, Nid.PATTERN_OF_PATTERNS_SEQUENCE_64);
+    }
+
+    /**
+     * The type token a nid gives: a pattern's, a concept's or a STAMP's for the three fixed
+     * pattern halves, else a semantic's.
+     *
+     * @param nid a 64-bit nid
+     * @return the chronology type token
+     */
+    public static byte kindToken(long nid) {
+        return switch (Nid.patternSequence64(nid)) {
+            case Nid.PATTERN_OF_PATTERNS_SEQUENCE_64 -> PATTERN_TOKEN;
+            case Nid.CONCEPT_SEQUENCE_64 -> CONCEPT_TOKEN;
+            case Nid.STAMP_SEQUENCE_64 -> STAMP_TOKEN;
+            default -> SEMANTIC_TOKEN;
+        };
+    }
+
+    /**
+     * The pattern a semantic's nid gives: the pattern whose element sequence is the nid's pattern
+     * half; 0 for a nid of a fixed pattern half, which no semantic has.
+     *
+     * @param nid a 64-bit nid
+     * @return the pattern's nid, or 0
+     */
+    public static long impliedPatternNid(long nid) {
+        int half = Nid.patternSequence64(nid);
+        return half >= Nid.FIRST_SEMANTIC_SEQUENCE_64 ? Nid.compose64(Nid.PATTERN_OF_PATTERNS_SEQUENCE_64, half) : 0;
+    }
+
+    // ---------------------------------------------------------------- scalars
+
+    /** Writes an int as a zigzag varint: small magnitudes, either sign, take few bytes. */
+    public static void writeSignedVarInt(ByteBuf buf, int value) {
+        buf.writeVarInt((value << 1) ^ (value >> 31));
+    }
+
+    /** Reads an int written by {@link #writeSignedVarInt}. */
+    public static int readSignedVarInt(ByteBuf buf) {
+        int value = buf.readVarInt();
+        return (value >>> 1) ^ -(value & 1);
+    }
+
+    /** Writes a long as a zigzag varint. */
+    public static void writeSignedVarLong(ByteBuf buf, long value) {
+        buf.writeVarLong((value << 1) ^ (value >> 63));
+    }
+
+    /** Reads a long written by {@link #writeSignedVarLong}. */
+    public static long readSignedVarLong(ByteBuf buf) {
+        long value = buf.readVarLong();
+        return (value >>> 1) ^ -(value & 1);
+    }
+
     // ---------------------------------------------------------------- the identity at the head of a chronology
 
     /**
-     * Writes a chronology's identity after its type token: the nid, the first UUID, and the
-     * further UUID longs.
+     * Checks that a nid gives an entity's kind and, for a semantic, its pattern: what a format 3
+     * record relies on, since it writes neither.
      *
-     * @param buf                 the buffer, its type token already written
-     * @param nid                 the entity's nid
-     * @param mostSignificantBits the first UUID's most significant bits
-     * @param leastSignificantBits the first UUID's least significant bits
-     * @param additionalUuidLongs two longs per further UUID, or null
+     * @param token      the entity's chronology type token
+     * @param nid        the entity's nid
+     * @param patternNid a semantic's pattern nid; ignored for any other kind
+     * @throws IllegalArgumentException if the nid gives another kind or pattern
      */
-    public static void writeIdentity(ByteBuf buf, long nid, long mostSignificantBits, long leastSignificantBits,
-                                     long[] additionalUuidLongs) {
+    public static void requireKindOfNid(byte token, long nid, long patternNid) {
+        Nid.validate64(nid);
+        if (token != kindToken(nid) || (token == SEMANTIC_TOKEN && patternNid != impliedPatternNid(nid))) {
+            throw new IllegalArgumentException("Entity " + DiagnosticText.component(nid) + " is "
+                    + kindWord(Nid.patternSequence64(nid)) + " by its nid, but the entity is of type " + token
+                    + (token == SEMANTIC_TOKEN ? ", a semantic of pattern " + DiagnosticText.component(patternNid) : "")
+                    + ": its nid was minted for a component of another kind (IKE-Network/ike-issues#1313)");
+        }
+    }
+
+    /**
+     * Writes a chronology's identity: the nid, the first UUID, and the further UUID longs.
+     *
+     * @param buf                  the buffer
+     * @param nid                  the entity's nid
+     * @param mostSignificantBits  the first UUID's most significant bits
+     * @param leastSignificantBits the first UUID's least significant bits
+     * @param additionalUuidLongs  two longs per further UUID, or null
+     */
+    public static void writeIdentity(ByteBuf buf, long nid, long mostSignificantBits,
+                                     long leastSignificantBits, long[] additionalUuidLongs) {
         writeNid(buf, nid);
         buf.writeLong(mostSignificantBits);
         buf.writeLong(leastSignificantBits);
@@ -129,9 +313,12 @@ public final class EntityRecordFormat2 {
         }
     }
 
-    /** A chronology's identity: its type token, nid, and UUIDs, and where the rest of the chronology begins. */
+    /**
+     * A chronology's identity: its type token and, for a semantic, its pattern's nid, both as the
+     * nid gives them; its nid and UUIDs; and where the rest of the chronology begins.
+     */
     public record Identity(byte token, long nid, long mostSignificantBits, long leastSignificantBits,
-                           long[] additionalUuidLongs, int restOffset) {
+                           long[] additionalUuidLongs, long patternNid, int restOffset) {
 
         /** Every UUID, the first then the further ones. */
         public ImmutableList<UUID> uuids() {
@@ -145,7 +332,7 @@ public final class EntityRecordFormat2 {
     }
 
     /**
-     * Reads the identity at the head of a chronology part, type token included.
+     * Reads the identity at the head of a chronology part.
      *
      * @param chronology the chronology part
      * @return its identity
@@ -155,24 +342,27 @@ public final class EntityRecordFormat2 {
     }
 
     /**
-     * Reads the identity at the buffer's head, type token included, leaving the head after it:
-     * the reader's way to the identity in place, without first taking the record apart. The
-     * identity's {@linkplain Identity#restOffset() rest offset} is the buffer's head after it.
+     * Reads the identity at the buffer's head, leaving the head after it: the reader's way to the
+     * identity in place, without first taking the record apart. The identity's
+     * {@linkplain Identity#restOffset() rest offset} is the buffer's head after it.
      *
-     * @param buf the buffer, its head at a chronology's type token
+     * @param buf the buffer, its head at a chronology
      * @return the identity
      */
     public static Identity readIdentity(ByteBuf buf) {
-        byte token = buf.readByte();
         long nid = readNid(buf);
         long msb = buf.readLong();
         long lsb = buf.readLong();
-        int count = buf.readVarInt();
-        long[] additional = new long[count];
-        for (int i = 0; i < count; i++) {
+        long[] additional = new long[buf.readVarInt()];
+        for (int i = 0; i < additional.length; i++) {
             additional[i] = buf.readLong();
         }
-        return new Identity(token, nid, msb, lsb, additional, buf.head());
+        return new Identity(kindToken(nid), nid, msb, lsb, additional, impliedPatternNid(nid), buf.head());
+    }
+
+    /** The type token of a chronology part: the one its nid gives. */
+    static byte chronologyToken(byte[] chronology) {
+        return kindToken(readNid(ByteBuf.wrapForReading(chronology)));
     }
 
     // ---------------------------------------------------------------- the envelope
@@ -185,14 +375,13 @@ public final class EntityRecordFormat2 {
      * Takes a record apart, copying each part out of it: for the merge, which reassembles parts.
      * A read decodes in place from {@link #chronologyReader} instead.
      *
-     * @param record a format 2 record
+     * @param record a format 3 record
      * @return its chronology and versions
-     * @throws IllegalArgumentException if the record is not in format 2
+     * @throws IllegalArgumentException if the record is not in format 3
      */
     public static Parts parts(byte[] record) {
-        if (!isFormat2(record)) {
-            throw new IllegalArgumentException("Not a format 2 entity record: "
-                    + (record == null ? "null" : "first byte " + record[0]));
+        if (!isFormat3(record)) {
+            throw notFormat3(record);
         }
         ByteBuf buf = ByteBuf.wrapForReading(record);
         buf.readByte();
@@ -237,7 +426,7 @@ public final class EntityRecordFormat2 {
      * holds once that version is withdrawn
      * ({@link dev.ikm.tinkar.common.service.internal.EntityStore#mergeReplacingVersion}).
      *
-     * @param record   a format 2 record
+     * @param record   a format 3 record, not a STAMP's
      * @param stampNid the stamp whose version to drop
      * @return the record without that version; {@code record} itself when it holds no version
      *         under the stamp; null when that version was its only one
@@ -259,21 +448,17 @@ public final class EntityRecordFormat2 {
     /**
      * The nid of the entity a record holds.
      *
-     * @param record a format 2 record
+     * @param record a format 3 record
      * @return the entity's nid
      */
     public static long nid(byte[] record) {
-        ByteBuf buf = ByteBuf.wrapForReading(record);
-        buf.readByte();
-        buf.readVarInt();   // the chronology's length
-        buf.readByte();     // its type token
-        return readNid(buf);
+        return readNid(chronologyReader(record));
     }
 
     /**
      * The UUIDs of the entity a record holds.
      *
-     * @param record a format 2 record
+     * @param record a format 3 record
      * @return its UUIDs, the first one first
      */
     public static ImmutableList<UUID> uuids(byte[] record) {
@@ -281,28 +466,27 @@ public final class EntityRecordFormat2 {
     }
 
     /**
-     * The type token of the entity a record holds: the first byte of its chronology.
+     * The type token of the entity a record holds.
      *
-     * @param record a format 2 record
+     * @param record a format 3 record
      * @return the chronology's type token
      */
     public static byte chronologyType(byte[] record) {
-        return chronologyReader(record).readByte();
+        return kindToken(readNid(chronologyReader(record)));
     }
 
     /**
-     * A buffer over a record, its head at the chronology's type token: past the format byte and
-     * the chronology's length. A read in place goes on from here, so nothing is copied out of
-     * the record (IKE-Network/ike-issues#1313).
+     * A buffer over a record, its head at the chronology: past the format byte and the
+     * chronology's length. A read in place goes on from here, so nothing is copied out of the
+     * record (IKE-Network/ike-issues#1313).
      *
-     * @param record a format 2 record
+     * @param record a format 3 record
      * @return the buffer
-     * @throws IllegalArgumentException if the record is not in format 2
+     * @throws IllegalArgumentException if the record is not in format 3
      */
     public static ByteBuf chronologyReader(byte[] record) {
-        if (!isFormat2(record)) {
-            throw new IllegalArgumentException("Not a format 2 entity record: "
-                    + (record == null ? "null" : "first byte " + record[0]));
+        if (!isFormat3(record)) {
+            throw notFormat3(record);
         }
         ByteBuf buf = ByteBuf.wrapForReading(record);
         buf.readByte();
@@ -311,30 +495,26 @@ public final class EntityRecordFormat2 {
     }
 
     /**
-     * The stamp nid of a version part: the two varints after its type token.
+     * The stamp nid of a version part of any entity but a STAMP: the typed reference at its head.
      *
      * @param version a version part
      * @return its stamp's nid
      */
     public static long stampNid(byte[] version) {
-        ByteBuf buf = ByteBuf.wrapForReading(version);
-        buf.readByte();
-        return readNid(buf);
+        return readStampNid(ByteBuf.wrapForReading(version));
     }
 
     /**
-     * The time of a stamp entity's version part: after its type token and its stamp nid come the
-     * state nid and then the time, as {@code EntityCodec2} writes a stamp version.
+     * The time of a STAMP's version part: after its state, as {@code EntityCodec3} writes a STAMP
+     * version, a varint of the time's bits.
      *
-     * @param version a version part of a stamp entity
+     * @param version a version part of a STAMP
      * @return its time: epoch milliseconds, {@link Long#MAX_VALUE} uncommitted, {@link Long#MIN_VALUE} canceled
      */
     public static long stampVersionTime(byte[] version) {
         ByteBuf buf = ByteBuf.wrapForReading(version);
-        buf.readByte();                                   // type token
-        readNid(buf);                                     // the stamp's own nid
-        readNid(buf);                                     // state nid
-        return buf.readLong();
+        readConceptNid(buf);                              // state
+        return buf.readVarLong();
     }
 
     /**
@@ -404,7 +584,7 @@ public final class EntityRecordFormat2 {
      * @param oldBytes the record stored, or null
      * @param newBytes the record being written, or null
      * @return the merged record
-     * @throws IllegalStateException if the records are not both in format 2
+     * @throws IllegalStateException if the records are not both in format 3
      */
     public static byte[] merge(byte[] oldBytes, byte[] newBytes) {
         return merge(oldBytes, newBytes, stampNid -> PrimitiveData.get().isCanceledStampNid(stampNid));
@@ -425,7 +605,7 @@ public final class EntityRecordFormat2 {
         if (newBytes == null || Arrays.equals(oldBytes, newBytes)) {
             return oldBytes;
         }
-        if (!isFormat2(oldBytes) || !isFormat2(newBytes)) {
+        if (!isFormat3(oldBytes) || !isFormat3(newBytes)) {
             throw new IllegalStateException("A store holds one entity format: merging a format "
                     + formatOf(oldBytes) + " record with a format " + formatOf(newBytes) + " one");
         }
@@ -434,7 +614,7 @@ public final class EntityRecordFormat2 {
         byte[] chronology = Arrays.equals(older.chronology(), newer.chronology())
                 ? older.chronology()
                 : mergeChronologies(older.chronology(), newer.chronology());
-        boolean stampEntity = chronology[0] == PrimitiveDataService.STAMP_DATA_TYPE;
+        boolean stampEntity = chronologyToken(chronology) == STAMP_TOKEN;
 
         TreeSet<byte[]> versions = new TreeSet<>(Arrays::compareUnsigned);
         MutableLongSet stampsPresent = LongSets.mutable.empty();
@@ -488,8 +668,7 @@ public final class EntityRecordFormat2 {
             }
         }
         int rest = older.length - held.restOffset();
-        ByteBuf buf = ByteBuf.wrapForWriting(new byte[older.length + 2 * 8 * added.size() + 5]);
-        buf.writeByte(held.token());
+        ByteBuf buf = ByteBuf.wrapForWriting(new byte[older.length + 2 * 8 * added.size() + 32]);
         writeIdentity(buf, held.nid(), held.mostSignificantBits(), held.leastSignificantBits(), additional);
         buf.write(older, held.restOffset(), rest);
         return Arrays.copyOf(buf.array(), buf.tail());

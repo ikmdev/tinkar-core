@@ -23,7 +23,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.id.PublicIdSet;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
-import dev.ikm.tinkar.common.service.EntityRecordFormat2;
+import dev.ikm.tinkar.common.service.EntityRecordFormat3;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.Concept;
@@ -40,6 +40,7 @@ import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.SemanticFacade;
+import dev.ikm.tinkar.terms.StampFacade;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.factory.Lists;
@@ -58,68 +59,82 @@ import java.util.function.Consumer;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Entity format 2, the format of a 64-bit store (design {@code design-2026-10-07-64-bit-rocks-store};
- * IKE-Network/ike-issues#1258), behind the {@link EntityRecordFactory} facade, which chooses it
- * when the open store's {@linkplain NidLayout#entityFormat() layout names it} and dispatches a
- * read on the record's first byte. The envelope, and the identity at the head of a chronology,
- * are {@link EntityRecordFormat2}'s; this class writes and reads what follows them.
+ * Entity format 3, the format of a 64-bit store (IKE-Network/ike-issues#1313, after format 2 of
+ * design {@code design-2026-10-07-64-bit-rocks-store} and IKE-Network/ike-issues#1258), behind
+ * the {@link EntityRecordFactory} facade, which chooses it when the open store's
+ * {@linkplain NidLayout#entityFormat() layout names it} and dispatches a read on the record's
+ * first byte. The envelope, and the identity at the head of a chronology, are
+ * {@link EntityRecordFormat3}'s; this class writes and reads what follows them.
  *
  * <p>What differs from format 1:
  * <ul>
- *   <li>every nid is its two halves as varints, two to five bytes for the references a
- *   knowledge base mostly holds, and every nid must be a 64-bit nid;</li>
- *   <li>every count and length is a varint: the version count, the field count, the length of a
- *   string, a decimal or a byte array, the size of an object array, an id list or an id set, the
- *   count of a pattern's field definitions, and the counts inside graph bytes;</li>
+ *   <li>the entity's kind, and a semantic's pattern, are not written: the nid gives them, and
+ *   the writer refuses an entity whose nid does not;</li>
+ *   <li>a reference whose kind fixes its pattern half is its element half alone, a varint: a
+ *   version's stamp, a STAMP's state, author, module and path, a pattern's purpose and meaning
+ *   and its field definitions' data type, purpose and meaning, a {@code CONCEPT} or
+ *   {@code PATTERN} field, and a graph vertex's meaning and property keys; the writer refuses one
+ *   whose pattern half is another. Every other reference is the nid's two halves as varints;</li>
+ *   <li>a version carries no type token, and a STAMP's version no stamp nid, which is its own;</li>
+ *   <li>every count and length is a varint, an {@code INTEGER} field a zigzag varint, an
+ *   {@code INSTANT} its seconds as a zigzag varint and its nanoseconds as a varint, and a STAMP's
+ *   time a varint of its bits;</li>
  *   <li>an id set is grouped by pattern: for each pattern sequence, the pattern, the count, the
  *   first element, then each further element as the gap from the one before; an id list keeps
  *   its order, one nid per member;</li>
- *   <li>UUIDs, times, integers, longs and floats keep their fixed widths;</li>
+ *   <li>a graph writes its vertices without their indexes, which are their positions, its
+ *   successors as each vertex's list by position, and every count and index as a varint; a
+ *   tree's predecessors are not written but rebuilt from its successors;</li>
+ *   <li>UUIDs, longs and floats keep their fixed widths;</li>
  *   <li>a {@link PlanarPoint} writes its token once and its two floats, and a
  *   {@link SpatialPoint} its three floats, which format 1 did not; a {@link Double} is still
  *   written as a float, since the interchange schema has no double.</li>
  * </ul>
  */
-public final class EntityCodec2 {
+public final class EntityCodec3 {
 
-    /** The format byte: {@link NidLayout#ENTITY_FORMAT_2}. */
-    public static final byte FORMAT = NidLayout.ENTITY_FORMAT_2;
+    /** The format byte: {@link NidLayout#ENTITY_FORMAT_3}. */
+    public static final byte FORMAT = NidLayout.ENTITY_FORMAT_3;
 
     private static final int CHRONOLOGY_SIZE = 256;
     private static final int VERSION_SIZE = 4096;
 
-    private EntityCodec2() {
+    private EntityCodec3() {
     }
 
     // ---------------------------------------------------------------- writing
 
     /**
-     * The format 2 record of an entity: its chronology and every version.
+     * The format 3 record of an entity: its chronology and every version.
      *
      * @param entity the entity
      * @return the record
-     * @throws IllegalArgumentException if a nid of the entity is not a 64-bit nid
+     * @throws IllegalArgumentException if a nid of the entity is not a 64-bit nid, the entity's nid
+     *                                  does not give its kind, or a typed reference names another kind
      */
     public static byte[] write(Entity<? extends EntityVersion> entity) {
-        byte[] chronology = chronology(entity);
-        List<byte[]> versions = new ArrayList<>(entity.versions().size());
-        for (EntityVersion version : entity.versions()) {
-            versions.add(version(version));
+        try {
+            byte[] chronology = chronology(entity);
+            List<byte[]> versions = new ArrayList<>(entity.versions().size());
+            for (EntityVersion version : entity.versions()) {
+                versions.add(version(version));
+            }
+            return EntityRecordFormat3.assemble(chronology, versions);
+        } catch (IllegalArgumentException refused) {
+            // The codec's refusals name a nid, not the entity it was written for.
+            throw new IllegalArgumentException(refused.getMessage() + ", writing " + EntityText.diagnostic(entity), refused);
         }
-        return EntityRecordFormat2.assemble(chronology, versions);
     }
 
     static byte[] chronology(Entity<? extends EntityVersion> entity) {
         return bytes(CHRONOLOGY_SIZE, buf -> {
-            buf.writeByte(entity.entityDataType().token);
+            EntityRecordFormat3.requireKindOfNid(entity.entityDataType().token, entity.nid(),
+                    entity instanceof SemanticEntity<?> semantic ? semantic.patternNid() : 0);
             ImmutableLongList additional = entity.additionalUuidLongs();
-            EntityRecordFormat2.writeIdentity(buf, entity.nid(), entity.mostSignificantBits(),
+            EntityRecordFormat3.writeIdentity(buf, entity.nid(), entity.mostSignificantBits(),
                     entity.leastSignificantBits(), additional == null ? null : additional.toArray());
             switch (entity) {
-                case SemanticEntity<?> semantic -> {
-                    EntityRecordFormat2.writeNid(buf, semantic.referencedComponentNid());
-                    EntityRecordFormat2.writeNid(buf, semantic.patternNid());
-                }
+                case SemanticEntity<?> semantic -> EntityRecordFormat3.writeNid(buf, semantic.referencedComponentNid());
                 case ConceptEntity<?> concept -> { }
                 case PatternEntity<?> pattern -> { }
                 case StampEntity<?> stamp -> { }
@@ -129,29 +144,26 @@ public final class EntityCodec2 {
     }
 
     /**
-     * The format 2 bytes of one version: its type token, its stamp's nid, and its content.
+     * The format 3 bytes of one version: its stamp, unless it is a STAMP's own, and its content.
      *
      * @param version the version
      * @return the version part
      */
     public static byte[] version(EntityVersion version) {
         return bytes(VERSION_SIZE, buf -> {
-            byte token = version.versionDataType().token;
-            if (token == 0) {
-                throw new IllegalStateException("Version type token cannot be zero: " + EntityText.diagnostic(version));
+            if (!(version instanceof StampEntityVersion)) {
+                EntityRecordFormat3.writeStampNid(buf, version.stampNid());
             }
-            buf.writeByte(token);
-            EntityRecordFormat2.writeNid(buf, version.stampNid());
             switch (version) {
                 case ConceptEntityVersion concept -> { }
                 case PatternVersionRecord pattern -> {
-                    EntityRecordFormat2.writeNid(buf, pattern.semanticPurposeNid());
-                    EntityRecordFormat2.writeNid(buf, pattern.semanticMeaningNid());
+                    EntityRecordFormat3.writeConceptNid(buf, pattern.semanticPurposeNid());
+                    EntityRecordFormat3.writeConceptNid(buf, pattern.semanticMeaningNid());
                     buf.writeVarInt(pattern.fieldDefinitions().size());
                     for (FieldDefinitionRecord field : pattern.fieldDefinitions()) {
-                        EntityRecordFormat2.writeNid(buf, field.dataTypeNid());
-                        EntityRecordFormat2.writeNid(buf, field.purposeNid());
-                        EntityRecordFormat2.writeNid(buf, field.meaningNid());
+                        EntityRecordFormat3.writeConceptNid(buf, field.dataTypeNid());
+                        EntityRecordFormat3.writeConceptNid(buf, field.purposeNid());
+                        EntityRecordFormat3.writeConceptNid(buf, field.meaningNid());
                     }
                 }
                 case SemanticEntityVersion semantic -> {
@@ -161,11 +173,11 @@ public final class EntityCodec2 {
                     }
                 }
                 case StampEntityVersion stamp -> {
-                    EntityRecordFormat2.writeNid(buf, stamp.stateNid());
-                    buf.writeLong(stamp.time());
-                    EntityRecordFormat2.writeNid(buf, stamp.authorNid());
-                    EntityRecordFormat2.writeNid(buf, stamp.moduleNid());
-                    EntityRecordFormat2.writeNid(buf, stamp.pathNid());
+                    EntityRecordFormat3.writeConceptNid(buf, stamp.stateNid());
+                    buf.writeVarLong(stamp.time());
+                    EntityRecordFormat3.writeConceptNid(buf, stamp.authorNid());
+                    EntityRecordFormat3.writeConceptNid(buf, stamp.moduleNid());
+                    EntityRecordFormat3.writeConceptNid(buf, stamp.pathNid());
                 }
                 default -> throw new IllegalStateException("Unexpected version: " + EntityText.diagnostic(version));
             }
@@ -173,16 +185,27 @@ public final class EntityCodec2 {
     }
 
     /**
-     * The nid of a component a field names by public id: its own when the store knows it, else
-     * one minted under the concept pattern. A field value carries no kind, a 64-bit store cannot
-     * mint without one, and a component a field names before it is written is a concept, as the
-     * KnowledgeSet builder takes it (IKE-Network/ike-issues#1313).
+     * The nid of a component a field names by public id: its own when the store knows it; for a
+     * proxy of a concept, pattern or STAMP, which names its kind, one minted under that kind, so
+     * a reference to a component the store does not hold, as a domain set's reference to a
+     * foundation it does not declare, is that kind's absent identity. A bare public id carries no
+     * kind, and a nid minted for one would guess it, filing a semantic or pattern written later
+     * under a concept's nid (IKE-Network/ike-issues#1313): it is refused. A caller naming a
+     * component not yet written registers it first ({@code nidForSemantic}, {@code nidForConcept})
+     * or names it by a proxy of its kind.
+     *
+     * @throws IllegalArgumentException if the store does not know a bare public id
      */
     private static long referencedNid(PublicId publicId) {
         if (PrimitiveData.get().hasPublicId(publicId)) {
             return PrimitiveData.get().nidForPublicId(publicId);
         }
-        return EntityService.get().nidForConcept(publicId);
+        if (publicId instanceof ConceptFacade || publicId instanceof PatternFacade || publicId instanceof StampFacade) {
+            return ((EntityFacade) publicId).nid();
+        }
+        throw new IllegalArgumentException("A field names " + publicId.idString() + ", which the store does not know:"
+                + " a public id carries no kind to mint its nid under; register the component first"
+                + " (IKE-Network/ike-issues#1313)");
     }
 
     /**
@@ -200,26 +223,26 @@ public final class EntityCodec2 {
             case Float value -> { token(buf, FieldDataType.FLOAT); buf.writeFloat(value); }
             case Double value -> { token(buf, FieldDataType.FLOAT); buf.writeFloat(value.floatValue()); }
             case byte[] value -> { token(buf, FieldDataType.BYTE_ARRAY); buf.writeVarInt(value.length); buf.write(value); }
-            case Integer value -> { token(buf, FieldDataType.INTEGER); buf.writeInt(value); }
+            case Integer value -> { token(buf, FieldDataType.INTEGER); EntityRecordFormat3.writeSignedVarInt(buf, value); }
             case Long value -> { token(buf, FieldDataType.LONG); buf.writeLong(value); }
             case BigDecimal value -> { token(buf, FieldDataType.DECIMAL); writeText(buf, value.toString()); }
             case Instant value -> {
                 token(buf, FieldDataType.INSTANT);
-                buf.writeLong(value.getEpochSecond());
-                buf.writeInt(value.getNano());
+                EntityRecordFormat3.writeSignedVarLong(buf, value.getEpochSecond());
+                buf.writeVarInt(value.getNano());
             }
             case String value -> { token(buf, FieldDataType.STRING); writeText(buf, value); }
-            case ConceptFacade value -> { token(buf, FieldDataType.CONCEPT); EntityRecordFormat2.writeNid(buf, value.nid()); }
-            case Concept value -> { token(buf, FieldDataType.CONCEPT); EntityRecordFormat2.writeNid(buf, Entity.nid(value)); }
-            case SemanticFacade value -> { token(buf, FieldDataType.SEMANTIC); EntityRecordFormat2.writeNid(buf, value.nid()); }
-            case Semantic value -> { token(buf, FieldDataType.SEMANTIC); EntityRecordFormat2.writeNid(buf, Entity.nid(value)); }
-            case PatternFacade value -> { token(buf, FieldDataType.PATTERN); EntityRecordFormat2.writeNid(buf, value.nid()); }
-            case Pattern value -> { token(buf, FieldDataType.PATTERN); EntityRecordFormat2.writeNid(buf, Entity.nid(value)); }
-            case EntityFacade value -> { token(buf, FieldDataType.IDENTIFIED_THING); EntityRecordFormat2.writeNid(buf, value.nid()); }
-            case Component value -> { token(buf, FieldDataType.IDENTIFIED_THING); EntityRecordFormat2.writeNid(buf, Entity.nid(value)); }
-            case DiTreeEntity value -> { token(buf, FieldDataType.DITREE); buf.write(value.getBytes(FORMAT)); }
-            case DiGraphEntity<?> value -> { token(buf, FieldDataType.DIGRAPH); buf.write(value.getBytes(FORMAT)); }
-            case EntityVertex value -> { token(buf, FieldDataType.VERTEX); buf.write(value.getBytes(FORMAT)); }
+            case ConceptFacade value -> { token(buf, FieldDataType.CONCEPT); EntityRecordFormat3.writeConceptNid(buf, value.nid()); }
+            case Concept value -> { token(buf, FieldDataType.CONCEPT); EntityRecordFormat3.writeConceptNid(buf, Entity.nid(value)); }
+            case SemanticFacade value -> { token(buf, FieldDataType.SEMANTIC); EntityRecordFormat3.writeNid(buf, value.nid()); }
+            case Semantic value -> { token(buf, FieldDataType.SEMANTIC); EntityRecordFormat3.writeNid(buf, Entity.nid(value)); }
+            case PatternFacade value -> { token(buf, FieldDataType.PATTERN); EntityRecordFormat3.writePatternNid(buf, value.nid()); }
+            case Pattern value -> { token(buf, FieldDataType.PATTERN); EntityRecordFormat3.writePatternNid(buf, Entity.nid(value)); }
+            case EntityFacade value -> { token(buf, FieldDataType.IDENTIFIED_THING); EntityRecordFormat3.writeNid(buf, value.nid()); }
+            case Component value -> { token(buf, FieldDataType.IDENTIFIED_THING); EntityRecordFormat3.writeNid(buf, Entity.nid(value)); }
+            case DiTreeEntity value -> { token(buf, FieldDataType.DITREE); value.write3(buf); }
+            case DiGraphEntity<?> value -> { token(buf, FieldDataType.DIGRAPH); value.write3(buf); }
+            case EntityVertex value -> { token(buf, FieldDataType.VERTEX); value.write3(buf, true); }
             case Object[] value -> {
                 token(buf, FieldDataType.OBJECT_ARRAY);
                 buf.writeVarInt(value.length);
@@ -237,14 +260,14 @@ public final class EntityCodec2 {
             case LongIdList value -> {
                 token(buf, FieldDataType.COMPONENT_ID_LIST);
                 buf.writeVarInt(value.size());
-                value.forEach(id -> EntityRecordFormat2.writeNid(buf, id));
+                value.forEach(id -> EntityRecordFormat3.writeNid(buf, id));
             }
             case LongIdSet value -> { token(buf, FieldDataType.COMPONENT_ID_SET); writeIdSet(buf, value.toArray()); }
-            case PublicId value -> { token(buf, FieldDataType.IDENTIFIED_THING); EntityRecordFormat2.writeNid(buf, referencedNid(value)); }
+            case PublicId value -> { token(buf, FieldDataType.IDENTIFIED_THING); EntityRecordFormat3.writeNid(buf, referencedNid(value)); }
             case PublicIdList value -> {
                 token(buf, FieldDataType.COMPONENT_ID_LIST);
                 buf.writeVarInt(value.size());
-                value.forEach(publicId -> EntityRecordFormat2.writeNid(buf, referencedNid((PublicId) publicId)));
+                value.forEach(publicId -> EntityRecordFormat3.writeNid(buf, referencedNid((PublicId) publicId)));
             }
             case PublicIdSet value -> {
                 long[] nids = new long[value.size()];
@@ -322,7 +345,7 @@ public final class EntityCodec2 {
     // ---------------------------------------------------------------- reading
 
     /**
-     * The entity a format 2 record holds. A version whose stamp is canceled is left out, as
+     * The entity a format 3 record holds. A version whose stamp is canceled is left out, as
      * format 1 leaves it out, except from a stamp entity.
      *
      * @param record the record
@@ -333,18 +356,15 @@ public final class EntityCodec2 {
     @SuppressWarnings("unchecked")
     public static <T extends Entity<V>, V extends EntityVersion> T read(byte[] record) {
         // One buffer over the record, each part decoded where it lies: the parts are never
-        // copied out of the record, which made a format 2 decode 1.3 to 2.4 times format 1's
-        // (IKE-Network/ike-issues#1313). A part's length marks where the next one begins.
-        if (!EntityRecordFormat2.isFormat2(record)) {
-            throw new IllegalArgumentException("Not a format 2 entity record: "
-                    + (record == null ? "null" : "first byte " + record[0]));
-        }
+        // copied out of the record, which made the first 64-bit format decode 1.3 to 2.4 times
+        // format 1's (IKE-Network/ike-issues#1313). A part's length marks where the next begins.
+        EntityRecordFormat3.requireFormat3(record);
         ByteBuf buf = ByteBuf.wrapForReading(record);
         buf.readByte();
         int chronologyLength = buf.readVarInt();
         int chronologyEnd = buf.head() + chronologyLength;
-        FieldDataType type = FieldDataType.fromToken(buf.readByte());
-        long nid = EntityRecordFormat2.readNid(buf);
+        long nid = EntityRecordFormat3.readNid(buf);
+        FieldDataType type = FieldDataType.fromToken(EntityRecordFormat3.kindToken(nid));
         long msb = buf.readLong();
         long lsb = buf.readLong();
         int additionalCount = buf.readVarInt();
@@ -361,8 +381,8 @@ public final class EntityCodec2 {
                 yield (T) concept;
             }
             case SEMANTIC_CHRONOLOGY -> {
-                long referencedComponentNid = EntityRecordFormat2.readNid(buf);
-                long patternNid = EntityRecordFormat2.readNid(buf);
+                long referencedComponentNid = EntityRecordFormat3.readNid(buf);
+                long patternNid = EntityRecordFormat3.impliedPatternNid(nid);
                 RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
                 SemanticRecord semantic = new SemanticRecord(msb, lsb, additionalLongs, nid, patternNid, referencedComponentNid, versions);
                 readVersions(buf, chronologyEnd, semantic, versions, true);
@@ -413,12 +433,7 @@ public final class EntityCodec2 {
 
     /** Reads one version at the buffer's head, after its length. */
     private static EntityVersion version(ByteBuf buf, Entity<? extends EntityVersion> entity) {
-        byte token = buf.readByte();
-        if (entity.versionDataType().token != token) {
-            throw new IllegalStateException("Wrong version token " + token + " (" + FieldDataType.fromToken(token)
-                    + ") for " + entity.versionDataType() + " of " + EntityText.diagnostic(entity));
-        }
-        long stampNid = EntityRecordFormat2.readNid(buf);
+        long stampNid = entity instanceof StampRecord ? entity.nid() : EntityRecordFormat3.readStampNid(buf);
         return switch (entity) {
             case ConceptRecord concept -> new ConceptVersionRecord(concept, stampNid);
             case SemanticRecord semantic -> {
@@ -431,22 +446,22 @@ public final class EntityCodec2 {
                 yield new SemanticVersionRecord(semantic, stampNid, fields);
             }
             case PatternRecord pattern -> {
-                long purposeNid = EntityRecordFormat2.readNid(buf);
-                long meaningNid = EntityRecordFormat2.readNid(buf);
+                long purposeNid = EntityRecordFormat3.readConceptNid(buf);
+                long meaningNid = EntityRecordFormat3.readConceptNid(buf);
                 int fieldCount = buf.readVarInt();
                 MutableList<FieldDefinitionRecord> definitions = Lists.mutable.ofInitialCapacity(fieldCount);
                 for (int index = 0; index < fieldCount; index++) {
-                    definitions.add(new FieldDefinitionRecord(EntityRecordFormat2.readNid(buf), EntityRecordFormat2.readNid(buf),
-                            EntityRecordFormat2.readNid(buf), stampNid, pattern.nid(), index));
+                    definitions.add(new FieldDefinitionRecord(EntityRecordFormat3.readConceptNid(buf), EntityRecordFormat3.readConceptNid(buf),
+                            EntityRecordFormat3.readConceptNid(buf), stampNid, pattern.nid(), index));
                 }
                 yield new PatternVersionRecord(pattern, stampNid, purposeNid, meaningNid, definitions.toImmutable());
             }
             case StampRecord stamp -> {
-                long stateNid = EntityRecordFormat2.readNid(buf);
-                long time = buf.readLong();
-                long authorNid = EntityRecordFormat2.readNid(buf);
-                long moduleNid = EntityRecordFormat2.readNid(buf);
-                long pathNid = EntityRecordFormat2.readNid(buf);
+                long stateNid = EntityRecordFormat3.readConceptNid(buf);
+                long time = buf.readVarLong();
+                long authorNid = EntityRecordFormat3.readConceptNid(buf);
+                long moduleNid = EntityRecordFormat3.readConceptNid(buf);
+                long pathNid = EntityRecordFormat3.readConceptNid(buf);
                 yield new StampVersionRecord(stamp, stateNid, time, authorNid, moduleNid, pathNid);
             }
             default -> throw new IllegalStateException("Unexpected entity: " + EntityText.diagnostic(entity));
@@ -465,18 +480,18 @@ public final class EntityCodec2 {
             case BOOLEAN -> buf.readBoolean();
             case FLOAT -> buf.readFloat();
             case BYTE_ARRAY -> readBytes(buf);
-            case INTEGER -> buf.readInt();
+            case INTEGER -> EntityRecordFormat3.readSignedVarInt(buf);
             case LONG -> buf.readLong();
             case DECIMAL -> new BigDecimal(readString(buf));
-            case INSTANT -> Instant.ofEpochSecond(buf.readLong(), buf.readInt());
+            case INSTANT -> Instant.ofEpochSecond(EntityRecordFormat3.readSignedVarLong(buf), buf.readVarInt());
             case STRING -> readString(buf);
-            case CONCEPT -> EntityProxy.Concept.make(EntityRecordFormat2.readNid(buf));
-            case SEMANTIC -> EntityProxy.Semantic.make(EntityRecordFormat2.readNid(buf));
-            case PATTERN -> EntityProxy.Pattern.make(EntityRecordFormat2.readNid(buf));
-            case IDENTIFIED_THING -> EntityProxy.make(EntityRecordFormat2.readNid(buf));
-            case DITREE -> DiTreeEntity.make(buf, FORMAT);
-            case DIGRAPH -> DiGraphEntity.make(buf, FORMAT);
-            case VERTEX -> EntityVertex.make(buf, FORMAT);
+            case CONCEPT -> EntityProxy.Concept.make(EntityRecordFormat3.readConceptNid(buf));
+            case SEMANTIC -> EntityProxy.Semantic.make(EntityRecordFormat3.readNid(buf));
+            case PATTERN -> EntityProxy.Pattern.make(EntityRecordFormat3.readPatternNid(buf));
+            case IDENTIFIED_THING -> EntityProxy.make(EntityRecordFormat3.readNid(buf));
+            case DITREE -> DiTreeEntity.read3(buf);
+            case DIGRAPH -> DiGraphEntity.read3(buf);
+            case VERTEX -> EntityVertex.read3(buf, -1);
             case OBJECT_ARRAY -> {
                 int count = buf.readVarInt();
                 Object[] elements = new Object[count];
@@ -491,7 +506,7 @@ public final class EntityCodec2 {
                 int size = buf.readVarInt();
                 long[] nids = new long[size];
                 for (int i = 0; i < size; i++) {
-                    nids[i] = EntityRecordFormat2.readNid(buf);
+                    nids[i] = EntityRecordFormat3.readNid(buf);
                 }
                 yield LongIds.list.of(nids);
             }
@@ -555,15 +570,15 @@ public final class EntityCodec2 {
      * The nids a record references as an entity's identity, for a UUID index rebuilt from the
      * records: the entity's nid and UUIDs.
      *
-     * @param record a format 2 record
+     * @param record a format 3 record
      * @return the identity at the head of its chronology, its rest offset counted from the record's start
      */
-    public static EntityRecordFormat2.Identity identity(byte[] record) {
-        return EntityRecordFormat2.readIdentity(EntityRecordFormat2.chronologyReader(record));
+    public static EntityRecordFormat3.Identity identity(byte[] record) {
+        return EntityRecordFormat3.readIdentity(EntityRecordFormat3.chronologyReader(record));
     }
 
     /** Unused parameter kept for symmetry with the format 1 reader's signature. */
     static ImmutableList<byte[]> versions(byte[] record) {
-        return EntityRecordFormat2.parts(record).versions();
+        return EntityRecordFormat3.parts(record).versions();
     }
 }

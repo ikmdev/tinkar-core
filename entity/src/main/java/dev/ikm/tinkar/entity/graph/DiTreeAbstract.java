@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.graph;
 
+import dev.ikm.tinkar.common.service.EntityRecordFormat3;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.GraphAdaptorFactory;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -100,15 +101,15 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
     }
 
     /**
-     * The tree's bytes in an entity format: the vertices, the successor map, the predecessor
-     * map, and the root's index. Format 2 writes the counts as varints and the vertices in
-     * format 2; vertex indexes are ints in every format.
+     * The tree's bytes in an entity format. Format 1: the vertices, the successor map, the
+     * predecessor map, and the root's index, every count and index an int. Format 3:
+     * {@link #write3}.
      *
-     * @param entityFormatVersion the format, 1 or 2
+     * @param entityFormatVersion the format, 1 or 3
      * @return the bytes
      */
     public final byte[] getBytes(byte entityFormatVersion) {
-        boolean format2 = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec2.FORMAT;
+        boolean format3 = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec3.FORMAT;
         int defaultSize = estimatedBytes();
         int bufSize = defaultSize;
         AtomicReference<ByteBuf> byteBufRef =
@@ -116,14 +117,14 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         while (true) {
             try {
                 ByteBuf byteBuf = byteBufRef.get();
+                if (format3) {
+                    write3(byteBuf);
+                    return byteBuf.asArray();
+                }
                 writeVertexMap(byteBuf, entityFormatVersion);
                 writeIntIntListMap(byteBuf, successorMap(), entityFormatVersion);
 
-                if (format2) {
-                    byteBuf.writeVarInt(predecessorMap.size());
-                } else {
-                    byteBuf.writeInt(predecessorMap.size());
-                }
+                byteBuf.writeInt(predecessorMap.size());
                 predecessorMap.forEachKeyValue((vertex, predecessor) -> {
                     byteBuf.writeInt(vertex);
                     byteBuf.writeInt(predecessor);
@@ -138,6 +139,49 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
                 byteBufRef.set(ByteBufPool.allocate(bufSize));
             }
         }
+    }
+
+    /**
+     * Writes the tree in entity format 3 (IKE-Network/ike-issues#1313): the vertices without
+     * their indexes, each vertex's successors by position, and the root's index with a flag,
+     * every count and index a varint. The predecessor map is not written when it is the one the
+     * successors give, which {@link DiTreeEntity#read3} rebuilds; otherwise, as for a tree
+     * holding a vertex its root no longer reaches, whose predecessor was recorded as -1, the
+     * flag is set and the map follows: its entry count, then each vertex and its predecessor.
+     *
+     * @param buf the buffer
+     */
+    public final void write3(ByteBuf buf) {
+        int count = vertexMap.size();
+        writeVertices3(buf);
+        writeAdjacency3(buf, count, successorMap);
+        boolean derived = predecessorsAreDerived(count);
+        buf.writeVarInt((root.vertexIndex() << 1) | (derived ? 0 : 1));
+        if (!derived) {
+            buf.writeVarInt(predecessorMap.size());
+            predecessorMap.forEachKeyValue((vertex, predecessor) -> {
+                EntityRecordFormat3.writeSignedVarInt(buf, vertex);
+                EntityRecordFormat3.writeSignedVarInt(buf, predecessor);
+            });
+        }
+    }
+
+    /** Whether the predecessor map is exactly the one the successors give. */
+    private boolean predecessorsAreDerived(int count) {
+        int edges = 0;
+        for (int i = 0; i < count; i++) {
+            ImmutableIntList successors = successorMap.get(i);
+            if (successors != null) {
+                for (int j = 0; j < successors.size(); j++) {
+                    int child = successors.get(j);
+                    if (!predecessorMap.containsKey(child) || predecessorMap.get(child) != i) {
+                        return false;
+                    }
+                    edges++;
+                }
+            }
+        }
+        return edges == predecessorMap.size();
     }
 
     @Override

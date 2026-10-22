@@ -55,8 +55,10 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
     }
 
     public static DiGraphEntity make(ByteBuf readBuf, byte entityFormatVersion) {
-        boolean format2 = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec2.FORMAT;
-        if (entityFormatVersion != ENTITY_FORMAT_VERSION && !format2) {
+        if (entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec3.FORMAT) {
+            return read3(readBuf);
+        }
+        if (entityFormatVersion != ENTITY_FORMAT_VERSION) {
             throw new IllegalStateException("Unsupported entity format version: " + entityFormatVersion);
         }
         ImmutableList<EntityVertex> vertexMap = readVertexEntities(readBuf, entityFormatVersion);
@@ -68,7 +70,7 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
         // the count and guessed roots as the first vertices, leaving the written root
         // indexes unread — misaligning every field that follows the graph in the same
         // buffer (IKE-Network/ike-issues#885).
-        int rootCount = format2 ? readBuf.readVarInt() : readBuf.readInt();
+        int rootCount = readBuf.readInt();
         MutableList<EntityVertex> roots = Lists.mutable.ofInitialCapacity(rootCount);
         for (int i = 0; i < rootCount; i++) {
             roots.add(vertexMap.get(readBuf.readInt()));
@@ -109,14 +111,15 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
     }
 
     /**
-     * The graph's bytes in an entity format: the vertices, the successor and predecessor maps,
-     * and the roots' indexes. Format 2 writes the counts as varints and the vertices in format 2.
+     * The graph's bytes in an entity format. Format 1: the vertices, the successor and
+     * predecessor maps, and the roots' indexes, every count and index an int. Format 3:
+     * {@link #write3}.
      *
-     * @param entityFormatVersion the format, 1 or 2
+     * @param entityFormatVersion the format, 1 or 3
      * @return the bytes
      */
     public final byte[] getBytes(byte entityFormatVersion) {
-        boolean format2 = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec2.FORMAT;
+        boolean format3 = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec3.FORMAT;
         int defaultSize = estimatedBytes();
         int bufSize = defaultSize;
         AtomicReference<ByteBuf> byteBufRef =
@@ -124,15 +127,15 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
         while (true) {
             try {
                 ByteBuf byteBuf = byteBufRef.get();
+                if (format3) {
+                    write3(byteBuf);
+                    return byteBuf.asArray();
+                }
                 writeVertexMap(byteBuf, entityFormatVersion);
                 writeIntIntListMap(byteBuf, successorMap(), entityFormatVersion);
                 writeIntIntListMap(byteBuf, predecessorMap(), entityFormatVersion);
 
-                if (format2) {
-                    byteBuf.writeVarInt(roots.size());
-                } else {
-                    byteBuf.writeInt(roots.size());
-                }
+                byteBuf.writeInt(roots.size());
                 roots.forEach(root -> byteBuf.writeInt(root.vertexIndex()));
                 return byteBuf.asArray();
             } catch (ArrayIndexOutOfBoundsException e) {
@@ -142,6 +145,42 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
                 byteBufRef.set(ByteBufPool.allocate(bufSize));
             }
         }
+    }
+
+    /**
+     * Writes the graph in entity format 3 (IKE-Network/ike-issues#1313): the vertices without
+     * their indexes, each vertex's successors and then each vertex's predecessors by position,
+     * and the roots' indexes, every count and index a varint. A graph's predecessors are written,
+     * not derived, since a vertex has several and their order is the graph's.
+     *
+     * @param buf the buffer
+     */
+    public final void write3(ByteBuf buf) {
+        int count = vertexMap.size();
+        writeVertices3(buf);
+        writeAdjacency3(buf, count, successorMap);
+        writeAdjacency3(buf, count, predecessorMap);
+        buf.writeVarInt(roots.size());
+        roots.forEach(root -> buf.writeVarInt(root.vertexIndex()));
+    }
+
+    /**
+     * Reads a graph {@link #write3} wrote.
+     *
+     * @param readBuf the buffer
+     * @return the graph
+     */
+    public static DiGraphEntity read3(ByteBuf readBuf) {
+        ImmutableList<EntityVertex> vertexMap = readVertices3(readBuf);
+        int count = vertexMap.size();
+        ImmutableIntObjectMap<ImmutableIntList> successorMap = readAdjacency3(readBuf, count);
+        ImmutableIntObjectMap<ImmutableIntList> predecessorMap = readAdjacency3(readBuf, count);
+        int rootCount = readBuf.readVarInt();
+        EntityVertex[] roots = new EntityVertex[rootCount];
+        for (int i = 0; i < rootCount; i++) {
+            roots[i] = vertexMap.get(readBuf.readVarInt());
+        }
+        return new DiGraphEntity(Lists.immutable.of(roots), vertexMap, successorMap, predecessorMap);
     }
 
     public static class Builder<V extends EntityVertex> {

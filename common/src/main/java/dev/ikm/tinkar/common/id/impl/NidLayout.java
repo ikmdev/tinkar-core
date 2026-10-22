@@ -180,10 +180,11 @@ public enum NidLayout {
      * sequence in the lower, both from 1 through {@value Nid#MAX_SEQUENCE_64}; the store's key is
      * the nid itself, eight bytes big-endian, so {@code long} order, key order and
      * pattern-then-element order are one order. The pattern-of-patterns is sequence 1, with the
-     * concept pattern at its element 2 and the stamp pattern at 3. Entities are written in
-     * {@linkplain #ENTITY_FORMAT_2 format 2}.
+     * concept pattern at its element 2 and the stamp pattern at 3
+     * ({@link Nid#CONCEPT_SEQUENCE_64}, {@link Nid#STAMP_SEQUENCE_64}). Entities are written in
+     * {@linkplain #ENTITY_FORMAT_3 format 3}.
      */
-    SIXTY_FOUR_BIT("64-bit", 1, NidLayout.ENTITY_FORMAT_2, 4) {
+    SIXTY_FOUR_BIT("64-bit", 1, NidLayout.ENTITY_FORMAT_3, 4) {
         @Override
         public long encode(int patternSequence, long elementSequence) {
             if (elementSequence < 1 || elementSequence > Nid.MAX_SEQUENCE_64) {
@@ -251,11 +252,15 @@ public enum NidLayout {
     public static final byte ENTITY_FORMAT_1 = 1;
 
     /**
-     * Entity format 2: the format of a 64-bit store. Each nid reference is its two halves as
-     * varints, counts and lengths are varints, an id set is grouped by pattern, and UUIDs keep
-     * their fixed width ({@code EntityRecordFormat2}).
+     * Entity format 3: the format of a 64-bit store ({@code EntityRecordFormat3}). Each nid
+     * reference is varints, and where the reference's kind fixes its pattern half (a version's
+     * stamp, a STAMP's concepts, a pattern's concepts, a {@code CONCEPT} or {@code PATTERN}
+     * field, a graph vertex's meaning and property keys) only the element half; counts, lengths
+     * and vertex indexes are varints; an id set is grouped by pattern; and UUIDs keep their fixed
+     * width. Format 2, the first 64-bit format, was retired on 2026-10-21 before any store but a
+     * test's held it (IKE-Network/ike-issues#1313): a store that records it refuses to open.
      */
-    public static final byte ENTITY_FORMAT_2 = 2;
+    public static final byte ENTITY_FORMAT_3 = 3;
 
     /** The largest element sequence of a sequential nid: that of {@code Integer.MAX_VALUE - 1}. */
     private static final long MAX_SEQUENTIAL_ELEMENT = ((long) Integer.MAX_VALUE - 1) - Integer.MIN_VALUE;

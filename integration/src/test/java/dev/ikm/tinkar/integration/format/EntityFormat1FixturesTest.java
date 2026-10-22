@@ -273,7 +273,7 @@ class EntityFormat1FixturesTest {
         return pattern;
     }
 
-    /** The format 1 bytes of the semantic fixture, for the size comparison of {@link EntityFormat2FixturesTest}. */
+    /** The format 1 bytes of the semantic fixture, for the size comparison of {@link EntityFormat3FixturesTest}. */
     static byte[] semanticBytes() {
         NidLayout active = NidLayout.active();
         NidLayout.activate(NidLayout.EIGHT_BIT);

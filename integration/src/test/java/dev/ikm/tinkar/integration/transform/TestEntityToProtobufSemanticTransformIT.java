@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.integration.helper.NidsByKind;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -56,9 +57,10 @@ public class TestEntityToProtobufSemanticTransformIT {
     private SemanticRecord createSemanticWithFields(int numVersions, int fieldsPerVersion) {
         UUID semanticUuid = UUID.randomUUID();
         PublicId semanticPublicId = PublicIds.of(semanticUuid);
-        long semanticNid = NidsByKind.any(semanticPublicId);
-
         long patternNid = createAndStorePattern(conceptMap);
+        // Minted under its pattern: a 64-bit store's entity format refuses a semantic under a
+        // concept's nid (IKE-Network/ike-issues#1313).
+        long semanticNid = EntityService.get().nidForSemantic(PrimitiveData.publicId(patternNid), semanticPublicId);
         long referencedComponentNid = NidsByKind.any(conceptMap.get(MODULE_CONCEPT_NAME).publicId());
 
         RecordListBuilder<SemanticVersionRecord> semanticVersions = RecordListBuilder.make();

@@ -27,7 +27,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.id.PublicIdSet;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
-import dev.ikm.tinkar.common.service.EntityRecordFormat2;
+import dev.ikm.tinkar.common.service.EntityRecordFormat3;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
@@ -79,11 +79,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * The facade over the entity codecs. Format 1 is the code here, frozen: every reference four
- * bytes, the format of every 6-bit, 8-bit and sequential store. Format 2 is {@link EntityCodec2},
+ * bytes, the format of every 6-bit, 8-bit and sequential store. Format 3 is {@link EntityCodec3},
  * the format of a 64-bit store. A write uses the format the open store's layout names
  * ({@link NidLayout#entityFormat()}); a read dispatches on the record's first byte, which is 0
- * for format 1 (the high byte of its part count) and {@value NidLayout#ENTITY_FORMAT_2} for
- * format 2 (design {@code design-2026-10-07-64-bit-rocks-store}).
+ * for format 1 (the high byte of its part count) and {@value NidLayout#ENTITY_FORMAT_3} for
+ * format 3 (IKE-Network/ike-issues#1313). A record of the retired format 2, first byte 2, is
+ * refused.
  */
 public class EntityRecordFactory {
     private static final Logger LOG = LoggerFactory.getLogger(EntityRecordFactory.class);
@@ -94,8 +95,8 @@ public class EntityRecordFactory {
     public static volatile int MAX_VERSION_SIZE = DEFAULT_VERSION_SIZE;
 
     public static byte[] getBytes(Entity<? extends EntityVersion> entity) {
-        if (NidLayout.active().entityFormat() == NidLayout.ENTITY_FORMAT_2) {
-            return EntityCodec2.write(entity);
+        if (NidLayout.active().entityFormat() == NidLayout.ENTITY_FORMAT_3) {
+            return EntityCodec3.write(entity);
         }
         // TODO: write directly to a single ByteBuf, rather that the approach below.
         boolean complete = false;
@@ -448,12 +449,12 @@ public class EntityRecordFactory {
         if (bytes == null) {
             return null;
         }
-        if (EntityRecordFormat2.isFormat2(bytes)) {
-            if (EntityRecordFormat2.chronologyType(bytes) == PrimitiveDataService.STAMP_DATA_TYPE) {
+        if (EntityRecordFormat3.isFormat3(bytes)) {
+            if (EntityRecordFormat3.chronologyType(bytes) == PrimitiveDataService.STAMP_DATA_TYPE) {
                 throw new IllegalArgumentException("A stamp's versions are not withdrawn: nid "
-                        + EntityRecordFormat2.nid(bytes));
+                        + EntityRecordFormat3.nid(bytes));
             }
-            return EntityRecordFormat2.withoutVersion(bytes, stampNid);
+            return EntityRecordFormat3.withoutVersion(bytes, stampNid);
         }
         Entity<? extends EntityVersion> entity = make(bytes);
         if (entity.versions().stream().noneMatch(version -> version.stampNid() == stampNid)) {
@@ -487,8 +488,8 @@ public class EntityRecordFactory {
      * a fluent API that better manages type determination.
      */
     public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
-        if (EntityRecordFormat2.isFormat2(data)) {
-            return EntityCodec2.read(data);
+        if (data != null && data.length > 0 && data[0] != 0) {
+            return EntityCodec3.read(data);              // refuses any but format 3
         }
         // TODO change to use DecoderInput instead of ByteBuf directly.
         // TODO remove the parts where it computes size.
@@ -692,8 +693,8 @@ public class EntityRecordFactory {
     }
 
     public static Object readFieldData(ByteBuf readBuf, FieldDataType dataType, byte formatVersion) {
-        if (formatVersion == NidLayout.ENTITY_FORMAT_2) {
-            return EntityCodec2.readField(readBuf, dataType);
+        if (formatVersion == NidLayout.ENTITY_FORMAT_3) {
+            return EntityCodec3.readField(readBuf, dataType);
         }
         return switch (dataType) {
             case BOOLEAN -> readBuf.readBoolean();

@@ -245,17 +245,28 @@ public final class StampedWriter implements AutoCloseable {
         return nid;
     }
 
+    /** The nid of a referenced component the store knows, else a refusal naming it. */
+    private static long referencedNid(PublicId referencedComponent) {
+        if (!PrimitiveData.get().hasPublicId(referencedComponent)) {
+            throw new IllegalArgumentException("A semantic references " + referencedComponent.idString()
+                    + ", which the store does not know: write or register it first (IKE-Network/ike-issues#1313)");
+        }
+        return EntityService.get().nidForPublicId(referencedComponent);
+    }
+
     /**
      * Writes a version of a semantic.
      *
      * @param semanticId          the semantic's identity
      * @param patternId           the pattern the semantic instantiates
-     * @param referencedComponent the component the semantic is about; one the store does not know
-     *                            yet is taken as a concept and minted under the concept pattern,
-     *                            as the KnowledgeSet builder takes a reference not yet written
-     *                            (IKE-Network/ike-issues#1313)
+     * @param referencedComponent the component the semantic is about, which the store must know:
+     *                            written already, or registered under its own pattern
+     *                            ({@code nidForSemantic}, {@code nidForConcept}) by a caller that
+     *                            references it before writing it. A public id carries no kind,
+     *                            so a nid minted here would guess it (IKE-Network/ike-issues#1313)
      * @param fieldValues         the field values, in the pattern's field order
      * @return the semantic's nid
+     * @throws IllegalArgumentException if the store does not know the referenced component
      */
     public long semantic(PublicId semanticId, PublicId patternId, PublicId referencedComponent,
                         Object... fieldValues) {
@@ -269,9 +280,7 @@ public final class StampedWriter implements AutoCloseable {
                 .leastSignificantBits(identifier.leastSignificantBits())
                 .additionalUuidLongs(identifier.additionalUuidLongs())
                 .patternNid(EntityService.get().nidForPattern(patternId))
-                .referencedComponentNid(PrimitiveData.get().hasPublicId(referencedComponent)
-                        ? EntityService.get().nidForPublicId(referencedComponent)
-                        : EntityService.get().nidForConcept(referencedComponent))
+                .referencedComponentNid(referencedNid(referencedComponent))
                 .versions(versions)
                 .build();
         ImmutableList<Object> values = Lists.immutable.of(fieldValues);

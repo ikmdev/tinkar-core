@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.integration.builder;
 
 import network.ike.foundation.ike.bindings.IkeConcept;
+import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
@@ -64,9 +65,17 @@ class TestReferentialClosure {
     private static final KnowledgeSet OPEN_SET =
             KnowledgeSet.of("2f0a7d5e-9c31-5b46-8a2d-6e1c4f9b7a53");
 
-    /** An identity nothing ever declares — the component-id list member that must dangle. */
+    /**
+     * An identity nothing ever declares — the component-id list member that must dangle. It is
+     * named by a concept proxy, which says its kind, so the store mints it as an absent concept;
+     * a bare public id of no kind is refused at write (IKE-Network/ike-issues#1313).
+     */
     private static final UUID ABSENT_MEMBER =
             UUID.fromString("7d3b9e1c-4a86-4f25-b7d0-9c5e2a8f6b14");
+
+    /** An identity nothing declares, named by a bare public id: no kind to mint its nid under. */
+    private static final UUID BARE_MEMBER =
+            UUID.fromString("3e8a5c71-2f9d-4b06-9a1c-7d4e6b2f8c35");
 
     @BeforeAll
     static void composeOpenLedger() {
@@ -94,7 +103,7 @@ class TestReferentialClosure {
                 .isA(IkeConcept.MODEL_CONCEPT)
                 .semantic(OPEN_SET.patternRef("Roster pattern (ClosureTest)"),
                         PublicIds.of(OPEN_SET.uuidFor("Roster (ClosureTest)")),
-                        PublicIds.list.of(PublicIds.of(ABSENT_MEMBER)));
+                        PublicIds.list.of(EntityProxy.Concept.make(PublicIds.of(ABSENT_MEMBER))));
     }
 
     @AfterAll
@@ -147,5 +156,22 @@ class TestReferentialClosure {
         } finally {
             System.clearProperty(ENFORCE_CLOSURE_PROPERTY);
         }
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("A bare public id the store does not know is refused, naming it: it carries no kind to mint its nid under")
+    void aBarePublicIdOfNoKindIsRefused() {
+        KnowledgeSet bare = KnowledgeSet.of("9c4e1f2a-6b37-5d58-8e19-3a7c5d2f8b61");
+        ActiveStamp birth = Stamp.active("2026-08-11T00:00:00Z",
+                KernelConcept.USER, IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH);
+        bare.concept("Bare reference (ClosureTest)").at(birth)
+                .synonym("Bare reference")
+                .isA(IkeConcept.MODEL_CONCEPT)
+                .semantic(OPEN_SET.patternRef("Roster pattern (ClosureTest)"),
+                        PublicIds.of(bare.uuidFor("Bare roster (ClosureTest)")),
+                        PublicIds.list.of(PublicIds.of(BARE_MEMBER)));
+        IllegalArgumentException refused = assertThrows(IllegalArgumentException.class, bare::write);
+        assertTrue(refused.getMessage().contains(BARE_MEMBER.toString()), refused.getMessage());
     }
 }

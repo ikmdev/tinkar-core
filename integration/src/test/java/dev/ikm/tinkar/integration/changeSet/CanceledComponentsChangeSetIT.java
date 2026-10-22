@@ -67,7 +67,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * A change set carries canceled work as a store reads it (IKE-Network/ike-issues#1276). A
  * version whose stamp is canceled stays in the record but is left out when the record is
- * read ({@code EntityCodec2.read}), so a component with a canceled version among live ones
+ * read ({@code EntityCodec3.read}), so a component with a canceled version among live ones
  * travels with the live ones only, and the stamp that canceled it travels as a stamp; a
  * component whose every version is canceled reads as one with no versions, and travels as
  * such, its identity kept; and a nid minted but never written, which a record still refers

@@ -33,7 +33,7 @@ public class EntityFactory {
      */
     /**
      * The entity a record holds, in whichever format the record is: {@link EntityRecordFactory#make(byte[])}
-     * reads the format from the record itself (format 2 begins with its format byte, format 1
+     * reads the format from the record itself (format 3 begins with its format byte, format 1
      * with its part count), so a 64-bit store's records read here too (IKE-Network/ike-issues#1258).
      */
     public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {

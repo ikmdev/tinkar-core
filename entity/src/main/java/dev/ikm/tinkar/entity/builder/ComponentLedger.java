@@ -792,6 +792,19 @@ final class ComponentLedger {
     }
 
     /**
+     * Mints the nid of every generic semantic this ledger declares, under its pattern, before
+     * any is written: a declaration elsewhere in the set may reference one
+     * (IKE-Network/ike-issues#1313).
+     */
+    void registerSemanticNids() {
+        for (GenericSemanticLedger semantic : genericSemantics) {
+            if (semantic.semanticId != null) {
+                EntityService.get().nidForSemantic(semantic.pattern.publicId(), semantic.semanticId);
+            }
+        }
+    }
+
+    /**
      * Writes every generic declared-identity semantic ledger. References are resolved to
      * nids here, at write: the referenced component and the pattern are minted from
      * their full public ids, so lookups by any of their UUIDs resolve — whether or not
@@ -849,16 +862,21 @@ final class ComponentLedger {
     }
 
     /**
-     * The nid of a component a semantic references: its own when the store knows it, else one
-     * minted under the concept pattern. A declaration names the referenced component by public
-     * id only, without its kind, and a reference not yet written is a concept in every
-     * declaration the builder makes; a semantic or pattern it references is written first.
+     * The nid of a component a semantic references, which the store must know: every component
+     * the set declares is registered under its own pattern before any is written
+     * ({@link KnowledgeSet#write()}), and an established one is in the store. A public id
+     * carries no kind, so a nid minted for one the store does not know would guess it
+     * (IKE-Network/ike-issues#1313).
+     *
+     * @throws IllegalStateException if the store does not know the public id
      */
     static long referencedNidFor(PublicId publicId) {
         if (PrimitiveData.get().hasPublicId(publicId)) {
             return PrimitiveData.nid(publicId);
         }
-        return conceptNidFor(publicId);
+        throw new IllegalStateException("A declaration references " + publicId.idString()
+                + ", which neither the set declares nor the store holds: a public id carries no kind to mint"
+                + " its nid under (IKE-Network/ike-issues#1313)");
     }
 
     /**

@@ -105,7 +105,7 @@ class NidLayoutTest {
             assertEquals(NidLayout.ENTITY_FORMAT_1, layout.entityFormat(), layout.displayName());
             assertEquals(layout == NidLayout.SEQUENTIAL ? 0 : 2, layout.patternPrefixLength(), layout.displayName());
         }
-        assertEquals(NidLayout.ENTITY_FORMAT_2, NidLayout.SIXTY_FOUR_BIT.entityFormat());
+        assertEquals(NidLayout.ENTITY_FORMAT_3, NidLayout.SIXTY_FOUR_BIT.entityFormat());
         assertEquals(4, NidLayout.SIXTY_FOUR_BIT.patternPrefixLength());
     }
 

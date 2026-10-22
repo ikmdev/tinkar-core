@@ -27,7 +27,7 @@ import dev.ikm.tinkar.common.service.DataServiceProperty;
 import dev.ikm.tinkar.common.service.DataUriOption;
 import dev.ikm.tinkar.common.service.DataUse;
 import dev.ikm.tinkar.common.service.DiagnosticText;
-import dev.ikm.tinkar.common.service.EntityRecordFormat2;
+import dev.ikm.tinkar.common.service.EntityRecordFormat3;
 import dev.ikm.tinkar.common.service.NidGenerator;
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
@@ -88,7 +88,7 @@ import java.util.function.ObjLongConsumer;
  * The 64-bit spined-array store: entity bytes held in memory in spined arrays, as the sequential
  * {@code SpinedArrayProvider} holds them, but indexed per pattern, pattern sequence then element
  * sequence, under 64-bit nids ({@link Nid#compose64}, {@link NidLayout#SIXTY_FOUR_BIT}), with
- * records in entity format 2 (design-2026-10-20-instance-data, "The 64-bit spined-array engine";
+ * records in entity format 3 (design-2026-10-20-instance-data, "The 64-bit spined-array engine";
  * IKE-Network/ike-issues#1313). Each pattern's elements are one range, a {@link PatternTable}, so a
  * component's pattern is read from its nid, a pattern's elements are enumerated by walking its
  * table, and a scope of instance data is erased by dropping its patterns' tables.
@@ -194,7 +194,7 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
         }
         files.readCounters().forEach((sequence, next) -> table(sequence).raiseTo(next));
         await(spineBatches((table, index) -> table.records.forEachOnSpine(index, (slot, record) ->
-                identities.opened(table.nidOf(slot), EntityRecordFormat2.uuids(record).castToList()))));
+                identities.opened(table.nidOf(slot), EntityRecordFormat3.uuids(record).castToList()))));
         for (int sequence : patternSequences()) {
             PatternTable table = table(sequence);
             table.raiseTo(table.records.end() + 1);
@@ -442,7 +442,7 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
     public PublicId publicIdForNid(long nid) {
         byte[] record = record(nid);
         if (record != null) {
-            return PublicIds.of(EntityRecordFormat2.uuids(record).toArray(new UUID[0]));
+            return PublicIds.of(EntityRecordFormat3.uuids(record).toArray(new UUID[0]));
         }
         return identities.publicIdOf(nid).orElseThrow(() ->
                 new IllegalStateException("No entity is stored for nid " + nid + " in " + name + ", and no public id was minted for it"));
@@ -459,7 +459,7 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
     public byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject,
                         DataActivity activity) {
         return merge(nid, patternNid, referencedComponentNid, value, sourceObject, activity,
-                (stored, incoming) -> EntityRecordFormat2.merge(stored, incoming, this::isCanceledStampNid));
+                (stored, incoming) -> EntityRecordFormat3.merge(stored, incoming, this::isCanceledStampNid));
     }
 
     @Override
@@ -468,15 +468,15 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
         // The version leaves the stored record inside the same atomic accumulation that merges
         // the value in, so no reader sees the record with neither.
         return merge(nid, patternNid, referencedComponentNid, value, sourceObject, activity,
-                (stored, incoming) -> EntityRecordFormat2.merge(EntityRecordFactory.withoutVersion(stored, withdrawnStampNid),
+                (stored, incoming) -> EntityRecordFormat3.merge(EntityRecordFactory.withoutVersion(stored, withdrawnStampNid),
                         incoming, this::isCanceledStampNid));
     }
 
     private byte[] merge(long nid, long patternNid, long referencedComponentNid, byte[] value, Object sourceObject,
                          DataActivity activity, BinaryOperator<byte[]> accumulator) {
         Nid.validate64(nid);
-        if (!EntityRecordFormat2.isFormat2(value)) {
-            throw new IllegalArgumentException("A 64-bit store holds format 2 records; " + DiagnosticText.component(nid) + " was given "
+        if (!EntityRecordFormat3.isFormat3(value)) {
+            throw new IllegalArgumentException("A 64-bit store holds format 3 records; " + DiagnosticText.component(nid) + " was given "
                     + (value == null || value.length == 0 ? "no record" : "a format " + value[0] + " record"));
         }
         PatternTable table = table(Nid.patternSequence64(nid));

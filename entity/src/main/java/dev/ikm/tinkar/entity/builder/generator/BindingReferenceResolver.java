@@ -16,8 +16,13 @@
 package dev.ikm.tinkar.entity.builder.generator;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.terms.SemanticFacade;
 import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.KernelPattern;
 
@@ -125,8 +130,26 @@ public final class BindingReferenceResolver {
             }
         }
         String escapedDescription = escapeForJavaStringLiteral(facade.description());
-        String factory = facade instanceof PatternFacade ? "EntityProxy.Pattern.make(\"" : "EntityProxy.Concept.make(\"";
-        return new Resolved(false, factory + escapedDescription + "\", " + publicIdLiteral(publicId) + ")");
+        return new Resolved(false, factoryFor(facade) + escapedDescription + "\", " + publicIdLiteral(publicId) + ")");
+    }
+
+    /**
+     * The proxy factory for a facade's kind: the facade's own when it names one, else the kind
+     * of the entity the source store holds for it. A reference read back from a change set names
+     * no kind (a protobuf field value is a public id), and a fallback of "concept" would declare a
+     * pattern or semantic as a concept, which a 64-bit store refuses (IKE-Network/ike-issues#1313).
+     */
+    private static String factoryFor(EntityFacade facade) {
+        return switch (facade) {
+            case PatternFacade _ -> "EntityProxy.Pattern.make(\"";
+            case ConceptFacade _ -> "EntityProxy.Concept.make(\"";
+            case SemanticFacade _ -> "EntityProxy.Semantic.make(\"";
+            default -> switch (EntityHandle.get(facade.nid()).orNull()) {
+                case PatternEntity<?> _ -> "EntityProxy.Pattern.make(\"";
+                case SemanticEntity<?> _ -> "EntityProxy.Semantic.make(\"";
+                case null, default -> "EntityProxy.Concept.make(\"";
+            };
+        };
     }
 
     /**

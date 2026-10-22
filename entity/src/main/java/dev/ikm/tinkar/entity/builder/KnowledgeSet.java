@@ -417,6 +417,21 @@ public final class KnowledgeSet {
         for (Stamp stamp : declaredStamps) {
             ComponentLedger.putStampEntity(stamp, EntityService.get().nidForStamp(stamp.publicId()));
         }
+        // Every declared component's nid first, each under its own pattern, so a reference to
+        // one not yet written resolves to it and never mints a concept's nid for a pattern or
+        // semantic: concepts are written before patterns (IKE-Network/ike-issues#1313).
+        for (ConceptBuilder builder : concepts.values()) {
+            builder.ledger().conceptNid();
+        }
+        for (PatternBuilder builder : patterns.values()) {
+            builder.ledger().patternNid();
+        }
+        for (ConceptBuilder builder : concepts.values()) {
+            builder.ledger().registerSemanticNids();
+        }
+        for (PatternBuilder builder : patterns.values()) {
+            builder.ledger().registerSemanticNids();
+        }
         for (ConceptBuilder builder : concepts.values()) {
             builder.writeInto();
         }

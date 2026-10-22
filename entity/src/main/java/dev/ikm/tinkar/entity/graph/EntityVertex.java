@@ -64,8 +64,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongConsumer;
 
-import dev.ikm.tinkar.common.service.EntityRecordFormat2;
-import dev.ikm.tinkar.entity.EntityCodec2;
+import dev.ikm.tinkar.common.service.EntityRecordFormat3;
+import dev.ikm.tinkar.entity.EntityCodec3;
 
 import static dev.ikm.tinkar.entity.EntityRecordFactory.ENTITY_FORMAT_VERSION;
 
@@ -217,7 +217,10 @@ public class EntityVertex implements Vertex, VertexId {
 	}
 
 	public static EntityVertex make(ByteBuf readBuf, byte entityFormatVersion) {
-		if (entityFormatVersion == ENTITY_FORMAT_VERSION || entityFormatVersion == EntityCodec2.FORMAT) {
+		if (entityFormatVersion == EntityCodec3.FORMAT) {
+			return read3(readBuf, -1);
+		}
+		if (entityFormatVersion == ENTITY_FORMAT_VERSION) {
 			EntityVertex entityVertex = new EntityVertex();
 			entityVertex.fill(readBuf, entityFormatVersion);
 			return entityVertex;
@@ -227,20 +230,19 @@ public class EntityVertex implements Vertex, VertexId {
 	}
 
 	/**
-	 * Reads what {@link #getBytes(byte)} wrote: in format 1 the nids as four bytes and the
-	 * property count as an int; in format 2 the nids as varint pairs and the count as a varint.
+	 * Reads what {@link #getBytes(byte)} wrote in format 1: the nids as four bytes and the
+	 * property count as an int.
 	 */
 	private void fill(ByteBuf readBuf, byte formatVersion) {
-		boolean format2 = formatVersion == EntityCodec2.FORMAT;
 		this.mostSignificantBits = readBuf.readLong();
 		this.leastSignificantBits = readBuf.readLong();
 		this.vertexIndex = readBuf.readInt();
-		this.meaningNid = format2 ? EntityRecordFormat2.readNid(readBuf) : readBuf.readInt();
-		int propertyCount = format2 ? readBuf.readVarInt() : readBuf.readInt();
+		this.meaningNid = readBuf.readInt();
+		int propertyCount = readBuf.readInt();
 		if (propertyCount > 0) {
 			MutableLongObjectMap<Object> mutableProperties = LongObjectMaps.mutable.ofInitialCapacity(propertyCount);
 			for (int i = 0; i < propertyCount; i++) {
-				long conceptNid = format2 ? EntityRecordFormat2.readNid(readBuf) : readBuf.readInt();
+				long conceptNid = readBuf.readInt();
 				FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
 				Object value = EntityRecordFactory.readFieldData(readBuf, dataType, formatVersion);
 				mutableProperties.put(conceptNid, value);
@@ -490,45 +492,35 @@ public class EntityVertex implements Vertex, VertexId {
 	}
 
 	/**
-	 * The vertex's bytes in an entity format: the UUID, the vertex index, the meaning's nid, and
-	 * the properties, each a concept's nid and a field value. Format 1 writes a nid as four bytes
-	 * and the count as an int; format 2 writes a nid as its two halves as varints and the count
-	 * as a varint, and its field values through {@link EntityCodec2}.
+	 * The vertex's bytes in an entity format. Format 1: the UUID, the vertex index, the meaning's
+	 * nid, and the properties, each a concept's nid and a field value, every nid four bytes and
+	 * the count an int. Format 3: {@link #write3} with the index.
 	 *
-	 * @param entityFormatVersion the format, 1 or 2
+	 * @param entityFormatVersion the format, 1 or 3
 	 * @return the bytes
 	 */
 	public final byte[] getBytes(byte entityFormatVersion) {
-		boolean format2 = entityFormatVersion == EntityCodec2.FORMAT;
+		boolean format3 = entityFormatVersion == EntityCodec3.FORMAT;
 		int bufSize = DEFAULT_SIZE;
         AtomicReference<ByteBuf> byteBufRef =
                 new AtomicReference<>(ByteBufPool.allocate(bufSize));
 		while (true) {
 			try {
 				ByteBuf byteBuf = byteBufRef.get();
+				if (format3) {
+					write3(byteBuf, true);
+					return byteBuf.asArray();
+				}
 				byteBuf.writeLong(mostSignificantBits);
 				byteBuf.writeLong(leastSignificantBits);
 				byteBuf.writeInt(vertexIndex);
-				if (format2) {
-					EntityRecordFormat2.writeNid(byteBuf, meaningNid);
-				} else {
-					byteBuf.writeInt(Nid.narrowChecked(meaningNid));
-				}
+				byteBuf.writeInt(Nid.narrowChecked(meaningNid));
 				int propertyCount = properties == null ? 0 : properties.size();
-				if (format2) {
-					byteBuf.writeVarInt(propertyCount);
-				} else {
-					byteBuf.writeInt(propertyCount);
-				}
+				byteBuf.writeInt(propertyCount);
 				if (properties != null) {
 					properties.forEachKeyValue((nid, value) -> {
-						if (format2) {
-							EntityRecordFormat2.writeNid(byteBuf, nid);
-							EntityCodec2.writeField(byteBuf, value);
-						} else {
-							byteBuf.writeInt(Nid.narrowChecked(nid));
-							EntityRecordFactory.writeField(byteBuf, value);
-						}
+						byteBuf.writeInt(Nid.narrowChecked(nid));
+						EntityRecordFactory.writeField(byteBuf, value);
 					});
 				}
 				return byteBuf.asArray();
@@ -539,6 +531,58 @@ public class EntityVertex implements Vertex, VertexId {
 				byteBufRef.set(ByteBufPool.allocate(bufSize));
 			}
 		}
+	}
+
+	/**
+	 * Writes the vertex in entity format 3 (IKE-Network/ike-issues#1313): its index when asked
+	 * (a vertex standing alone as a field; within a graph its index is its position), the UUID,
+	 * the meaning as a concept reference, the property count, and each property as a concept
+	 * reference and a field value.
+	 *
+	 * @param buf       the buffer
+	 * @param withIndex whether to write the vertex's index
+	 */
+	public final void write3(ByteBuf buf, boolean withIndex) {
+		if (withIndex) {
+			EntityRecordFormat3.writeSignedVarInt(buf, vertexIndex);
+		}
+		buf.writeLong(mostSignificantBits);
+		buf.writeLong(leastSignificantBits);
+		EntityRecordFormat3.writeConceptNid(buf, meaningNid);
+		buf.writeVarInt(properties == null ? 0 : properties.size());
+		if (properties != null) {
+			properties.forEachKeyValue((nid, value) -> {
+				EntityRecordFormat3.writeConceptNid(buf, nid);
+				EntityCodec3.writeField(buf, value);
+			});
+		}
+	}
+
+	/**
+	 * Reads a vertex {@link #write3} wrote.
+	 *
+	 * @param buf         the buffer
+	 * @param vertexIndex the vertex's index, its position in a graph; negative to read the index written with it
+	 * @return the vertex
+	 */
+	public static EntityVertex read3(ByteBuf buf, int vertexIndex) {
+		EntityVertex vertex = new EntityVertex();
+		vertex.vertexIndex = vertexIndex < 0 ? EntityRecordFormat3.readSignedVarInt(buf) : vertexIndex;
+		vertex.mostSignificantBits = buf.readLong();
+		vertex.leastSignificantBits = buf.readLong();
+		vertex.meaningNid = EntityRecordFormat3.readConceptNid(buf);
+		int propertyCount = buf.readVarInt();
+		if (propertyCount > 0) {
+			MutableLongObjectMap<Object> properties = LongObjectMaps.mutable.ofInitialCapacity(propertyCount);
+			for (int i = 0; i < propertyCount; i++) {
+				long conceptNid = EntityRecordFormat3.readConceptNid(buf);
+				properties.put(conceptNid, EntityCodec3.readField(buf, FieldDataType.fromToken(buf.readByte())));
+			}
+			vertex.properties = properties.toImmutable();
+		} else {
+			vertex.properties = LongObjectMaps.immutable.empty();
+		}
+		return vertex;
 	}
 
 	public void setVertexIndex(int vertexIndex) {

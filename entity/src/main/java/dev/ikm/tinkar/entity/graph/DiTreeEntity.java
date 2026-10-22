@@ -17,6 +17,7 @@ package dev.ikm.tinkar.entity.graph;
 
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.Vertex;
+import dev.ikm.tinkar.common.service.EntityRecordFormat3;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -77,15 +78,17 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
     }
 
     public static DiTreeEntity make(ByteBuf readBuf, byte entityFormatVersion) {
-        boolean format2 = entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec2.FORMAT;
-        if (entityFormatVersion != ENTITY_FORMAT_VERSION && !format2) {
+        if (entityFormatVersion == dev.ikm.tinkar.entity.EntityCodec3.FORMAT) {
+            return read3(readBuf);
+        }
+        if (entityFormatVersion != ENTITY_FORMAT_VERSION) {
             throw new IllegalStateException("Unsupported entity format version: " + entityFormatVersion);
         }
 
         ImmutableList<EntityVertex> vertexMap = readVertexEntities(readBuf, entityFormatVersion);
         ImmutableIntObjectMap<ImmutableIntList> successorMap = readIntIntListMap(readBuf, entityFormatVersion);
 
-        int predecessorMapSize = format2 ? readBuf.readVarInt() : readBuf.readInt();
+        int predecessorMapSize = readBuf.readInt();
         MutableIntIntMap predecessorMap = IntIntMaps.mutable.ofInitialCapacity(predecessorMapSize);
         for (int i = 0; i < predecessorMapSize; i++) {
             predecessorMap.put(readBuf.readInt(), readBuf.readInt());
@@ -96,6 +99,32 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
         return new DiTreeEntity(vertexMap.get(rootVertexIndex), vertexMap,
                 successorMap, predecessorMap.toImmutable());
 
+    }
+
+    /**
+     * Reads a tree {@link DiTreeAbstract#write3} wrote, its predecessors rebuilt from its
+     * successors unless the tree wrote them (IKE-Network/ike-issues#1313).
+     *
+     * @param readBuf the buffer
+     * @return the tree
+     */
+    public static DiTreeEntity read3(ByteBuf readBuf) {
+        ImmutableList<EntityVertex> vertexMap = readVertices3(readBuf);
+        int count = vertexMap.size();
+        ImmutableIntObjectMap<ImmutableIntList> successorMap = readAdjacency3(readBuf, count);
+        int flaggedRoot = readBuf.readVarInt();
+        MutableIntIntMap predecessorMap;
+        if ((flaggedRoot & 1) == 0) {
+            predecessorMap = IntIntMaps.mutable.ofInitialCapacity(count);
+            successorMap.forEachKeyValue((parent, children) -> children.forEach(child -> predecessorMap.put(child, parent)));
+        } else {
+            int entries = readBuf.readVarInt();
+            predecessorMap = IntIntMaps.mutable.ofInitialCapacity(entries);
+            for (int i = 0; i < entries; i++) {
+                predecessorMap.put(EntityRecordFormat3.readSignedVarInt(readBuf), EntityRecordFormat3.readSignedVarInt(readBuf));
+            }
+        }
+        return new DiTreeEntity(vertexMap.get(flaggedRoot >>> 1), vertexMap, successorMap, predecessorMap.toImmutable());
     }
 
     public static DiTreeEntity.Builder builder() {

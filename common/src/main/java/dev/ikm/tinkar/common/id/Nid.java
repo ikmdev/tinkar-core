@@ -79,6 +79,21 @@ public interface Nid {
     int MAX_SEQUENCE_64 = Integer.MAX_VALUE - 1;
 
     /**
+     * The pattern half of every pattern's 64-bit nid: the pattern-of-patterns' own element
+     * sequence. A pattern's element half is the pattern half of its semantics' nids.
+     */
+    int PATTERN_OF_PATTERNS_SEQUENCE_64 = 1;
+
+    /** The pattern half of a concept's 64-bit nid: the concept pattern, element 2 of the pattern-of-patterns. */
+    int CONCEPT_SEQUENCE_64 = 2;
+
+    /** The pattern half of a STAMP's 64-bit nid: the stamp pattern, element 3 of the pattern-of-patterns. */
+    int STAMP_SEQUENCE_64 = 3;
+
+    /** The first pattern half a semantic's 64-bit nid can have; the three before it are fixed. */
+    int FIRST_SEMANTIC_SEQUENCE_64 = 4;
+
+    /**
      * Whether a value is the none sentinel, in either form.
      *
      * @param nid the value

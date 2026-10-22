@@ -21,7 +21,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.EntityRecordFormat2;
+import dev.ikm.tinkar.common.service.EntityRecordFormat3;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.TrackingCallable;
@@ -350,8 +350,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             int at = position.getIfAbsent(nid, -1);
             if (at >= 0) {
                 // A format-2 record names its UUIDs up front; an older record (a legacy store) is decoded for them.
-                ids[at] = EntityRecordFormat2.isFormat2(bytes)
-                        ? PublicIds.of(EntityRecordFormat2.uuids(bytes).toArray(new UUID[0]))
+                ids[at] = EntityRecordFormat3.isFormat3(bytes)
+                        ? PublicIds.of(EntityRecordFormat3.uuids(bytes).toArray(new UUID[0]))
                         : EntityRecordFactory.make(bytes).publicId();
             }
         });
@@ -732,7 +732,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         /** Files one entity: by kind, a semantic by its pattern; one whose every version is canceled carries no record. */
         private void file(long nid, Entity<?> entity) {
             if (entity.versions().isEmpty()) {
-                // Every version canceled: the record reads with none (EntityCodec2.read leaves a
+                // Every version canceled: the record reads with none (EntityCodec3.read leaves a
                 // canceled version out), so there is nothing to carry. Its identity travels only
                 // if a record refers to it, as a referenced-only entry of the component table
                 // (IKE-Network/ike-issues#1276).
