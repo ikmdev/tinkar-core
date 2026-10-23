@@ -257,8 +257,10 @@ public enum NidLayout {
      * stamp, a STAMP's concepts, a pattern's concepts, a {@code CONCEPT} or {@code PATTERN}
      * field, a graph vertex's meaning and property keys) only the element half; counts, lengths
      * and vertex indexes are varints; an id set is grouped by pattern; and UUIDs keep their fixed
-     * width. Format 2, the first 64-bit format, was retired on 2026-10-21 before any store but a
-     * test's held it (IKE-Network/ike-issues#1313): a store that records it refuses to open.
+     * width. Format 2, the first 64-bit format, was replaced on 2026-10-21 and is still read
+     * ({@code EntityFormat2}, which also upgrades a record to format 3): a 64-bit Rocks store that
+     * records it opens as it is, converting each record as it is read, and rewrites itself in
+     * format 3 when opened with {@code -Drocks.upgradeEntityFormat=true} (IKE-Network/ike-issues#1313).
      */
     public static final byte ENTITY_FORMAT_3 = 3;
 

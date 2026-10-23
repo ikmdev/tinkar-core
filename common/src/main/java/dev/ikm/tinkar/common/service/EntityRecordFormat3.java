@@ -68,8 +68,8 @@ import java.util.function.LongPredicate;
  * activej's {@link ByteBuf}; counts and lengths are never negative.
  *
  * <p>A format 1 record begins with the high byte of its part count, which is 0, so the first
- * byte tells the formats apart. A record that begins with 2 is one of format 2, retired on
- * 2026-10-21 before any store but a test's held it, and is refused.
+ * byte tells the formats apart. A record that begins with 2 is one of format 2, the first 64-bit
+ * format, which this envelope does not parse: {@code EntityFormat2} reads it and upgrades it.
  */
 public final class EntityRecordFormat3 {
 
@@ -115,8 +115,8 @@ public final class EntityRecordFormat3 {
 
     private static IllegalArgumentException notFormat3(byte[] record) {
         if (record != null && record.length > 0 && record[0] == RETIRED_FORMAT_2) {
-            return new IllegalArgumentException("A record of entity format 2, retired on 2026-10-21 "
-                    + "(IKE-Network/ike-issues#1313): rebuild the store from its change sets");
+            return new IllegalArgumentException("A record of entity format 2, which the format 3 envelope does not parse: "
+                    + "read it with EntityFormat2, or upgrade the store to format 3 (IKE-Network/ike-issues#1313)");
         }
         return new IllegalArgumentException("Not a format 3 entity record: "
                 + (record == null ? "null" : record.length == 0 ? "empty" : "first byte " + record[0]));
