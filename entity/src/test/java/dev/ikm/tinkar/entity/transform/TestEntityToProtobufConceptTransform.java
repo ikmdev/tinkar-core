@@ -15,8 +15,6 @@
  */
 package dev.ikm.tinkar.entity.transform;
 
-import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
@@ -39,6 +37,7 @@ import java.util.UUID;
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestEntityToProtobufConceptTransform {
@@ -60,7 +59,6 @@ public class TestEntityToProtobufConceptTransform {
     public void testStampEntityWithEmptyVersions() {
         // Given a StampEntity with empty versions
         UUID uuid = UUID.randomUUID();
-        PublicId randomPublicID = PublicIds.of(uuid);
         RecordListBuilder<StampVersionRecord> emptyVersions = RecordListBuilder.make();
         emptyVersions.build();
         StampRecord stampRecord = new StampRecord(
@@ -71,9 +69,10 @@ public class TestEntityToProtobufConceptTransform {
                 emptyVersions);
 
         // When/Then - should throw because versions is empty
-        assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
-                .createPBStampChronology(stampRecord), "Unexpected number of version size: 0 " +
-                " for stamp entity: " + randomPublicID);
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
+                .createPBStampChronology(stampRecord));
+        assertTrue(thrown.getMessage().startsWith("Unexpected number of version size: 0 for stamp entity: "),
+                thrown.getMessage());
     }
 
     @Test
@@ -82,7 +81,6 @@ public class TestEntityToProtobufConceptTransform {
         // Given a StampEntity with three versions
         // We need a StampRecord with 3 versions. StampVersionRecord requires non-zero nids.
         UUID uuid = UUID.randomUUID();
-        PublicId randomPublicID = PublicIds.of(uuid);
         RecordListBuilder<StampVersionRecord> versions = RecordListBuilder.make();
         StampRecord stampRecord = new StampRecord(
                 uuid.getMostSignificantBits(),
@@ -97,9 +95,10 @@ public class TestEntityToProtobufConceptTransform {
         versions.build();
 
         // When/Then - should throw because versions > 2
-        assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
-                .createPBStampChronology(stampRecord), "Unexpected number of version size: 3" +
-                " for stamp entity: " + randomPublicID);
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
+                .createPBStampChronology(stampRecord));
+        assertTrue(thrown.getMessage().startsWith("Unexpected number of version size: 3 for stamp entity: "),
+                thrown.getMessage());
     }
 
     @Test

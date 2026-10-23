@@ -252,6 +252,9 @@ public class TinkarSchemaToEntityTransformer {
             throw new RuntimeException("Exception thrown, STAMP Public is null.");
         }
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
+        if (!stampChronology.hasFirstStampVersion()) {
+            throw new IllegalStateException("Missing first Stamp version from the Stamp Chronology");
+        }
         PublicId stampPublicId = transformPublicId(stampChronology.getPublicId());
         StampRecord stampRecord;
         if (stampPublicId.uuidCount() > 0) {
@@ -267,11 +270,7 @@ public class TinkarSchemaToEntityTransformer {
         } else {
             throw new IllegalStateException("No UUIDs in PublicId.");
         }
-        if(stampChronology.hasFirstStampVersion()){
-            stampVersions.add(transformStampVersion(stampChronology.getFirstStampVersion(), stampRecord));
-        }else{
-            throw new IllegalStateException("Missing first Stamp version from the Stamp Chronology");
-        }
+        stampVersions.add(transformStampVersion(stampChronology.getFirstStampVersion(), stampRecord));
         if(stampChronology.hasSecondStampVersion()){
             stampVersions.add(transformStampVersion(stampChronology.getSecondStampVersion(), stampRecord));
         }
@@ -283,6 +282,12 @@ public class TinkarSchemaToEntityTransformer {
         return (StampRecord) stampEntity;
     }
     protected StampVersionRecord transformStampVersion(StampVersion pbStampVersion, StampRecord stampRecord){
+         // Every field checked before any is resolved, so the refusal names the one missing rather
+         // than whatever resolving the others ran into.
+         requireStampField(pbStampVersion.getStatusPublicId(), "a status");
+         requireStampField(pbStampVersion.getAuthorPublicId(), "an author");
+         requireStampField(pbStampVersion.getModulePublicId(), "a module");
+         requireStampField(pbStampVersion.getPathPublicId(), "a path");
          return StampVersionRecordBuilder.builder()
                 .chronology(stampRecord)
                 .stateNid(nidForConcept(pbStampVersion.getStatusPublicId()))
@@ -292,6 +297,13 @@ public class TinkarSchemaToEntityTransformer {
                 .pathNid(nidForConcept(pbStampVersion.getPathPublicId()))
                 .build();
     }
+    /** Refuses a STAMP version field with no public id: neither a UUID nor a sequence. */
+    private static void requireStampField(dev.ikm.tinkar.schema.PublicId publicId, String field) {
+        if (!bySequence(publicId) && !SchemaIds.hasUuids(publicId)) {
+            throw new IllegalStateException("A STAMP version needs " + field + " public id");
+        }
+    }
+
     //Field Definition Transformation
     //This creates PBFieldDefinition (line 256 in Tinkar.proto)
     protected FieldDefinitionRecord transformFieldDefinitionRecord(FieldDefinition pbFieldDefinition,

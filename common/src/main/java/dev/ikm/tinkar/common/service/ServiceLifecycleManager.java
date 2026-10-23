@@ -1095,7 +1095,10 @@ public class ServiceLifecycleManager {
             }
         }
 
-        LOG.warn("Service {} not found. Active services: {}. State: {}",
+        // Not a warning: absence is the answer the Optional gives, and an optional service — the
+        // remote concept search, absent over a local store — is asked for in ordinary use. A
+        // caller that needs the service refuses with its own message.
+        LOG.debug("Service {} not found. Active services: {}. State: {}",
                 serviceType.getSimpleName(),
                 activeServices.keySet().stream()
                         .map(Class::getSimpleName)

@@ -20,8 +20,6 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,15 +31,12 @@ public class TransactionTest {
     NOTE: method addComponent(long entityNid) is not being used anywhere, but in this Test Class so far.
      */
 
-    private static final Logger LOG = LoggerFactory.getLogger(TransactionTest.class);
-
     @Test
     @Order(1)
     /*
     Test with value Not equals to Zero
      */
     public void testAddComponentNotZero() {
-        LOG.warn("Test addComponent(entityNid) Not Zero");
 
         Transaction transaction = new Transaction();
         long actualEntityNid = 6;
@@ -58,7 +53,6 @@ public class TransactionTest {
     Test expecting Exception
      */
     public void testAddComponentWithZeroFail() {
-        LOG.warn("Test addComponent(entityNid) throws IllegalStateException when entityNid = 0");
 
         Transaction transaction = new Transaction();
         assertThrows(IllegalStateException.class, () -> transaction.addComponent(0));
@@ -70,7 +64,6 @@ public class TransactionTest {
     Test with Negative value
      */
     public void testAddComponentWithNegative() {
-        LOG.warn("Test addComponent(entityNid) with Negative Values");
 
         Transaction transaction = new Transaction();
         long actualEntityNid = -1;

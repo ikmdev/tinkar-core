@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -61,8 +62,9 @@ public class TestProtobufToEntityStampTransform {
 
         // When we transform PBStampVersion
         // Then we will throw a Runtime exception
-        assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance()
-                .transformStampVersion(pbStampVersion, null), "Not allowed to have empty UUID for status.");
+        IllegalStateException refused = assertThrows(IllegalStateException.class, () -> TinkarSchemaToEntityTransformer.getInstance()
+                .transformStampVersion(pbStampVersion, null));
+        assertEquals("A STAMP version needs a status public id", refused.getMessage());
     }
 
     @Test
@@ -79,8 +81,9 @@ public class TestProtobufToEntityStampTransform {
 
         // When we transform PBStampVersion
         // Then we will throw a Runtime exception
-        assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance()
-                .transformStampVersion(pbStampVersion, null), "Not allowed to have empty UUID for author.");
+        IllegalStateException refused = assertThrows(IllegalStateException.class, () -> TinkarSchemaToEntityTransformer.getInstance()
+                .transformStampVersion(pbStampVersion, null));
+        assertEquals("A STAMP version needs an author public id", refused.getMessage());
     }
 
     @Test
@@ -97,8 +100,9 @@ public class TestProtobufToEntityStampTransform {
 
         // When we transform PBStampVersion
         // Then we will throw a Runtime exception
-        assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance()
-                .transformStampVersion(pbStampVersion, null), "Not allowed to have empty UUID for module.");
+        IllegalStateException refused = assertThrows(IllegalStateException.class, () -> TinkarSchemaToEntityTransformer.getInstance()
+                .transformStampVersion(pbStampVersion, null));
+        assertEquals("A STAMP version needs a module public id", refused.getMessage());
     }
 
     @Test
@@ -115,8 +119,9 @@ public class TestProtobufToEntityStampTransform {
 
         // When we transform PBStampVersion
         // Then we will throw a Runtime exception
-        assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance()
-                .transformStampVersion(pbStampVersion, null), "Not allowed to have empty UUID for path.");
+        IllegalStateException refused = assertThrows(IllegalStateException.class, () -> TinkarSchemaToEntityTransformer.getInstance()
+                .transformStampVersion(pbStampVersion, null));
+        assertEquals("A STAMP version needs a path public id", refused.getMessage());
     }
 
     @Test
@@ -125,12 +130,13 @@ public class TestProtobufToEntityStampTransform {
         Consumer<StampEntity<StampEntityVersion>> stampConsumer = (c) -> { };
         // Given a PBStampChronology with a no Stamp Versions present
         StampChronology pbStampChronology = StampChronology.newBuilder()
-                .setPublicId(createPBPublicId())
+                .setPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                 .build();
 
         // When we transform PBStampChronology
-        // Then we will throw a Runtime exception
-        assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance()
-                .transformStampChronology(pbStampChronology, stampConsumer), "Not allowed to have no stamp versions.");
+        // Then it is refused for having no versions
+        IllegalStateException refused = assertThrows(IllegalStateException.class, () -> TinkarSchemaToEntityTransformer.getInstance()
+                .transformStampChronology(pbStampChronology, stampConsumer));
+        assertEquals("Missing first Stamp version from the Stamp Chronology", refused.getMessage());
     }
 }

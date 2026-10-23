@@ -19,8 +19,6 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static dev.ikm.tinkar.common.service.PrimitiveDataService.STAMP_DATA_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,8 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PrimitiveDataServiceTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PrimitiveDataServiceTest.class);
 
     @Test
     @Order(1)
@@ -39,7 +35,6 @@ public class PrimitiveDataServiceTest {
     public void testStampDataType() {
         byte actual_stamp_data_type = 7;
 
-        LOG.warn("Comparing Expected and Actual Byte stamp_data_type!");
         assertEquals(STAMP_DATA_TYPE, actual_stamp_data_type);
     }
 
@@ -51,7 +46,6 @@ public class PrimitiveDataServiceTest {
     public void testStampDataTypeFail() {
         byte actual_stamp_data_type = 6;
 
-        LOG.warn("Comparing Expected and Actual Byte stamp_data_type!");
         assertNotEquals(STAMP_DATA_TYPE, actual_stamp_data_type);
     }
 

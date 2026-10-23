@@ -15,8 +15,6 @@
  */
 package dev.ikm.tinkar.entity.transform;
 
-import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.StampRecord;
@@ -32,6 +30,7 @@ import java.util.UUID;
 
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestEntityToProtobufStampTransform {
@@ -53,7 +52,6 @@ public class TestEntityToProtobufStampTransform {
     public void stampChronologyTransformWithZeroVersions() {
         // Given a StampEntity with zero versions
         UUID uuid = UUID.randomUUID();
-        PublicId randomPublicID = PublicIds.of(uuid);
         RecordListBuilder<StampVersionRecord> emptyVersions = RecordListBuilder.make();
         emptyVersions.build();
         StampRecord stampRecord = new StampRecord(
@@ -65,8 +63,10 @@ public class TestEntityToProtobufStampTransform {
 
         // When we transform our StampVersion into a PBStampVersion
         // Then the resulting PBStampVersion should throw an exception because there is an empty stamp version.
-        assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance()
-                .createPBStampChronology(stampRecord), "Not allowed to have an empty stamp version in a StampChronology.");
+        RuntimeException refused = assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
+                .createPBStampChronology(stampRecord));
+        assertTrue(refused.getMessage().startsWith("Unexpected number of version size: 0 for stamp entity: "),
+                refused.getMessage());
     }
     //TODO: Add test to check if a stamp chronology can be created with two stamp version of the same type (and time).
 }

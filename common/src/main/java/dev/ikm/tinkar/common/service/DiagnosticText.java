@@ -140,6 +140,9 @@ public final class DiagnosticText {
 
     /** The UUIDs of the public id the store has for a nid, or empty when it has none. */
     private static Optional<UUID[]> uuids(long nid) {
+        if (!PrimitiveData.running()) {
+            return Optional.empty();                    // no store to ask, as in a message built before one starts
+        }
         try {
             return uuids(PrimitiveData.publicId(nid));
         } catch (RuntimeException noPublicIdForTheNid) {
@@ -176,6 +179,9 @@ public final class DiagnosticText {
      * not hold.
      */
     private static Optional<String> description(PublicId publicId) {
+        if (!PrimitiveData.running()) {
+            return Optional.empty();
+        }
         try {
             PrimitiveDataService store = PrimitiveData.get();
             if (!store.hasPublicId(publicId)) {
