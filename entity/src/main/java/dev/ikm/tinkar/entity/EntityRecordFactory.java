@@ -488,6 +488,9 @@ public class EntityRecordFactory {
      * a fluent API that better manages type determination.
      */
     public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
+        if (EntityFormat2.isFormat2(data)) {
+            return EntityFormat2.read(data);             // a store created before format 3
+        }
         if (data != null && data.length > 0 && data[0] != 0) {
             return EntityCodec3.read(data);              // refuses any but format 3
         }
@@ -695,6 +698,9 @@ public class EntityRecordFactory {
     public static Object readFieldData(ByteBuf readBuf, FieldDataType dataType, byte formatVersion) {
         if (formatVersion == NidLayout.ENTITY_FORMAT_3) {
             return EntityCodec3.readField(readBuf, dataType);
+        }
+        if (formatVersion == EntityFormat2.FORMAT) {
+            return EntityFormat2.readField(readBuf, dataType);
         }
         return switch (dataType) {
             case BOOLEAN -> readBuf.readBoolean();

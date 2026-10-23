@@ -559,6 +559,28 @@ public class EntityVertex implements Vertex, VertexId {
 	}
 
 	/**
+	 * A vertex with every part given, as a reader of a retired record format decodes it
+	 * ({@code EntityFormat2}).
+	 *
+	 * @param mostSignificantBits  the vertex UUID's most significant bits
+	 * @param leastSignificantBits the vertex UUID's least significant bits
+	 * @param vertexIndex          the vertex's index in its graph
+	 * @param meaningNid           the meaning's nid
+	 * @param properties           the properties, each a concept's nid and its value
+	 * @return the vertex
+	 */
+	public static EntityVertex of(long mostSignificantBits, long leastSignificantBits, int vertexIndex,
+								  long meaningNid, ImmutableLongObjectMap<Object> properties) {
+		EntityVertex vertex = new EntityVertex();
+		vertex.mostSignificantBits = mostSignificantBits;
+		vertex.leastSignificantBits = leastSignificantBits;
+		vertex.vertexIndex = vertexIndex;
+		vertex.meaningNid = meaningNid;
+		vertex.properties = properties;
+		return vertex;
+	}
+
+	/**
 	 * Reads a vertex {@link #write3} wrote.
 	 *
 	 * @param buf         the buffer
