@@ -79,7 +79,7 @@ public record PatternVersionRecord(PatternRecord chronology, long stampNid,
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("≤");
-        sb.append(Entity.getStamp(stampNid).describe());
+        sb.append(EntityText.stamp(stampNid));
 
         sb.append(" rcp: ");
         sb.append(PrimitiveData.text(semanticPurposeNid));

@@ -54,6 +54,26 @@ public final class EntityText {
     }
 
     /**
+     * A STAMP as a version's text names it: the STAMP described, or its identification and that
+     * the store does not hold it — a version can be read before its STAMP is stored, as a load
+     * writing in parallel does, or after a change set left it out.
+     *
+     * @param stampNid the STAMP's nid
+     * @return the STAMP described; a note naming it when the store does not hold it
+     */
+    public static String stamp(long stampNid) {
+        try {
+            StampEntity<?> stamp = Entity.getStamp(stampNid);
+            if (stamp != null) {
+                return stamp.describe();
+            }
+        } catch (RuntimeException malformed) {
+            return "a STAMP that cannot be written (" + malformed.getClass().getSimpleName() + ")";
+        }
+        return "STAMP " + DiagnosticText.component(stampNid) + ", which this store does not hold";
+    }
+
+    /**
      * The kind of a version, the identification of its entity, and the identification of its
      * stamp.
      *

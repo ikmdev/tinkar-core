@@ -25,6 +25,7 @@ import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -52,6 +53,8 @@ class UuidsAddedToComponentIT {
     @BeforeAll
     void start() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        // The base the set's references resolve to: the kernel and the starter set.
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @AfterAll

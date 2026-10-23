@@ -361,9 +361,6 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                                                 return null;
 
                                             });
-                                } catch (Throwable t) {
-                                    LOG.error("Unhandled exception in identifier subtask for msg: {}", pbTinkarMsg, t);
-                                    throw t; // preserve failure semantics
                                 } finally {
                                     permits.release();
                                 }

@@ -681,11 +681,11 @@ public class InferredResultsWriter {
 	}
 
 	private void logEmptyNavigationSets(long conceptNid, ImmutableLongSet parentNids, ImmutableLongSet childNids) {
-		if (parentNids.isEmpty()) {
+		// The root has no parents: that is what makes it the root. Any other concept without them
+		// has fallen out of the taxonomy.
+		if (parentNids.isEmpty() && conceptNid != rootConceptNid) {
 			int count = emptyParentCount.incrementAndGet();
-			if (conceptNid == rootConceptNid) {
-				LOG.warn("Empty parent set for root concept nid={} ({})", conceptNid, PrimitiveData.text(conceptNid));
-			} else if (count > 1) {
+			if (count > 1) {
 				LOG.error("Multiple concepts with empty parent sets. Count={}, latest nid={} ({}), rootNid={} ({})",
 						count, conceptNid, PrimitiveData.text(conceptNid), rootConceptNid,
 						PrimitiveData.text(rootConceptNid));

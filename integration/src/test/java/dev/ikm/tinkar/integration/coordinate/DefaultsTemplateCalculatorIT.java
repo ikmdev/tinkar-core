@@ -35,6 +35,7 @@ import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
@@ -86,6 +87,8 @@ class DefaultsTemplateCalculatorIT {
     @BeforeAll
     static void composeAndWrite() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        // The base the set's references resolve to: the kernel and the starter set.
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
 
         PatternFacade p1 = TEST_SET.patternRef(P1_FQN);
         PatternFacade p2 = TEST_SET.patternRef(P2_FQN);

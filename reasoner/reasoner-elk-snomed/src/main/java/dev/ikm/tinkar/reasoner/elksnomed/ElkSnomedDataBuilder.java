@@ -26,7 +26,6 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.interval.Interval;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRole;
@@ -161,47 +160,47 @@ public class ElkSnomedDataBuilder {
 		}
 	}
 
+	/**
+	 * Places each role type in the concept taxonomy under the concepts of its super role types, as
+	 * SNOMED CT places an attribute. A role type with no super role type is a root of the role
+	 * hierarchy — SNOMED CT's concept model attribute roots, the IKE starter set's Role type — and its
+	 * concept keeps the definition it is stated with, which places it in the taxonomy: rebuilt from
+	 * its super role types it would have no parent, and every role under it would fall out of the
+	 * taxonomy with it.
+	 */
 	private void buildRoleConcepts() {
-		// Create concepts for role types and concrete role types
 		// Should eventually do this in the write back of inferred
-		var objectAttributeRoot = ElkSnomedData.tryGetNid(SnomedIds.concept_model_object_attribute);
-		var dataAttributeRoot = ElkSnomedData.tryGetNid(SnomedIds.concept_model_data_attribute);
 		for (RoleType role : data.getRoleTypes()) {
-			if (objectAttributeRoot.isPresent() && objectAttributeRoot.getAsLong() == role.getId()) {
-				LOG.info("Skipping root " + PrimitiveData.text(role.getId()));
+			if (role.getSuperRoleTypes().isEmpty()) {
 				continue;
 			}
-			Concept con = data.getOrCreateConcept(role.getId());
-			if (!con.getDefinitions().isEmpty()) {
-				LOG.error("Has defs: " + con);
-				con.removeAllDefinitions();
-			}
-			Definition def = new Definition();
-			def.setDefinitionType(DefinitionType.SubConcept);
-			con.addDefinition(def);
+			Definition def = replaceDefinitions(role.getId());
 			for (RoleType sup_role : role.getSuperRoleTypes()) {
-				Concept sup_con = data.getOrCreateConcept(sup_role.getId());
-				def.addSuperConcept(sup_con);
+				def.addSuperConcept(data.getOrCreateConcept(sup_role.getId()));
 			}
 		}
 		for (ConcreteRoleType role : data.getConcreteRoleTypes()) {
-			if (dataAttributeRoot.isPresent() && dataAttributeRoot.getAsLong() == role.getId()) {
-				LOG.info("Skipping root " + PrimitiveData.text(role.getId()));
+			if (role.getSuperConcreteRoleTypes().isEmpty()) {
 				continue;
 			}
-			Concept con = data.getOrCreateConcept(role.getId());
-			if (!con.getDefinitions().isEmpty()) {
-				LOG.error("Has defs: " + con);
-				con.removeAllDefinitions();
-			}
-			Definition def = new Definition();
-			def.setDefinitionType(DefinitionType.SubConcept);
-			con.addDefinition(def);
+			Definition def = replaceDefinitions(role.getId());
 			for (ConcreteRoleType sup_role : role.getSuperConcreteRoleTypes()) {
-				Concept sup_con = data.getOrCreateConcept(sup_role.getId());
-				def.addSuperConcept(sup_con);
+				def.addSuperConcept(data.getOrCreateConcept(sup_role.getId()));
 			}
 		}
+	}
+
+	/** The role type's concept, its stated definitions replaced by one new primitive definition, returned. */
+	private Definition replaceDefinitions(long roleNid) {
+		Concept con = data.getOrCreateConcept(roleNid);
+		if (!con.getDefinitions().isEmpty()) {
+			LOG.error("Has defs: " + con);
+			con.removeAllDefinitions();
+		}
+		Definition def = new Definition();
+		def.setDefinitionType(DefinitionType.SubConcept);
+		con.addDefinition(def);
+		return def;
 	}
 
 	public Concept processDelete(long nid) {

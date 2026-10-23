@@ -55,7 +55,7 @@ public record ConceptVersionRecord(ConceptRecord chronology, long stampNid)
 
     @Override
     public String toString() {
-        return stamp().describe();
+        return EntityText.stamp(stampNid);
     }
 
 }

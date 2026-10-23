@@ -21,7 +21,6 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
-import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.provider.entity.EntityProvider;
 import dev.ikm.tinkar.common.service.DataServiceController;
@@ -373,22 +372,20 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
             ));
         }
         
-        // Check if EntityProvider caches have content
+        // Check if EntityProvider caches have content. The cache is static, so it is read without
+        // asking for the entity service, which no store has started yet.
         try {
-            EntityService service = EntityService.get();
-            if (service instanceof EntityProvider provider) {
-                // Use reflection to check cache sizes (they're private)
-                Field entityCacheField = EntityProvider.class.getDeclaredField("ENTITY_CACHE");
-                entityCacheField.setAccessible(true);
-                Cache<?, ?> entityCache = (Cache<?, ?>) entityCacheField.get(null);
-                long cacheSize = entityCache.estimatedSize();
-                
-                if (cacheSize > 0) {
-                    pollutionWarnings.add(String.format(
-                        "EntityProvider.ENTITY_CACHE contains %,d entries (expected 0)",
-                        cacheSize
-                    ));
-                }
+            // Use reflection to check cache sizes (they're private)
+            Field entityCacheField = EntityProvider.class.getDeclaredField("ENTITY_CACHE");
+            entityCacheField.setAccessible(true);
+            Cache<?, ?> entityCache = (Cache<?, ?>) entityCacheField.get(null);
+            long cacheSize = entityCache.estimatedSize();
+
+            if (cacheSize > 0) {
+                pollutionWarnings.add(String.format(
+                    "EntityProvider.ENTITY_CACHE contains %,d entries (expected 0)",
+                    cacheSize
+                ));
             }
         } catch (Exception e) {
             LOG.debug("Could not check EntityProvider cache state: {}", e.getMessage());

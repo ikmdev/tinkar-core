@@ -75,9 +75,8 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
                     return (File) obj;
                 })
                 .orElseGet(() -> {
-                    LOG.warn("DATA_STORE_ROOT not set in ServiceProperties");
-                    LOG.warn("This is expected for an in-memory store (the spined array's ephemeral mode)");
-                    LOG.warn("For persistent stores (RocksProvider, SpinedArrayProvider), ensure DATA_STORE_ROOT is set during DATA_STORAGE phase");
+                    // No root is the in-memory or remote-backed case: a persistent store cannot open
+                    // without one, and sets it in its DATA_STORAGE phase, before this runs.
                     // Use a unique directory based on JVM UUID to avoid lock conflicts in tests
                     String jvmUuid = ServiceProperties.jvmUuid();
                     // defaultDataDirectory is RELATIVE ("target/lucene/"), so it resolves against
@@ -97,7 +96,8 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
                                 workingDirectory.getAbsolutePath(), base.getAbsolutePath());
                     }
                     File uniqueDir = new File(base, jvmUuid);
-                    LOG.info("Using unique Lucene index location: {}", uniqueDir.getAbsolutePath());
+                    LOG.info("No DATA_STORE_ROOT, as for an in-memory store: the Lucene index is kept at {}",
+                            uniqueDir.getAbsolutePath());
                     return uniqueDir;
                 });
         this(datastoreRoot);

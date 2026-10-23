@@ -23,7 +23,6 @@ import dev.ikm.tinkar.fixtures.NewEphemeralKeyValueProvider;
 import dev.ikm.tinkar.integration.snomed.core.MockEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +46,6 @@ class SnomedLanguageSemanticMultipleVersionsIT {
 
     @Test
     @DisplayName("Language Acceptability Semantic with multiple versions")
-    @Order(1)
     void createLanguageAcceptabilitySemanticMultipleVersions() {
         String input = "der2_cRefset_LanguageFull-en_US1000124_20220901_5.txt";
         List<SemanticRecord> semanticRecordList = createLanguageAcceptabilitySemantic(input);
@@ -61,7 +59,6 @@ class SnomedLanguageSemanticMultipleVersionsIT {
 
     @Test
     @DisplayName("Test Language Acceptability Semantic records data")
-    @Order(2)
     void createLanguageAcceptabilitySemanticVersionsTestWithRealData() {
         String input = "der2_cRefset_LanguageFull-en_US1000124_20220901_5.txt";
         List<SemanticRecord> semanticRecordList = createLanguageAcceptabilitySemantic(input);
@@ -90,7 +87,6 @@ class SnomedLanguageSemanticMultipleVersionsIT {
 
     @Test
     @DisplayName("Test Language Acceptability Semantic records")
-    @Order(3)
     void createLanguageAcceptabilitySemanticVersionChronologyTest() {
         String input = "der2_cRefset_LanguageFull-en_US1000124_20220901_5.txt";
         List<SemanticRecord> semanticRecordList = createLanguageAcceptabilitySemantic(input);

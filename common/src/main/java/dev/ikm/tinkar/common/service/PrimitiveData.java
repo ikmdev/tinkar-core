@@ -90,7 +90,10 @@ public class PrimitiveData {
 
         if (!lifecycleManager.isRunning()) {
             LOG.info("Starting ServiceLifecycleManager...");
-            lifecycleManager.discoverServices();
+            // Discovery may have run already: listing the controllers to choose one discovers them.
+            if (!lifecycleManager.isDiscovered()) {
+                lifecycleManager.discoverServices();
+            }
             // Note: prepareStartup() is called automatically by startServices()
             // after any GUI/programmatic selections have been made
             lifecycleManager.startServices();

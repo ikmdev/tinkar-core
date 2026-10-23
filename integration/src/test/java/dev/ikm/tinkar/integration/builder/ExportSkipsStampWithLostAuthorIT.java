@@ -13,6 +13,7 @@ import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.State;
@@ -44,6 +45,8 @@ class ExportSkipsStampWithLostAuthorIT {
     @BeforeAll
     static void beforeAll() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        // The base the set's references resolve to: the kernel and the starter set.
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @AfterAll
@@ -54,7 +57,7 @@ class ExportSkipsStampWithLostAuthorIT {
     @Test
     void anExportSkipsTheStampAndCompletes() throws Exception {
         KnowledgeSet set = KnowledgeSet.of("88888888-8888-5888-9888-888888888888");
-        ActiveStamp stamp = Stamp.active("2026-07-03T00:00:00Z",
+        ActiveStamp stamp = Stamp.active("2030-01-01T00:00:00Z",
                 set.conceptRef("Lost probe author (Probe)"),
                 set.conceptRef("Lost probe module (Probe)"),
                 KernelConcept.DEVELOPMENT_PATH);
@@ -67,12 +70,13 @@ class ExportSkipsStampWithLostAuthorIT {
         long lostAuthorNid = EntityService.get().nidForConcept(PublicIds.of(UUID.randomUUID())) + 100_000;
         assertThrows(IllegalStateException.class, () -> PrimitiveData.publicId(lostAuthorNid));
         EntityService.get().putEntity(stampWithAuthor(lostAuthorNid,
-                Instant.parse("2026-07-04T00:00:00Z").toEpochMilli()));
+                Instant.parse("2030-01-02T00:00:00Z").toEpochMilli()));
 
         Path out = Path.of(System.getProperty("user.dir")).resolve("target").resolve("export-lost-author.zip");
         Files.deleteIfExists(out);
+        // From the set's own time, after every STAMP of the base: the set and the lost-author stamp, not the base.
         EntityCountSummary summary = new ExportEntitiesToProtobufFile(out.toFile(),
-                new TemporalEntityAggregator(0L, Long.MAX_VALUE)).compute();
+                new TemporalEntityAggregator(Instant.parse("2030-01-01T00:00:00Z").toEpochMilli(), Long.MAX_VALUE)).compute();
 
         assertEquals(2, summary.conceptCount());
         assertEquals(1, summary.stampCount(), "the set's stamp, without the one whose author is lost");

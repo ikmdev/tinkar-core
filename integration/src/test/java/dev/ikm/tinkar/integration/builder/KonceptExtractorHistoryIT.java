@@ -26,6 +26,7 @@ import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.KonceptExtractor;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -62,6 +63,8 @@ class KonceptExtractorHistoryIT {
     @BeforeAll
     static void composeAndWrite() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        // The base the set's references resolve to: the kernel and the starter set.
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
 
         birth = Stamp.active("2020-01-01T00:00:00Z",
                 KernelConcept.USER, IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH);

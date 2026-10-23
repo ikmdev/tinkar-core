@@ -34,6 +34,7 @@ import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.State;
@@ -99,6 +100,8 @@ class EstablishedRetirementBuilderIT {
     @BeforeAll
     static void composeAndWrite() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        // The base the set's references resolve to: the kernel and the starter set.
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
 
         baseStamp = Stamp.active("2020-01-01T00:00:00Z",
                 KernelConcept.USER, KernelConcept.PRIMORDIAL_MODULE, KernelConcept.PRIMORDIAL_PATH);

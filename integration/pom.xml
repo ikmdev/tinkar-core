@@ -16,6 +16,9 @@
         <!-- log4j's JUL manager defaults to its API adapter, which refuses the JUnit
              provider's Logger.setLevel call and prints three lines in every forked JVM;
              the core adapter honors it. -->
+        <!-- A knowledge set whose references do not resolve within its closure fails the test
+             that writes it, rather than only logging (IKE-Network/ike-issues#937). A JVM option,
+             not a system property, so the ForkedJvm stages a suite starts receive it too. -->
         <failsafeArgLine>
             --enable-preview
             -Xmx12G
@@ -24,6 +27,7 @@
             -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
             -Dlog4j.jul.LoggerAdapter=org.apache.logging.log4j.jul.CoreLoggerAdapter
             -Dorg.apache.lucene.vectorization.upperJavaFeatureVersion=27
+            -DknowledgeSet.enforceClosure=true
         </failsafeArgLine>
         <surefireArgLine>
             --enable-preview

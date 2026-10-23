@@ -4,25 +4,34 @@ import dev.ikm.tinkar.terms.PatternFacade;
 import network.ike.foundation.ike.bindings.IkeConcept;
 import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.SemanticRecordBuilder;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.aggregator.AllowlistEntityAggregator;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.eclipse.collections.api.factory.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -41,10 +50,14 @@ class AllowlistEntityAggregatorIT {
     private ConceptFacade thingA;
     private ConceptFacade thingB;
     private PatternFacade probePattern;
+    /** A semantic in module A whose pattern the store does not hold, so its purpose cannot be resolved. */
+    private long unclassifiable;
 
     @BeforeAll
     void beforeAll() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        // The base the set's references resolve to: the kernel and the starter set.
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
 
         KnowledgeSet set = KnowledgeSet.of("aa1e5000-0000-5000-9000-0000000000aa");
         moduleA = set.conceptRef("Module A (Probe)");
@@ -67,6 +80,31 @@ class AllowlistEntityAggregatorIT {
                 .field(IkeConcept.MEANING, IkeConcept.PURPOSE, KernelConcept.STRING)
                 .synonym("Probe pattern");
         set.write();
+        unclassifiable = writeSemanticOfAnAbsentPattern(stampA);
+    }
+
+    /**
+     * Writes a semantic about Thing A, under module A's STAMP, whose pattern the store does not
+     * hold: written past the set, which would refuse it, as content from a source whose patterns
+     * were not brought along.
+     */
+    private long writeSemanticOfAnAbsentPattern(ActiveStamp stampA) {
+        PublicId absentPattern = PublicIds.of(UUID.nameUUIDFromBytes("AllowlistEntityAggregatorIT absent pattern".getBytes()));
+        UUID semanticUuid = UUID.nameUUIDFromBytes("AllowlistEntityAggregatorIT unclassifiable semantic".getBytes());
+        long patternNid = EntityService.get().nidForPattern(absentPattern);
+        long semanticNid = EntityService.get().nidForSemantic(absentPattern, PublicIds.of(semanticUuid));
+        long stampNid = EntityHandle.get(stampA.publicId()).expectStamp().nid();
+        RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
+        SemanticRecord semantic = SemanticRecordBuilder.builder()
+                .leastSignificantBits(semanticUuid.getLeastSignificantBits())
+                .mostSignificantBits(semanticUuid.getMostSignificantBits())
+                .nid(semanticNid)
+                .patternNid(patternNid)
+                .referencedComponentNid(thingA.nid())
+                .versions(versions).build();
+        versions.add(new SemanticVersionRecord(semantic, stampNid, Lists.immutable.of("of a pattern the store does not hold"))).build();
+        EntityService.get().putEntity(semantic);
+        return semanticNid;
     }
 
     @AfterAll
@@ -107,18 +145,20 @@ class AllowlistEntityAggregatorIT {
     @Test
     void purposePredicateIsOffByDefaultAndFailOpen() {
         List<PublicId> allow = List.of(moduleA.publicId());
-        EntityCountSummary noPredicate = new AllowlistEntityAggregator(allow).aggregate(nid -> { });
-        // Fail-open: purpose never drops a semantic whose pattern-purpose it cannot classify (the
-        // description semantics here sit on kernel patterns absent from this replay-seeded store),
-        // so a reject-everything predicate leaves the semantic count unchanged.
-        EntityCountSummary rejectAll =
-                new AllowlistEntityAggregator(allow, List.of(), List.of(), List.of(), nid -> false).aggregate(nid -> { });
+        List<Long> noPredicate = collect(new AllowlistEntityAggregator(allow));
+        // A predicate rejecting every purpose drops each semantic whose pattern-purpose resolves —
+        // the descriptions, on patterns the store holds — and keeps the one whose pattern it does
+        // not hold: purpose never drops content it cannot classify.
+        List<Long> rejectAll = collect(new AllowlistEntityAggregator(allow, List.of(), List.of(), List.of(), nid -> false));
 
-        assertTrue(noPredicate.semanticCount() > 0, "the allowed module has description semantics");
-        assertEquals(noPredicate.semanticCount(), rejectAll.semanticCount(),
-                "a complementary purpose refinement never drops content it cannot classify");
-        // NOTE: positive purpose exclusion (a reject predicate dropping a semantic on an in-store
-        // pattern) needs a semantic instance, which KnowledgeSet does not yet author — follow-up.
+        assertTrue(noPredicate.contains(unclassifiable), "with no predicate, every semantic of the module is exported");
+        assertTrue(noPredicate.stream().anyMatch(nid -> nid != unclassifiable
+                        && EntityHandle.get(nid).orNull() instanceof SemanticEntity<?>),
+                "the allowed module has description semantics");
+        assertEquals(List.of(unclassifiable), rejectAll.stream()
+                        .filter(nid -> EntityHandle.get(nid).orNull() instanceof SemanticEntity<?>)
+                        .toList(),
+                "only the semantic whose purpose cannot be resolved survives a predicate rejecting every purpose");
     }
 
     @Test

@@ -27,6 +27,7 @@ import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.KonceptExtractor;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
@@ -77,6 +78,8 @@ class KonceptExtractorPatternShapeIT {
     @BeforeAll
     static void composeAndWrite() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        // The base the set's references resolve to: the kernel and the starter set.
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
 
         ActiveStamp birth = Stamp.active("2020-01-01T00:00:00Z",
                 KernelConcept.USER, IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH);

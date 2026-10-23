@@ -174,7 +174,7 @@ class TransactionRecordRestartIT {
         public void run(Properties in, Properties out) {
             out.putAll(in);
             ServiceProperties.set(ServiceKeys.CANCEL_UNCOMMITTED_STAMPS_AT_STARTUP, Boolean.TRUE);
-            TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
+            TestHelper.reopenDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
             try {
                 UUID pendingUuid = UUID.fromString(in.getProperty("pending.uuid"));
                 Transaction pending = Transaction.forUuid(pendingUuid).orElse(null);
@@ -225,7 +225,7 @@ class TransactionRecordRestartIT {
         @Override
         public void run(Properties in, Properties out) {
             out.putAll(in);
-            TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
+            TestHelper.reopenDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
             try {
                 rebuiltAndState(out, "pending", UUID.fromString(in.getProperty("pending.uuid")));
                 out.setProperty("pending.version.committed", Boolean.toString(latest(PENDING_CONCEPT).committed()));

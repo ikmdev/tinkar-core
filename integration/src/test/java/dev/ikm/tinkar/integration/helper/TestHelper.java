@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,20 +30,43 @@ import java.io.File;
 public class TestHelper {
     private static final Logger LOG = LoggerFactory.getLogger(TestHelper.class);
 
+    /**
+     * Starts a new store in {@code fileDataStore}. A store an earlier run left there is removed
+     * first, so the suite never reads data it did not write; a stage reopening a store an earlier
+     * stage wrote calls {@link #reopenDataBase(DataStore, File)}.
+     */
     public static void startDataBase(DataStore dataStore, File fileDataStore) {
         if (fileDataStore.exists()) {
-            LOG.warn("Datastore {} already exists. Loading this datastore may impact test results.\n" +
-                    "Consider leveraging Maven's clean lifecycle phase or `FileUtil.recursiveDelete` during test setup.", fileDataStore.getName());
+            LOG.info("Removing the datastore {} an earlier run left", fileDataStore.getName());
+            FileUtil.recursiveDelete(fileDataStore);
         }
+        start(dataStore, fileDataStore);
+    }
+
+    /**
+     * Opens the store an earlier stage of this run wrote in {@code fileDataStore}.
+     *
+     * @throws IllegalStateException if there is no store there to reopen
+     */
+    public static void reopenDataBase(DataStore dataStore, File fileDataStore) {
+        if (!fileDataStore.isDirectory()) {
+            throw new IllegalStateException("No datastore to reopen at " + fileDataStore.getAbsolutePath());
+        }
+        start(dataStore, fileDataStore);
+    }
+
+    /**
+     * Starts a memory-only store. Its root is a directory of this JVM's own under
+     * {@code target}, where the search index is kept, so suites never share one.
+     */
+    public static void startDataBase(DataStore dataStore) {
+        start(dataStore, new File("target/generated-datastores/memory-only-" + ServiceProperties.jvmUuid()));
+    }
+
+    private static void start(DataStore dataStore, File fileDataStore) {
         CachingService.clearAll();
         LOG.info("Cleared caches");
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, fileDataStore);
-        startDataController(dataStore);
-    }
-
-    public static void startDataBase(DataStore dataStore) {
-        CachingService.clearAll();
-        LOG.info("Cleared caches");
         startDataController(dataStore);
     }
 

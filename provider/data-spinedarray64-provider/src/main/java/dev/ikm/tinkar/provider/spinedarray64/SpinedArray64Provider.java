@@ -486,7 +486,6 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
                 && entity.additionalUuidLongs().notEmpty()) {
             identities.mapIfAbsent(nid, entity.publicId().asUuidArray());
         }
-        dataUseIndex.merged(sourceObject);
         // The citation after the record: a reader following citations from the referenced
         // component finds a record at every nid it is given.
         long referenced = sourceObject instanceof SemanticEntity<?> semantic ? semantic.referencedComponentNid()
@@ -496,9 +495,15 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
         }
         writeSequence.increment();
         changeSetWriterServices.forEach(writer -> writer.writeToChangeSet((Entity) sourceObject, activity));
+        // The data-use index last of the store's own work: the record, its citation and its change
+        // set are written whatever the index does with it.
+        dataUseIndex.merged(sourceObject);
 
-        // Live indexing, within the load phase policy, as the other stores do.
-        if (!loadPhase || EntityService.get().loadPhaseSearchPolicy().shouldIndexLive()) {
+        // Live indexing, within the load phase policy, as the other stores do. The index holds
+        // semantics only, so nothing else asks for the search service, which a write during
+        // startup — a STAMP cancelled as the store opens — would find not running yet.
+        if (sourceObject instanceof SemanticEntity<?>
+                && (!loadPhase || EntityService.get().loadPhaseSearchPolicy().shouldIndexLive())) {
             try {
                 getSearchService().index(sourceObject);
             } catch (Exception e) {

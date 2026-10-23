@@ -31,6 +31,7 @@ import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.fixtures.ForkedJvm;
 import dev.ikm.tinkar.fixtures.OpenSpinedArrayKeyValueProvider;
+import dev.ikm.tinkar.fixtures.WithKeyValueProvider;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.DataStore;
@@ -75,8 +76,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * store of its own, so that its concept and semantic do not exist in this suite's
  * store when the import tests begin. It contains:
  * <ol>
- *   <li>A description semantic (written FIRST)</li>
- *   <li>A concept that the semantic references (written SECOND)</li>
+ *   <li>The STAMP both versions cite</li>
+ *   <li>A description semantic</li>
+ *   <li>A concept that the semantic references, written after it</li>
  * </ol>
  *
  * <p>The multi-pass algorithm:
@@ -92,6 +94,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * datastore).
  */
 @ExtendWith(OpenSpinedArrayKeyValueProvider.class)
+// A new store each run: the directory an earlier run left is cleared, not reopened.
+@WithKeyValueProvider(cleanOnStart = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @Tag(TestTags.STAGED)
@@ -250,6 +254,9 @@ class ForwardReferenceChangeSetIT {
                 EntityService.get().putEntity(newConcept);
                 EntityService.get().putEntity(descriptionSemantic);
 
+                // The STAMP both versions cite, so the import holds everything they reference.
+                transformer.transform(testStamp).writeDelimitedTo(zos);
+
                 // FORWARD REFERENCE: Write description semantic BEFORE the concept
                 TinkarMsg semanticMsg = transformer.transform(descriptionSemantic);
                 semanticMsg.writeDelimitedTo(zos);
@@ -290,7 +297,7 @@ class ForwardReferenceChangeSetIT {
         private static void writeManifest(ZipOutputStream zos) throws IOException {
             Manifest manifest = new Manifest();
             manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-            manifest.getMainAttributes().putValue("Total-Count", "2"); // 1 semantic + 1 concept
+            manifest.getMainAttributes().putValue("Total-Count", "3"); // 1 STAMP + 1 semantic + 1 concept
             ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
             zos.putNextEntry(manifestEntry);
             manifest.write(zos);

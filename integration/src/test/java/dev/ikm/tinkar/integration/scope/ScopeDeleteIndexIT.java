@@ -127,7 +127,7 @@ class ScopeDeleteIndexIT {
         public void run(Properties in, Properties out) {
             out.putAll(in);
             System.setProperty(ScopeOperations.FULL_PASS_PROPERTY, "false");
-            TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
+            TestHelper.reopenDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
             try {
                 String doc = in.getProperty("first", "c");
                 deleteWritten(doc, in, out);

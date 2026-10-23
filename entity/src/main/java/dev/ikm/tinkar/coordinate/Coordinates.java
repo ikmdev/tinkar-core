@@ -46,6 +46,10 @@ public class Coordinates {
     }
 
     public static class Logic {
+        /**
+         * The EL++ logic coordinate, rooted at the root vertex: the concept every other is a kind of,
+         * a primitive with no parents (the IKE starter set's "IKE root concept").
+         */
         public static LogicCoordinateRecord ElPlusPlus() {
             return LogicCoordinateRecord.make(KernelConcept.SNOROCKET_CLASSIFIER,
                     KernelConcept.EL_PLUS_PLUS_PROFILE,
@@ -54,7 +58,7 @@ public class Coordinates {
                     KernelPattern.SOLOR_CONCEPT_ASSEMBLAGE,
                     KernelPattern.STATED_NAVIGATION_PATTERN,
                     KernelPattern.INFERRED_NAVIGATION_PATTERN,
-                    KernelConcept.NAVIGATION_VERTEX);
+                    KernelConcept.ROOT_VERTEX);
         }
     }
 

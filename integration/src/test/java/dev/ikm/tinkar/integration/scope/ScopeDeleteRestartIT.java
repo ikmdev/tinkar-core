@@ -116,7 +116,7 @@ class ScopeDeleteRestartIT {
     static class Reopen implements ForkedJvm.Stage {
         @Override
         public void run(Properties in, Properties out) throws Exception {
-            TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
+            TestHelper.reopenDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
             try {
                 for (String part : new String[] {"pattern", "root", "line", "cited", "comment", "revision"}) {
                     out.setProperty("a." + part, Boolean.toString(PrimitiveData.get().hasPublicId(id(in, "a." + part))));

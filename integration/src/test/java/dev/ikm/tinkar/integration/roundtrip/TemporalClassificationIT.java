@@ -238,7 +238,7 @@ class TemporalClassificationIT {
         public void run(Properties in, Properties out) throws Exception {
             String time = in.getProperty(TIME);
             String prefix = "at." + time + ".";
-            TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
+            TestHelper.reopenDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(STORE)));
             try {
                 StampPositionRecord position = StampPositionRecord.make(Long.parseLong(time), pathNid(in));
                 StampCoordinateRecord stamps = StampCoordinateRecord.make(StateSet.ACTIVE, position, LongIds.set.empty());

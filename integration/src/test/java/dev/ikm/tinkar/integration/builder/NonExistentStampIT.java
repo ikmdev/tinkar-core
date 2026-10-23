@@ -17,7 +17,9 @@ package dev.ikm.tinkar.integration.builder;
 
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampService;
@@ -26,12 +28,18 @@ import dev.ikm.tinkar.entity.builder.PrimordialStamp;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
+import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.State;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -51,6 +59,7 @@ class NonExistentStampIT {
     @BeforeAll
     void startUseAndWrite() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        writeTheConceptsTheStampCites();
         // The stamp service used to write the non-existent stamp the first time it was used.
         StampService.get().getPathNidsInUse();
         absentBeforeTheSetWasWritten =
@@ -58,6 +67,23 @@ class NonExistentStampIT {
 
         TEST_SET.stamp(Stamp.nonExistent());
         TEST_SET.write();
+    }
+
+    /**
+     * The base the set's closure needs: the concepts the non-existent stamp cites, each written
+     * under an ordinary STAMP whose own references are among them. A larger base, the starter set,
+     * would hold the non-existent stamp itself.
+     */
+    private static void writeTheConceptsTheStampCites() {
+        StampRecord base = StampRecord.make(UUID.nameUUIDFromBytes("NonExistentStampIT base".getBytes()),
+                State.ACTIVE, Instant.parse("2026-01-01T00:00:00Z").toEpochMilli(),
+                KernelConcept.AUTHOR_FOR_VERSION.publicId(), KernelConcept.UNINITIALIZED_COMPONENT.publicId(),
+                KernelConcept.UNINITIALIZED_COMPONENT.publicId());
+        EntityService.get().putEntity(base);
+        for (EntityFacade concept : List.of(KernelConcept.AUTHOR_FOR_VERSION, KernelConcept.UNINITIALIZED_COMPONENT,
+                KernelConcept.ACTIVE_STATE, KernelConcept.PRIMORDIAL_STATE)) {
+            EntityService.get().putEntity(ConceptRecord.build(concept.publicId(), base.lastVersion()));
+        }
     }
 
     @AfterAll

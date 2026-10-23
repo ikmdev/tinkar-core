@@ -133,12 +133,22 @@ class KnowledgeBaseRoundTripIT {
     private abstract static class StoreStage implements ForkedJvm.Stage {
         abstract String storeProperty();
 
+        /** Whether the stage writes a new store; the others reopen the one an earlier stage wrote. */
+        boolean newStore() {
+            return false;
+        }
+
         abstract void work(Properties in, Properties out) throws Exception;
 
         @Override
         public final void run(Properties in, Properties out) throws Exception {
             out.putAll(in);
-            TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, new File(in.getProperty(storeProperty())));
+            File store = new File(in.getProperty(storeProperty()));
+            if (newStore()) {
+                TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, store);
+            } else {
+                TestHelper.reopenDataBase(DataStore.SPINED_ARRAY_STORE, store);
+            }
             try {
                 work(in, out);
             } finally {
@@ -152,6 +162,11 @@ class KnowledgeBaseRoundTripIT {
         @Override
         String storeProperty() {
             return STORE;
+        }
+
+        @Override
+        boolean newStore() {
+            return true;
         }
 
         @Override
@@ -259,6 +274,11 @@ class KnowledgeBaseRoundTripIT {
         @Override
         String storeProperty() {
             return RESTORED_STORE;
+        }
+
+        @Override
+        boolean newStore() {
+            return true;
         }
 
         @Override

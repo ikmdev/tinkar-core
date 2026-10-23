@@ -36,6 +36,7 @@ import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.fixtures.ForkedJvm;
 import dev.ikm.tinkar.fixtures.OpenSpinedArrayKeyValueProvider;
+import dev.ikm.tinkar.fixtures.WithKeyValueProvider;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.DataStore;
@@ -76,6 +77,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * in a JVM of their own, exported in format 3, and restored into a fresh store here.
  */
 @ExtendWith(OpenSpinedArrayKeyValueProvider.class)
+// A new store each run: the directory an earlier run left is cleared, not reopened.
+@WithKeyValueProvider(cleanOnStart = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Tag(TestTags.STAGED)
 class CanceledComponentsChangeSetIT {

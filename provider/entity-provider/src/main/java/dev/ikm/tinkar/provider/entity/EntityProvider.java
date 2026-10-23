@@ -334,23 +334,23 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
      */
     private void putEntity(Entity entity, DataActivity activity, boolean dispatch, boolean addToCache,
                            long withdrawnStampNid, StoreWrite write) {
+        // Clears the entity's text too. It is recomputed from the descriptions on the next read,
+        // never seeded with the UUIDs: a component with no description has no text, and a UUID
+        // read back as its text would be taken for a description.
         invalidateCaches(entity);
         // Only a semantic has a pattern and a referenced component; every other entity passes
         // the not-applicable sentinel, Integer.MAX_VALUE (Nid.NOT_APPLICABLE), for both.
         synchronized (putLock(entity.nid())) {
             byte[] mergedEntityBytes = switch (entity) {
                 case ConceptEntity conceptEntity -> {
-                    STRING_CACHE.put(conceptEntity.nid(), conceptEntity.asUuidList().toString());
                     yield write.write(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
                             entity.getBytes(), entity, activity);
                 }
                 case PatternEntity patternEntity -> {
-                    STRING_CACHE.put(patternEntity.nid(), patternEntity.asUuidList().toString());
                     yield write.write(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
                             entity.getBytes(), entity, activity);
                 }
                 case SemanticEntity semanticEntity -> {
-                    STRING_CACHE.put(semanticEntity.nid(), semanticEntity.asUuidList().toString());
                     // Read past the cache, which invalidateCaches just cleared and a put without
                     // caching must leave clear.
                     SemanticEntity<?> identified = VertexIdentityWrite.forWrite(semanticEntity, () -> {
@@ -691,8 +691,14 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
         processor.dispatch((long) Nid.NONE); // everything changed: the none sentinel, widened
     }
 
+    /**
+     * The search service, once the services are running. A load phase can begin before then — the
+     * search provider's own startup rebuild begins one — and there is no running search service to
+     * tell; one that starts later reads the store as it finds it.
+     */
     private static Optional<SearchService> runningSearchService() {
-        return ServiceLifecycleManager.get().getRunningService(SearchService.class);
+        ServiceLifecycleManager lifecycle = ServiceLifecycleManager.get();
+        return lifecycle.isRunning() ? lifecycle.getRunningService(SearchService.class) : Optional.empty();
     }
 
     /**

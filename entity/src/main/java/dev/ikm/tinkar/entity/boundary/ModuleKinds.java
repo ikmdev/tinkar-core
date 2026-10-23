@@ -188,11 +188,16 @@ public final class ModuleKinds {
         return -1;
     }
 
-    /** The latest version in time, uncommitted included, cancelled excluded. */
+    /**
+     * The latest version in time, uncommitted included, cancelled excluded. A version whose STAMP
+     * the store does not hold yet is left out: a load writes records in parallel, so a version can
+     * be stored before its STAMP, and its state and time are unknown until then. The load phase's
+     * end resolves every module again ({@code DataUseIndex}).
+     */
     static SemanticEntityVersion latest(SemanticEntity<? extends SemanticEntityVersion> semantic) {
         SemanticEntityVersion latest = null;
         for (SemanticEntityVersion version : semantic.versions()) {
-            if (version.canceled()) {
+            if (version.stamp() == null || version.canceled()) {
                 continue;
             }
             if (latest == null || version.time() >= latest.time()) {

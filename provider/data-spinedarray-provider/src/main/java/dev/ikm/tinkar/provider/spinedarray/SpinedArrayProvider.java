@@ -621,9 +621,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(Nid.narrowChecked(nid), value, accumulator);
         // Its public id is in its bytes now; the save finds any that are still absent.
         absentUuids.remove(Nid.narrowChecked(nid));
-        this.dataUseIndex.merged(sourceObject);
         this.writeSequence.increment();
         this.changeSetWriterServices.forEach(writerService -> writerService.writeToChangeSet((Entity) sourceObject, activity));
+        // The data-use index last of the store's own work: the record, its citation and its change
+        // set are written whatever the index does with it.
+        this.dataUseIndex.merged(sourceObject);
 
         // Delegate indexing to SearchProvider.
         //
@@ -632,8 +634,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
         // recreate at endLoadPhase. Replace this two-mode shim with touched-nid
         // notification + per-nid catch-up when the proper design lands.
         // See LoadPhaseSearchPolicy javadoc for the full picture.
-        if (!loadPhase
-                || dev.ikm.tinkar.entity.EntityService.get().loadPhaseSearchPolicy().shouldIndexLive()) {
+        // The index holds semantics only, so nothing else asks for the search service, which a
+        // write during startup — a STAMP cancelled as the store opens — would find not running yet.
+        if (sourceObject instanceof SemanticEntity
+                && (!loadPhase
+                || dev.ikm.tinkar.entity.EntityService.get().loadPhaseSearchPolicy().shouldIndexLive())) {
             try {
                 getSearchService().index(sourceObject);
             } catch (Exception e) {

@@ -38,6 +38,7 @@ import dev.ikm.tinkar.entity.builder.PatternBuilder;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.State;
 import org.junit.jupiter.api.AfterAll;
@@ -84,6 +85,8 @@ class ChronologyBuilderIT {
     @BeforeAll
     static void composeAndWrite() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        // The base the set's references resolve to: the kernel and the starter set.
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
 
         // ---- The ledger, time-major: a stamp, then the edits under it. ----
 

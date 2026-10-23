@@ -22,6 +22,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.fixtures.OpenSpinedArrayKeyValueProvider;
+import dev.ikm.tinkar.fixtures.WithKeyValueProvider;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.State;
@@ -48,6 +49,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
  * canonical ObservableStamp instances and preventing duplicate versions.
  */
 @ExtendWith(OpenSpinedArrayKeyValueProvider.class)
+// A new store each run: the directory an earlier run left is cleared, not reopened.
+@WithKeyValueProvider(cleanOnStart = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TransactionStampIdempotenceIT {
