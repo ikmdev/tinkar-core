@@ -635,7 +635,11 @@ public class StampCalculatorWithCache implements StampCalculator {
                     stamp.moduleNid(),
                     stamp.time());
         }
-        stampOnRoute.put(stamp.pathNid(), returnValue);
+        // Held under the stamp's nid: the answer depends on its path, module and time together.
+        // An uncommitted stamp's time is replaced at commit, so its answer is not held.
+        if (stamp.time() != Long.MAX_VALUE) {
+            stampOnRoute.put(stamp.nid(), returnValue);
+        }
         return returnValue;
     }
 

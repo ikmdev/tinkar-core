@@ -59,7 +59,7 @@ public interface NavigationCalculator extends StampCalculatorDelegate, LanguageC
     LongIdSet descendentsOf(long conceptNid);
 
     default LongIdSet ancestorsOf(ConceptFacade concept) {
-        return descendentsOf(concept.nid());
+        return ancestorsOf(concept.nid());
     }
 
     LongIdSet ancestorsOf(long conceptNid);
@@ -71,7 +71,7 @@ public interface NavigationCalculator extends StampCalculatorDelegate, LanguageC
     LongIdSet kindOf(long conceptNid);
 
     default ImmutableList<Edge> parentEdges(ConceptFacade concept) {
-        return childEdges(concept.nid());
+        return parentEdges(concept.nid());
     }
 
     default ImmutableList<Edge> childEdges(long conceptNid) {
