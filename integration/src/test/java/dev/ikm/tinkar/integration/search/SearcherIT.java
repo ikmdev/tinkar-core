@@ -105,6 +105,8 @@ public class SearcherIT {
         //Role: [46ae9325-dd24-5008-8fda-80cf1f0977c7], inferred in the IKE starter set
         //    Interval role: [ed9d3506-65ad-48ea-bd01-95474fecdbc4]
         //    Role value: [988bb02a-9b4a-4ef9-937e-fa8a6afc6c42]
+        //    Role type: [76320274-be2a-5ba0-b3e8-e6d2e383ee6a]
+        //        Interval Role Type: [6fa58611-af37-402e-a0c2-6ee1d6068651]
 
         //Given a datastore loaded with the IKE starter set (via setup()) and a navigatorCalculator/stampCalculator for Primordial Path
         var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
@@ -112,9 +114,10 @@ public class SearcherIT {
         //When I search "Component" for only the descendants of Role
         var searchResults = stampCoordinate.stampCalculator().searchDescendants(KernelConcept.ROLE.publicId(), "Interval", 100);
 
-        //Then there should only be 2 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
+        //Then there should only be 4 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
         // 1) Interval role
-        assertEquals(2, searchResults.size(), "Exactly 2 search results should be returned");
+        // 2) Interval Role Type
+        assertEquals(4, searchResults.size(), "Exactly 4 search results should be returned");
     }
 
     @Test
@@ -122,6 +125,8 @@ public class SearcherIT {
         //Role: [46ae9325-dd24-5008-8fda-80cf1f0977c7], inferred in the IKE starter set
         //    Interval role: [ed9d3506-65ad-48ea-bd01-95474fecdbc4]
         //    Role value: [988bb02a-9b4a-4ef9-937e-fa8a6afc6c42]
+        //    Role type: [76320274-be2a-5ba0-b3e8-e6d2e383ee6a]
+        //        Interval Role Type: [6fa58611-af37-402e-a0c2-6ee1d6068651]
 
         //Given a datastore loaded with the IKE starter set (via setup()) and a navigatorCalculator/stampCalculator for Primordial Path
         var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
@@ -132,9 +137,10 @@ public class SearcherIT {
         //When I search "Component" for only the descendants of Role
         var searchResults = stampCoordinate.stampCalculator().searchDescendants(navigationCalculator, KernelConcept.ROLE.publicId(), "Interval", 100);
 
-        //Then there should only be 2 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
+        //Then there should only be 4 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
         // 1) Interval role
-        assertEquals(2, searchResults.size(), "Exactly 2 search results should be returned");
+        // 2) Interval Role Type
+        assertEquals(4, searchResults.size(), "Exactly 4 search results should be returned");
     }
 
     @Test

@@ -83,9 +83,14 @@ public class SearchProviderIT {
 
     @Test
     public void getDescendantsIT() {
+        // Role type is stated under Role in the starter set, so the role hierarchy is below it too.
         List<PublicId> expectedUserDescendants = Arrays.asList(
                 IkeConcept.ROLE_RESTRICTION.publicId(),
-                KernelConcept.INTERVAL_ROLE.publicId()
+                KernelConcept.INTERVAL_ROLE.publicId(),
+                KernelConcept.ROLE_TYPE.publicId(),
+                IkeConcept.PART_OF.publicId(),
+                IkeConcept.FEATURE_ROLE_TYPE.publicId(),
+                KernelConcept.INTERVAL_ROLE_TYPE.publicId()
         );
 
         List<PublicId> actualUserDescendants = Searcher.descendantsOf(KernelConcept.ROLE.publicId());
