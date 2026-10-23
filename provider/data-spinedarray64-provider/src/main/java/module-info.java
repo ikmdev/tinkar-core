@@ -23,6 +23,7 @@ import dev.ikm.tinkar.provider.spinedarray64.SpinedArray64Provider;
  * The 64-bit spined-array store: per-pattern spined arrays under 64-bit nids, beside the frozen
  * sequential spined array (IKE-Network/ike-issues#1313).
  */
+@SuppressWarnings("module") // 64 in spinedarray64 is the nid width, not a version
 module dev.ikm.tinkar.provider.spinedarray64 {
     requires org.slf4j;
     requires dev.ikm.tinkar.common;
