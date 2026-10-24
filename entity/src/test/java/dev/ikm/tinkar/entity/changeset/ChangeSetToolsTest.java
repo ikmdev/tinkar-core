@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.entity.changeset;
 
 import dev.ikm.tinkar.schema.ConceptChronology;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.schema.ConceptVersion;
 import dev.ikm.tinkar.schema.Field;
 import dev.ikm.tinkar.schema.FieldDefinition;
@@ -271,6 +272,91 @@ class ChangeSetToolsTest {
         assertEquals(2, own.getUuidBitsCount());
         assertEquals(0, own.getUuidsCount());
         assertTrue(carried.getConceptChronology().getConceptVersions(0).getStampChronologyPublicId().hasSequence());
+    }
+
+    @Test
+    void aResolverNamesThePatternOfEveryReferenceItKnows() throws Exception {
+        UUID[] conceptPattern = EntityBinding.Concept.pattern().publicId().asUuidArray();
+        java.util.Set<UUID> concepts = java.util.Set.of(STATUS, AUTHOR, MODULE, PATH);
+        java.util.function.Function<UUID[], java.util.Optional<UUID[]>> knowledgeBase =
+                uuids -> concepts.contains(uuids[0]) ? java.util.Optional.of(conceptPattern) : java.util.Optional.empty();
+        Path format2 = writeFormat2(dir.resolve("journal.zip"), journal(), true);
+
+        Path plain = dir.resolve("plain.zip");
+        new ChangeSetCompaction(format2.toFile(), plain.toFile()).call();
+        assertEquals(0, patternOf(plain, STATUS), "without a resolver the store's lack of a pattern is kept");
+
+        Path resolved = dir.resolve("resolved.zip");
+        ChangeSetCompaction.Result result = new ChangeSetCompaction(format2.toFile(), resolved.toFile(), knowledgeBase).call();
+        int conceptPatternSequence = sequenceOf(resolved, conceptPattern[0]);
+        for (UUID concept : concepts) {
+            assertEquals(conceptPatternSequence, patternOf(resolved, concept), concept + " is filed under the concept pattern");
+        }
+        assertEquals(List.of(NEVER_WRITTEN), result.withoutPattern(), "a component no knowledge base holds is named, not guessed");
+        assertTrue(new ChangeSetVerification(resolved.toFile()).call().ok());
+
+        // A format-3 change set whose references name no pattern is rewritten the same way.
+        Path again = dir.resolve("again.zip");
+        new ChangeSetCompaction(plain.toFile(), again.toFile(), knowledgeBase).call();
+        assertEquals(sequenceOf(again, conceptPattern[0]), patternOf(again, STATUS));
+        assertEquals(recordsByComponent(resolved).keySet(), recordsByComponent(again).keySet());
+    }
+
+    @Test
+    void modulesKeepOnlyTheVersionsStampedInThem() throws Exception {
+        UUID otherStamp = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        UUID otherModule = UUID.fromString("00000000-0000-0000-0000-0000000000e5");
+        TinkarMsg stampElsewhere = TinkarMsg.newBuilder().setStampChronology(StampChronology.newBuilder()
+                .setPublicId(id(otherStamp))
+                .setFirstStampVersion(StampVersion.newBuilder()
+                        .setStatusPublicId(id(STATUS)).setAuthorPublicId(id(AUTHOR))
+                        .setModulePublicId(id(otherModule)).setPathPublicId(id(PATH)).setTime(2_000))).build();
+        TinkarMsg conceptElsewhere = TinkarMsg.newBuilder().setConceptChronology(ConceptChronology.newBuilder()
+                .setPublicId(id(CONCEPT_B))
+                .addConceptVersions(ConceptVersion.newBuilder().setStampChronologyPublicId(id(otherStamp)))).build();
+        TinkarMsg semanticElsewhere = TinkarMsg.newBuilder().setSemanticChronology(SemanticChronology.newBuilder()
+                .setPublicId(id(SEMANTIC_T)).setReferencedComponentPublicId(id(CONCEPT_B))
+                .setPatternForSemanticPublicId(id(PATTERN_X))
+                .addSemanticVersions(SemanticVersion.newBuilder().setStampChronologyPublicId(id(otherStamp))
+                        .addFields(Field.newBuilder().setPublicId(id(NEVER_WRITTEN))))).build();
+        Path session = writeFormat2(dir.resolve("session.zip"), List.of(stamp(STAMP), stampElsewhere,
+                concept(CONCEPT_A, 1), pattern(PATTERN_X), conceptElsewhere, semanticElsewhere), true);
+
+        Path extension = dir.resolve("extension.zip");
+        new ChangeSetCompaction(session.toFile(), extension.toFile(), null, java.util.Set.of(MODULE)).call();
+
+        Map<UUID, TinkarMsg> records = recordsByComponent(extension);
+        assertEquals(java.util.Set.of(STAMP, CONCEPT_A, PATTERN_X), records.keySet(), "only what the module stamped");
+        try (ZipFile zip = new ZipFile(extension.toFile())) {
+            List<UUID> listed = new ArrayList<>();
+            ComponentTable.forEach(zip, entry -> listed.addAll(List.of(entry.uuids())));
+            assertFalse(listed.contains(NEVER_WRITTEN), "a reference only a dropped version made goes with it");
+            assertFalse(listed.contains(otherModule));
+        }
+        assertTrue(new ChangeSetVerification(extension.toFile()).call().ok());
+    }
+
+    /** The pattern sequence the table gives a component. */
+    static int patternOf(Path changeSet, UUID component) throws IOException {
+        return entryOf(changeSet, component).patternSequence();
+    }
+
+    /** The sequence the table gives a component. */
+    static int sequenceOf(Path changeSet, UUID component) throws IOException {
+        return entryOf(changeSet, component).sequence();
+    }
+
+    static ComponentTable.Component entryOf(Path changeSet, UUID component) throws IOException {
+        List<ComponentTable.Component> found = new ArrayList<>();
+        try (ZipFile zip = new ZipFile(changeSet.toFile())) {
+            ComponentTable.forEach(zip, entry -> {
+                if (List.of(entry.uuids()).contains(component)) {
+                    found.add(entry);
+                }
+            });
+        }
+        assertEquals(1, found.size(), component + " is in the table once");
+        return found.getFirst();
     }
 
     @Test

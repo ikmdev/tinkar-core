@@ -67,7 +67,7 @@ public final class BindingsMain {
      * provider is on the classpath. Must match the name the probe and
      * {@link PrimitiveData#selectControllerByName(String)} both see.
      */
-    private static final String EPHEMERAL_STORE_CONTROLLER = "Load Ephemeral Store";
+    private static final String EPHEMERAL_STORE_CONTROLLER = "Load Memory-Only 64-bit Store";
 
     private BindingsMain() {
     }
@@ -124,8 +124,9 @@ public final class BindingsMain {
                     throw new IllegalStateException(source.getClass().getName()
                             + " resolved nids during composition, which needs a running data store,"
                             + " but no \"" + EPHEMERAL_STORE_CONTROLLER + "\" controller is on the"
-                            + " generation classpath. Add an ephemeral-store provider (e.g."
-                            + " network.ike.knowledge:ike-knowledge-provider) as a runtime dependency"
+                            + " generation classpath. Add the 64-bit store provider (e.g."
+                            + " network.ike.knowledge:ike-knowledge-provider, which brings"
+                            + " dev.ikm.tinkar:data-spinedarray64-provider) as a runtime dependency"
                             + " of the bindings module.", e);
                 }
                 throw e;

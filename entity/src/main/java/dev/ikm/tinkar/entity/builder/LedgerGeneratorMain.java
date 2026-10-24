@@ -86,7 +86,7 @@ public final class LedgerGeneratorMain {
         }
 
         CachingService.clearAll();
-        PrimitiveData.selectControllerByName("Load Ephemeral Store");
+        PrimitiveData.selectControllerByName("Load Memory-Only 64-bit Store");
         PrimitiveData.start();
         List<String> sectionClassNames = new ArrayList<>();
         int distinctMembers;

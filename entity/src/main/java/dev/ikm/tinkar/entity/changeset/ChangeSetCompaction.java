@@ -17,8 +17,14 @@ package dev.ikm.tinkar.entity.changeset;
 
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.CountingInputStream;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.schema.PublicId;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.EntityBinding;
@@ -39,6 +45,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.jar.Manifest;
 import java.util.zip.GZIPInputStream;
@@ -58,11 +66,28 @@ import java.util.zip.ZipOutputStream;
  * component goes to the bucket of its kind or pattern, every reference not carried is noted
  * with the pattern its field implies, a stamp field or a pattern field. The second rewrites
  * each record's references to sequences and spools it to its bucket's entry.
+ *
+ * <p>Given a resolver, a compaction also names the pattern of every reference no field
+ * implies, by asking the resolver, which reads it from knowledge bases that hold the
+ * component: a UUID names the same component in every one of them. Without one, such a
+ * reference is written with no pattern, as the store that wrote it knew none, and a store
+ * that mints by pattern cannot load it without a base. With a resolver, a format-3 change set
+ * is rewritten too: expanded to references by UUID, then compacted.
+ *
+ * <p>Given modules, a compaction keeps only the versions stamped in them, as a merge of a
+ * knowledge base's extension does: a stamp in another module goes, a component left with no
+ * version goes, and so does every reference only they made. A session file carries what Komet
+ * wrote on its own beside the extension's content; this leaves the extension's content alone.
  */
 public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompaction.Result> {
 
     public record Result(File target, long records, long repeatsSuperseded, long components, long referencedOnly,
-                         long referencesLeftAsUuids, int entries) {
+                         long referencesLeftAsUuids, int entries, List<UUID> withoutPattern) {
+
+        public Result {
+            withoutPattern = List.copyOf(withoutPattern);
+        }
+
         public String text() {
             StringBuilder text = new StringBuilder(target.getName()).append(": ")
                     .append(String.format("%,d", records)).append(" record(s) in ").append(entries).append(" entries, ")
@@ -73,6 +98,12 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
             }
             if (referencesLeftAsUuids > 0) {
                 text.append("; ").append(String.format("%,d", referencesLeftAsUuids)).append(" reference(s) left as UUIDs");
+            }
+            if (!withoutPattern.isEmpty()) {
+                text.append("; ").append(String.format("%,d", withoutPattern.size()))
+                        .append(" reference(s) with no pattern, none known to the knowledge bases: ")
+                        .append(withoutPattern.subList(0, Math.min(5, withoutPattern.size())))
+                        .append(withoutPattern.size() > 5 ? " …" : "");
             }
             return text.toString();
         }
@@ -85,12 +116,57 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
 
     private final File source;
     private final File target;
+    private final Function<UUID[], Optional<UUID[]>> patternOf;
+    private final java.util.Set<UUID> modules;
 
     public ChangeSetCompaction(File source, File target) {
+        this(source, target, null);
+    }
+
+    public ChangeSetCompaction(File source, File target, Function<UUID[], Optional<UUID[]>> patternOf) {
+        this(source, target, patternOf, java.util.Set.of());
+    }
+
+    /**
+     * A compaction that names the pattern of every reference it can.
+     *
+     * @param source    the change set to read, in any format
+     * @param target    the format-3 change set to write
+     * @param patternOf the pattern of a component by its UUIDs, empty when unknown; null for none
+     * @param modules   the modules whose versions are kept; empty keeps every version
+     */
+    public ChangeSetCompaction(File source, File target, Function<UUID[], Optional<UUID[]>> patternOf,
+                               java.util.Set<UUID> modules) {
         super(false, true);
         this.source = source;
         this.target = target;
+        this.patternOf = patternOf;
+        this.modules = java.util.Set.copyOf(modules);
         updateTitle("Compact change set " + source.getName());
+    }
+
+    /**
+     * The pattern of a component as the running store knows it: the concept, stamp or pattern
+     * pattern for those kinds, a semantic's own pattern. Empty for a component the store does not
+     * hold; never minted.
+     *
+     * @return the resolver
+     */
+    public static Function<UUID[], Optional<UUID[]>> patternsFromStore() {
+        return uuids -> {
+            dev.ikm.tinkar.common.id.PublicId id = PublicIds.of(uuids);
+            if (!PrimitiveData.get().hasPublicId(id)) {
+                return Optional.empty();
+            }
+            Optional<Object> chronology = EntityService.get().getChronology(PrimitiveData.nid(id)).map(Object.class::cast);
+            return chronology.map(component -> switch (component) {
+                case ConceptEntity<?> concept -> EntityBinding.Concept.pattern().publicId();
+                case StampEntity<?> stamp -> EntityBinding.Stamp.pattern().publicId();
+                case PatternEntity<?> pattern -> EntityBinding.Pattern.pattern().publicId();
+                case SemanticEntity<?> semantic -> semantic.pattern().publicId();
+                default -> null;
+            }).map(dev.ikm.tinkar.common.id.PublicId::asUuidArray);
+        };
     }
 
     /** The carried components of one entry: a kind, or a semantic pattern. */
@@ -124,6 +200,10 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
         final UuidSequenceMap referencedIndex = new UuidSequenceMap(1 << 12);
         final List<long[]> referencedBits = new ArrayList<>();
         final IntArrayList referencedPattern = new IntArrayList();
+        /** The pattern the resolver named for a referenced component no field implies one for, by index. */
+        final Map<Integer, UUID[]> resolvedPattern = new LinkedHashMap<>();
+        /** The first UUID of each such component the resolver could not name. */
+        final List<UUID> withoutPattern = new ArrayList<>();
         long records;
         long repeats;
         // The ordering: rows of the table, a carried ordinal (> 0) or a referenced index (< 0), each with its pattern sequence.
@@ -232,6 +312,9 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
          */
         void order() {
             sequenceOfOrdinal = new int[lastRecord.size()];
+            if (patternOf != null) {
+                resolvePatterns();
+            }
             // Every pattern placed as a prelude is a referenced component when not carried: the
             // binding patterns, and each semantic bucket's pattern. Listed now, so the sequences
             // are sized once.
@@ -277,7 +360,40 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
                 if (sequenceOfReferenced[index] == 0 && carried.get(bits[0], bits[1]) == 0) {
                     // Referred to before its record came, and still not carried: the reference table.
                     int code = referencedPattern.get(index - 1);
-                    addReferenced(index, code == STAMP ? stamps.patternSequence : code == PATTERN ? 1 : 0);
+                    UUID[] resolved = resolvedPattern.get(index);
+                    addReferenced(index, code == STAMP ? stamps.patternSequence : code == PATTERN ? 1
+                            : resolved != null ? placePattern(resolved) : 0);
+                }
+            }
+        }
+
+        /**
+         * Asks the resolver for the pattern of every referenced component no field implies one
+         * for, and lists each pattern named as referenced, so the sequences are sized once and the
+         * pattern is placed before its member.
+         */
+        private void resolvePatterns() {
+            int known = referencedBits.size();
+            for (int index = 1; index <= known; index++) {
+                long[] bits = referencedBits.get(index - 1);
+                if (referencedPattern.get(index - 1) != UNKNOWN || carried.get(bits[0], bits[1]) != 0) {
+                    continue;
+                }
+                UUID[] uuids = new UUID[bits.length / 2];
+                for (int i = 0; i < uuids.length; i++) {
+                    uuids[i] = new UUID(bits[2 * i], bits[2 * i + 1]);
+                }
+                Optional<UUID[]> pattern = patternOf.apply(uuids);
+                if (pattern.isEmpty()) {
+                    withoutPattern.add(uuids[0]);
+                    continue;
+                }
+                resolvedPattern.put(index, pattern.get());
+                if (ordinalOf(pattern.get()) == 0) {
+                    int patternIndex = ensureReferenced(pattern.get());
+                    if (referencedPattern.get(patternIndex - 1) == UNKNOWN) {
+                        referencedPattern.set(patternIndex - 1, PATTERN);
+                    }
                 }
             }
         }
@@ -376,14 +492,33 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
     }
 
     @Override
-    protected Result compute() throws IOException {
+    protected Result compute() throws Exception {
+        int sourceVersion;
         try (ZipFile zip = new ZipFile(source)) {
             Manifest manifest = ChangeSetFormat.manifest(zip)
                     .orElseThrow(() -> new IllegalArgumentException(source.getName() + " has no manifest, " + ChangeSetFormat.MANIFEST));
-            int version = ChangeSetFormat.version(manifest.getMainAttributes(), source.getName());
-            if (version >= ChangeSetFormat.CURRENT_VERSION) {
-                throw new IllegalArgumentException(source.getName() + " is in format version " + version + " already");
-            }
+            sourceVersion = ChangeSetFormat.version(manifest.getMainAttributes(), source.getName());
+        }
+        if (sourceVersion < ChangeSetFormat.CURRENT_VERSION) {
+            return compact(source);
+        }
+        if (patternOf == null && modules.isEmpty()) {
+            throw new IllegalArgumentException(source.getName() + " is in format version " + sourceVersion + " already");
+        }
+        // Format 3 with references that may name no pattern: expanded to references by UUID, then compacted.
+        Path expanded = Files.createTempFile("ike-compaction-", "-expanded.zip");
+        try {
+            new ChangeSetExpansion(source, expanded.toFile()).call();
+            return compact(expanded.toFile());
+        } finally {
+            Files.deleteIfExists(expanded);
+        }
+    }
+
+    private Result compact(File source) throws IOException {
+        try (ZipFile zip = new ZipFile(source)) {
+            Manifest manifest = ChangeSetFormat.manifest(zip)
+                    .orElseThrow(() -> new IllegalArgumentException(source.getName() + " has no manifest, " + ChangeSetFormat.MANIFEST));
             List<ChangeSetFormat.RecordEntry> entries = ChangeSetFormat.recordEntries(zip, manifest);
             long total = 0;
             for (ChangeSetFormat.RecordEntry entry : entries) {
@@ -392,9 +527,11 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
             long span = Math.max(1, 2 * total);
             updateProgress(0, span);
 
+            KeptStamps kept = modules.isEmpty() ? null : keptStamps(zip, entries);
+
             // Pass 1: number the components.
             Numbering numbering = new Numbering();
-            readRecords(zip, entries, 0, span, "Numbering", (record, index) -> {
+            readRecords(zip, entries, kept, 0, span, "Numbering", (record, index) -> {
                 PublicId own = ChangeSetFormat.componentOf(record);
                 UUID[] uuids = SchemaIds.uuids(own);
                 numbering.file(record, uuids, index);
@@ -429,7 +566,7 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
                     Bucket bucket = numbering.order.get(i);
                     bucket.spool = new ChangeSetWriter.Spool(spoolDirectory, i + 1, bucket.label);
                 }
-                readRecords(zip, entries, total, span, "Compacting", (record, index) -> {
+                readRecords(zip, entries, kept, total, span, "Compacting", (record, index) -> {
                     UUID[] uuids = SchemaIds.uuids(ChangeSetFormat.componentOf(record));
                     int ordinal = numbering.ordinalOf(uuids);
                     if (numbering.lastRecord.get(ordinal) != index) {
@@ -492,7 +629,7 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
             updateMessage("Compacted " + String.format("%,d", written[0]) + " record(s)");
             return new Result(target, written[0], numbering.repeats, numbering.rows.size(),
                     numbering.rows.size() - numbering.componentRows + referencedOnlyAmong(numbering),
-                    leftAsUuids[0], writtenEntries.size());
+                    leftAsUuids[0], writtenEntries.size(), numbering.withoutPattern);
         }
     }
 
@@ -510,9 +647,79 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
         void visit(TinkarMsg record, int index) throws IOException;
     }
 
-    /** Reads every record of the entries in order, numbering them from 1, with progress from {@code from} across half of {@code span}. */
-    private void readRecords(ZipFile zip, List<ChangeSetFormat.RecordEntry> entries, long from, long span, String verb,
-                             RecordVisitor visitor) throws IOException {
+    /** The UUIDs of the stamps in the kept modules. */
+    private record KeptStamps(java.util.Set<UUID> uuids) {
+        boolean has(PublicId stamp) {
+            for (UUID uuid : SchemaIds.uuids(stamp)) {
+                if (uuids.contains(uuid)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    /** A pass over the stamps: those with a version in one of the modules are kept. */
+    private KeptStamps keptStamps(ZipFile zip, List<ChangeSetFormat.RecordEntry> entries) throws IOException {
+        java.util.Set<UUID> stamps = new java.util.HashSet<>();
+        readRecords(zip, entries, null, 0, 1, "Selecting stamps in", (record, index) -> {
+            if (!record.hasStampChronology()) {
+                return;
+            }
+            dev.ikm.tinkar.schema.StampChronology stamp = record.getStampChronology();
+            boolean inModule = inModules(stamp.getFirstStampVersion().getModulePublicId())
+                    || (stamp.hasSecondStampVersion() && inModules(stamp.getSecondStampVersion().getModulePublicId()));
+            if (inModule) {
+                stamps.addAll(List.of(SchemaIds.uuids(stamp.getPublicId())));
+            }
+        });
+        return new KeptStamps(stamps);
+    }
+
+    private boolean inModules(PublicId module) {
+        for (UUID uuid : SchemaIds.uuids(module)) {
+            if (modules.contains(uuid)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** A record with only its versions on kept stamps, or null when none is left. */
+    private static TinkarMsg keptPart(TinkarMsg record, KeptStamps kept) {
+        return switch (record.getValueCase()) {
+            case STAMP_CHRONOLOGY -> kept.has(record.getStampChronology().getPublicId()) ? record : null;
+            case CONCEPT_CHRONOLOGY -> {
+                var chronology = record.getConceptChronology();
+                var versions = chronology.getConceptVersionsList().stream()
+                        .filter(version -> kept.has(version.getStampChronologyPublicId())).toList();
+                yield versions.isEmpty() ? null : TinkarMsg.newBuilder().setConceptChronology(
+                        chronology.toBuilder().clearConceptVersions().addAllConceptVersions(versions)).build();
+            }
+            case PATTERN_CHRONOLOGY -> {
+                var chronology = record.getPatternChronology();
+                var versions = chronology.getPatternVersionsList().stream()
+                        .filter(version -> kept.has(version.getStampChronologyPublicId())).toList();
+                yield versions.isEmpty() ? null : TinkarMsg.newBuilder().setPatternChronology(
+                        chronology.toBuilder().clearPatternVersions().addAllPatternVersions(versions)).build();
+            }
+            case SEMANTIC_CHRONOLOGY -> {
+                var chronology = record.getSemanticChronology();
+                var versions = chronology.getSemanticVersionsList().stream()
+                        .filter(version -> kept.has(version.getStampChronologyPublicId())).toList();
+                yield versions.isEmpty() ? null : TinkarMsg.newBuilder().setSemanticChronology(
+                        chronology.toBuilder().clearSemanticVersions().addAllSemanticVersions(versions)).build();
+            }
+            case VALUE_NOT_SET -> throw new IllegalStateException("Tinkar message value not set");
+        };
+    }
+
+    /**
+     * Reads every record of the entries in order, numbering them from 1, with progress from {@code from} across half of
+     * {@code span}; with kept stamps, a record is seen with only its versions on them, and not at all when none is.
+     */
+    private void readRecords(ZipFile zip, List<ChangeSetFormat.RecordEntry> entries, KeptStamps kept, long from, long span,
+                             String verb, RecordVisitor visitor) throws IOException {
         int index = 0;
         long done = from;
         for (ChangeSetFormat.RecordEntry entry : entries) {
@@ -523,6 +730,12 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
                     : new BufferedInputStream(counting, 1 << 20)) {
                 TinkarMsg record;
                 while ((record = TinkarMsg.parseDelimitedFrom(in)) != null) {
+                    if (kept != null) {
+                        record = keptPart(record, kept);
+                        if (record == null) {
+                            continue;
+                        }
+                    }
                     visitor.visit(record, ++index);
                     if (index % 10_000 == 0) {
                         updateProgress(done + counting.getBytesRead(), span);
