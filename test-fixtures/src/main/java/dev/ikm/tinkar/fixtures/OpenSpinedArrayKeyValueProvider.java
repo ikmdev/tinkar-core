@@ -3,7 +3,7 @@ package dev.ikm.tinkar.fixtures;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * Type-safe JUnit 5 extension for opening an existing SpinedArray store.
+ * Type-safe JUnit 5 extension for opening an existing 64-bit SpinedArray store.
  * <p>Prefer this class when you want discoverable, IDE-friendly configuration via
  * {@code @ExtendWith(OpenSpinedArrayKeyValueProvider.class)}. You can still
  * refine behavior with {@link WithKeyValueProvider} on the test class

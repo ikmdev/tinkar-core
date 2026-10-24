@@ -58,6 +58,8 @@ module dev.ikm.tinkar.common {
     exports dev.ikm.tinkar.common.service.internal to
             dev.ikm.tinkar.entity,
             dev.ikm.tinkar.provider.entity,
+            // The sequential store, a Komet plugin since it left tinkar-core
+            // (komet-sequential-store-plugin, IKE-Network/ike-issues#1313).
             dev.ikm.tinkar.provider.spinedarray,
             dev.ikm.tinkar.provider.spinedarray64,
             dev.ikm.tinkar.provider.grpc,

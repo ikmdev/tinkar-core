@@ -17,7 +17,6 @@
 
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.ServiceLifecycle;
-import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 
 open module dev.ikm.tinkar.reasoner.hybrid.test {
@@ -30,7 +29,6 @@ open module dev.ikm.tinkar.reasoner.hybrid.test {
 	requires dev.ikm.tinkar.entity;
 	requires dev.ikm.tinkar.terms;
 	requires dev.ikm.tinkar.ext.lang.owl;
-	requires dev.ikm.tinkar.provider.spinedarray;
 	requires dev.ikm.tinkar.reasoner.service;
 	requires dev.ikm.tinkar.reasoner.elksnomed;
 	requires dev.ikm.tinkar.reasoner.hybrid;
@@ -42,6 +40,5 @@ open module dev.ikm.tinkar.reasoner.hybrid.test {
 
 	uses ReasonerService;
 	uses DataServiceController;
-	uses SpinedArrayProvider.OpenController;
 	uses ServiceLifecycle;
 }

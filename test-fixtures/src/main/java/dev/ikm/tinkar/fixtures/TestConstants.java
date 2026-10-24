@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.fixtures;
 
 import dev.ikm.tinkar.common.service.DataServiceController;
-import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 import dev.ikm.tinkar.provider.spinedarray64.SpinedArray64Provider;
 
 import java.io.File;
@@ -30,13 +29,15 @@ public class TestConstants {
      */
     public static final Class<? extends DataServiceController<?>> LOAD_EPHEMERAL_STORE =
             SpinedArray64Provider.LoadController.class;
-    /** The sequential spined array's memory-only mode, for the tests of that store itself. */
-    public static final Class<? extends DataServiceController<?>> LOAD_SEQUENTIAL_EPHEMERAL_STORE =
-            SpinedArrayProvider.LoadController.class;
+    /**
+     * The persistent store a test opens: the 64-bit spined array's since the sequential store left
+     * tinkar-core for komet-sequential-store-plugin (IKE-Network/ike-issues#1313).
+     */
     public static final Class<? extends DataServiceController<?>> OPEN_SPINED_ARRAY_STORE =
-            SpinedArrayProvider.OpenController.class;
+            SpinedArray64Provider.OpenController.class;
+    /** The persistent store a test creates, the 64-bit spined array's. */
     public static final Class<? extends DataServiceController<?>> NEW_SPINED_ARRAY_STORE =
-            SpinedArrayProvider.NewController.class;
+            SpinedArray64Provider.NewController.class;
 
     public static final Function<String,File> createFilePathInTarget = (pathName) -> new File("%s/target/%s".formatted(System.getProperty("user.dir"), pathName));
 

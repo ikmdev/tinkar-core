@@ -47,7 +47,6 @@
     <subprojects>
         <subproject>test-logging</subproject>
         <subproject>nid-check</subproject>
-        <subproject>collection</subproject>
         <subproject>common</subproject>
         <subproject>component</subproject>
         <subproject>entity</subproject>

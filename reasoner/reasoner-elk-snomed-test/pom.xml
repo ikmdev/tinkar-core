@@ -25,10 +25,6 @@
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>data-spinedarray-provider</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
 			<artifactId>entity</artifactId>
 		</dependency>
 		<dependency>
@@ -90,6 +86,12 @@
 			<groupId>dev.ikm.tinkar</groupId>
 			<artifactId>test-logging</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<!-- The store the tests open (IKE-Network/ike-issues#1313). -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>data-spinedarray64-provider</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
 

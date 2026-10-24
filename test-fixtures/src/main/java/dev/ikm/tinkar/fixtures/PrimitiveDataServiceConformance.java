@@ -69,8 +69,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>A provider runs the suite with a subclass that opens an empty store of its kind for the class,
  * for example:
  * <pre>{@code
- * @WithKeyValueProvider(controllerClass = SpinedArrayProvider.LoadController.class)
- * class SpinedArrayEphemeralConformanceTest extends PrimitiveDataServiceConformance {
+ * @WithKeyValueProvider(controllerClass = SpinedArray64Provider.LoadController.class)
+ * class SpinedArray64MemoryOnlyConformanceTest extends PrimitiveDataServiceConformance {
  * }
  * }</pre>
  * Each test makes its own components, with fresh UUIDs, so the tests do not depend on one another

@@ -90,8 +90,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * <p>The changeset and the generating stage's store are in this suite's own directory
  * under {@code target/generated-datastores}, so the suite runs alongside any other.
- * Tests are ordered to ensure the 1-pass test runs first (before entities exist in
- * datastore).
+ * The store's nids name their pattern, so it asks for the identity pass
+ * ({@code requiresMultiPassImport}): a forced single pass cannot key the forward reference. The
+ * single-pass import is the sequential store's, and its test went with that store to
+ * komet-sequential-store-plugin (IKE-Network/ike-issues#1313).
  */
 @ExtendWith(OpenSpinedArrayKeyValueProvider.class)
 // A new store each run: the directory an earlier run left is cleared, not reopened.
@@ -133,40 +135,12 @@ class ForwardReferenceChangeSetIT {
     }
 
     /**
-     * Test that 1-pass import succeeds even with forward references.
-     * The semantic is written before the concept it references, but
-     * Entity.nid() assigns NIDs without requiring the entity to exist.
-     */
-    @Test
-    @Order(1)
-    @DisplayName("1-pass import should succeed with forward reference")
-    void testOnePassImportSucceedsWithForwardReference() {
-        LOG.info("Testing 1-pass import with forward reference - expecting success");
-
-        // Create loader with 1-pass mode (useTwoPassImport = false)
-        LoadEntitiesFromProtobufFile loader = new LoadEntitiesFromProtobufFile(changesetFile, false);
-
-        // Should succeed - Entity.nid() assigns NIDs without requiring entity to exist
-        var summary = loader.compute();
-        LOG.info("1-pass import succeeded: {}", summary);
-        assertNotNull(summary);
-
-        // Verify both entities were loaded
-        ConceptEntity loadedConcept = EntityHandle.get(newConceptPublicId).expectConcept();
-        SemanticEntity loadedSemantic = EntityHandle.get(descriptionSemanticPublicId).expectSemantic();
-        assertNotNull(loadedConcept, "New concept should be loaded");
-        assertNotNull(loadedSemantic, "Description semantic should be loaded");
-    }
-
-    /**
      * Test that multi-pass import succeeds with forward references.
      * Pass 1: Imports all non-semantics (concept exists)
      * Pass 2: Imports the semantic that references the now-existing concept
-     *
-     * This test runs second, after the 1-pass test has demonstrated the failure scenario.
      */
     @Test
-    @Order(2)
+    @Order(1)
     @DisplayName("Multi-pass import should succeed with forward reference")
     void testMultiPassImportSucceedsWithForwardReference() {
         LOG.info("Testing multi-pass import with forward reference - expecting success");
@@ -190,7 +164,7 @@ class ForwardReferenceChangeSetIT {
     }
 
     @Test
-    @Order(3)
+    @Order(2)
     @DisplayName("Auto-detected import mode should match provider requirement")
     void testAutoDetectedImportMode() {
         // This test verifies the auto-detection matches the provider

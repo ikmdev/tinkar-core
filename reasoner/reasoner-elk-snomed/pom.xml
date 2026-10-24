@@ -15,11 +15,6 @@
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>data-spinedarray-provider</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
 			<artifactId>common</artifactId>
 		</dependency>
 		<dependency>
@@ -63,6 +58,12 @@
 		<dependency>
 			<groupId>dev.ikm.elk</groupId>
 			<artifactId>elk-snomed</artifactId>
+		</dependency>
+		<!-- The store the tests open (IKE-Network/ike-issues#1313). -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>data-spinedarray64-provider</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
 </project>

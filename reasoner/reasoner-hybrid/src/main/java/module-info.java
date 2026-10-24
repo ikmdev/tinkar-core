@@ -16,7 +16,6 @@
  */
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.ServiceLifecycle;
-import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 import dev.ikm.tinkar.reasoner.hybrid.HybridReasonerService;
 import dev.ikm.tinkar.reasoner.hybrid.IntervalReasonerService;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
@@ -26,10 +25,8 @@ module dev.ikm.tinkar.reasoner.hybrid {
 	requires org.eclipse.collections.impl;
 	requires org.slf4j;
 
-	requires dev.ikm.tinkar.collection;
 	requires dev.ikm.tinkar.common;
 	requires dev.ikm.tinkar.entity;
-	requires dev.ikm.tinkar.provider.spinedarray;
 	requires dev.ikm.tinkar.reasoner.service;
 	requires dev.ikm.tinkar.reasoner.elksnomed;
 
@@ -44,7 +41,6 @@ module dev.ikm.tinkar.reasoner.hybrid {
 	// TODO
 	uses ReasonerService;
 	uses DataServiceController;
-	uses SpinedArrayProvider.OpenController;
 	uses ServiceLifecycle;
 
 }

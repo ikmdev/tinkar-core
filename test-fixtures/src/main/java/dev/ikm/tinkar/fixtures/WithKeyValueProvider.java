@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * <pre>
  * {@code
  * @WithKeyValueProvider(
- *     controllerClass = SpinedArrayProvider.OpenController.class,
+ *     controllerClass = SpinedArray64Provider.OpenController.class,
  *     dataPath = "target/key-value-store",
  *     cleanOnStart = true,
  *     importPath = "target/data/*-pb.zip"
@@ -61,7 +61,7 @@ public @interface WithKeyValueProvider {
      *
      * Example:
      * <pre>{@code
-     * @WithKeyValueProvider(controllerClass = SpinedArrayProvider.LoadController.class)
+     * @WithKeyValueProvider(controllerClass = SpinedArray64Provider.LoadController.class)
      * }</pre>
      */
     @SuppressWarnings("rawtypes")

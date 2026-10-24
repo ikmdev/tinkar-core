@@ -23,8 +23,8 @@ import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.provider.entity.EntityProvider;
+import dev.ikm.tinkar.provider.spinedarray64.SpinedArray64Provider;
 import dev.ikm.tinkar.common.service.DataServiceController;
-import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -70,7 +70,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * </ol>
  * <p>Defaults and smart behavior:
  * <ul>
- *   <li>If {@code controllerName="default"} or empty, a Spined Array controller is selected automatically:
+ *   <li>If {@code controllerName="default"} or empty, a 64-bit Spined Array controller is selected automatically:
  *     OPEN if {@code dataPath} exists and has content; NEW otherwise.</li>
  *   <li>For non-ephemeral controllers, {@code dataPath} defaults to {@code target/test-data/{TestClassName}} for automatic test isolation.</li>
  *   <li>{@code cleanOnStart=true} removes any existing files under {@code dataPath} prior to startup.</li>
@@ -431,14 +431,9 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
             // Auto-select: OPEN if data exists, NEW otherwise
             File dir = new File(cfg.dataPath);
             boolean exists = dir.exists() && dir.isDirectory() && dir.list() != null && dir.list().length > 0;
-            cfg.controllerClass = exists ? SpinedArrayProvider.OpenController.class
-                    : SpinedArrayProvider.NewController.class;
+            cfg.controllerClass = exists ? SpinedArray64Provider.OpenController.class
+                    : SpinedArray64Provider.NewController.class;
         }
-    }
-
-    private boolean isEphemeralController(String controllerName) {
-        return SpinedArrayProvider.LoadController.CONTROLLER_NAME.equals(controllerName)
-                || dev.ikm.tinkar.provider.spinedarray64.SpinedArray64Provider.LoadController.CONTROLLER_NAME.equals(controllerName);
     }
 
     private void cleanDirectory(String pathStr) {

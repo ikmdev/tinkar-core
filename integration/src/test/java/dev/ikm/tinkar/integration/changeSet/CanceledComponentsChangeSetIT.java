@@ -23,7 +23,6 @@ import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptRecordBuilder;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
-import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.RecordListBuilder;
@@ -153,9 +152,10 @@ class CanceledComponentsChangeSetIT {
         assertEquals(2, referencedOnly.size(), "components the change set references but does not carry: " + referencedUuids);
         assertTrue(referencedUuids.contains(NEVER_WRITTEN) && referencedUuids.contains(CANCELED_ONLY), referencedUuids.toString());
         ComponentTable.Component neverWrittenEntry = referencedOnly.get(referencedUuids.indexOf(NEVER_WRITTEN));
-        assertEquals(0, neverWrittenEntry.patternSequence(), "a spined-array nid names no pattern");
         ComponentTable.Component canceledEntry = referencedOnly.get(referencedUuids.indexOf(CANCELED_ONLY));
         assertTrue(canceledEntry.patternSequence() > 0, "a canceled-only concept names the concept pattern");
+        assertEquals(canceledEntry.patternSequence(), neverWrittenEntry.patternSequence(),
+                "a never-written concept's nid names the concept pattern too");
     }
 
     /** Builds the three shapes on a store of its own and exports them. */
@@ -183,8 +183,8 @@ class CanceledComponentsChangeSetIT {
                 ConceptRecord canceledConcept = concept(CANCELED_ONLY, canceled.nid());
                 EntityService.get().putEntity(canceledConcept);
 
-                // A nid minted and never written, and a description whose language refers to it.
-                long neverWritten = Entity.nid(PublicIds.of(NEVER_WRITTEN));
+                // A concept's nid minted and never written, and a description whose language refers to it.
+                long neverWritten = EntityService.get().nidForConcept(PublicIds.of(NEVER_WRITTEN));
                 ImmutableList<Object> fields = Lists.immutable.of(
                         EntityProxy.Concept.make(neverWritten),
                         "A description whose language was never written",

@@ -31,10 +31,6 @@
 		</dependency>
 		<dependency>
 			<groupId>${project.parent.groupId}</groupId>
-			<artifactId>data-spinedarray-provider</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>${project.parent.groupId}</groupId>
 			<artifactId>executor-provider</artifactId>
 			<scope>test</scope>
 		</dependency>
@@ -49,6 +45,12 @@
 		<dependency>
 			<groupId>dev.ikm.tinkar</groupId>
 			<artifactId>test-logging</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- The store the tests open (IKE-Network/ike-issues#1313). -->
+		<dependency>
+			<groupId>${project.parent.groupId}</groupId>
+			<artifactId>data-spinedarray64-provider</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

@@ -133,9 +133,9 @@ public abstract class PrimitiveDataTestUtil {
 //		CachingService.clearAll();
 // First get the controller to configure it
 		DataServiceController<?> dsc = PrimitiveData.getControllerOptions().stream()
-				.filter(c -> "Open SpinedArrayStore".equals(c.controllerName()))
+				.filter(c -> "Open 64-bit SpinedArrayStore".equals(c.controllerName()))
 				.findFirst()
-				.orElseThrow(() -> new IllegalStateException("SpinedArrayStore controller not found"));
+				.orElseThrow(() -> new IllegalStateException("64-bit SpinedArrayStore controller not found"));
 
 // Configure the data URI BEFORE selection
 		DataUriOption duo = new DataUriOption(name, target_path.toUri());
@@ -143,7 +143,7 @@ public abstract class PrimitiveDataTestUtil {
 		dsc.setDataUriOption(duo);
 
 // Now select it (this registers with ServiceLifecycleManager)
-		PrimitiveData.selectControllerByName("Open SpinedArrayStore");
+		PrimitiveData.selectControllerByName("Open 64-bit SpinedArrayStore");
 	}
 
 	public static void stopPrimitiveData() {

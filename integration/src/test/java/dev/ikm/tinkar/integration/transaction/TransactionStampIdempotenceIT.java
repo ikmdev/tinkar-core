@@ -19,6 +19,7 @@ import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.fixtures.OpenSpinedArrayKeyValueProvider;
@@ -118,7 +119,7 @@ class TransactionStampIdempotenceIT {
 
         // Create a mock entity facade for testing
         PublicId entityId = PublicIds.of(UUID.randomUUID());
-        long entityNid = PrimitiveData.nid(entityId);
+        long entityNid = EntityService.get().nidForConcept(entityId);
         dev.ikm.tinkar.terms.EntityFacade entityFacade = dev.ikm.tinkar.terms.EntityFacade.make(entityNid);
 
         // Call getStampForEntities() multiple times with the same parameters

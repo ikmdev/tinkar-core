@@ -42,7 +42,6 @@ module dev.ikm.tinkar.entity {
     requires com.github.benmanes.caffeine;
     requires dev.ikm.jpms.activej.bytebuf;
     requires dev.ikm.jpms.protobuf;
-    requires dev.ikm.tinkar.collection;
     requires dev.ikm.tinkar.schema;
     requires java.logging;
     requires org.eclipse.collections.api;
