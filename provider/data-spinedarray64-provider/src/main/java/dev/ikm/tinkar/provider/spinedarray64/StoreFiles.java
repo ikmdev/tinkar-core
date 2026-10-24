@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.provider.spinedarray64;
 
 import dev.ikm.tinkar.common.id.impl.NidLayout;
+import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -46,7 +47,8 @@ import java.util.stream.Stream;
  * The files of a persistent 64-bit spined-array store (design-2026-10-20-instance-data, "Persistence
  * and the save format"):
  * <pre>
- *   store-format.properties        layout, entity format, engine, spine geometry, created
+ *   store-format.properties        layout, entity format, engine, spine geometry, created,
+ *                                  vertex identity (when the store was created with derived identities)
  *   counters.properties            pattern sequence = next element sequence
  *   absentIdentities.txt           nid uuid… per nid minted and never written
  *   patterns/&lt;sequence&gt;/records/spine-&lt;k&gt;     [int slots]([int length][bytes])*
@@ -66,6 +68,11 @@ final class StoreFiles {
     static final String CITATIONS = "citations";
     static final String SPINE_PREFIX = "spine-";
     static final String ENGINE = "64-bit spined array";
+    /**
+     * The format property naming the vertex-identity derivation version a store was created
+     * under; a store without it was created before derivation (IKE-Network/ike-issues#1310).
+     */
+    static final String VERTEX_IDENTITY = "vertexIdentity";
 
     private final File root;
     private final File patterns;
@@ -94,6 +101,8 @@ final class StoreFiles {
         format.setProperty("spine.min", Integer.toString(geometry.min()));
         format.setProperty("spine.max", Integer.toString(geometry.max()));
         format.setProperty("createdAt", Instant.now().toString());
+        // Everything a store of this build holds passes through the write path that derives identities.
+        format.setProperty(VERTEX_IDENTITY, Integer.toString(ChangeSetFormat.VERTEX_IDENTITY_VERSION));
         writeProperties(new File(root, FORMAT_FILE), format, "The format of a 64-bit spined-array store");
     }
 
@@ -114,6 +123,11 @@ final class StoreFiles {
         }
         return new SpineGeometry(Integer.parseInt(format.getProperty("spine.min")),
                 Integer.parseInt(format.getProperty("spine.max")));
+    }
+
+    /** Whether the format file says the store was created with derived vertex identities. */
+    boolean vertexIdentityDerived() {
+        return readProperties(new File(root, FORMAT_FILE)).getProperty(VERTEX_IDENTITY) != null;
     }
 
     // ---------- counters ----------

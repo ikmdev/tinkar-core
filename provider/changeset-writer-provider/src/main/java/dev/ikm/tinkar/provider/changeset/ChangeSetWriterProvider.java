@@ -450,9 +450,13 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         private final Set<Long> moduleList = new HashSet<>();
         private final Set<Long> authorList = new HashSet<>();
         private final EntityToTinkarSchemaTransformer entityTransformer = EntityToTinkarSchemaTransformer.getInstance();
+        /** Whether the store's trees carry derived vertex identities, so the journal's do. */
+        private final boolean vertexIdentityDerived;
 
         Journal(File zipfile) {
             this.zipfile = zipfile;
+            // A journal opens on its first entity, while the store runs.
+            this.vertexIdentityDerived = PrimitiveData.running() && PrimitiveData.vertexIdentityDerived();
             // The journal is spooled in the format-2 layout as entities arrive, under a name
             // the sync layer does not match, and compacted into the change set at close.
             this.spool = new File(zipfile.getParentFile(), zipfile.getName() + SPOOL_SUFFIX);
@@ -522,7 +526,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     final ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
                     zos.putNextEntry(manifestEntry);
                     zos.write(generateManifestContent(entityCount, conceptsCount, semanticsCount, patternsCount,
-                            stampsCount, moduleList, authorList).getBytes(StandardCharsets.UTF_8));
+                            stampsCount, moduleList, authorList, vertexIdentityDerived).getBytes(StandardCharsets.UTF_8));
                     zos.closeEntry();
                 }
                 zos.flush();
@@ -668,6 +672,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * @param stampsCount the counter for the total number of stamps processed
      * @param moduleList the nids of the modules collected for the manifest
      * @param authorList the nids of the authors collected for the manifest
+     * @param vertexIdentityDerived whether the store's trees carry derived vertex identities
      * @return the generated manifest content as a String
      */
     private String generateManifestContent(LongAdder entityCount,
@@ -676,14 +681,16 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                            LongAdder patternsCount,
                                            LongAdder stampsCount,
                                            Set<Long> moduleList,
-                                           Set<Long> authorList) {
+                                           Set<Long> authorList,
+                                           boolean vertexIdentityDerived) {
         return ExportEntitiesToProtobufFile.generateManifestContent(entityCount.sum(),
                 conceptsCount.sum(),
                 semanticsCount.sum(),
                 patternsCount.sum(),
                 stampsCount.sum(),
                 ExportEntitiesToProtobufFile.publicIds(moduleList),
-                ExportEntitiesToProtobufFile.publicIds(authorList));
+                ExportEntitiesToProtobufFile.publicIds(authorList),
+                vertexIdentityDerived);
     }
 
     /**

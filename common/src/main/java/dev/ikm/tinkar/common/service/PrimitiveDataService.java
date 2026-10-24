@@ -424,6 +424,23 @@ public interface PrimitiveDataService {
     }
 
     /**
+     * Whether every definition tree the store holds carries derived vertex identities
+     * (arch-vertex-identity-rule; IKE-Network/ike-issues#1310). A store created by a build whose
+     * write path derives them holds nothing that did not pass through it, and records so when it
+     * is created. A store written before derivation holds trees whose vertex UUIDs were never
+     * derived, and the versions written to it since are correlated against that history, not
+     * re-derived, so it stays underived for good. An export or change set declares its identities
+     * derived only when its store's are: a loader keeps a declared file's UUIDs and holds them to
+     * the invariants, which an underived history breaks.
+     *
+     * @return true for a store that recorded at its creation that its identities are derived;
+     * false, the default, for one that did not or cannot say
+     */
+    default boolean vertexIdentityDerived() {
+        return false;
+    }
+
+    /**
      * Signals the data provider to suppress per-entity indexing.
      * Set to {@code true} before bulk import and {@code false} after,
      * so that the index can be rebuilt in a single batch pass.

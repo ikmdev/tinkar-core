@@ -111,6 +111,8 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
     /** The store's files; null for a memory-only store. */
     private final StoreFiles files;
     private final SpineGeometry geometry;
+    /** Whether the store was created with derived vertex identities: a memory-only one always is. */
+    private final boolean vertexIdentityDerived;
     private final Object growth = new Object();
     private volatile PatternTable[] tables = new PatternTable[64];
     private final Identities identities;
@@ -136,6 +138,7 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
             this.name = MEMORY_ONLY_NAME;
             this.files = null;
             this.geometry = SpineGeometry.defaults();
+            this.vertexIdentityDerived = true;
         } else {
             if (!root.isDirectory() && !root.mkdirs()) {
                 throw new IllegalStateException("Could not create " + root.getAbsolutePath());
@@ -144,6 +147,7 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
             this.files = new StoreFiles(root);
             if (StoreFiles.holdsAStore(root)) {
                 this.geometry = files.readFormat();
+                this.vertexIdentityDerived = files.vertexIdentityDerived();
             } else {
                 for (String other : OTHER_STORES) {
                     if (new File(root, other).exists()) {
@@ -153,6 +157,7 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
                 }
                 this.geometry = SpineGeometry.defaults();
                 files.writeFormat(geometry);
+                this.vertexIdentityDerived = true;
             }
         }
         this.identities = new Identities(sequence -> table(sequence).nextElementSequence());
@@ -435,6 +440,15 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
     @Override
     public boolean requiresMultiPassImport() {
         return true;
+    }
+
+    /**
+     * A store this engine creates records the derivation version in its format file; one
+     * created before derivation has none there, and stays underived however it is written since.
+     */
+    @Override
+    public boolean vertexIdentityDerived() {
+        return vertexIdentityDerived;
     }
 
     /** The UUIDs of the entity stored under a nid, from its record; for a nid minted and never written, from its mint. */

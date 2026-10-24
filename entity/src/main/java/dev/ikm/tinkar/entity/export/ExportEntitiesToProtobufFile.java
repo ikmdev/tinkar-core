@@ -256,7 +256,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                 ZipEntry manifestEntry = new ZipEntry(ChangeSetFormat.MANIFEST);
                 zos.putNextEntry(manifestEntry);
                 zos.write(manifestContent(entityCountSummary, written, sequences.count(),
-                        publicIds(moduleNids), publicIds(authorNids)).getBytes(StandardCharsets.UTF_8));
+                        publicIds(moduleNids), publicIds(authorNids), PrimitiveData.vertexIdentityDerived())
+                        .getBytes(StandardCharsets.UTF_8));
                 zos.closeEntry();
                 zos.flush();
                 zos.finish();
@@ -981,13 +982,19 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         }
     }
 
-    /** The format-3 manifest: the version, the counts, the record entries with their hashes, the modules and authors. */
+    /**
+     * The format-3 manifest: the version, whether the trees' vertex identities were derived, the
+     * counts, the record entries with their hashes, the modules and authors. Identities are
+     * declared derived only when the store's are ({@link PrimitiveData#vertexIdentityDerived()}):
+     * a store written before derivation holds trees whose UUIDs were never derived, which a
+     * loader must correlate, not keep.
+     */
     static String manifestContent(EntityCountSummary counts, List<WrittenEntry> entries, long componentCount,
-                                  Collection<PublicId> moduleList, Collection<PublicId> authorList) {
+                                  Collection<PublicId> moduleList, Collection<PublicId> authorList,
+                                  boolean vertexIdentityDerived) {
         StringBuilder manifest = new StringBuilder()
                 .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.CURRENT_VERSION).append("\n")
-                // A store's trees carry the identities the write path derived or kept.
-                .append(ChangeSetFormat.vertexIdentityLine(true))
+                .append(ChangeSetFormat.vertexIdentityLine(vertexIdentityDerived))
                 .append("Packager-Name: ").append(KernelConcept.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
                 .append("Total-Count: ").append(counts.getTotalCount()).append("\n")
@@ -1010,7 +1017,9 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
 
     /**
      * A format-2 manifest, for the incremental change-set writer, which still writes the
-     * identity-index layout; the exporter's own manifest is {@link #manifestContent}.
+     * identity-index layout; the exporter's own manifest is {@link #manifestContent}. The writer
+     * journals whole entities, every version, so it declares identities derived only when its
+     * store's are, as the exporter does.
      */
     public static String generateManifestContent(long entityCount,
                                            long conceptsCount,
@@ -1018,10 +1027,11 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                                            long patternsCount,
                                            long stampsCount,
                                            Collection<PublicId> moduleList,
-                                           Collection<PublicId> authorList){
+                                           Collection<PublicId> authorList,
+                                           boolean vertexIdentityDerived){
         StringBuilder manifestContent = new StringBuilder()
                 .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.IDENTITY_INDEX_VERSION).append("\n")
-                .append(ChangeSetFormat.vertexIdentityLine(true))
+                .append(ChangeSetFormat.vertexIdentityLine(vertexIdentityDerived))
                 // TODO: Dynamically populate this user
                 .append("Packager-Name: ").append(KernelConcept.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")

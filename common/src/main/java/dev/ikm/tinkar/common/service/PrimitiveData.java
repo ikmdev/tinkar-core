@@ -451,4 +451,14 @@ public class PrimitiveData {
     public static boolean requiresMultiPassImport() {
         return get().requiresMultiPassImport();
     }
+
+    /**
+     * Whether the running store's definition trees all carry derived vertex identities.
+     *
+     * @return true when they do
+     * @see PrimitiveDataService#vertexIdentityDerived()
+     */
+    public static boolean vertexIdentityDerived() {
+        return get().vertexIdentityDerived();
+    }
 }
