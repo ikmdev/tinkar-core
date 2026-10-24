@@ -60,9 +60,14 @@ public class ConcurrentHashSet<T extends Object> implements Set<T> {
         return keySet.iterator();
     }
 
+    /**
+     * A snapshot of the members, exactly as many as there were. Sized by an earlier
+     * {@code size()}, the array kept a slot that a member removed in between left null, and
+     * copies such as {@code Transaction.activeTransactions()} handed that null on.
+     */
     @Override
     public T[] toArray() {
-        return keySet.toArray((T[]) new Object[keySet.size()]);
+        return (T[]) keySet.toArray();
     }
 
     @Override
