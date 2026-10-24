@@ -277,28 +277,33 @@ class ChangeSetToolsTest {
     @Test
     void aResolverNamesThePatternOfEveryReferenceItKnows() throws Exception {
         UUID[] conceptPattern = EntityBinding.Concept.pattern().publicId().asUuidArray();
-        java.util.Set<UUID> concepts = java.util.Set.of(STATUS, AUTHOR, MODULE, PATH);
-        java.util.function.Function<UUID[], java.util.Optional<UUID[]>> knowledgeBase =
-                uuids -> concepts.contains(uuids[0]) ? java.util.Optional.of(conceptPattern) : java.util.Optional.empty();
+        java.util.function.Function<UUID[], java.util.Optional<UUID[]>> knowsIt =
+                uuids -> uuids[0].equals(NEVER_WRITTEN) ? java.util.Optional.of(conceptPattern) : java.util.Optional.empty();
+        java.util.function.Function<UUID[], java.util.Optional<UUID[]>> knowsNothing = uuids -> java.util.Optional.empty();
         Path format2 = writeFormat2(dir.resolve("journal.zip"), journal(), true);
 
         Path plain = dir.resolve("plain.zip");
         new ChangeSetCompaction(format2.toFile(), plain.toFile()).call();
-        assertEquals(0, patternOf(plain, STATUS), "without a resolver the store's lack of a pattern is kept");
+        int conceptPatternSequence = sequenceOf(plain, conceptPattern[0]);
+        for (UUID typed : List.of(STATUS, AUTHOR, MODULE, PATH)) {
+            assertEquals(conceptPatternSequence, patternOf(plain, typed), typed + ": the schema types a stamp's " + typed + " as a concept");
+        }
+        assertEquals(0, patternOf(plain, NEVER_WRITTEN), "without a resolver an untyped reference keeps the store's lack of a pattern");
 
         Path resolved = dir.resolve("resolved.zip");
-        ChangeSetCompaction.Result result = new ChangeSetCompaction(format2.toFile(), resolved.toFile(), knowledgeBase).call();
-        int conceptPatternSequence = sequenceOf(resolved, conceptPattern[0]);
-        for (UUID concept : concepts) {
-            assertEquals(conceptPatternSequence, patternOf(resolved, concept), concept + " is filed under the concept pattern");
-        }
-        assertEquals(List.of(NEVER_WRITTEN), result.withoutPattern(), "a component no knowledge base holds is named, not guessed");
+        ChangeSetCompaction.Result result = new ChangeSetCompaction(format2.toFile(), resolved.toFile(), knowsIt).call();
+        assertEquals(sequenceOf(resolved, conceptPattern[0]), patternOf(resolved, NEVER_WRITTEN), "the knowledge base names its kind");
+        assertTrue(result.withoutPattern().isEmpty());
         assertTrue(new ChangeSetVerification(resolved.toFile()).call().ok());
+
+        ChangeSetCompaction.Result unknown = new ChangeSetCompaction(format2.toFile(), dir.resolve("unknown.zip").toFile(),
+                knowsNothing).call();
+        assertEquals(List.of(NEVER_WRITTEN), unknown.withoutPattern(), "a component no knowledge base holds is named, not guessed");
 
         // A format-3 change set whose references name no pattern is rewritten the same way.
         Path again = dir.resolve("again.zip");
-        new ChangeSetCompaction(plain.toFile(), again.toFile(), knowledgeBase).call();
-        assertEquals(sequenceOf(again, conceptPattern[0]), patternOf(again, STATUS));
+        new ChangeSetCompaction(plain.toFile(), again.toFile(), knowsIt).call();
+        assertEquals(sequenceOf(again, conceptPattern[0]), patternOf(again, NEVER_WRITTEN));
         assertEquals(recordsByComponent(resolved).keySet(), recordsByComponent(again).keySet());
     }
 

@@ -113,6 +113,9 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
     private static final int UNKNOWN = 1;
     private static final int STAMP = 2;
     private static final int PATTERN = 3;
+    /** A concept: the schema types a stamp's status, author, module and path, a pattern's purpose
+     * and meaning, and a field definition's meaning, data type and purpose as concepts. */
+    private static final int CONCEPT = 4;
 
     private final File source;
     private final File target;
@@ -264,6 +267,9 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
             int code = switch (field == null ? "" : field.getName()) {
                 case "stamp_chronology_public_id" -> STAMP;
                 case "pattern_for_semantic_public_id" -> PATTERN;
+                case "status_public_id", "author_public_id", "module_public_id", "path_public_id",
+                     "referenced_component_purpose_public_id", "referenced_component_meaning_public_id",
+                     "meaning_public_id", "data_type_public_id", "purpose_public_id" -> CONCEPT;
                 default -> UNKNOWN;
             };
             int index = referencedIndex.get(uuids[0].getMostSignificantBits(), uuids[0].getLeastSignificantBits());
@@ -362,6 +368,7 @@ public final class ChangeSetCompaction extends TrackingCallable<ChangeSetCompact
                     int code = referencedPattern.get(index - 1);
                     UUID[] resolved = resolvedPattern.get(index);
                     addReferenced(index, code == STAMP ? stamps.patternSequence : code == PATTERN ? 1
+                            : code == CONCEPT ? concepts.patternSequence
                             : resolved != null ? placePattern(resolved) : 0);
                 }
             }
