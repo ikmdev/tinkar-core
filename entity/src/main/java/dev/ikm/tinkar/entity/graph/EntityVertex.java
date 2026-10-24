@@ -679,7 +679,34 @@ public class EntityVertex implements Vertex, VertexId {
 		if (this.meaningNid != that.meaningNid) {
 			return false;
 		}
-		return compareProperties(this.properties, that.properties);
+		int thisSize = this.properties == null ? 0 : this.properties.size();
+		int thatSize = that.properties == null ? 0 : that.properties.size();
+		if (thisSize != thatSize) {
+			return false;
+		}
+		if (thisSize == 0) {
+			return true;
+		}
+		for (long key : this.properties.keySet().toArray()) {
+			if (!that.properties.containsKey(key)
+					|| !equivalentValues(this.properties.get(key), that.properties.get(key))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Two components are equivalent when their nids are, whatever form each takes — a binding
+	 * enum equals only itself, while a proxy or a record equals any component with its nid, so
+	 * {@code equals} alone would answer by the order it is asked in. Anything else is equivalent
+	 * when either finds the other equal.
+	 */
+	private static boolean equivalentValues(Object a, Object b) {
+		if (a instanceof ComponentWithNid componentA && b instanceof ComponentWithNid componentB) {
+			return componentA.nid() == componentB.nid();
+		}
+		return Objects.equals(a, b) || Objects.equals(b, a);
 	}
 
 	private static boolean compareProperties(LongObjectMap theseProperties, LongObjectMap thoseProperties) {

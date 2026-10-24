@@ -33,10 +33,10 @@ import java.util.function.LongPredicate;
  *
  * <p>A property whose value is a component matches any other form of the same component: a
  * proxy, a binding enum and a record of one component agree, as {@code EntityProxy} defines.
- * {@link EntityVertex#equivalent(EntityVertex)} compares values with {@code equals}, which is
- * not symmetric across those forms (a binding enum equals only itself), so a necessary normal
- * form built with {@code KernelConcept} values was not equivalent to the same form read back
- * from a store, whose values are proxies; this compares components by nid.
+ * {@code equals} is not symmetric across those forms (a binding enum equals only itself), so a
+ * necessary normal form built with {@code KernelConcept} values would not match the same form
+ * read back from a store, whose values are proxies; this compares components by nid, as
+ * {@link EntityVertex#equivalent(EntityVertex)} does.
  *
  * <p>This answers exactly, without a search: each vertex gets a canonical hash computed bottom
  * up (its meaning, its properties in no particular order, its children's hashes sorted), which

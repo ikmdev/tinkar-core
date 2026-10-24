@@ -161,8 +161,8 @@ class DiTreeIsomorphismIT {
 
     /**
      * The reasoner builds its normal form with binding enums; a form read back from the store
-     * holds proxies. They are the same tree. {@link EntityVertex#equivalent} disagrees with itself
-     * across the two, which is why the comparison does not rest on it.
+     * holds proxies. They are the same tree, vertex by vertex in either direction: a binding enum
+     * equals only itself, so {@link EntityVertex#equivalent} compares components by nid.
      */
     @Test
     void enumsAndProxiesOfOneConceptAreTheSameTree() {
@@ -174,10 +174,13 @@ class DiTreeIsomorphismIT {
         assertTrue(DiTreeIsomorphism.isomorphic(proxies, enums));
         assertEquals(DiTreeIsomorphism.hash(enums), DiTreeIsomorphism.hash(proxies));
 
-        EntityVertex roleWithEnums = enums.vertexMap().detect(v -> v.properties().size() == 2);
-        EntityVertex roleWithProxies = proxies.vertexMap().detect(v -> v.properties().size() == 2);
-        assertTrue(roleWithProxies.equivalent(roleWithEnums), "a proxy equals an enum of its concept");
-        assertFalse(roleWithEnums.equivalent(roleWithProxies), "an enum equals only itself");
+        assertEquals(enums.vertexCount(), proxies.vertexCount());
+        for (int index = 0; index < enums.vertexCount(); index++) {
+            EntityVertex withEnums = enums.vertex(index);
+            EntityVertex withProxies = proxies.vertex(index);
+            assertTrue(withEnums.equivalent(withProxies), "enum to proxy at vertex " + index);
+            assertTrue(withProxies.equivalent(withEnums), "proxy to enum at vertex " + index);
+        }
     }
 
     @Test
