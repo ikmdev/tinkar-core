@@ -52,7 +52,9 @@ public record SemanticVersionRecord(SemanticRecord chronology, long stampNid,
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SemanticVersionRecord that = (SemanticVersionRecord) o;
-        return stampNid == that.stampNid && fieldValues.equals(that.fieldValues);
+        // Compared as java.util.Lists: a version read from the store holds its values in a
+        // RecordListBuilder, which an Eclipse immutable list never equals, as it is not a List.
+        return stampNid == that.stampNid && fieldValues.castToList().equals(that.fieldValues.castToList());
     }
 
     @Override
