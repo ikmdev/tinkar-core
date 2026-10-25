@@ -84,6 +84,14 @@ public class Transaction implements Comparable<Transaction> {
     private volatile boolean recorded;
     /** Rebuilt from its record at startup: its versions are matched by stamp alone. */
     private volatile boolean restored;
+    /**
+     * Left pending until the person publishes or discards it (IKE-Network/ike-issues#1326): its
+     * work may be continued by another writer that leaves its own work pending. Rebuilt
+     * transactions are left pending too.
+     */
+    private volatile boolean leftPending;
+    /** The transaction this one's work was moved into ({@link #moveInto}); null until then. */
+    private volatile Transaction continuation;
     /** How many components the record's latest version lists; -1 before the first. */
     private volatile int recordedComponents = -1;
 
@@ -824,6 +832,7 @@ public class Transaction implements Comparable<Transaction> {
             transaction.recordAuthorNid = snapshot.authorNid();
             transaction.recorded = true;
             transaction.restored = true;
+            transaction.leftPending = true;
             for (long componentNid : snapshot.componentNids()) {
                 transaction.componentsInTransaction.add(componentNid);
             }
@@ -941,6 +950,221 @@ public class Transaction implements Comparable<Transaction> {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Marks this transaction as left pending until the person publishes or discards it, as a
+     * window's edits and the assistant's changes are (IKE-Network/ike-issues#1326): another writer
+     * that leaves its work pending, under the same author, module and path, continues this
+     * transaction rather than opening a second one beside it. A transaction a writer commits at
+     * once is never marked, so no such writer is joined, and none takes over pending work.
+     */
+    public void leavePending() {
+        this.leftPending = true;
+    }
+
+    /**
+     * @return whether the transaction is left pending until the person publishes or discards it:
+     *         marked by {@link #leavePending()}, or rebuilt from its record
+     */
+    public boolean leftPending() {
+        return leftPending;
+    }
+
+    /**
+     * The transaction holding this one's work: this one, or the one its work was moved into
+     * ({@link #moveInto}), followed as far as it was moved. A holder of a transaction that ended
+     * this way goes on in its continuation while that is open, and reads how the work ended
+     * from it once it is not.
+     *
+     * @return the transaction holding this one's work; this one when it was never moved
+     */
+    public Transaction continuation() {
+        Transaction current = this;
+        while (current.continuation != null) {
+            current = current.continuation;
+        }
+        return current;
+    }
+
+    /**
+     * @return whether the transaction was committed: its versions are published
+     */
+    public boolean committed() {
+        return ending.get() == Ending.COMMITTED;
+    }
+
+    /**
+     * The open transaction left pending ({@link #leftPending()}) that owns an entity's pending
+     * version under the given author, module and path, whatever its state: work a writer that
+     * leaves its own work pending continues (IKE-Network/ike-issues#1326). When the entity's
+     * pending versions belong to more than one such transaction, which to continue is not clear,
+     * and none is returned.
+     *
+     * @param entityNid the entity about to be changed
+     * @param authorNid the author of the change
+     * @param moduleNid its module
+     * @param pathNid   its path
+     * @param except    the writer's own transaction, which is not returned; may be null
+     * @return the transaction to continue, if there is exactly one
+     */
+    public static Optional<Transaction> pendingOwnerOf(long entityNid, long authorNid, long moduleNid, long pathNid,
+                                                       Transaction except) {
+        if (!(dev.ikm.tinkar.entity.EntityHandle.get(entityNid).orNull() instanceof Entity<?> entity)) {
+            return Optional.empty();
+        }
+        Transaction found = null;
+        for (Object object : entity.versions()) {
+            EntityVersion version = (EntityVersion) object;
+            if (!version.uncommitted()) {
+                continue;
+            }
+            StampEntity<?> stamp = version.stamp();
+            if (stamp.authorNid() != authorNid || stamp.moduleNid() != moduleNid || stamp.pathNid() != pathNid) {
+                continue;
+            }
+            Transaction owner = forVersion(version).filter(Transaction::isOpen).filter(Transaction::leftPending)
+                    .orElse(null);
+            if (owner == null || owner == except) {
+                continue;
+            }
+            if (found != null && found != owner) {
+                return Optional.empty();
+            }
+            found = owner;
+        }
+        return Optional.ofNullable(found);
+    }
+
+    /**
+     * Moves this transaction's work into another open transaction, then ends this one
+     * (IKE-Network/ike-issues#1326). Each version written under one of this transaction's
+     * uncommitted stamps is written again, unchanged, under the receiver's stamp of the same
+     * state, author, module and path, and leaves its old stamp in the same write
+     * ({@link dev.ikm.tinkar.entity.EntityService#putEntityReplacingVersion}), so no component has
+     * a version left behind. Each component joins the receiver. This transaction, emptied, is
+     * canceled, which cancels only its now unused stamps, and names the receiver as its
+     * {@link #continuation()}. The receiver's basis moves back to this one's when it is earlier:
+     * what it holds now was made against both.
+     *
+     * <p>Two pending versions of one component cannot be merged without choosing between them:
+     * when the receiver already holds a pending version of a component this transaction does,
+     * nothing is moved.
+     *
+     * @param receiver the open transaction that continues this one's work
+     * @return true when the work was moved; false when both hold a pending version of one component
+     * @throws IllegalStateException if either transaction is not open, or they are the same
+     */
+    public boolean moveInto(Transaction receiver) {
+        if (receiver == this || !isOpen() || !receiver.isOpen()) {
+            throw new IllegalStateException("Work moves between two open transactions: " + transactionName
+                    + " (" + transactionUuid + ") into " + receiver.transactionName + " (" + receiver.transactionUuid + ")");
+        }
+        org.eclipse.collections.api.set.primitive.LongSet ownStamps = uncommittedStampNids();
+        java.util.List<Long> components = componentsToMove(receiver, ownStamps);
+        if (components == null) {
+            return false;
+        }
+        for (long componentNid : components) {
+            moveVersions(componentNid, ownStamps, receiver);
+            receiver.addComponent(componentNid);
+        }
+        componentsInTransaction.clear();
+        receiver.basisTime = Math.min(receiver.basisTime, basisTime);
+        continuation = receiver;
+        cancel();
+        receiver.record(KernelConcept.TRANSACTION_OPEN.nid());
+        Entity.provider().notifyRefreshRequired(receiver);
+        return true;
+    }
+
+    /**
+     * Whether {@link #moveInto} would move this transaction's work into the receiver: both are
+     * open, and no component has a pending version in each.
+     *
+     * @param receiver the transaction that would continue this one's work
+     * @return true when the work can be moved
+     */
+    public boolean canMoveInto(Transaction receiver) {
+        return receiver != this && isOpen() && receiver.isOpen()
+                && componentsToMove(receiver, uncommittedStampNids()) != null;
+    }
+
+    private org.eclipse.collections.api.set.primitive.LongSet uncommittedStampNids() {
+        org.eclipse.collections.api.set.primitive.MutableLongSet stampNids =
+                new org.eclipse.collections.impl.set.mutable.primitive.LongHashSet();
+        for (UUID stampUuid : stampsInTransaction) {
+            long stampNid = stampNid(stampUuid);
+            if (Entity.getStamp(stampNid).lastVersion().time() == Long.MAX_VALUE) {
+                stampNids.add(stampNid);
+            }
+        }
+        return stampNids;
+    }
+
+    /** The components to move, stamps aside; null when one has a pending version here and in the receiver. */
+    private java.util.List<Long> componentsToMove(Transaction receiver,
+                                                  org.eclipse.collections.api.set.primitive.LongSet ownStamps) {
+        java.util.List<Long> components = new java.util.ArrayList<>();
+        for (Long componentNid : componentsInTransaction) {
+            if (!(dev.ikm.tinkar.entity.EntityHandle.get(componentNid).orNull() instanceof Entity<?> entity)
+                    || entity instanceof StampEntity<?>) {
+                continue;
+            }
+            boolean ownVersion = false;
+            boolean receiverVersion = false;
+            for (Object object : entity.versions()) {
+                EntityVersion version = (EntityVersion) object;
+                if (ownStamps.contains(version.stampNid())) {
+                    ownVersion = true;
+                } else if (version.uncommitted() && receiver.ownsStamp(version.stamp().asUuidArray())) {
+                    receiverVersion = true;
+                }
+            }
+            if (ownVersion && receiverVersion) {
+                return null;
+            }
+            components.add(componentNid);
+        }
+        return components;
+    }
+
+    /** Writes the component's versions under this transaction's stamps again under the receiver's. */
+    private void moveVersions(long componentNid, org.eclipse.collections.api.set.primitive.LongSet ownStamps,
+                              Transaction receiver) {
+        while (true) {
+            Entity<?> entity = dev.ikm.tinkar.entity.EntityHandle.get(componentNid).expectEntity();
+            EntityVersion toMove = null;
+            for (Object object : entity.versions()) {
+                if (ownStamps.contains(((EntityVersion) object).stampNid())) {
+                    toMove = (EntityVersion) object;
+                    break;
+                }
+            }
+            if (toMove == null) {
+                return;
+            }
+            StampEntity<?> oldStamp = toMove.stamp();
+            long newStampNid = receiver.getStamp(oldStamp.state(), Long.MAX_VALUE, oldStamp.authorNid(),
+                    oldStamp.moduleNid(), oldStamp.pathNid()).nid();
+            Entity<?> moved = switch (toMove) {
+                case dev.ikm.tinkar.entity.ConceptVersionRecord version ->
+                        version.chronology().without(version).with(version.withStampNid(newStampNid)).build();
+                case dev.ikm.tinkar.entity.SemanticVersionRecord version ->
+                        version.chronology().without(version).with(version.withStampNid(newStampNid)).build();
+                case dev.ikm.tinkar.entity.PatternVersionRecord version ->
+                        version.chronology().without(version).with(version.withStampNid(newStampNid)).build();
+                default -> throw new IllegalStateException("Only a concept's, a semantic's or a pattern's version moves: "
+                        + dev.ikm.tinkar.entity.EntityText.diagnostic(toMove));
+            };
+            Entity.provider().putEntityReplacingVersion(moved, oldStamp.nid());
+        }
+    }
+
+    private static long stampNid(UUID stampUuid) {
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern().publicId())
+                .call(() -> PrimitiveData.nid(stampUuid));
     }
 
     /**
