@@ -24,6 +24,7 @@ import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.FieldDefinitionForEntity;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -60,7 +61,14 @@ public record ChangeChronology(long nid, ImmutableList<VersionChangeRecord> chan
             sb.append(viewCalculator.getPreferredDescriptionTextWithFallbackOrNid(stampForChange.authorNid()));
             for (FieldChangeRecord fieldChange: changeRecord.changes()) {
                 sb.append("\n   ");
-                Function<Object, String> formatFunction = value -> value.toString();
+                Function<Object, String> formatFunction = value -> switch (value) {
+                    // A pattern version's field definition: its meaning, purpose and data type.
+                    case FieldDefinitionForEntity definition -> "[" + definition.indexInPattern() + "] " +
+                            viewCalculator.getPreferredDescriptionTextOrNid(definition.meaningNid()) + " / " +
+                            viewCalculator.getPreferredDescriptionTextOrNid(definition.purposeNid()) + " / " +
+                            viewCalculator.getPreferredDescriptionTextOrNid(definition.dataTypeNid());
+                    default -> value.toString();
+                };
                 if (fieldChange.currentValue().fieldDefinition(viewCalculator).meaningNid() == KernelConcept.TIME_FOR_VERSION.nid()) {
                     formatFunction = value -> switch (value) {
                         case Long epochMs -> DateTimeUtil.format(epochMs);

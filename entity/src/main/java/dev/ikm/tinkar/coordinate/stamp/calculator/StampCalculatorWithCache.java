@@ -769,7 +769,13 @@ public class StampCalculatorWithCache implements StampCalculator {
     public <V extends
             EntityVersion> List<DiTreeVersion<V>> getVersionGraphList(ImmutableList<V> versionList) {
         SortedSet<VersionWithDistance<V>> versionWithDistances = new TreeSet<>();
-        versionList.forEach(v -> versionWithDistances.add(new VersionWithDistance<>(v)));
+        // A canceled version is on no route, as for latest: its time, Long.MIN_VALUE, would
+        // otherwise make it the root its path's first real version is compared with.
+        versionList.forEach(v -> {
+            if (!v.canceled()) {
+                versionWithDistances.add(new VersionWithDistance<>(v));
+            }
+        });
 
         final List<DiTreeVersion<V>> results = new ArrayList<>();
 
@@ -791,7 +797,11 @@ public class StampCalculatorWithCache implements StampCalculator {
                     nodesInTree.add(versionWithDistance);
                 } else {
                     List<VersionVertex> leafList = new ArrayList<>(leafNodes);
+                    boolean branched = false;
                     for (VersionVertex leafNode : leafList) {
+                        if (branched) {
+                            break;
+                        }
                         switch (getRelativePosition(versionWithDistance.version, leafNode.version())) {
                             case AFTER:
                                 VersionVertex newLeaf = VersionVertex.make(versionWithDistance.version);
@@ -801,6 +811,20 @@ public class StampCalculatorWithCache implements StampCalculator {
                                 leafNodes.add(newLeaf);
                                 break;
                             case EQUAL:
+                                if (versionWithDistance.version.uncommitted() && leafNode.version().uncommitted()) {
+                                    // Two uncommitted versions on one path do not supersede each other, as
+                                    // latest treats them: each follows the other's predecessor, on a branch
+                                    // of its own. Without a predecessor, the version is left for a graph of its own.
+                                    Optional<VersionVertex> predecessor = treeBuilder.predecessor(leafNode);
+                                    if (predecessor.isPresent()) {
+                                        VersionVertex branch = VersionVertex.make(versionWithDistance.version);
+                                        treeBuilder.addEdge(branch, predecessor.get());
+                                        nodesInTree.add(versionWithDistance);
+                                        leafNodes.add(branch);
+                                    }
+                                    branched = true;
+                                    break;
+                                }
                                 // TODO handle different modules... ?
                                 throw new IllegalStateException("Version can only be in one module at a time. \n"
                                         + EntityText.diagnostic(leafNode.version()) + "\n" + EntityText.diagnostic(versionWithDistance.version));
@@ -1172,9 +1196,17 @@ public class StampCalculatorWithCache implements StampCalculator {
             this.computedDistance = getDistance(StampPositionRecord.make(version.stamp().time(), version.stamp().pathNid()));
         }
 
+        /**
+         * By distance, then by stamp: two versions at one distance, as two uncommitted
+         * versions on one path are, are distinct, and a sorted set must keep both.
+         */
         @Override
         public int compareTo(VersionWithDistance o) {
-            return this.computedDistance.compareTo(o.computedDistance);
+            int byDistance = this.computedDistance.compareTo(o.computedDistance);
+            if (byDistance != 0) {
+                return byDistance;
+            }
+            return Long.compare(this.version.stampNid(), o.version.stampNid());
         }
     }
 
