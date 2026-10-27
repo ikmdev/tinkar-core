@@ -280,6 +280,79 @@ class ChangeChronologyIT {
         }
     }
 
+    /**
+     * A change chronology depends on no coordinate: calculators on different paths give the same
+     * records in the same order, including versions on a path one of them cannot see.
+     */
+    @Test
+    void theChronologyIsTheSameOnEveryCoordinate() {
+        PublicId conceptId = PublicIds.newRandom();
+        EntityProxy.Semantic semantic = EntityProxy.Semantic.make(PublicIds.newRandom());
+        long semanticNid;
+        try (StampedWriter writer = openOn("on development", TIME + 30, KernelConcept.DEVELOPMENT_PATH)) {
+            writer.concept(conceptId);
+            semanticNid = writer.semantic(semantic, KernelPattern.COMMENT_PATTERN.publicId(), conceptId, "on development");
+            writer.commit();
+        }
+        try (StampedWriter writer = openOn("on master", TIME + 31, KernelConcept.MASTER_PATH)) {
+            writer.semantic(semantic, KernelPattern.COMMENT_PATTERN.publicId(), conceptId, "on master");
+            writer.commit();
+        }
+        try (StampedWriter writer = openOn("on development again", TIME + 32, KernelConcept.DEVELOPMENT_PATH)) {
+            writer.semantic(semantic, KernelPattern.COMMENT_PATTERN.publicId(), conceptId, "on development again");
+            writer.commit();
+        }
+        try (StampedWriter writer = openOn("on master again", TIME + 33, KernelConcept.MASTER_PATH)) {
+            writer.semantic(semantic, KernelPattern.COMMENT_PATTERN.publicId(), conceptId, "on master again");
+            writer.commit();
+        }
+
+        ChangeChronology onDevelopment = Calculators.Stamp.DevelopmentLatest().changeChronology(semanticNid);
+        ChangeChronology onMaster = Calculators.Stamp.MasterLatest().changeChronology(semanticNid);
+        assertEquals(4, onDevelopment.changeRecords().size(), "One change record for each version, on either path");
+        assertEquals(onDevelopment, onMaster, "The same chronology on the development and master coordinates: "
+                + comments(onDevelopment) + " and " + comments(onMaster));
+        // Master originates from development, so its versions come first, newest first within each path.
+        assertEquals(List.of("on master again", "on master", "on development again", "on development"), comments(onDevelopment),
+                "Path farthest from the primordial path first, then newest first");
+    }
+
+    /**
+     * A semantic's fields are recorded against its own pattern by index, not named from the pattern
+     * version a coordinate sees: a coordinate that cannot see the pattern still has the semantic's
+     * chronology, the same as one that can.
+     */
+    @Test
+    void aSemanticOfAPatternTheCoordinateCannotSeeHasTheSameChronology() {
+        PublicId conceptId = PublicIds.newRandom();
+        PublicId patternId = PublicIds.newRandom();
+        EntityProxy.Semantic semantic = EntityProxy.Semantic.make(PublicIds.newRandom());
+        long patternNid;
+        long semanticNid;
+        try (StampedWriter writer = openOn("pattern on master", TIME + 40, KernelConcept.MASTER_PATH)) {
+            writer.concept(conceptId);
+            patternNid = writer.pattern(patternId, KernelConcept.ENGLISH_LANGUAGE, KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE,
+                    field(KernelConcept.ENGLISH_LANGUAGE, KernelConcept.ENGLISH_LANGUAGE, KernelConcept.STRING));
+            semanticNid = writer.semantic(semantic, patternId, conceptId, "first");
+            writer.commit();
+        }
+        try (StampedWriter writer = openOn("semantic on master", TIME + 41, KernelConcept.MASTER_PATH)) {
+            writer.semantic(semantic, patternId, conceptId, "second");
+            writer.commit();
+        }
+        assertFalse(Calculators.Stamp.DevelopmentLatest().latest(patternNid).isPresent(),
+                "The development coordinate cannot see the pattern");
+
+        ChangeChronology onMaster = Calculators.Stamp.MasterLatest().changeChronology(semanticNid);
+        ChangeChronology onDevelopment = Calculators.Stamp.DevelopmentLatest().changeChronology(semanticNid);
+        assertEquals(onMaster, onDevelopment, "The same chronology whether or not the coordinate sees the pattern");
+        FieldChangeRecord change = onDevelopment.changeRecords().getFirst().changes()
+                .detect(fieldChange -> fieldChange.currentValue().patternNid() == patternNid);
+        assertEquals(0, change.currentValue().indexInPattern(), "The semantic's only field");
+        assertEquals("first", change.priorValue().value());
+        assertEquals("second", change.currentValue().value());
+    }
+
     private static final long TIME = 1_760_000_000_000L;
     private static final int MEANING = EntityBinding.Pattern.Version.patternMeaningFieldDefinitionIndex();
     private static final int PURPOSE = EntityBinding.Pattern.Version.patternPurposeFieldDefinitionIndex();
@@ -287,6 +360,10 @@ class ChangeChronologyIT {
 
     private static StampedWriter open(String name, long time, ConceptFacade author) {
         return StampedWriter.open(name, State.ACTIVE, time, author, KernelConcept.PRIMORDIAL_MODULE, KernelConcept.DEVELOPMENT_PATH);
+    }
+
+    private static StampedWriter openOn(String name, long time, ConceptFacade path) {
+        return StampedWriter.open(name, State.ACTIVE, time, KernelConcept.USER, KernelConcept.PRIMORDIAL_MODULE, path);
     }
 
     /** A writer whose stamp stays uncommitted until it commits, and is canceled if it does not. */
@@ -309,6 +386,11 @@ class ChangeChronologyIT {
     /** A version's change to the comment pattern's only field. */
     private static FieldChangeRecord commentField(VersionChangeRecord versionChange) {
         return versionChange.changes().detect(change -> change.currentValue().patternNid() == KernelPattern.COMMENT_PATTERN.nid());
+    }
+
+    /** Each change record's comment, in the chronology's order. */
+    private static List<Object> comments(ChangeChronology chronology) {
+        return chronology.changeRecords().collect(change -> commentField(change).currentValue().value()).castToList();
     }
 
     private static long nid(Object value) {

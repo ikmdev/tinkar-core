@@ -177,6 +177,26 @@ public class StampCalculatorWithCache implements StampCalculator {
                 filterKey -> new StampCalculatorWithCache(filter));
     }
 
+    /**
+     * Orders two stamps by path, the path nearest the primordial path first, then by time, then by
+     * stamp nid: a total order that depends on no coordinate, so every view orders a change
+     * chronology alike, including versions on paths its own coordinate cannot see.
+     *
+     * @param stampNid1 the first stamp
+     * @param stampNid2 the second stamp
+     * @return negative, zero or positive as the first stamp comes before, is, or comes after the second
+     */
+    public static int comparePathThenTime(long stampNid1, long stampNid2) {
+        StampEntity stamp1 = Entity.getStamp(stampNid1);
+        StampEntity stamp2 = Entity.getStamp(stampNid2);
+        int byDistance = getDistance(StampPositionRecord.make(stamp1.time(), stamp1.pathNid()))
+                .compareTo(getDistance(StampPositionRecord.make(stamp2.time(), stamp2.pathNid())));
+        if (byDistance != 0) {
+            return byDistance;
+        }
+        return Long.compare(stampNid1, stampNid2);
+    }
+
     private static BigInteger getDistance(StampPosition position) {
         int pathDistanceFromOrigin = pathDistanceFromOrigin(0, position.toStampPositionImmutable());
         return BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.valueOf(pathDistanceFromOrigin)).add(BigInteger.valueOf(position.time()));
