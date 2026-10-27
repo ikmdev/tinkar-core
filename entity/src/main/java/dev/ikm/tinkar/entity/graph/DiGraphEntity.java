@@ -200,7 +200,10 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
         }
 
         public Builder addVertex(V vertex) {
-            if (vertex.vertexIndex() > 0 &&
+            // A vertex is already in the list when its index names it there. A new vertex
+            // carries -1, so index 0 is a valid index like any other: the guard once tested
+            // > 0, which re-added the first vertex on every edge that touched it.
+            if (vertex.vertexIndex() >= 0 &&
                     vertex.vertexIndex() < vertexMap.size() &&
                     vertexMap.get(vertex.vertexIndex()) == vertex) {
                 // already in the list.

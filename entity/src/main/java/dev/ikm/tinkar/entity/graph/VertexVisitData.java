@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.entity.graph;
 
-import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.common.util.ArrayUtil;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
@@ -28,10 +27,6 @@ public class VertexVisitData {
 
     /** The leaf nodes. */
     private final BitSet leafNodes;
-    private final BitSet necessarySets;
-    private final BitSet sufficientSets;
-    private final BitSet propertySets;
-    private final BitSet inclusionSets;
 
     /** The max depth. */
     private int maxDepth = 0;
@@ -78,10 +73,6 @@ public class VertexVisitData {
     public VertexVisitData(int graphSize, VisitProcessor vertexStartConsumer,
                            VisitProcessor vertexEndConsumer) {
         this.leafNodes = new BitSet(graphSize);
-        this.necessarySets = new BitSet(graphSize);
-        this.sufficientSets = new BitSet(graphSize);
-        this.propertySets = new BitSet(graphSize);
-        this.inclusionSets = new BitSet(graphSize);
         this.distanceArray = ArrayUtil.createAndFillWithMinusOne(graphSize);
         this.discoverySequenceArray = ArrayUtil.createAndFillWithMinusOne(graphSize);
         this.finishSequenceArray = ArrayUtil.createAndFillWithMinusOne(graphSize);
@@ -90,20 +81,14 @@ public class VertexVisitData {
         this.vertexEndConsumer = vertexEndConsumer;
     }
 
+    /**
+     * Runs the start consumer, if any, for a vertex the traversal has discovered. The visitor
+     * is neutral: it no longer classifies vertices by the EL++ set concepts, which resolved
+     * kernel terms through the store on every visit and so required a running
+     * {@code PrimitiveDataService} to traverse any graph at all; nothing read those sets, and
+     * a consumer that needs them can test a vertex's meaning itself.
+     */
     public void vertexStartProcess(EntityVertex vertex, DiGraphAbstract<EntityVertex> diGraph) {
-        if (vertex.meaningNid == KernelConcept.NECESSARY_SET.nid()) {
-            this.necessarySets.set(vertex.vertexIndex);
-        }
-        if (vertex.meaningNid == KernelConcept.SUFFICIENT_SET.nid()) {
-            this.sufficientSets.set(vertex.vertexIndex);
-        }
-        if (vertex.meaningNid == KernelConcept.PROPERTY_SET.nid()) {
-            this.propertySets.set(vertex.vertexIndex);
-        }
-        if (vertex.meaningNid == KernelConcept.INCLUSION_SET.nid()) {
-            this.inclusionSets.set(vertex.vertexIndex);
-        }
-
         if (vertexStartConsumer != null) {
             vertexStartConsumer.accept(vertex, diGraph, this);
         }
@@ -163,16 +148,6 @@ public class VertexVisitData {
     public BitSet leafVertexIndexes() {
         return this.leafNodes;
     }
-    public BitSet propertySetIndexes() {
-        return this.propertySets;
-    }
-    public BitSet necessarySetIndexes() {
-        return this.necessarySets;
-    }
-    public BitSet sufficientSetIndexes() {
-        return this.sufficientSets;
-    }
-    public BitSet inclusionSetIndexes() { return this.inclusionSets; }
 
     /**
      * Gets the max depth.

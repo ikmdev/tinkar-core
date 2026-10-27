@@ -33,6 +33,8 @@ import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -320,7 +322,10 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
             final int   currentIndex      = bfsQueue.remove();
             final int   currentDistance = vertexVisitData.distance(currentIndex);
             final EntityVertex currentVertex = vertex(currentIndex);
-            final ImmutableIntList childIndexes       = successorMap.get(currentIndex);
+            // A leaf has no entry in the successor map, so read it with an empty default as
+            // the depth-first traversal does.
+            final ImmutableIntList childIndexes =
+                    successorMap.getIfAbsent(currentIndex, () -> IntLists.immutable.empty());
 
             if (childIndexes.isEmpty()) {
                 vertexVisitData.setLeafVertex(currentIndex);
@@ -343,16 +348,41 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
             vertexVisitData.endVertexVisit(currentIndex);
         }
     }
+    /**
+     * Visits the graph depth first from {@code startNid}, in the order the recursive form
+     * visited it: a vertex is discovered and its start process run before any child, each
+     * child is entered in successor order once its earlier siblings' subtrees have finished,
+     * and the end process and finish run after the last child. The walk keeps its own stack of
+     * frames rather than recursing, so a graph's depth is bounded by memory alone, not by the
+     * call stack: the recursive form threw past depth 100, a ceiling a long sequential chain
+     * reaches ({@code dev-digraph-readiness-spike}).
+     */
     public final void depthFirstProcess(int startNid, VertexVisitData vertexVisitData) {
-        dfsVisit(startNid, vertexVisitData, 0);
-    }
-    private void dfsVisit(int index,
-                          VertexVisitData vertexVisitData,
-                          int depth) {
-        if (depth > 100) {
-            // toString depends on this method, so we can't include this.toString() in the exception...
-            throw new RuntimeException("Depth limit exceeded: " + depth);  // + " in graph: " + this);
+        final Deque<DfsFrame> stack = new ArrayDeque<>();
+        stack.push(enter(startNid, 0, vertexVisitData));
+
+        while (!stack.isEmpty()) {
+            final DfsFrame frame = stack.peek();
+            if (frame.nextChild < frame.childIndexes.size()) {
+                final int childIndex = frame.childIndexes.get(frame.nextChild++);
+                if (vertexVisitData.vertexStatus(childIndex) == VertexStatus.UNDISCOVERED) {
+                    vertexVisitData.setPredecessorIndex(childIndex, frame.index);
+                    stack.push(enter(childIndex, frame.depth + 1, vertexVisitData));
+                } else {
+                    // second path to node. Could be multi-parent or cycle...
+                    // TODO decide if to put in generic cycle detection using this circumstance.
+                }
+            } else {
+                stack.pop();
+                vertexVisitData.vertexEndProcess(frame.vertex, (DiGraphAbstract<EntityVertex>) this);
+                // Change to NodeStatus.FINISHED
+                vertexVisitData.endVertexVisit(frame.index);
+            }
         }
+    }
+
+    /** Discovers a vertex and runs its start process; the frame then walks its children. */
+    private DfsFrame enter(int index, int depth, VertexVisitData vertexVisitData) {
         // Change to NodeStatus.PROCESSING
         vertexVisitData.startVertexVisit(index, depth);
 
@@ -363,21 +393,23 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
         }
         EntityVertex vertex = vertex(index);
         vertexVisitData.vertexStartProcess(vertex, (DiGraphAbstract<EntityVertex>) this);
+        return new DfsFrame(index, depth, vertex, childIndexes);
+    }
 
-        childIndexes.forEach(childIndex -> {
-            if (vertexVisitData.vertexStatus(childIndex) == VertexStatus.UNDISCOVERED) {
-                vertexVisitData.setPredecessorIndex(childIndex, index);
-                dfsVisit(childIndex, vertexVisitData, depth + 1);
-            } else {
-                // second path to node. Could be multi-parent or cycle...
-                // TODO decide if to put in generic cycle detection using this circumstance.
-            }
-        });
+    /** One vertex under visit on the depth-first stack, with the next child to enter. */
+    private static final class DfsFrame {
+        final int index;
+        final int depth;
+        final EntityVertex vertex;
+        final ImmutableIntList childIndexes;
+        int nextChild;
 
-        vertexVisitData.vertexEndProcess(vertex, (DiGraphAbstract<EntityVertex>) this);
-
-        // Change to NodeStatus.FINISHED
-        vertexVisitData.endVertexVisit(index);
+        DfsFrame(int index, int depth, EntityVertex vertex, ImmutableIntList childIndexes) {
+            this.index = index;
+            this.depth = depth;
+            this.vertex = vertex;
+            this.childIndexes = childIndexes;
+        }
     }
 
 
