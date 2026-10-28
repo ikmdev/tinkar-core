@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.graph.adaptor.profile;
 
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.terms.EntityFacade;
@@ -179,7 +180,7 @@ public abstract class ProfiledTree<N> {
             case Long nid -> OptionalLong.of(nid);
             case Integer nid -> OptionalLong.of(nid);
             case EntityFacade facade -> OptionalLong.of(facade.nid());
-            default -> throw new IllegalStateException("vertex " + vertexIndex + " property " + propertyKeyNid
+            default -> throw new IllegalStateException("vertex " + vertexIndex + " property " + DiagnosticText.component(propertyKeyNid)
                     + " is not a concept: " + value);
         };
     }
@@ -190,7 +191,7 @@ public abstract class ProfiledTree<N> {
         return switch (value) {
             case null -> OptionalDouble.empty();
             case Number number -> OptionalDouble.of(number.doubleValue());
-            default -> throw new IllegalStateException("vertex " + vertexIndex + " property " + propertyKeyNid
+            default -> throw new IllegalStateException("vertex " + vertexIndex + " property " + DiagnosticText.component(propertyKeyNid)
                     + " is not a number: " + value);
         };
     }
@@ -201,7 +202,7 @@ public abstract class ProfiledTree<N> {
         return switch (value) {
             case null -> absent;
             case Boolean flag -> flag;
-            default -> throw new IllegalStateException("vertex " + vertexIndex + " property " + propertyKeyNid
+            default -> throw new IllegalStateException("vertex " + vertexIndex + " property " + DiagnosticText.component(propertyKeyNid)
                     + " is not a flag: " + value);
         };
     }

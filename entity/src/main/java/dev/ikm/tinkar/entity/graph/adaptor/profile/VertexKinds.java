@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.graph.adaptor.profile;
 
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import org.eclipse.collections.api.factory.primitive.LongObjectMaps;
 import org.eclipse.collections.api.map.primitive.ImmutableLongObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
@@ -72,7 +73,7 @@ public final class VertexKinds<N> {
          */
         public Builder<N> kind(long meaningNid, NodeFactory<N> factory) {
             if (factories.containsKey(meaningNid)) {
-                throw new IllegalArgumentException("meaning " + meaningNid + " is already a kind of this profile");
+                throw new IllegalArgumentException("meaning " + DiagnosticText.component(meaningNid) + " is already a kind of this profile");
             }
             factories.put(meaningNid, factory);
             return this;
