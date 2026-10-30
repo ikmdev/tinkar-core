@@ -260,29 +260,7 @@ class VertexIdentityWriteIT {
      */
     @Test
     void aVertexNothingReachesDoesNotBreakTheSameVersionCheck() {
-        LogicalExpressionBuilder builder = new LogicalExpressionBuilder();
-        builder.NecessarySet(builder.And(builder.ConceptAxiom(KernelConcept.LANGUAGE)));
-        DiTreeEntity tree = (DiTreeEntity) builder.build().sourceGraph();
-        // The same tree, vertex by vertex and edge by edge, plus a vertex nothing reaches. The orphan
-        // has a logical meaning (the set's And), so the identity table still covers the tree.
-        DiTreeEntity.Builder withOrphan = DiTreeEntity.builder();
-        for (EntityVertex vertex : tree.vertexMap()) {
-            EntityVertex copy = vertex.copyWithUnassignedIndex();
-            withOrphan.addVertex(copy);
-            if (vertex.vertexIndex() == tree.root().vertexIndex()) {
-                withOrphan.setRoot(copy);
-            }
-        }
-        for (EntityVertex vertex : tree.vertexMap()) {
-            tree.successors(vertex.vertexIndex()).forEach(child -> withOrphan.addEdge(child, vertex.vertexIndex()));
-        }
-        int set = tree.successors(tree.root().vertexIndex()).get(0);
-        long and = tree.vertex(tree.successors(set).get(0)).getMeaningNid();
-        withOrphan.addVertex(EntityVertex.make(and));
-        DiTreeEntity orphaned = withOrphan.build();
-        assertEquals(tree.vertexMap().size() + 1, orphaned.vertexMap().size());
-        assertEquals(tree.root().vertexIndex(), orphaned.root().vertexIndex());
-        assertEquals(tree.successors(tree.root().vertexIndex()), orphaned.successors(orphaned.root().vertexIndex()));
+        DiTreeEntity orphaned = treeWithOrphan();
 
         PublicId concept = PublicIds.newRandom();
         PublicId semantic = PublicIds.newRandom();
@@ -385,6 +363,105 @@ class VertexIdentityWriteIT {
     }
 
     /**
+     * A change set carrying a tree with a vertex nothing reaches loads. The protobuf transform
+     * holds such an orphan with predecessor -1, as SNOMED CT's OWL transform writes some, which
+     * names no vertex; the invariants read it as no operand, both in the version checked and in
+     * the history the next version reads.
+     */
+    @Test
+    void aCarriedTreeHoldingAVertexNothingReachesLoads() {
+        DiTreeEntity orphaned = treeWithOrphan();
+        int orphan = orphaned.vertexMap().size() - 1;
+        DiTreeEntity asTransformed = new DiTreeEntity(orphaned.root(), orphaned.vertexMap(), orphaned.successorMap(),
+                orphaned.predecessorMap().newWithKeyValue(orphan, -1));
+
+        assertEquals(null, changeSetCarryingTogether(40, asTransformed, asTransformed),
+                "the tree is kept as it arrived, twice over");
+    }
+
+    /**
+     * A small logical tree, vertex by vertex and edge by edge, plus a vertex nothing reaches. The
+     * orphan has a logical meaning (the set's And), so the identity table still covers the tree.
+     */
+    private static DiTreeEntity treeWithOrphan() {
+        LogicalExpressionBuilder builder = new LogicalExpressionBuilder();
+        builder.NecessarySet(builder.And(builder.ConceptAxiom(KernelConcept.LANGUAGE)));
+        DiTreeEntity tree = (DiTreeEntity) builder.build().sourceGraph();
+        DiTreeEntity.Builder withOrphan = DiTreeEntity.builder();
+        for (EntityVertex vertex : tree.vertexMap()) {
+            EntityVertex copy = vertex.copyWithUnassignedIndex();
+            withOrphan.addVertex(copy);
+            if (vertex.vertexIndex() == tree.root().vertexIndex()) {
+                withOrphan.setRoot(copy);
+            }
+        }
+        for (EntityVertex vertex : tree.vertexMap()) {
+            tree.successors(vertex.vertexIndex()).forEach(child -> withOrphan.addEdge(child, vertex.vertexIndex()));
+        }
+        int set = tree.successors(tree.root().vertexIndex()).get(0);
+        long and = tree.vertex(tree.successors(set).get(0)).getMeaningNid();
+        withOrphan.addVertex(EntityVertex.make(and));
+        DiTreeEntity orphaned = withOrphan.build();
+        assertEquals(tree.vertexMap().size() + 1, orphaned.vertexMap().size());
+        assertEquals(tree.root().vertexIndex(), orphaned.root().vertexIndex());
+        assertEquals(tree.successors(tree.root().vertexIndex()), orphaned.successors(orphaned.root().vertexIndex()));
+        return orphaned;
+    }
+
+    /**
+     * Versions a change set carries together, in one write, are each held to the versions before
+     * them in that write: the history is built once for the write and extended version by
+     * version, so a consistent chain passes and a version that gives a kept UUID another meaning
+     * is refused, though nothing is stored before the write.
+     */
+    @Test
+    void versionsCarriedTogetherAreEachHeldToTheOnesBefore() {
+        List<Version> chain = chains.getFirst();
+        DiTreeEntity first = VertexIdentityChains.build(chain.get(0).root());
+        DiTreeEntity second = VertexIdentityChains.build(chain.get(1).root());
+        DiTreeEntity swapped = withUuids(second, j -> j == second.root().vertexIndex()
+                ? uuidAt(first, first.successors(first.root().vertexIndex()).get(0)) : uuidAt(second, j));
+
+        assertEquals(null, changeSetCarryingTogether(20, first, second), "a consistent chain is kept");
+        String refused = changeSetCarryingTogether(30, first, swapped);
+        assertNotNull(refused, "a version breaking the one before it in the same write is refused");
+        assertTrue(refused.contains("changed meaning"), refused);
+    }
+
+    /**
+     * Loads two versions of one semantic in a single change-set write; returns the refusal's
+     * message, or null when both were kept as they arrived.
+     */
+    private String changeSetCarryingTogether(long offset, DiTreeEntity earlier, DiTreeEntity later) {
+        long time = 1_900_000_000_000L + offset * 10;
+        PublicId concept = PublicIds.newRandom();
+        PublicId semantic = PublicIds.newRandom();
+        StampedWriter writer = open("change set " + offset, time);
+        writer.concept(concept);
+        writer.commit();
+        long nid = EntityService.get().nidForSemantic(KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.publicId(), semantic);
+
+        StampedWriter first = open("change set " + offset + ", first", time + 1);
+        StampedWriter second = open("change set " + offset + ", second", time + 2);
+        try {
+            putLoaded(nid, semantic, concept, new long[]{first.stamp().nid(), second.stamp().nid()},
+                    new DiTreeEntity[]{earlier, later}, DataActivity.LOADING_CHANGE_SET);
+        } catch (IllegalStateException refused) {
+            second.cancel();
+            first.cancel();
+            return refused.getMessage();
+        }
+        DiTreeEntity stored = storedTree(nid, second.stamp().nid());
+        assertNotNull(stored);
+        for (int j = 0; j < later.vertexMap().size(); j++) {
+            assertEquals(uuidAt(later, j), uuidAt(stored, j), "a change set's UUIDs are kept");
+        }
+        second.cancel();
+        first.cancel();
+        return null;
+    }
+
+    /**
      * Loads a change set's version, then a later one that gives the root's UUID to another
      * vertex; returns the refusal's message, or null when the later version was kept.
      */
@@ -429,6 +506,11 @@ class VertexIdentityWriteIT {
 
     private static void putLoaded(long nid, PublicId semantic, PublicId concept, long stampNid, DiTreeEntity tree,
                                   DataActivity activity) {
+        putLoaded(nid, semantic, concept, new long[]{stampNid}, new DiTreeEntity[]{tree}, activity);
+    }
+
+    private static void putLoaded(long nid, PublicId semantic, PublicId concept, long[] stampNids, DiTreeEntity[] trees,
+                                  DataActivity activity) {
         PublicIdentifierRecord identifier = PublicIdentifierRecord.make(semantic);
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord record = SemanticRecordBuilder.builder()
@@ -440,8 +522,10 @@ class VertexIdentityWriteIT {
                 .referencedComponentNid(EntityService.get().nidForPublicId(concept))
                 .versions(versions)
                 .build();
-        versions.add(SemanticVersionRecordBuilder.builder().chronology(record).stampNid(stampNid)
-                .fieldValues(Lists.immutable.of(tree)).build());
+        for (int i = 0; i < stampNids.length; i++) {
+            versions.add(SemanticVersionRecordBuilder.builder().chronology(record).stampNid(stampNids[i])
+                    .fieldValues(Lists.immutable.of(trees[i])).build());
+        }
         EntityService.get().putEntity(SemanticRecordBuilder.builder(record).versions(versions.toImmutable()).build(),
                 activity);
     }

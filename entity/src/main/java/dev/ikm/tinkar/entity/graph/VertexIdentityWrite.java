@@ -25,8 +25,14 @@ import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.IdentityRule;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.primitive.IntObjectMaps;
+import org.eclipse.collections.api.factory.primitive.LongObjectMaps;
+import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 
 import org.slf4j.Logger;
@@ -34,13 +40,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.LongFunction;
 import java.util.function.Supplier;
@@ -131,15 +133,15 @@ public final class VertexIdentityWrite {
         boolean carry = activity == DataActivity.LOADING_CHANGE_SET || activity == DataActivity.DATA_REPAIR;
         SemanticEntity<?> stored = storedSupplier.get();
 
-        Map<Long, SemanticEntityVersion> storedByStamp = new HashMap<>();
+        MutableLongObjectMap<SemanticEntityVersion> storedByStamp = LongObjectMaps.mutable.empty();
         if (stored != null) {
             for (SemanticEntityVersion version : stored.versions()) {
-                storedByStamp.putIfAbsent(version.stampNid(), version);
+                storedByStamp.getIfAbsentPut(version.stampNid(), version);
             }
         }
         List<Ordered> versions = new ArrayList<>();
         List<Ordered> replaced = new ArrayList<>();
-        Set<Long> rewritten = new HashSet<>();
+        MutableLongSet rewritten = LongSets.mutable.empty();
         boolean anyNew = false;
         for (SemanticVersionRecord version : record.versions()) {
             SemanticEntityVersion same = storedByStamp.get(version.stampNid());
@@ -155,7 +157,7 @@ public final class VertexIdentityWrite {
         if (!anyNew) {
             return incoming;
         }
-        storedByStamp.forEach((stampNid, version) -> {
+        storedByStamp.forEachKeyValue((stampNid, version) -> {
             if (stampNid == withdrawnStampNid || rewritten.contains(stampNid)) {
                 replaced.add(ordered(version, true, stamps));
             } else if (versions.stream().noneMatch(v -> v.stampNid() == stampNid)) {
@@ -165,6 +167,11 @@ public final class VertexIdentityWrite {
         versions.sort(Comparator.comparingLong(Ordered::time).thenComparing(Ordered::stamp));
         replaced.sort(Comparator.comparingLong(Ordered::time).thenComparing(Ordered::stamp));
 
+        if (carry) {
+            // Carried identity is kept, never re-derived: the write passes as it came, or is refused.
+            checkCarried(record, replaced, versions);
+            return incoming;
+        }
         boolean changed = false;
         for (int v = 0; v < versions.size(); v++) {
             Ordered version = versions.get(v);
@@ -181,18 +188,6 @@ public final class VertexIdentityWrite {
                 }
                 VertexIdentityTable table = covering.get();
                 List<DiTreeEntity> history = history(replaced, versions, v, f, table);
-                if (carry) {
-                    List<String> broken = invariantBreaks(history, tree, table);
-                    if (!broken.isEmpty()) {
-                        String message = "Vertex identity broken in " + record.publicId() + " field " + f
-                                + ": " + String.join("; ", broken);
-                        if (!"warn".equals(System.getProperty(CARRIED_BREAKS))) {
-                            throw new IllegalStateException(message);
-                        }
-                        LOG.warn(message);
-                    }
-                    continue;
-                }
                 String shape = shapeBreak(tree, table);
                 if (shape != null) {
                     throw new IllegalStateException("Not a tree the " + table + " identity table admits, in "
@@ -280,7 +275,10 @@ public final class VertexIdentityWrite {
                 // identity never reads. The reachable trees are isomorphic, so neither has more.
                 continue;
             }
-            if (!EntityVertexUuid.of(a.vertex(i)).equals(EntityVertexUuid.of(b.vertex(images[i])))) {
+            EntityVertex vertexA = a.vertex(i);
+            EntityVertex vertexB = b.vertex(images[i]);
+            if (vertexA.leastSignificantBits() != vertexB.leastSignificantBits()
+                    || vertexA.mostSignificantBits() != vertexB.mostSignificantBits()) {
                 return false;
             }
         }
@@ -312,7 +310,7 @@ public final class VertexIdentityWrite {
     }
 
     private static SemanticRecord rebuilt(SemanticRecord record, List<Ordered> versions) {
-        Map<Long, List<Object>> fieldsByStamp = new HashMap<>();
+        MutableLongObjectMap<List<Object>> fieldsByStamp = LongObjectMaps.mutable.empty();
         for (Ordered version : versions) {
             if (!version.stored()) {
                 fieldsByStamp.put(version.stampNid(), version.fields());
@@ -411,44 +409,242 @@ public final class VertexIdentityWrite {
      */
     public static List<String> invariantBreaks(List<DiTreeEntity> history, DiTreeEntity tree,
                                                VertexIdentityTable table) {
-        Map<UUID, Long> meanings = new HashMap<>();
-        Map<UUID, List<Object>> operandKeys = new HashMap<>();
+        IdentityHistory known = new IdentityHistory();
         for (DiTreeEntity earlier : history) {
-            for (EntityVertex vertex : earlier.vertexMap()) {
-                UUID uuid = EntityVertexUuid.of(vertex);
-                meanings.put(uuid, vertex.getMeaningNid());
-                if (isOperand(earlier, vertex, table)) {
-                    operandKeys.put(uuid, identifying(vertex, table));
+            known.add(earlier, table);
+        }
+        return breaks(known, null, tree, table);
+    }
+
+    /**
+     * Checks carried input against the invariants, each version against the history it reads:
+     * the trees of the versions the write replaces, then the earlier versions' trees in order,
+     * with the latest earlier version on the version's own path read last. The history of each
+     * field is built once and extended version by version, so a semantic carrying every version
+     * across all time is not read again at each one; the version read last is an overlay over
+     * it, which answers as moving that version to the end of the history does.
+     */
+    private static void checkCarried(SemanticRecord record, List<Ordered> replaced, List<Ordered> versions) {
+        MutableIntObjectMap<List<FieldHistory>> byField = IntObjectMaps.mutable.empty();
+        for (int v = 0; v < versions.size(); v++) {
+            Ordered version = versions.get(v);
+            for (int f = 0; f < version.fields().size(); f++) {
+                if (!(version.fields().get(f) instanceof DiTreeEntity tree)) {
+                    continue;
+                }
+                Optional<VertexIdentityTable> covering = VertexIdentityTable.forTree(tree);
+                if (covering.isEmpty()) {
+                    continue;
+                }
+                if (!version.stored()) {
+                    FieldHistory history = fieldHistory(byField, f, covering.get(), replaced, versions, v);
+                    DiTreeEntity continued = history.continued(version.pathNid());
+                    IdentityHistory overlay = continued == null ? null : IdentityHistory.of(continued, history.table);
+                    List<String> broken = breaks(history.known, overlay, tree, history.table);
+                    if (!broken.isEmpty()) {
+                        String message = "Vertex identity broken in " + record.publicId() + " field " + f
+                                + ": " + String.join("; ", broken);
+                        if (!"warn".equals(System.getProperty(CARRIED_BREAKS))) {
+                            throw new IllegalStateException(message);
+                        }
+                        LOG.warn(message);
+                    }
+                }
+                // The version joins the history of every table that covers it, for the versions after
+                // it; the last has none after it, so no history reads its tree.
+                if (v == versions.size() - 1) {
+                    continue;
+                }
+                for (FieldHistory history : byField.getIfAbsent(f, List::of)) {
+                    if (history.table.covers(tree)) {
+                        history.add(tree, version.pathNid());
+                    }
                 }
             }
         }
+    }
+
+    /** The history of a field under a table, built from what precedes version {@code v} when first asked for. */
+    private static FieldHistory fieldHistory(MutableIntObjectMap<List<FieldHistory>> byField, int f,
+                                             VertexIdentityTable table, List<Ordered> replaced,
+                                             List<Ordered> versions, int v) {
+        List<FieldHistory> histories = byField.getIfAbsentPut(f, ArrayList::new);
+        for (FieldHistory history : histories) {
+            if (history.table.equals(table)) {
+                return history;
+            }
+        }
+        FieldHistory history = new FieldHistory(table);
+        for (Ordered version : replaced) {
+            if (f < version.fields().size() && version.fields().get(f) instanceof DiTreeEntity tree && table.covers(tree)) {
+                history.known.add(tree, table);
+            }
+        }
+        for (int e = 0; e < v; e++) {
+            Ordered earlier = versions.get(e);
+            if (f < earlier.fields().size() && earlier.fields().get(f) instanceof DiTreeEntity tree && table.covers(tree)) {
+                history.add(tree, earlier.pathNid());
+            }
+        }
+        histories.add(history);
+        return history;
+    }
+
+    /**
+     * How a tree that keeps its UUIDs breaks the invariants against what history knows; an
+     * overlay, when given, is read before the rest.
+     */
+    private static List<String> breaks(IdentityHistory known, IdentityHistory overlay, DiTreeEntity tree,
+                                       VertexIdentityTable table) {
         List<String> broken = new ArrayList<>();
         for (EntityVertex vertex : tree.vertexMap()) {
-            UUID uuid = EntityVertexUuid.of(vertex);
-            Long meaning = meanings.get(uuid);
-            if (meaning != null && meaning != vertex.getMeaningNid()) {
-                broken.add(uuid + " changed meaning");
-            } else if (operandKeys.containsKey(uuid) && isOperand(tree, vertex, table)
-                    && !operandKeys.get(uuid).equals(identifying(vertex, table))) {
-                broken.add(uuid + " changed an identifying property");
+            long most = vertex.mostSignificantBits();
+            long least = vertex.leastSignificantBits();
+            IdentityHistory.Known first = overlay == null ? null : overlay.find(most, least);
+            IdentityHistory.Known rest = known.find(most, least);
+            if (first == null && rest == null) {
+                continue;
+            }
+            long meaning = first != null ? first.meaningNid() : rest.meaningNid();
+            EntityVertex operand = first != null && first.operand() != null ? first.operand()
+                    : rest == null ? null : rest.operand();
+            if (meaning != vertex.getMeaningNid()) {
+                broken.add(new UUID(most, least) + " changed meaning");
+            } else if (operand != null && isOperand(tree, vertex, table)
+                    && !sameIdentifying(operand, vertex, table)) {
+                broken.add(new UUID(most, least) + " changed an identifying property");
             }
         }
         return broken;
     }
 
-    private static boolean isOperand(DiTreeEntity tree, EntityVertex vertex, VertexIdentityTable table) {
-        return tree.predecessor(vertex).map(parent ->
-                table.rule(parent.getMeaningNid()).successors() == IdentityRule.Successors.OPERANDS)
-                .orElse(false);
+    /**
+     * The history of one field under one identity table: what its earlier trees know, and the
+     * latest of them, overall and on each path, for the version that continues one.
+     */
+    private static final class FieldHistory {
+        private final VertexIdentityTable table;
+        private final IdentityHistory known = new IdentityHistory();
+        private final MutableLongObjectMap<DiTreeEntity> latestByPath = LongObjectMaps.mutable.empty();
+        private DiTreeEntity latest;
+
+        private FieldHistory(VertexIdentityTable table) {
+            this.table = table;
+        }
+
+        private void add(DiTreeEntity tree, long pathNid) {
+            known.add(tree, table);
+            latestByPath.put(pathNid, tree);
+            latest = tree;
+        }
+
+        /** The tree a version on the path continues: the latest on its path, else the latest; null with no earlier version. */
+        private DiTreeEntity continued(long pathNid) {
+            DiTreeEntity onPath = latestByPath.get(pathNid);
+            return onPath != null ? onPath : latest;
+        }
     }
 
-    private static List<Object> identifying(EntityVertex vertex, VertexIdentityTable table) {
-        List<Object> values = new ArrayList<>();
-        table.rule(vertex.getMeaningNid()).identifying().forEach(property -> {
-            Object value = vertex.properties().get(property.nid());
-            values.add(value instanceof dev.ikm.tinkar.terms.ComponentWithNid component ? component.nid()
-                    : Objects.requireNonNullElse(value, ""));
-        });
-        return values;
+    /**
+     * What earlier trees say of each vertex identity: its meaning, and, for an operand, the
+     * vertex whose identifying properties a kept identity must keep. A later tree's entry
+     * replaces an earlier one's, the meaning always and the operand when the later vertex is
+     * one, as the order of history says.
+     *
+     * <p>Keyed on the low half of the UUID and confirmed on the high half, so no UUID is built
+     * and no nid boxed; low halves that collide, which name-based UUIDs make vanishingly rare,
+     * chain. Built by one write, on its thread under the put lock, and never handed on.
+     */
+    private static final class IdentityHistory {
+
+        /** One identity's entry, and the next whose low half is the same. */
+        record Known(long mostSignificantBits, long meaningNid, EntityVertex operand, Known next) {
+        }
+
+        private final MutableLongObjectMap<Known> byLow = LongObjectMaps.mutable.empty();
+
+        static IdentityHistory of(DiTreeEntity tree, VertexIdentityTable table) {
+            IdentityHistory history = new IdentityHistory();
+            history.add(tree, table);
+            return history;
+        }
+
+        void add(DiTreeEntity tree, VertexIdentityTable table) {
+            for (EntityVertex vertex : tree.vertexMap()) {
+                put(vertex, isOperand(tree, vertex, table) ? vertex : null);
+            }
+        }
+
+        Known find(long most, long least) {
+            for (Known known = byLow.get(least); known != null; known = known.next()) {
+                if (known.mostSignificantBits() == most) {
+                    return known;
+                }
+            }
+            return null;
+        }
+
+        private void put(EntityVertex vertex, EntityVertex operand) {
+            long most = vertex.mostSignificantBits();
+            long least = vertex.leastSignificantBits();
+            Known head = byLow.get(least);
+            Known previous = find(most, least);
+            Known chain = previous == null ? head : without(head, previous);
+            byLow.put(least, new Known(most, vertex.getMeaningNid(),
+                    operand != null ? operand : previous == null ? null : previous.operand(), chain));
+        }
+
+        private static Known without(Known chain, Known removed) {
+            if (chain == null) {
+                return null;
+            }
+            if (chain == removed) {
+                return chain.next();
+            }
+            return new Known(chain.mostSignificantBits(), chain.meaningNid(), chain.operand(),
+                    without(chain.next(), removed));
+        }
+    }
+
+    /**
+     * Whether the vertex is an operand: its predecessor's rule takes operands. The root has no
+     * predecessor, and a vertex nothing reaches from the root is held with predecessor -1, which
+     * names no vertex: neither is an operand.
+     */
+    private static boolean isOperand(DiTreeEntity tree, EntityVertex vertex, VertexIdentityTable table) {
+        int parent = tree.predecessorMap().getIfAbsent(vertex.vertexIndex(), -1);
+        return parent >= 0
+                && table.rule(tree.vertex(parent).getMeaningNid()).successors() == IdentityRule.Successors.OPERANDS;
+    }
+
+    /**
+     * Whether two vertices hold the same identifying properties, each by its own meaning's rule,
+     * compared in place: a component by its nid, anything else by its value, an absent one as
+     * empty text.
+     */
+    private static boolean sameIdentifying(EntityVertex earlier, EntityVertex vertex, VertexIdentityTable table) {
+        ImmutableList<dev.ikm.tinkar.terms.ConceptFacade> before = table.rule(earlier.getMeaningNid()).identifying();
+        ImmutableList<dev.ikm.tinkar.terms.ConceptFacade> after = table.rule(vertex.getMeaningNid()).identifying();
+        if (before.size() != after.size()) {
+            return false;
+        }
+        for (int i = 0; i < before.size(); i++) {
+            if (!sameValue(earlier.properties().get(before.get(i).nid()), vertex.properties().get(after.get(i).nid()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean sameValue(Object a, Object b) {
+        if (a instanceof dev.ikm.tinkar.terms.ComponentWithNid componentA) {
+            return b instanceof dev.ikm.tinkar.terms.ComponentWithNid componentB
+                    ? componentA.nid() == componentB.nid()
+                    : b instanceof Long nid && nid == componentA.nid();
+        }
+        if (b instanceof dev.ikm.tinkar.terms.ComponentWithNid componentB) {
+            return a instanceof Long nid && nid == componentB.nid();
+        }
+        return Objects.requireNonNullElse(a, "").equals(Objects.requireNonNullElse(b, ""));
     }
 }

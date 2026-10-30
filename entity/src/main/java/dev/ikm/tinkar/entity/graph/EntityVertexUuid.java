@@ -24,6 +24,6 @@ final class EntityVertexUuid {
     }
 
     static UUID of(EntityVertex vertex) {
-        return vertex.asUuidList().getFirst(); // first-uuid: a vertex holds exactly one UUID
+        return new UUID(vertex.mostSignificantBits(), vertex.leastSignificantBits()); // a vertex holds exactly one UUID
     }
 }

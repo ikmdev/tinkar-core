@@ -378,6 +378,10 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
                 ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
             }
         }
+        if (entity instanceof PatternEntity) {
+            // A new version can add a field the search service indexes: it decides the pattern again.
+            runningSearchService().ifPresent(search -> search.patternWritten(entity.nid()));
+        }
         if (dispatch) {
             processor.dispatch(entity.nid());
             if (entity instanceof SemanticEntity semanticEntity) {

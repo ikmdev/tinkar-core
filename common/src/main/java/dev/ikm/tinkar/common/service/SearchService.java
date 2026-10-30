@@ -35,6 +35,34 @@ public interface SearchService {
     void index(Object object);
 
     /**
+     * Whether this service does anything with a semantic of the pattern. A store asks before it
+     * hands a written semantic to {@link #index} or counts the write against a load phase's
+     * live-index threshold, so a writer of semantics no index holds, such as the 5.7 M navigation
+     * semantics a GUDID-sized knowledge base derives, costs the index nothing. Asked on every
+     * write, so a service decides once per pattern, from the pattern's field definitions, and
+     * remembers the decision until {@link #patternWritten} says the pattern changed.
+     *
+     * <p>The decision is the service's own: an index of text declines the patterns that carry
+     * none, and an index of other values (vectors, say) would claim the patterns it reads. A
+     * service that cannot tell says {@code true}, which is always safe.
+     *
+     * @param patternNid the nid of the written semantic's pattern
+     * @return {@code false} only when this service would do nothing with a semantic of the pattern
+     */
+    default boolean indexesPattern(long patternNid) {
+        return true;
+    }
+
+    /**
+     * Tells the service a pattern was written, so a decision {@link #indexesPattern} remembered
+     * for it is made again: a new version can add a field the service indexes.
+     *
+     * @param patternNid the nid of the written pattern
+     */
+    default void patternWritten(long patternNid) {
+    }
+
+    /**
      * Removes a semantic's text from the index, when a scope it belongs to is deleted
      * (IKE-Network/ike-issues#1313). A search service that keeps no per-semantic text has nothing
      * to remove.

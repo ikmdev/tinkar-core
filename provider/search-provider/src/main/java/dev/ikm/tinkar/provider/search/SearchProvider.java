@@ -57,6 +57,7 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
     private final String name;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private volatile boolean loadPhase = false;
+    private final TextPatterns textPatterns = new TextPatterns();
 
     public static SearchProvider get() {
         return SINGLETON.orElseSet(SearchProvider::new);
@@ -232,9 +233,11 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
             LOG.debug("SearchProvider is closed, skipping index operation");
             return;
         }
-        // Lucene full-text indexing only applies to semantics — concept/pattern/stamp
-        // names live in description semantics and reach the index via their semantics.
-        if (object instanceof SemanticEntity<?> semanticEntity) {
+        // Lucene full-text indexing only applies to the text of semantics — concept/pattern/stamp
+        // names live in description semantics and reach the index via their semantics. A
+        // semantic of a pattern without text has no document to replace, so it costs neither a
+        // buffered delete nor a refresh.
+        if (object instanceof SemanticEntity<?> semanticEntity && indexesPattern(semanticEntity.patternNid())) {
             indexer.index(semanticEntity);
             // Outside a load phase, ensure the NRT searcher sees the new
             // document immediately. A load phase refreshes once at its end
@@ -244,6 +247,16 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
                 Searcher.refreshAfterIndex();
             }
         }
+    }
+
+    @Override
+    public boolean indexesPattern(long patternNid) {
+        return textPatterns.indexes(patternNid);
+    }
+
+    @Override
+    public void patternWritten(long patternNid) {
+        textPatterns.forget(patternNid);
     }
 
     @Override

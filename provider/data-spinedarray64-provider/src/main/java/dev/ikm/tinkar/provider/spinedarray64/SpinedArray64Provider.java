@@ -515,11 +515,15 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
 
         // Live indexing, within the load phase policy, as the other stores do. The index holds
         // semantics only, so nothing else asks for the search service, which a write during
-        // startup — a STAMP cancelled as the store opens — would find not running yet.
-        if (sourceObject instanceof SemanticEntity<?>
-                && (!loadPhase || EntityService.get().loadPhaseSearchPolicy().shouldIndexLive())) {
+        // startup — a STAMP cancelled as the store opens — would find not running yet; and only a
+        // semantic of a pattern the service indexes counts against the policy's threshold.
+        if (sourceObject instanceof SemanticEntity<?> semantic) {
             try {
-                getSearchService().index(sourceObject);
+                SearchService search = getSearchService();
+                if (search.indexesPattern(semantic.patternNid())
+                        && (!loadPhase || EntityService.get().loadPhaseSearchPolicy().shouldIndexLive())) {
+                    search.index(sourceObject);
+                }
             } catch (Exception e) {
                 LOG.debug("SearchService not available for indexing", e);
             }
