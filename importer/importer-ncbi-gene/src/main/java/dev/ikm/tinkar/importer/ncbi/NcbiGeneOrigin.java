@@ -30,8 +30,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,12 +42,21 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * An NCBI Gene origin: the gene reports NCBI Datasets returned for the genes of some organisms,
- * kept exactly as returned, one per line of {@code genes.jsonl}, beside the {@code manifest.json}
- * that says how they were retrieved ({@link OriginManifest}). The origin is a directory or a zip,
- * and its two files are found by name at any depth, each exactly once, so the builder's layout
- * ({@code ncbi-gene-origin-20261020/manifest.json}) and the files alone both read.
- * {@link NcbiGeneOriginBuilder} writes one.
+ * An NCBI Gene origin: the genes of some organisms, beside the {@code manifest.json} that says
+ * how they were retrieved ({@link OriginManifest}). The manifest's format says what else the
+ * origin holds:
+ * <ul>
+ *   <li>{@link OriginManifest.Format#DATASETS_REPORTS}: the gene reports NCBI Datasets returned,
+ *   kept exactly as returned, one per line of {@code genes.jsonl};
+ *   {@link NcbiGeneOriginBuilder} writes one;</li>
+ *   <li>{@link OriginManifest.Format#BULK_FILES}: rows filtered verbatim from NCBI Gene's bulk
+ *   files ({@code gene_info.tsv}, {@code gene2refseq.tsv}, {@code gene_summary.tsv}) and NCBI
+ *   Taxonomy's names ({@code taxonomy_names.dmp}), joined into genes by {@link BulkGeneReader};
+ *   {@link NcbiGeneBulkOriginBuilder} writes one.</li>
+ * </ul>
+ * The origin is a directory or a zip, and its files are found by name at any depth, each exactly
+ * once, so the builders' layout ({@code ncbi-gene-origin-20261020/manifest.json}) and the files
+ * alone both read.
  */
 public final class NcbiGeneOrigin implements AutoCloseable {
 
@@ -53,18 +64,32 @@ public final class NcbiGeneOrigin implements AutoCloseable {
     public static final String MANIFEST_FILE = "manifest.json";
     /** The reports' file name: JSON Lines, one Datasets gene report per line. */
     public static final String REPORTS_FILE = "genes.jsonl";
+    /** The file names a bulk-file origin holds beside its manifest. */
+    public static final List<String> BULK_FILES = List.of(BulkGeneReader.GENE_INFO_FILE,
+            BulkGeneReader.GENE2REFSEQ_FILE, BulkGeneReader.GENE_SUMMARY_FILE, BulkGeneReader.TAXONOMY_NAMES_FILE);
 
     private static final Pattern DATE_IN_NAME = Pattern.compile("(?<!\\d)(\\d{8})(?!\\d)");
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    /** A located file that can be opened, and where it was found. */
-    private interface Located {
+    /** A file of the origin that can be opened, and where it was found. */
+    interface OriginFile {
+        /**
+         * Opens the file.
+         *
+         * @return its content, to be closed
+         * @throws IOException when it cannot be opened
+         */
         InputStream open() throws IOException;
 
+        /**
+         * Where the file was found, for messages.
+         *
+         * @return the path, or the archive and entry
+         */
         String where();
     }
 
-    private record OnDisk(Path file) implements Located {
+    private record OnDisk(Path file) implements OriginFile {
         @Override
         public InputStream open() throws IOException {
             return Files.newInputStream(file);
@@ -76,7 +101,7 @@ public final class NcbiGeneOrigin implements AutoCloseable {
         }
     }
 
-    private record InArchive(ZipFile zip, ZipEntry entry) implements Located {
+    private record InArchive(ZipFile zip, ZipEntry entry) implements OriginFile {
         @Override
         public InputStream open() throws IOException {
             return zip.getInputStream(entry);
@@ -89,8 +114,9 @@ public final class NcbiGeneOrigin implements AutoCloseable {
     }
 
     private final Path path;
-    private final List<Located> manifests = new ArrayList<>();
-    private final List<Located> reports = new ArrayList<>();
+    private final List<OriginFile> manifests = new ArrayList<>();
+    private final List<OriginFile> reports = new ArrayList<>();
+    private final Map<String, List<OriginFile>> bulkFiles = new LinkedHashMap<>();
     private ZipFile archive;
     private OriginManifest manifest;
 
@@ -114,7 +140,14 @@ public final class NcbiGeneOrigin implements AutoCloseable {
                 origin.scanArchive(path);
             }
             origin.requireOne(MANIFEST_FILE, origin.manifests);
-            origin.requireOne(REPORTS_FILE, origin.reports);
+            switch (origin.manifest().format()) {
+                case DATASETS_REPORTS -> origin.requireOne(REPORTS_FILE, origin.reports);
+                case BULK_FILES -> {
+                    for (String file : BULK_FILES) {
+                        origin.requireOne(file, origin.bulkFiles.getOrDefault(file, List.of()));
+                    }
+                }
+            }
             return origin;
         } catch (IOException e) {
             origin.close();
@@ -160,7 +193,7 @@ public final class NcbiGeneOrigin implements AutoCloseable {
      */
     public OriginManifest manifest() {
         if (manifest == null) {
-            Located located = manifests.getFirst();
+            OriginFile located = manifests.getFirst();
             try (InputStream in = located.open()) {
                 manifest = OriginManifest.parse(MAPPER.readTree(in));
             } catch (IOException e) {
@@ -171,13 +204,33 @@ public final class NcbiGeneOrigin implements AutoCloseable {
     }
 
     /**
-     * The reports as NCBI returned them, in file order. The stream must be closed.
+     * The genes, in file order: each Datasets report parsed, or each gene of the bulk files joined.
+     * The stream must be closed.
+     *
+     * @return the genes
+     * @throws ImportException when a file, or a gene in it, cannot be read
+     */
+    public Stream<GeneReport> genes() {
+        return switch (manifest().format()) {
+            case DATASETS_REPORTS -> rawReports().map(GeneReport::parse);
+            case BULK_FILES -> BulkGeneReader.genes(bulkFile(BulkGeneReader.GENE_INFO_FILE),
+                    bulkFile(BulkGeneReader.GENE2REFSEQ_FILE), bulkFile(BulkGeneReader.GENE_SUMMARY_FILE),
+                    bulkFile(BulkGeneReader.TAXONOMY_NAMES_FILE));
+        };
+    }
+
+    /**
+     * The reports as NCBI Datasets returned them, in file order, for a
+     * {@link OriginManifest.Format#DATASETS_REPORTS} origin. The stream must be closed.
      *
      * @return the reports' JSON
-     * @throws ImportException when the file cannot be read
+     * @throws ImportException when the file cannot be read, or the origin holds bulk files
      */
     public Stream<JsonNode> rawReports() {
-        Located located = reports.getFirst();
+        if (manifest().format() != OriginManifest.Format.DATASETS_REPORTS) {
+            throw new ImportException("The NCBI Gene origin " + path + " holds bulk files, not Datasets reports");
+        }
+        OriginFile located = reports.getFirst();
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(located.open(), StandardCharsets.UTF_8), 1 << 16);
             return reader.lines().filter(line -> !line.isBlank()).map(line -> {
@@ -199,14 +252,14 @@ public final class NcbiGeneOrigin implements AutoCloseable {
     }
 
     /**
-     * The reports, parsed, in file order.
+     * The genes, read into a list, in file order; {@link #genes()} streams them.
      *
      * @return the genes
-     * @throws ImportException when the file, or a report in it, cannot be read
+     * @throws ImportException when a file, or a gene in it, cannot be read
      */
     public List<GeneReport> reports() {
-        try (Stream<JsonNode> raw = rawReports()) {
-            return raw.map(GeneReport::parse).toList();
+        try (Stream<GeneReport> genes = genes()) {
+            return genes.toList();
         }
     }
 
@@ -221,10 +274,14 @@ public final class NcbiGeneOrigin implements AutoCloseable {
         }
     }
 
-    private void requireOne(String fileName, List<Located> found) {
+    private OriginFile bulkFile(String fileName) {
+        return bulkFiles.get(fileName).getFirst();
+    }
+
+    private void requireOne(String fileName, List<OriginFile> found) {
         if (found.size() != 1) {
             throw new ImportException("Expected one " + fileName + " in the NCBI Gene origin " + path + ", found "
-                    + found.stream().map(Located::where).toList());
+                    + found.stream().map(OriginFile::where).toList());
         }
     }
 
@@ -248,12 +305,14 @@ public final class NcbiGeneOrigin implements AutoCloseable {
         }
     }
 
-    private void classify(String fileName, Located located) {
+    private void classify(String fileName, OriginFile located) {
         String name = fileName.toLowerCase(Locale.ROOT);
         if (name.equals(MANIFEST_FILE)) {
             manifests.add(located);
         } else if (name.equals(REPORTS_FILE)) {
             reports.add(located);
+        } else if (BULK_FILES.contains(name)) {
+            bulkFiles.computeIfAbsent(name, key -> new ArrayList<>()).add(located);
         }
     }
 }

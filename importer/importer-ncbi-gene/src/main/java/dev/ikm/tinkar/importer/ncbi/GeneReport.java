@@ -28,9 +28,10 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * One gene as NCBI Datasets reports it ({@code GET /datasets/v2/gene/id/{ids}}, one element of
- * {@code reports[]}): the fields the importer reads, parsed from the report as the origin holds
- * it. Everything else in the report stays in the origin, untouched.
+ * One gene as the importer reads it: from NCBI Datasets' report ({@code GET
+ * /datasets/v2/gene/id/{ids}}, one element of {@code reports[]}), parsed by {@link #parse}, or
+ * from the rows of NCBI Gene's bulk files that a bulk-file origin holds, joined by the origin's
+ * reader. Everything else stays in the origin, untouched.
  *
  * @param geneId              the NCBI Gene ID
  * @param symbol              the gene symbol ({@code N}, {@code PB2})
@@ -126,6 +127,34 @@ public record GeneReport(String geneId, String symbol, String description, Strin
             }
             return UNRECOGNIZED;
         }
+
+        /**
+         * The type a {@code type_of_gene} of NCBI Gene's {@code gene_info} file names
+         * ({@code protein-coding}, {@code ncRNA}, {@code biological-region}).
+         *
+         * @param typeOfGene the file's text
+         * @return the type, {@link #UNKNOWN} for an absent text ({@code -}), {@link #UNRECOGNIZED}
+         *         for a text this importer does not know
+         */
+        public static GeneType ofGeneInfo(String typeOfGene) {
+            if (typeOfGene == null || typeOfGene.isBlank() || typeOfGene.strip().equals("-")) {
+                return UNKNOWN;
+            }
+            return switch (typeOfGene.strip()) {
+                case "protein-coding" -> PROTEIN_CODING;
+                case "pseudo" -> PSEUDO;
+                case "ncRNA" -> NC_RNA;
+                case "rRNA" -> R_RNA;
+                case "tRNA" -> T_RNA;
+                case "snRNA" -> SN_RNA;
+                case "snoRNA" -> SNO_RNA;
+                case "scRNA" -> SC_RNA;
+                case "biological-region" -> BIOLOGICAL_REGION;
+                case "other" -> OTHER;
+                case "unknown" -> UNKNOWN;
+                default -> UNRECOGNIZED;
+            };
+        }
     }
 
     /**
@@ -159,6 +188,23 @@ public record GeneReport(String geneId, String symbol, String description, Strin
                 }
             }
             return Optional.empty();
+        }
+
+        /**
+         * The orientation an {@code orientation} of NCBI Gene's {@code gene2refseq} file names.
+         *
+         * @param sign the file's text: {@code +} or {@code -}, {@code ?} when not applicable
+         * @return the orientation, if the text names one
+         */
+        public static Optional<Orientation> ofSign(String sign) {
+            if (sign == null) {
+                return Optional.empty();
+            }
+            return switch (sign.strip()) {
+                case "+" -> Optional.of(PLUS);
+                case "-" -> Optional.of(MINUS);
+                default -> Optional.empty();
+            };
         }
     }
 

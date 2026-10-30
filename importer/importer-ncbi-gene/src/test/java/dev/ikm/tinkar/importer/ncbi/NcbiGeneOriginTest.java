@@ -44,7 +44,7 @@ class NcbiGeneOriginTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private static final OriginManifest MANIFEST = new OriginManifest(OriginManifest.FORMAT,
+    private static final OriginManifest MANIFEST = OriginManifest.ofDatasetsReports(
             Instant.parse("2026-10-20T18:00:00Z"), LocalDate.of(2026, 10, 20),
             List.of(new ScopedTaxon("2697049", "Severe acute respiratory syndrome coronavirus 2",
                             "txid2697049[Organism:exp] AND alive[prop]", 1, List.of("43740575")),

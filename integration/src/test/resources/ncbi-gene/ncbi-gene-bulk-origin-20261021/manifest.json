@@ -1,0 +1,104 @@
+{
+  "format" : "ncbi-gene-origin/2",
+  "retrievedAt" : "2026-10-21T15:25:10.808701Z",
+  "releaseDate" : "2026-10-21",
+  "sources" : [ {
+    "name" : "gene_info.gz",
+    "url" : "https://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_info.gz",
+    "lastModified" : "Tue, 20 Oct 2026 05:55:16 GMT",
+    "bytes" : 1594343804,
+    "sha256" : "feccff68b4a12f9dcda9e015d0acae85dc9a2dacca527038e5807b68b6594f91"
+  }, {
+    "name" : "gene2refseq.gz",
+    "url" : "https://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2refseq.gz",
+    "lastModified" : "Tue, 20 Oct 2026 05:53:06 GMT",
+    "bytes" : 2403321638,
+    "sha256" : "150f46c97dee4899108cfcea4ed43107176f1581fdad1c9b3256a60070c90ed6"
+  }, {
+    "name" : "gene_summary.gz",
+    "url" : "https://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_summary.gz",
+    "lastModified" : "Tue, 20 Oct 2026 05:57:47 GMT",
+    "bytes" : 23477234,
+    "sha256" : "7cc44c43d79da8f8159c3e9bc85ab59fc771d55349edbe11be2733b480ccd7b2"
+  }, {
+    "name" : "taxdump.tar.gz",
+    "url" : "https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz",
+    "lastModified" : "Wed, 21 Oct 2026 14:29:31 GMT",
+    "bytes" : 79895423,
+    "sha256" : "9feb1be37bdd6a2a7d871b619370bf6fabf6ebbf9b55e21df0590548da2e4957"
+  } ],
+  "extracts" : [ {
+    "name" : "gene_info.tsv",
+    "source" : "gene_info.gz",
+    "filter" : "tax_id is a scoped taxon (2697049, 11320, 11520, 11250) or descends from one in nodes.dmp of taxdump.tar.gz",
+    "rows" : 149,
+    "sha256" : "15c886cbb80bb8ca944f60fd48ec8cede0f99ca01b1aed94d42e38cb3241bbd8"
+  }, {
+    "name" : "gene2refseq.tsv",
+    "source" : "gene2refseq.gz",
+    "filter" : "tax_id is a scoped taxon (2697049, 11320, 11520, 11250) or descends from one in nodes.dmp of taxdump.tar.gz, and genomic_nucleotide_accession.version is stated",
+    "rows" : 169,
+    "sha256" : "5ecd9c866f398eb4bc1ff8f31e745d5ff6770f0b879ad81c1be107c6be15caf3"
+  }, {
+    "name" : "gene_summary.tsv",
+    "source" : "gene_summary.gz",
+    "filter" : "tax_id is a scoped taxon (2697049, 11320, 11520, 11250) or descends from one in nodes.dmp of taxdump.tar.gz",
+    "rows" : 11,
+    "sha256" : "6635703547514fea0f6b6ea23df7f342e5b94f2d7f486f60b734e4957c0bef5b"
+  }, {
+    "name" : "taxonomy_names.dmp",
+    "source" : "taxdump.tar.gz",
+    "filter" : "scientific-name rows of names.dmp for the scoped taxa and every tax_id of gene_info.tsv",
+    "rows" : 14,
+    "sha256" : "4f60392a893f3c516be8b587d0a950f29954a685beceac9fc0adb70866ea1983"
+  } ],
+  "entrezChecks" : [ {
+    "taxId" : "2697049",
+    "query" : "txid2697049[Organism:exp] AND alive[prop] NOT NEWENTRY[Gene Name]",
+    "entrezCount" : 11,
+    "originCount" : 11
+  }, {
+    "taxId" : "11320",
+    "query" : "txid11320[Organism:exp] AND alive[prop] NOT NEWENTRY[Gene Name]",
+    "entrezCount" : 82,
+    "originCount" : 82
+  }, {
+    "taxId" : "11520",
+    "query" : "txid11520[Organism:exp] AND alive[prop] NOT NEWENTRY[Gene Name]",
+    "entrezCount" : 10,
+    "originCount" : 10
+  }, {
+    "taxId" : "11250",
+    "query" : "txid11250[Organism:exp] AND alive[prop] NOT NEWENTRY[Gene Name]",
+    "entrezCount" : 32,
+    "originCount" : 32
+  } ],
+  "taxa" : [ {
+    "taxId" : "2697049",
+    "organismName" : "Severe acute respiratory syndrome coronavirus 2",
+    "query" : "rows of gene_info.gz whose tax_id is 2697049 or descends from it in nodes.dmp, less NEWENTRY placeholder rows",
+    "count" : 11,
+    "geneIds" : [ "43740568", "43740569", "43740570", "43740571", "43740572", "43740573", "43740574", "43740575", "43740576", "43740577", "43740578" ]
+  }, {
+    "taxId" : "11320",
+    "organismName" : "Influenza A virus",
+    "query" : "rows of gene_info.gz whose tax_id is 11320 or descends from it in nodes.dmp, less NEWENTRY placeholder rows",
+    "count" : 82,
+    "geneIds" : [ "956527", "956528", "956529", "956530", "956531", "956532", "956533", "956534", "956535", "956536", "1460995", "1460996", "1460997", "1460998", "1460999", "1461000", "1461001", "1461002", "3654615", "3654616", "3654617", "3654618", "3654619", "3654620", "3654621", "3654622", "3655103", "3655104", "3655105", "3655106", "3655107", "3655108", "3655109", "3655110", "3655111", "3655112", "3655151", "3655152", "3655153", "3655154", "3655155", "3655156", "3655157", "3655158", "3655159", "3655160", "3655161", "3802042", "3896424", "4036076", "4036374", "8656647", "8656648", "13229134", "13229455", "13229459", "13229461", "23104219", "23104221", "23104222", "23104224", "23104225", "23104227", "23104229", "23104231", "23104232", "23104235", "23104236", "23104238", "23301357", "23308107", "23308108", "23308111", "23308112", "23308115", "23308118", "23308122", "23308125", "23308128", "23308131", "23561287", "23561398" ]
+  }, {
+    "taxId" : "11520",
+    "organismName" : "Influenza B virus",
+    "query" : "rows of gene_info.gz whose tax_id is 11520 or descends from it in nodes.dmp, less NEWENTRY placeholder rows",
+    "count" : 10,
+    "geneIds" : [ "956538", "956545", "956546", "956547", "26824002", "26824003", "26824004", "26824006", "26824007", "26824008" ]
+  }, {
+    "taxId" : "11250",
+    "organismName" : "human respiratory syncytial virus",
+    "query" : "rows of gene_info.gz whose tax_id is 11250 or descends from it in nodes.dmp, less NEWENTRY placeholder rows",
+    "count" : 32,
+    "geneIds" : [ "1489818", "1489819", "1489820", "1489821", "1489822", "1489823", "1489824", "1489825", "1489826", "1489827", "1494467", "1494468", "1494469", "1494470", "1494471", "1494472", "1494473", "1494474", "1494475", "1494476", "1724894", "1724895", "37607636", "37607637", "37607638", "37607639", "37607640", "37607641", "37607642", "37607643", "37607644", "37607645" ]
+  } ],
+  "geneReports" : 135,
+  "withoutReport" : [ ],
+  "requests" : [ "https://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_info.gz", "https://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2refseq.gz", "https://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_summary.gz", "https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz", "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=gene&retmode=json&retmax=0&term=txid2697049%5BOrganism%3Aexp%5D+AND+alive%5Bprop%5D+NOT+NEWENTRY%5BGene+Name%5D", "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=gene&retmode=json&retmax=0&term=txid11320%5BOrganism%3Aexp%5D+AND+alive%5Bprop%5D+NOT+NEWENTRY%5BGene+Name%5D", "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=gene&retmode=json&retmax=0&term=txid11520%5BOrganism%3Aexp%5D+AND+alive%5Bprop%5D+NOT+NEWENTRY%5BGene+Name%5D", "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=gene&retmode=json&retmax=0&term=txid11250%5BOrganism%3Aexp%5D+AND+alive%5Bprop%5D+NOT+NEWENTRY%5BGene+Name%5D" ]
+}

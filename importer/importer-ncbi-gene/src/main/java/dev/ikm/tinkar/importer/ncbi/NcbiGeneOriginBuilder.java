@@ -185,8 +185,8 @@ public final class NcbiGeneOriginBuilder {
             LOG.warn("NCBI Datasets returned no report for {} genes, which the origin lacks: {}", withoutReport.size(),
                     withoutReport);
         }
-        OriginManifest manifest = new OriginManifest(OriginManifest.FORMAT, retrievedAt, date, scoped,
-                reports.size(), withoutReport, requests);
+        OriginManifest manifest = OriginManifest.ofDatasetsReports(retrievedAt, date, scoped, reports.size(),
+                withoutReport, requests);
         String name = out.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".zip")
                 ? stripZip(out.getFileName().toString())
                 : "ncbi-gene-origin-" + date.format(DateTimeFormatter.BASIC_ISO_DATE);

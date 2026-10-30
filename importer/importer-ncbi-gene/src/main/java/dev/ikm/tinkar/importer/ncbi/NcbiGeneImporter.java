@@ -34,16 +34,19 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
- * Imports an NCBI Gene origin ({@link NcbiGeneOrigin}): the gene reports NCBI Datasets returned
- * for the genes of some organisms, as {@link NcbiGeneOriginBuilder} retrieves them. Genes are
+ * Imports an NCBI Gene origin ({@link NcbiGeneOrigin}): the genes of some organisms, as NCBI
+ * Datasets reported them ({@link NcbiGeneOriginBuilder}) or as NCBI Gene's bulk files hold them
+ * ({@link NcbiGeneBulkOriginBuilder}); both read into the same genes. Genes are
  * written as NCBI holds them, per reference strain: an influenza A gene is PB2 of
  * A/Puerto Rico/8/1934(H1N1), not PB2 of influenza A. See {@link GeneWriter} for what each gene
  * becomes and {@link NcbiGeneTerms} for how identities are minted.
@@ -77,8 +80,8 @@ public final class NcbiGeneImporter implements KnowledgeImporter {
 
     @Override
     public String description() {
-        return "NCBI Gene: the genes of scoped organisms as NCBI Datasets reports them, with their RefSeq"
-                + " genomic accessions";
+        return "NCBI Gene: the genes of scoped organisms, from NCBI Datasets' reports or NCBI Gene's bulk files,"
+                + " with their RefSeq genomic accessions and locations";
     }
 
     @Override
@@ -103,12 +106,16 @@ public final class NcbiGeneImporter implements KnowledgeImporter {
                     releaseDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli());
             geneWriter.shared();
             long skipped = 0;
-            for (GeneReport gene : origin.reports()) {
-                if (inScope.isPresent() && !inScope.get().contains(gene.geneId())) {
-                    skipped++;
-                    continue;
+            try (Stream<GeneReport> genes = origin.genes()) {
+                Iterator<GeneReport> iterator = genes.iterator();
+                while (iterator.hasNext()) {
+                    GeneReport gene = iterator.next();
+                    if (inScope.isPresent() && !inScope.get().contains(gene.geneId())) {
+                        skipped++;
+                        continue;
+                    }
+                    geneWriter.gene(gene);
                 }
-                geneWriter.gene(gene);
             }
             Map<String, Long> details = new LinkedHashMap<>(geneWriter.details());
             details.put("genes out of scope", skipped);

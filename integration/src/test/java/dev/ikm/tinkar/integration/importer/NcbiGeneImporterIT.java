@@ -83,6 +83,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class NcbiGeneImporterIT {
 
     private static final String ORIGIN = "/ncbi-gene/ncbi-gene-origin-20261020";
+    /**
+     * The same four taxa as a bulk-file origin, filtered on 2026-10-21 from NCBI Gene's bulk files
+     * of 2026-10-20 and NCBI Taxonomy's dump of 2026-10-21.
+     */
+    private static final String BULK_ORIGIN = "/ncbi-gene/ncbi-gene-bulk-origin-20261021";
 
     // The importer's own concepts.
     private static final UUID MODULE = UUID.fromString("e9fa005b-3acc-513f-a673-f89aff53b346");
@@ -140,13 +145,18 @@ class NcbiGeneImporterIT {
     private static final UUID RSV_A_N_CONCEPT = UUID.fromString("5deeb00e-f914-5673-b7f4-b53799b75a55");
     private static final UUID RSV_A_N_LOCATION = UUID.fromString("ce366341-19f0-505a-b43e-366c90ae1591");
 
+    // RSV A's small RNA Rsvgs02 (1724894): Datasets gives it no description, gene_info "miscRNA".
+    private static final UUID RSVGS02_DESCRIPTION = UUID.fromString("86812337-33fe-5772-93d6-753d02a76b7d");
+
     private Path origin;
+    private Path bulkOrigin;
 
     @BeforeAll
     void startStore() throws URISyntaxException {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
         TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
         origin = Path.of(assertNotNullAndGet(NcbiGeneImporterIT.class.getResource(ORIGIN)).toURI());
+        bulkOrigin = Path.of(assertNotNullAndGet(NcbiGeneImporterIT.class.getResource(BULK_ORIGIN)).toURI());
     }
 
     @AfterAll
@@ -284,6 +294,42 @@ class NcbiGeneImporterIT {
     void refusesATaxonTheOriginLacks() {
         assertThrows(ImportException.class, () -> inLoadPhase(origin, Map.of("taxa", "9606")), "human genes are not in this origin");
         assertThrows(ImportException.class, () -> inLoadPhase(origin, Map.of("taxa", "SARS-CoV-2")));
+    }
+
+    @Test
+    @Order(7)
+    void theBulkOriginOfTheSameGenesReadsIntoTheSameIdentities() {
+        ImportReport report = inLoadPhase(bulkOrigin, Map.of());
+        assertEquals(Optional.of(Instant.parse("2026-10-21T00:00:00Z")), report.releaseDate());
+        Map<String, Long> details = report.details();
+        assertEquals(135L, details.get("genes"), report.toString());
+        assertEquals(11L, details.get("organisms"), report.toString());
+        assertEquals(135L, details.get("genomic locations"), report.toString());
+        assertEquals(268L, details.get("gene names"), "two RSV A small RNAs gain gene_info's description: " + report);
+        assertEquals(4, report.written(), "those two descriptions and their dialects, and nothing else: " + report);
+        assertEquals(20, report.versioned(),
+                "the 20 locations Datasets gave no orientation, which gene2refseq places on the plus strand: " + report);
+
+        assertEquals("miscRNA", latest(RSVGS02_DESCRIPTION).fieldValues().get(1));
+        SemanticEntityVersion rsvA = latest(RSV_A_N_LOCATION);
+        assertEquals(List.of("NC_001803.1", 1125, 2329), rsvA.fieldValues().subList(0, 3).castToList());
+        assertEquals(nid(PLUS_STRAND), ((EntityFacade) rsvA.fieldValues().get(3)).nid(),
+                "the bulk files state the strand Datasets left unstated");
+        SemanticEntityVersion n = latest(N_LOCATION);
+        assertEquals(List.of("NC_045512.2", 28274, 29533), n.fieldValues().subList(0, 3).castToList(),
+                "gene2refseq's zero-based positions read one-based, as Datasets gives them");
+    }
+
+    @Test
+    @Order(8)
+    void replayingTheBulkOriginWritesNothing() {
+        ImportReport again = inLoadPhase(bulkOrigin, Map.of());
+        assertEquals(0, again.written(), again.toString());
+        assertEquals(0, again.versioned(), again.toString());
+        ImportReport scoped = inLoadPhase(bulkOrigin, Map.of("taxa", "2697049"));
+        assertEquals(11L, scoped.details().get("genes"), scoped.toString());
+        assertEquals(124L, scoped.details().get("genes out of scope"), scoped.toString());
+        assertEquals(0, scoped.written(), scoped.toString());
     }
 
     /** An import as kb-assemble runs one: inside the bulk-load bracket. */

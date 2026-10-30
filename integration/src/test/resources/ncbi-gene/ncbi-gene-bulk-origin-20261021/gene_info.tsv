@@ -1,0 +1,150 @@
+#tax_id	GeneID	Symbol	LocusTag	Synonyms	dbXrefs	chromosome	map_location	description	type_of_gene	Symbol_from_nomenclature_authority	Full_name_from_nomenclature_authority	Nomenclature_status	Other_designations	Modification_date	Feature_type
+11250	1489818	NS1	HRSVgp01	-	-	-	-	nonstructural protein 1	protein-coding	-	-	-	nonstructural protein 1	20260616	-
+11250	1489819	NS2	HRSVgp02	-	-	-	-	nonstructural protein 2	protein-coding	-	-	-	nonstructural protein 2	20260616	-
+11250	1489820	N	HRSVgp03	-	-	-	-	nucleoprotein	protein-coding	-	-	-	nucleoprotein	20260616	-
+11250	1489821	P	HRSVgp04	-	-	-	-	phosphoprotein	protein-coding	-	-	-	phosphoprotein	20260616	-
+11250	1489822	M	HRSVgp05	-	-	-	-	matrix protein	protein-coding	-	-	-	matrix protein	20260616	-
+11250	1489823	SH	HRSVgp06	-	-	-	-	small hydrophobic protein	protein-coding	-	-	-	small hydrophobic protein	20260616	-
+11250	1489824	G	HRSVgp07	-	-	-	-	attachment glycoprotein	protein-coding	-	-	-	attachment glycoprotein	20260616	-
+11250	1489825	F	HRSVgp08	-	-	-	-	fusion glycoprotein	protein-coding	-	-	-	fusion glycoprotein	20260616	-
+11250	1489826	M2	HRSVgp09	-	-	-	-	M2-1 protein;M2-2 protein	protein-coding	-	-	-	M2-1 protein;M2-2 protein	20260616	-
+11250	1489827	L	HRSVgp10	-	-	-	-	polymerase protein	protein-coding	-	-	-	polymerase protein	20260616	-
+11250	2828661	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene (Human orthopneumovirus; human RSV).	other	-	-	-	-	20240401	-
+11250	37607636	NS1	DZD21_gp01	-	-	-	-	nonstructural protein 1	protein-coding	-	-	-	nonstructural protein 1	20260616	-
+11250	37607637	NS2	DZD21_gp02	-	-	-	-	nonstructural protein 2	protein-coding	-	-	-	nonstructural protein 2	20260616	-
+11250	37607638	N	DZD21_gp03	-	-	-	-	nucleoprotein	protein-coding	-	-	-	nucleoprotein	20260616	-
+11250	37607639	P	DZD21_gp04	-	-	-	-	phosphoprotein	protein-coding	-	-	-	phosphoprotein	20260616	-
+11250	37607640	M	DZD21_gp05	-	-	-	-	matrix protein	protein-coding	-	-	-	matrix protein	20260616	-
+11250	37607641	SH	DZD21_gp06	-	-	-	-	small hydrophobic protein	protein-coding	-	-	-	small hydrophobic protein	20260616	-
+11250	37607642	G	DZD21_gp07	-	-	-	-	attachment glycoprotein	protein-coding	-	-	-	attachment glycoprotein	20260616	-
+11250	37607643	F	DZD21_gp08	-	-	-	-	fusion glycoprotein	protein-coding	-	-	-	fusion glycoprotein	20260528	-
+11250	37607644	M2	DZD21_gp09	-	-	-	-	M2-1 protein;M2-2 protein	protein-coding	-	-	-	M2-1 protein;M2-2 protein	20260616	-
+11250	37607645	L	DZD21_gp10	-	-	-	-	polymerase protein	protein-coding	-	-	-	polymerase protein	20260616	-
+11320	2828679	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene (Human Influenza A Virus; Influenza virus type A; influenza A virus).	other	-	-	-	-	20240404	-
+11520	2828681	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene (Influenza virus type B).	other	-	-	-	-	20230602	-
+12814	2829063	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene (respiratory syncytial virus RS; respiratory syncytial virus RS virus; respiratory syncytial virus RSV).	other	-	-	-	-	20260121	-
+93838	3654615	PB2	FLUAVH5N1_s1gp1	-	-	-	-	polymerase	protein-coding	-	-	-	polymerase	20260616	-
+93838	3654616	PB1	FLUAVH5N1_s2gp1	-	-	-	-	polymerase	protein-coding	-	-	-	polymerase	20260616	-
+93838	3654617	PA	FLUAVH5N1_s3gp1	-	-	-	-	polymerase	protein-coding	-	-	-	polymerase	20250510	-
+93838	3654618	NP	FLUAVH5N1_s5gp1	-	-	-	-	nucleocapsid protein	protein-coding	-	-	-	nucleocapsid protein	20260616	-
+93838	3654619	NA	FLUAVH5N1_s6gp1	-	-	-	-	neuraminidase	protein-coding	-	-	-	neuraminidase	20250510	-
+93838	3654620	HA	FLUAVH5N1_s4gp1	-	-	-	-	hemagglutinin	protein-coding	-	-	-	hemagglutinin|HA1|HA2	20260616	-
+93838	3654621	M2	FLUAVH5N1_s7gp1	-	-	-	-	matrix protein 2	protein-coding	-	-	-	matrix protein 2	20260616	-
+93838	3654622	NEP	FLUAVH5N1_s8gp1	NS2	-	-	-	nonstructural protein 2	protein-coding	-	-	-	nonstructural protein 2|nuclear export protein	20260616	-
+93838	3760094	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene (Influenza A virus (A/Goose/Guangdong/1/96(H5N1)); influenza A virus (A/goose/Guangdong/1/96/(H5N1))).	other	-	-	-	-	20240531	-
+93838	3896424	PB1-F2	FLUAVH5N1_s2gp2	-	-	-	-	PB1-F2 protein	protein-coding	-	-	-	PB1-F2 protein	20260616	-
+93838	8656647	M1	FLUAVH5N1_s7gp2	-	-	-	-	matrix protein 1	protein-coding	-	-	-	matrix protein 1	20260616	-
+93838	8656648	NS1	FLUAVH5N1_s8gp2	-	-	-	-	nonstructural protein 1	protein-coding	-	-	-	nonstructural protein 1	20260616	-
+93838	13229455	PA-X	FLUAVH5N1_s3gp2	-	-	-	-	PA-X protein	protein-coding	-	-	-	PA-X protein	20260616	-
+130760	1460995	NS1	FLUAVAHHH9N2s8gp2	-	-	-	-	nonstructural protein 1	protein-coding	-	-	-	nonstructural protein 1	20260616	-
+130760	1460996	ha	FLUAVAHHH9N2s4gp1	-	-	-	-	Hemagglutinin	protein-coding	-	-	-	Hemagglutinin	20260616	-
+130760	1460997	na	FLUAVAHHH9N2s6gp1	-	-	-	-	neuraminidase	protein-coding	-	-	-	neuraminidase	20250510	-
+130760	1460998	pb2	FLUAVAHHH9N2s1gp1	-	-	-	-	polymerase Pb2	protein-coding	-	-	-	polymerase Pb2	20250510	-
+130760	1460999	pb1	FLUAVAHHH9N2s2gp1	-	-	-	-	polymerase Pb1	protein-coding	-	-	-	polymerase Pb1	20260616	-
+130760	1461000	pa	FLUAVAHHH9N2s3gp1	-	-	-	-	polymerase PA	protein-coding	-	-	-	polymerase PA	20260616	-
+130760	1461001	M1	FLUAVAHHH9N2s7gp2	-	-	-	-	matrix protein 1	protein-coding	-	-	-	matrix protein 1	20260616	-
+130760	1461002	M2	FLUAVAHHH9N2s7gp1	-	-	-	-	matrix protein 2	protein-coding	-	-	-	matrix protein 2	20260616	-
+130760	2830155	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene.	other	-	-	-	-	20240605	-
+130760	4036076	np	FLUAVAHHH9N2s5gp1	-	-	-	-	nucleoprotein	protein-coding	-	-	-	nucleoprotein	20260616	-
+130760	4036374	NEP	FLUAVAHHH9N2s8gp1	NS2	-	-	-	nuclear export protein	protein-coding	-	-	-	nuclear export protein	20260616	-
+208893	1494467	L	Rsvgp10	-	-	-	-	Polymerase (L)	protein-coding	-	-	-	Polymerase (L)	20260616	-
+208893	1494468	NS1	Rsvgp01	-	-	-	-	non-structural protein 1 (1C)	protein-coding	-	-	-	non-structural protein 1 (1C)	20260616	-
+208893	1494469	NS2	Rsvgp02	-	-	-	-	non-structural protein 2 (1B)	protein-coding	-	-	-	non-structural protein 2 (1B)	20260616	-
+208893	1494470	N	Rsvgp03	-	-	-	-	Nucleoprotein (N)	protein-coding	-	-	-	Nucleoprotein (N)	20260616	-
+208893	1494471	P	Rsvgp04	-	-	-	-	Phosphoprotein (P)	protein-coding	-	-	-	Phosphoprotein (P)	20260528	-
+208893	1494472	M	Rsvgp05	-	-	-	-	Matrix protein (M)	protein-coding	-	-	-	Matrix protein (M)	20260616	-
+208893	1494473	SH	Rsvgp06	-	-	-	-	Small hydrophobic protein (SH)	protein-coding	-	-	-	Small hydrophobic protein (SH)	20260616	-
+208893	1494474	G	Rsvgp07	-	-	-	-	Attachment glycoprotein (G)	protein-coding	-	-	-	Attachment glycoprotein (G)	20260528	-
+208893	1494475	F	Rsvgp08	-	-	-	-	Fusion protein (F)	protein-coding	-	-	-	Fusion protein (F)	20260528	-
+208893	1494476	M2	Rsvgp09	-	-	-	-	matrix (M2/22K)	protein-coding	-	-	-	matrix (M2/22K)	20260616	-
+208893	1724894	Rsvgs02	Rsvgs02	-	-	-	-	miscRNA	miscRNA	-	-	-	-	20260528	-
+208893	1724895	Rsvgs01	Rsvgs01	-	-	-	-	miscRNA	miscRNA	-	-	-	-	20260528	-
+208893	90829852	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene (Respiratory syncytial virus group A).	other	-	-	-	-	20240624	-
+211044	956527	M1	FLUAVs7gp1	-	-	-	-	matrix protein 1	protein-coding	-	-	-	matrix protein 1	20260616	-
+211044	956528	M2	FLUAVs7gp2	-	-	-	-	matrix protein 2	protein-coding	-	-	-	matrix protein 2	20260616	-
+211044	956529	HA	FLUAVs4gp1	-	-	-	-	haemagglutinin	protein-coding	-	-	-	haemagglutinin|HA1|HA2	20260616	-
+211044	956530	NA	FLUAVs6gp1	-	-	-	-	neuraminidase	protein-coding	-	-	-	neuraminidase	20260616	-
+211044	956531	NP	FLUAVs5gp1	-	-	-	-	nucleoprotein	protein-coding	-	-	-	nucleoprotein	20260616	-
+211044	956532	NEP	FLUAVs8gp1	NS2	-	-	-	nonstructural protein 2	protein-coding	-	-	-	nonstructural protein 2	20260616	-
+211044	956533	NS1	FLUAVs8gp2	-	-	-	-	nonstructural protein 1	protein-coding	-	-	-	nonstructural protein 1	20260616	-
+211044	956534	PB1	FLUAVs2gp1	-	-	-	-	polymerase PB1	protein-coding	-	-	-	polymerase PB1	20260616	-
+211044	956535	PA	FLUAVs3gp1	-	-	-	-	polymerase PA	protein-coding	-	-	-	polymerase PA	20260616	-
+211044	956536	PB2	FLUAVs1gp1	-	-	-	-	polymerase PB2	protein-coding	-	-	-	polymerase PB2	20260616	-
+211044	3802042	PB1-F2	FLUAVs2gp2	-	-	-	-	PB1-F2 protein	protein-coding	-	-	-	PB1-F2 protein	20260616	-
+211044	3926091	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene (Influenza A virus (A/PR 8/34 (H1N1)); Influenza A virus (A/PR/8/1934(H1N1)); Influenza A virus (A/PR/8/34(H0N1)); Influenza A virus (A/PR/8/34(H1N1)); Influenza A virus (A/PR8/1934(H1N1)); Influenza A virus (A/Puerto Rico/8/1934(H0N1)); Influenza A virus (A/Puerto Rico/8/34(H1N1)); Influenza A virus (A/Puerto Rico/8/34); Influenza A virus (STRAIN A/PUERTO RICO/8/34); nfluenza A virus (A/PR 8/34(H1N1))).	other	-	-	-	-	20240531	-
+211044	13229134	PA-X	FLUAVs3gp2	-	-	-	-	PA-X protein	protein-coding	-	-	-	PA-X protein	20260616	-
+335341	3655151	HA	FLUAVH3N2_s4p1	-	-	-	-	hemagglutinin	protein-coding	-	-	-	hemagglutinin|HA1|HA2	20260616	-
+335341	3655152	M1	FLUAVH3N2_s7p2	-	-	-	-	matrix protein 1	protein-coding	-	-	-	matrix protein 1	20260616	-
+335341	3655153	M2	FLUAVH3N2_s7p1	-	-	-	-	matrix protein 2	protein-coding	-	-	-	matrix protein 2	20260616	-
+335341	3655154	NA	FLUAVH3N2_s6p1	-	-	-	-	neuraminidase	protein-coding	-	-	-	neuraminidase	20260616	-
+335341	3655155	NP	FLUAVH3N2_s5p1	-	-	-	-	nucleocapsid protein	protein-coding	-	-	-	nucleocapsid protein	20260616	-
+335341	3655156	NS1	FLUAVH3N2_s8p2	-	-	-	-	nonstructural protein 1	protein-coding	-	-	-	nonstructural protein 1	20260616	-
+335341	3655157	NEP	FLUAVH3N2_s8p1	NS2	-	-	-	nonstructural protein 2	protein-coding	-	-	-	nonstructural protein 2	20260616	-
+335341	3655158	PA	FLUAVH3N2_s3p1	-	-	-	-	polymerase PA	protein-coding	-	-	-	polymerase PA	20260616	-
+335341	3655159	PB1	FLUAVH3N2_s2p1	-	-	-	-	polymerase PB1	protein-coding	-	-	-	polymerase PB1	20260616	-
+335341	3655160	PB1-F2	FLUAVH3N2_s2p2	-	-	-	-	PB1-F2 protein	protein-coding	-	-	-	PB1-F2 protein	20260616	-
+335341	3655161	PB2	FLUAVH3N2_s1p1	-	-	-	-	polymerase PB2	protein-coding	-	-	-	polymerase PB2	20260616	-
+335341	3760286	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene.	other	-	-	-	-	20240607	-
+335341	13229459	PA-X	FLUAVH3N2_s3p2	-	-	-	-	PA-X protein	protein-coding	-	-	-	PA-X protein	20260616	-
+488241	3655103	HA	FLUAVH2N2_s4p1	-	-	-	-	hemagglutinin	protein-coding	-	-	-	hemagglutinin|HA1|HA2	20260616	-
+488241	3655104	PB1-F2	FLUAVH2N2_s2p2	-	-	-	-	PB1-F2 protein	protein-coding	-	-	-	PB1-F2 protein	20260616	-
+488241	3655105	PB1	FLUAVH2N2_s2p1	-	-	-	-	PB1 polymerase subunit	protein-coding	-	-	-	PB1 polymerase subunit	20260616	-
+488241	3655106	PA	FLUAVH2N2_s3p1	-	-	-	-	polymerase PA	protein-coding	-	-	-	polymerase PA	20260616	-
+488241	3655107	M2	FLUAVH2N2_s7p1	-	-	-	-	membrane protein M2	protein-coding	-	-	-	membrane protein M2	20260616	-
+488241	3655108	M1	FLUAVH2N2_s7p2	-	-	-	-	membrane protein M1	protein-coding	-	-	-	membrane protein M1	20260616	-
+488241	3655109	PB2	FLUAVH2N2_s1p1	-	-	-	-	polymerase PB2	protein-coding	-	-	-	polymerase PB2	20260616	-
+488241	3655110	NEP	FLUAVH2N2_s8p2	NS2	-	-	-	nonstructural protein 2	protein-coding	-	-	-	nonstructural protein 2	20260616	-
+488241	3655111	NP	FLUAVH2N2_s5p1	-	-	-	-	nucleoprotein	protein-coding	-	-	-	nucleoprotein	20260616	-
+488241	3655112	NA	FLUAVH2N2_s6p1	-	-	-	-	neuraminidase	protein-coding	-	-	-	neuraminidase	20260616	-
+488241	7192501	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene (Influenza A virus (A/Korea/426/68 (H2N2)); Influenza A virus (A/Korea/426/68(H2N2)); Influenza A virus (STRAIN A/KOREA/426/68)).	other	-	-	-	-	20240605	-
+488241	13229461	PA-X	FLUAVH2N2_s3p2	-	-	-	-	PA-X protein	protein-coding	-	-	-	PA-X protein	20260616	-
+488241	23301357	NS1	FLUAVH2N2_s8p1	-	-	-	-	nonstructural protein 1	protein-coding	-	-	-	nonstructural protein 1	20260616	-
+518987	956538	HA	FLUBVsRNA-4gp1	-	-	-	-	hemagglutinin	protein-coding	-	-	-	hemagglutinin	20260616	-
+518987	956545	PB1	FLUBVsRNA-1gp1	-	-	-	-	polymerase PB1	protein-coding	-	-	-	polymerase PB1	20260616	-
+518987	956546	PB2	FLUBVsRNA-2gp1	-	-	-	-	polymerase PB2	protein-coding	-	-	-	polymerase PB2	20260616	-
+518987	956547	PA	FLUBVsRNA-3gp1	-	-	-	-	polymerase PA	protein-coding	-	-	-	polymerase PA	20260616	-
+518987	26681136	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene (Influenza B virus (B/Lee/40); Influenza B virus (STRAIN B/LEE/40)).	other	-	-	-	-	20240605	-
+518987	26824002	NP	FLUBVsRNA-5gp1	-	-	-	-	nucleoprotein	protein-coding	-	-	-	nucleoprotein	20260616	-
+518987	26824003	NB	FLUBVsRNA-6gp1	-	-	-	-	NB protein	protein-coding	-	-	-	NB protein	20260616	-
+518987	26824004	NA	FLUBVsRNA-6gp2	-	-	-	-	neuraminidase	protein-coding	-	-	-	neuraminidase	20260616	-
+518987	26824006	M1	FLUBVsRNA-7gp1	-	-	-	-	matrix protein M1	protein-coding	-	-	-	matrix protein M1	20260616	-
+518987	26824007	NEP	FLUBVsRNA-8gp2	NS2	-	-	-	nonstructural protein NS-2	protein-coding	-	-	-	nonstructural protein NS-2	20260616	-
+518987	26824008	NS1	FLUBVsRNA-8gp1	-	-	-	-	nonstructural protein NS-1	protein-coding	-	-	-	nonstructural protein NS-1	20260616	-
+641809	23308107	M1	UJ99_s7gp2	-	-	-	-	matrix protein 1	protein-coding	-	-	-	matrix protein 1	20260616	-
+641809	23308108	M2	UJ99_s7gp1	-	-	-	-	matrix protein 2	protein-coding	-	-	-	matrix protein 2	20260616	-
+641809	23308111	NS1	UJ99_s8gp2	-	-	-	-	nonstructural protein 1	protein-coding	-	-	-	nonstructural protein 1	20260616	-
+641809	23308112	NEP	UJ99_s8gp1	NS2	-	-	-	nuclear export protein	protein-coding	-	-	-	nuclear export protein	20260616	-
+641809	23308115	HA	UJ99_s4gp1	-	-	-	-	hemagglutinin	protein-coding	-	-	-	hemagglutinin|HA1|HA2	20260616	-
+641809	23308118	NA	UJ99_s6gp1	-	-	-	-	neuraminidase	protein-coding	-	-	-	neuraminidase	20260616	-
+641809	23308122	PB1	UJ99_s2gp1	-	-	-	-	polymerase PB1	protein-coding	-	-	-	polymerase PB1	20260616	-
+641809	23308125	NP	UJ99_s5gp1	-	-	-	-	nucleocapsid protein	protein-coding	-	-	-	nucleocapsid protein	20260616	-
+641809	23308128	PA	UJ99_s3gp1	-	-	-	-	polymerase PA	protein-coding	-	-	-	polymerase PA	20260616	-
+641809	23308131	PB2	UJ99_s1gp1	-	-	-	-	polymerase PB2	protein-coding	-	-	-	polymerase PB2	20260616	-
+641809	23561287	PB1-F2	UJ99_s2gp2	-	-	-	-	-	other	-	-	-	-	20200909	-
+641809	23561398	PA-X	UJ99_s3gp2	-	-	-	-	PA-X protein	protein-coding	-	-	-	PA-X protein	20260616	-
+641809	23678578	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene.	other	-	-	-	-	20240531	-
+1332244	23104219	PB2	TS66_s1gp1	-	-	-	-	polymerase PB2	protein-coding	-	-	-	polymerase PB2	20260616	-
+1332244	23104221	PB1-F2	TS66_s2gp2	-	-	-	-	PB1-F2 protein	protein-coding	-	-	-	PB1-F2 protein	20260616	-
+1332244	23104222	PB1	TS66_s2gp1	-	-	-	-	polymerase PB1	protein-coding	-	-	-	polymerase PB1	20260616	-
+1332244	23104224	PA-X	TS66_s3gp2	-	-	-	-	PA-X protein	protein-coding	-	-	-	PA-X protein	20260616	-
+1332244	23104225	PA	TS66_s3gp1	-	-	-	-	polymerase PA	protein-coding	-	-	-	polymerase PA	20260616	-
+1332244	23104227	HA	TS66_s4gp1	-	-	-	-	hemagglutinin	protein-coding	-	-	-	hemagglutinin|HA1|HA2	20260616	-
+1332244	23104229	NP	TS66_s5gp1	-	-	-	-	nucleocapsid protein	protein-coding	-	-	-	nucleocapsid protein	20260616	-
+1332244	23104231	M1	TS66_s7gp2	-	-	-	-	matrix protein 1	protein-coding	-	-	-	matrix protein 1	20260616	-
+1332244	23104232	M2	TS66_s7gp1	-	-	-	-	matrix protein 2	protein-coding	-	-	-	matrix protein 2	20260616	-
+1332244	23104235	NS1	TS66_s8gp2	-	-	-	-	nonstructural protein 1	protein-coding	-	-	-	nonstructural protein 1	20260616	-
+1332244	23104236	NEP	TS66_s8gp1	NS2	-	-	-	nuclear export protein	protein-coding	-	-	-	nuclear export protein	20260616	-
+1332244	23104238	NA	TS66_s6gp1	-	-	-	-	neuraminidase	protein-coding	-	-	-	neuraminidase	20260616	-
+1332244	23547483	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene.	other	-	-	-	-	20240531	-
+2697049	43562271	NEWENTRY	-	-	-	-	-	Record to support submission of GeneRIFs for a gene not in Gene (COVID-19 virus; HCoV-19; Human coronavirus 2019; SARS-2; SARS-CoV2; SARS2).	other	-	-	-	-	20250430	-
+2697049	43740568	S	GU280_gp02	spike glycoprotein	-	-	-	surface glycoprotein	protein-coding	-	-	-	surface glycoprotein	20260616	-
+2697049	43740569	ORF3a	GU280_gp03	-	-	-	-	ORF3a protein	protein-coding	-	-	-	ORF3a protein	20260616	-
+2697049	43740570	E	GU280_gp04	-	-	-	-	envelope protein	protein-coding	-	-	-	envelope protein	20260616	-
+2697049	43740571	M	GU280_gp05	-	-	-	-	membrane glycoprotein	protein-coding	-	-	-	membrane glycoprotein	20260616	-
+2697049	43740572	ORF6	GU280_gp06	-	-	-	-	ORF6 protein	protein-coding	-	-	-	ORF6 protein	20260616	-
+2697049	43740573	ORF7a	GU280_gp07	-	-	-	-	ORF7a protein	protein-coding	-	-	-	ORF7a protein	20260616	-
+2697049	43740574	ORF7b	GU280_gp08	-	-	-	-	ORF7b	protein-coding	-	-	-	ORF7b	20260723	-
+2697049	43740575	N	GU280_gp10	-	-	-	-	nucleocapsid phosphoprotein	protein-coding	-	-	-	nucleocapsid phosphoprotein	20261011	-
+2697049	43740576	ORF10	GU280_gp11	-	-	-	-	ORF10 protein	protein-coding	-	-	-	ORF10 protein	20260616	-
+2697049	43740577	ORF8	GU280_gp09	-	-	-	-	ORF8 protein	protein-coding	-	-	-	ORF8 protein	20260723	-
+2697049	43740578	ORF1ab	GU280_gp01	-	-	-	-	ORF1a polyprotein;ORF1ab polyprotein	protein-coding	-	-	-	ORF1a polyprotein;ORF1ab polyprotein|2'-O-ribose methyltransferase|3'-to-5' exonuclease|3C-like proteinase|RNA-dependent RNA polymerase|endoRNAse|helicase|leader protein|nsp10|nsp11|nsp2|nsp3|nsp4|nsp6|nsp7|nsp8|nsp9	20261012	-
