@@ -518,14 +518,17 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
         // startup — a STAMP cancelled as the store opens — would find not running yet; and only a
         // semantic of a pattern the service indexes counts against the policy's threshold.
         if (sourceObject instanceof SemanticEntity<?> semantic) {
-            try {
-                SearchService search = getSearchService();
-                if (search.indexesPattern(semantic.patternNid())
-                        && (!loadPhase || EntityService.get().loadPhaseSearchPolicy().shouldIndexLive())) {
-                    search.index(sourceObject);
+            Optional<SearchService> running = runningSearchService();
+            if (running.isPresent()) {
+                try {
+                    SearchService search = running.get();
+                    if (search.indexesPattern(semantic.patternNid())
+                            && (!loadPhase || EntityService.get().loadPhaseSearchPolicy().shouldIndexLive())) {
+                        search.index(sourceObject);
+                    }
+                } catch (Exception e) {
+                    LOG.debug("SearchService could not index nid {}", nid, e);
                 }
-            } catch (Exception e) {
-                LOG.debug("SearchService not available for indexing", e);
             }
         }
         return merged;
@@ -858,6 +861,20 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
     }
 
     // ---------- search ----------
+
+    /**
+     * The running search service, or none. Every semantic's merge asks, so a store opened without
+     * one ({@link dev.ikm.tinkar.common.service.ServiceKeys#SEARCH_DISABLED}) must pay nothing for
+     * asking: {@link #getSearchService()} took a lock and threw at every merge, and the exceptions
+     * tripled a load of solor-gudid-kb's 76 M entities (2026-10-31).
+     */
+    private Optional<SearchService> runningSearchService() {
+        if (searchService.isSet()) {
+            return Optional.of(getSearchService());
+        }
+        return ServiceLifecycleManager.get().getRunningService(SearchService.class)
+                .map(found -> searchService.orElseSet(() -> found));
+    }
 
     private SearchService getSearchService() {
         return searchService.orElseSet(() -> ServiceLifecycleManager.get()

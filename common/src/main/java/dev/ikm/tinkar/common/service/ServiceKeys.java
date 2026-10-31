@@ -32,6 +32,12 @@ public enum ServiceKeys {
      */
     CANCEL_UNCOMMITTED_STAMPS_AT_STARTUP,
     /**
+     * When true, the search service does not start, so a store opened only to be checked, never
+     * searched, builds no index: a round-trip check of a large knowledge base spent a fifth of its
+     * time rebuilding one. Searching such a store fails. Off by default.
+     */
+    SEARCH_DISABLED,
+    /**
      * Unique to each invocation of the JVM. Will persist across cache resets.
      */
     JVM_UUID,

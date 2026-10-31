@@ -126,9 +126,14 @@ public class ServiceLifecycleManager {
      * The service found for a type while the manager is running, so that the lookup every
      * {@code PrimitiveData.get()} makes does not walk the controllers and build their service
      * class lists again: that walk was 8 percent of an export's Java samples (2026-10-08).
-     * Cleared whenever the state or the active services change.
+     * A type no running service provides is cached as {@link #NO_RUNNING_SERVICE}: a load into
+     * a store with no search service asked for one at every record, and the walk tripled the
+     * load (solor-gudid-kb, 2026-10-31). Cleared whenever the state or the active services change.
      */
     private final Map<Class<?>, Object> runningServiceCache = new ConcurrentHashMap<>();
+
+    /** In {@link #runningServiceCache}: no running service provides the type. */
+    private static final Object NO_RUNNING_SERVICE = new Object();
     private final Map<Class<?>, ServicePriority> servicePriorities = new ConcurrentHashMap<>();
     private final Map<ServiceExclusionGroup, List<ServiceInfo>> mutualExclusionGroups = new ConcurrentHashMap<>();
     private final Map<ServiceExclusionGroup, Class<?>> groupSelections = new ConcurrentHashMap<>();
@@ -1039,13 +1044,16 @@ public class ServiceLifecycleManager {
     public <T> Optional<T> getRunningService(Class<T> serviceType) {
         if (state == State.RUNNING) {
             Object cached = runningServiceCache.get(serviceType);
+            if (cached == NO_RUNNING_SERVICE) {
+                return Optional.empty();
+            }
             if (cached != null) {
                 return Optional.of(serviceType.cast(cached));
             }
         }
         Optional<T> found = findRunningService(serviceType);
-        if (found.isPresent() && state == State.RUNNING) {
-            runningServiceCache.put(serviceType, found.get());
+        if (state == State.RUNNING) {
+            runningServiceCache.put(serviceType, found.isPresent() ? found.get() : NO_RUNNING_SERVICE);
         }
         return found;
     }

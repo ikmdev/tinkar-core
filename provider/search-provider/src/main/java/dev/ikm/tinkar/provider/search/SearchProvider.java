@@ -499,6 +499,12 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
             return Optional.of(ServiceExclusionGroup.SEARCH_ENGINE);
         }
 
+        /** Not when {@link ServiceKeys#SEARCH_DISABLED} is set: a store opened only to be checked. */
+        @Override
+        public boolean shouldActivate() {
+            return !ServiceProperties.get(ServiceKeys.SEARCH_DISABLED, false);
+        }
+
         @Override
         public int getSubPriority() {
             return 10; // Start early in INDEXING phase
