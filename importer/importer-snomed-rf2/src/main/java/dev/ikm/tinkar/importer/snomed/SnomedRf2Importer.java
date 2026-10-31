@@ -236,14 +236,21 @@ public final class SnomedRf2Importer implements KnowledgeImporter {
         axioms.increment();
     }
 
-    /** Transforms the axioms of the concepts this import wrote axioms for, and no others. */
+    /**
+     * Transforms the axioms of the concepts this import wrote axioms for, and no others, and of
+     * those only the OWL versions this import wrote: an extension's axiom on a concept of the
+     * edition beneath leaves the edition's history, already transformed by the edition's own
+     * import, as it is, rather than restating it under the extension's author at the edition's
+     * own times.
+     */
     private static void transformOwl(Stamps stamps, SnomedIds ids, java.util.Set<Long> axiomConcepts) {
         LOG.info("Transforming OWL axioms of {} concepts into EL++ stated axioms", axiomConcepts.size());
+        long authorNid = stamps.author().nid();
         try {
             new Rf2OwlToLogicAxiomTransformer(new Transaction("SNOMED CT OWL to logic"),
                     KernelPattern.OWL_AXIOM_SYNTAX_PATTERN, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-                    stamps.author().nid(), PrimitiveData.nid(ids.publicId(CORE_MODULE)), stamps.path().nid(),
-                    axiomConcepts::contains).call();
+                    authorNid, PrimitiveData.nid(ids.publicId(CORE_MODULE)), stamps.path().nid(),
+                    axiomConcepts::contains, owlStamp -> owlStamp.authorNid() == authorNid).call();
         } catch (Exception e) {
             throw new ImportException("Transforming SNOMED CT OWL axioms failed", e);
         }

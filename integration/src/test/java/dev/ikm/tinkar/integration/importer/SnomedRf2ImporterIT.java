@@ -187,6 +187,25 @@ class SnomedRf2ImporterIT {
         assertTrue(EntityService.get().semanticsForComponentOfPattern(aspirin, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
                 .findAny().isPresent(), "the RxNorm axiom becomes an EL++ stated axiom");
 
+        // RxNorm's transform writes RxNorm's version of the merged concept's definition, at RxNorm's
+        // time, and leaves SNOMED CT's history to SNOMED CT: a path holds one version per time.
+        SemanticEntity<SemanticEntityVersion> definition = EntityService.get()
+                .semanticsForComponentOfPattern(aspirin, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
+                .findFirst().orElseThrow();
+        Map<String, List<String>> versionsByTimeOnPath = new java.util.TreeMap<>();
+        for (SemanticEntityVersion version : definition.versions()) {
+            versionsByTimeOnPath.computeIfAbsent(version.stamp().time() + " on " + version.stamp().pathNid(),
+                    key -> new java.util.ArrayList<>()).add(PrimitiveData.text(version.stamp().moduleNid()));
+        }
+        versionsByTimeOnPath.forEach((timeOnPath, modules) ->
+                assertEquals(1, modules.size(), "versions at " + timeOnPath + ": " + modules));
+        long rxnormTime = java.time.LocalDate.parse("2024-04-10").atStartOfDay(java.time.ZoneOffset.UTC)
+                .toInstant().toEpochMilli();
+        List<Long> rxnormVersionTimes = definition.versions().stream()
+                .filter(version -> "RxNorm Author".equals(PrimitiveData.text(version.stamp().authorNid())))
+                .map(version -> version.stamp().time()).toList();
+        assertEquals(List.of(rxnormTime), rxnormVersionTimes, "RxNorm adds one version, at its own release time");
+
         List<SemanticEntityVersion> names = EntityService.get()
                 .semanticsForComponentOfPattern(aspirin, KernelPattern.DESCRIPTION_PATTERN.nid())
                 .map(s -> stamps.latest(s).get()).toList();
@@ -201,15 +220,58 @@ class SnomedRf2ImporterIT {
         assertTrue(drugIdentifiers.contains("999"), "a class with only a label carries its IRI's RxCUI: " + drugIdentifiers);
     }
 
+    /**
+     * An extension over the edition, as the LOINC collaboration and NUVA are imported: its own
+     * author and module, and an OWL axiom on a concept of the edition, at its own effective time.
+     * Its transform writes the extension's version of that concept's definition and leaves the
+     * edition's history to the edition: a path holds one version per time.
+     */
+    @Test
+    @Order(5)
+    void importsAnExtensionOverTheEdition(@TempDir Path dir) throws IOException {
+        String extensionModule = "11010000107";
+        Path extension = dir.resolve("SnomedCT_TestExtension_PRODUCTION_XX1010000_20250301T120000Z");
+        Path terminology = Files.createDirectories(extension.resolve("Full/Terminology"));
+        write(terminology.resolve("sct2_Concept_Full_XX1010000_20250301.txt"),
+                "id\teffectiveTime\tactive\tmoduleId\tdefinitionStatusId");
+        write(terminology.resolve("sct2_sRefset_OWLExpressionFull_XX1010000_20250301.txt"),
+                "id\teffectiveTime\tactive\tmoduleId\trefsetId\treferencedComponentId\towlExpression",
+                "00000000-0000-4000-8000-000000000005\t20250301\t1\t" + extensionModule + "\t733073007\t" + HEART
+                        + "\tSubClassOf(:" + HEART + " :" + FINDING_SITE + ")");
+        ImportReport report = inLoadPhase("snomed-rf2", extension, Map.of("author", "Test Extension Author"));
+        assertEquals(1L, report.details().get("OWL axioms"), report.toString());
+
+        SemanticEntity<SemanticEntityVersion> definition = EntityService.get()
+                .semanticsForComponentOfPattern(nid(HEART), KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
+                .findFirst().orElseThrow();
+        Map<String, List<String>> versionsByTimeOnPath = new java.util.TreeMap<>();
+        for (SemanticEntityVersion version : definition.versions()) {
+            versionsByTimeOnPath.computeIfAbsent(version.stamp().time() + " on " + version.stamp().pathNid(),
+                    key -> new java.util.ArrayList<>()).add(PrimitiveData.text(version.stamp().authorNid()));
+        }
+        versionsByTimeOnPath.forEach((timeOnPath, authors) ->
+                assertEquals(1, authors.size(), "versions at " + timeOnPath + ": " + authors));
+        long extensionTime = java.time.LocalDate.parse("2025-03-01").atStartOfDay(java.time.ZoneOffset.UTC)
+                .toInstant().toEpochMilli();
+        List<Long> extensionVersionTimes = definition.versions().stream()
+                .filter(version -> "Test Extension Author".equals(PrimitiveData.text(version.stamp().authorNid())))
+                .map(version -> version.stamp().time()).toList();
+        assertEquals(List.of(extensionTime), extensionVersionTimes, "the extension adds one version, at its own time");
+    }
+
     private ImportReport importRelease() {
         return inLoadPhase("snomed-rf2", release);
     }
 
-    /** An import as kb-assemble runs one: inside the bulk-load bracket. */
     private static ImportReport inLoadPhase(String importer, Path source) {
+        return inLoadPhase(importer, source, Map.of());
+    }
+
+    /** An import as kb-assemble runs one: inside the bulk-load bracket. */
+    private static ImportReport inLoadPhase(String importer, Path source, Map<String, String> options) {
         EntityService.get().beginLoadPhase();
         try {
-            return KnowledgeImporters.named(importer).importInto(new ImportSource(source, Map.of()),
+            return KnowledgeImporters.named(importer).importInto(new ImportSource(source, options),
                     new StoreWriter(Calculators.Stamp.DevelopmentLatest()));
         } finally {
             EntityService.get().endLoadPhase();

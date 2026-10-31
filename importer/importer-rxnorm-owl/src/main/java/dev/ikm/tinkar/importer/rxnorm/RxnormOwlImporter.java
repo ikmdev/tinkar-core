@@ -157,10 +157,13 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
         if (source.option("owlTransform").map(Boolean::parseBoolean).orElse(true) && axioms > 0) {
             LOG.info("Transforming OWL axioms into EL++ stated axioms");
             try {
-                // Only the concepts this import wrote axioms for: SNOMED CT's beneath are left alone.
+                // Only the concepts this import wrote axioms for, and of a concept merged with SNOMED CT
+                // only the OWL versions RxNorm wrote: SNOMED CT's history, already transformed by its
+                // own import, is left alone rather than restated under RxNorm at SNOMED CT's times.
                 new Rf2OwlToLogicAxiomTransformer(new Transaction("RxNorm OWL to logic"),
                         KernelPattern.OWL_AXIOM_SYNTAX_PATTERN, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-                        author.nid(), RXNORM_MODULE.nid(), path.nid(), classWriter.axiomConcepts::contains).call();
+                        author.nid(), RXNORM_MODULE.nid(), path.nid(), classWriter.axiomConcepts::contains,
+                        owlStamp -> owlStamp.moduleNid() == RXNORM_MODULE.nid()).call();
             } catch (Exception e) {
                 throw new ImportException("Transforming RxNorm OWL axioms failed", e);
             }

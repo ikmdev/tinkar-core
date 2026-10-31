@@ -59,6 +59,8 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
     private long authorNid = KernelConcept.USER.nid();
     private long moduleNid = Integer.MAX_VALUE;
     private long pathNid = Integer.MAX_VALUE;
+    /** Which OWL versions, by their STAMP, this transform writes EL++ versions for. */
+    private java.util.function.Predicate<StampEntity<?>> sources = stamp -> true;
 
     /**
 	 * @param transaction           - if supplied, this does NOT commit the
@@ -83,6 +85,22 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
         this.authorNid = authorNid;
         this.moduleNid = moduleNid;
         this.pathNid = pathNid;
+    }
+
+    /**
+     * Writes EL++ versions only for the OWL versions whose STAMP a predicate accepts: those a
+     * layered import wrote. A concept the import merged with a concept of a layer beneath carries
+     * that layer's OWL history too, which the layer's own import already transformed; written
+     * again under this transform's module, each would be a second version at the layer's own time
+     * on the same path, which a path cannot hold.
+     *
+     * @param sources which OWL versions, by their STAMP, to write EL++ versions for
+     */
+    public OwlToLogicAxiomTransformerAndWriter(Transaction transaction, List<TransformationGroup> transformationRecords,
+                                               long destinationPatternNid, long authorNid, long moduleNid, long pathNid,
+                                               java.util.function.Predicate<StampEntity<?>> sources) {
+        this(transaction, transformationRecords, destinationPatternNid, authorNid, moduleNid, pathNid);
+        this.sources = sources;
     }
 
     @Override
@@ -134,6 +152,9 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
         for (SemanticEntity<? extends SemanticEntityVersion> owlChronology : owlEntitiesForConcept) {
             for (long stampNid : owlChronology.stampNids().toArray()) {
                 StampEntity<? extends StampEntityVersion> stamp = EntityService.get().getStampFast(stampNid);
+                if (!sources.test(stamp)) {
+                    continue;
+                }
                 StampPositionRecord stampPos = StampPositionRecord.make(stamp.time(), stamp.pathNid());
                 long[] moduleWithOrigins = StampCalculatorWithCache.getModuleWithOrigins(stampPos, stamp.moduleNid());
                 StampCoordinateRecord stampCoordinate = StampCoordinateRecord.make(StateSet.ACTIVE, stampPos)

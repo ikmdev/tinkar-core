@@ -22,6 +22,7 @@ import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.PatternFacade;
@@ -80,7 +81,28 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
         this.concepts = concepts;
     }
 
+    /**
+     * Transforms only the concepts a predicate accepts, and of their OWL versions only those whose
+     * STAMP another accepts: the versions an import wrote. A concept the import merged with a
+     * concept of a layer beneath also carries that layer's OWL history, already transformed by the
+     * layer's own import; transformed again, each version would be a second one at the layer's
+     * own time on the same path.
+     *
+     * @param concepts which concepts to transform, by nid
+     * @param sources  which of their OWL versions, by STAMP, to transform
+     */
+    public Rf2OwlToLogicAxiomTransformer(Transaction transaction,
+                                         PatternFacade rf2OwlPattern,
+                                         PatternFacade logicalAxiomPattern,
+                                         long authorNid, long moduleNid, long pathNid,
+                                         java.util.function.LongPredicate concepts,
+                                         java.util.function.Predicate<StampEntity<?>> sources) {
+        this(transaction, rf2OwlPattern, logicalAxiomPattern, authorNid, moduleNid, pathNid, concepts);
+        this.sources = sources;
+    }
+
     private java.util.function.LongPredicate concepts = nid -> true;
+    private java.util.function.Predicate<StampEntity<?>> sources = stamp -> true;
 
     @Override
     protected Void compute() throws Exception {
@@ -115,7 +137,7 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
                 if (statedTransformList.size() == transformSize) {
                     List<TransformationGroup> listForTask = List.copyOf(statedTransformList);
                     OwlToLogicAxiomTransformerAndWriter transformer = new OwlToLogicAxiomTransformerAndWriter(
-                            transaction, listForTask, logicalAxiomPattern.nid(), authorNid, moduleNid, pathNid);
+                            transaction, listForTask, logicalAxiomPattern.nid(), authorNid, moduleNid, pathNid, sources);
                     tasks.add(transformer);
                     statedTransformList.clear();
                 }
@@ -124,7 +146,7 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
             // pickup any items remaining in the list.
             if (!statedTransformList.isEmpty()) {
                 OwlToLogicAxiomTransformerAndWriter remainingStatedtransformer = new OwlToLogicAxiomTransformerAndWriter(
-                        transaction, statedTransformList, logicalAxiomPattern.nid(), authorNid, moduleNid, pathNid);
+                        transaction, statedTransformList, logicalAxiomPattern.nid(), authorNid, moduleNid, pathNid, sources);
                 tasks.add(remainingStatedtransformer);
             }
 
