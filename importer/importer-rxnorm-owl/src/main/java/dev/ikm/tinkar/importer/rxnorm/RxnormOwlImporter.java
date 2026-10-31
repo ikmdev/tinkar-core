@@ -17,6 +17,7 @@ package dev.ikm.tinkar.importer.rxnorm;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.IdentityAdvisories;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
@@ -51,6 +52,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -153,6 +155,12 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
         }
         details.put("classes", (long) classes.size());
         details.put("axioms", axioms);
+        long merged = classWriter.mergedUuidsAdded.sum();
+        if (merged != 0) {
+            LOG.info("{} SNOMED CT concept(s) gained RxNorm's UUID as RxNorm classes merged with them",
+                    String.format("%,d", merged));
+            details.put("SNOMED CT concepts gaining RxNorm's UUID", merged);
+        }
 
         if (source.option("owlTransform").map(Boolean::parseBoolean).orElse(true) && axioms > 0) {
             LOG.info("Transforming OWL axioms into EL++ stated axioms");
@@ -275,7 +283,10 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
             PublicId conceptId = rxClass.snomedCtId.isEmpty() || rxClass.labelOnly()
                     ? PublicIds.of(rxnormUuid)
                     : PublicIds.of(UuidT5Generator.get(UuidUtil.SNOMED_NAMESPACE, rxClass.snomedCtId), rxnormUuid);
-            long conceptNid = writer.concept(stamp, conceptId);
+            long conceptNid = conceptId.uuidCount() > 1
+                    ? ScopedValue.where(IdentityAdvisories.COUNTED_NOT_ADVISED, mergedUuidsAdded)
+                            .call(() -> writer.concept(stamp, conceptId))
+                    : writer.concept(stamp, conceptId);
             if (rxClass.labelOnly()) {
                 describe(conceptNid, rxnormUuid, rxClass.rdfsLabel, "LDESC", KernelConcept.DESCRIPTION_NOT_CASE_SENSITIVE,
                         KernelConcept.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, KernelConcept.PREFERRED);
@@ -377,6 +388,12 @@ public final class RxnormOwlImporter implements KnowledgeImporter {
 
         /** The concepts this import wrote OWL axioms for: the ones to transform. */
         final java.util.Set<Long> axiomConcepts = new java.util.HashSet<>();
+
+        /**
+         * SNOMED CT concepts that gained RxNorm's UUID when a class merged with them: by design,
+         * so counted rather than advised one by one.
+         */
+        final LongAdder mergedUuidsAdded = new LongAdder();
 
         private long axiom(long conceptNid, UUID conceptUuid, String axiom, String suffix) {
             writer.semantic(stamp, id(conceptUuid, axiom, suffix), KernelPattern.OWL_AXIOM_SYNTAX_PATTERN, conceptNid,
