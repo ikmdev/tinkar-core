@@ -17,12 +17,18 @@ package dev.ikm.tinkar.reasoner.elksnomed;
 
 import dev.ikm.tinkar.terms.KernelConcept;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.eclipse.collections.api.factory.primitive.LongLists;
+import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +49,8 @@ import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
+import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
+import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
@@ -138,6 +146,7 @@ public class ElkSnomedDataBuilder {
 		if (isCancelled()) {
 			throw new CancellationException("Reasoner cancelled while extracting stated axioms");
 		}
+		processLastActiveDefinitions(logicCoordinate.statedAxiomsPatternNid());
 		buildRoleConcepts();
 		data.initializeReasonerConceptSet();
 		LOG.info("Reasoner concept set size: {}, concepts loaded: {}",
@@ -158,6 +167,60 @@ public class ElkSnomedDataBuilder {
 			LOG.error(msg);
 			throw new Exception(msg);
 		}
+	}
+
+	/**
+	 * Gives each concept a definition names, but whose own definition is retired, the definition
+	 * it last had: the one it had when the naming definition was written, as when a layer built on
+	 * an earlier edition names a concept the current edition retires. A last active definition can
+	 * name other retired concepts, so this repeats until it reaches no new one. A concept with no
+	 * active definition in any version stays without one, and the taxonomy places it under the root.
+	 */
+	private void processLastActiveDefinitions(long statedAxiomsPatternNid) {
+		MutableLongSet tried = LongSets.mutable.empty();
+		int found = 0;
+		while (true) {
+			long[] undefined = data.getConcepts().stream()
+					.filter(con -> con.getDefinitions().isEmpty() && con.getGciDefinitions().isEmpty())
+					.mapToLong(Concept::getId).filter(nid -> !tried.contains(nid)).toArray();
+			if (undefined.length == 0)
+				break;
+			for (long conceptNid : undefined) {
+				tried.add(conceptNid);
+				Optional<SemanticEntityVersion> lastActive = lastActiveDefinition(conceptNid, statedAxiomsPatternNid);
+				if (lastActive.isPresent()) {
+					found++;
+					LOG.info("Last active definition, as of {}, for retired concept nid={} ({})",
+							Instant.ofEpochMilli(lastActive.get().stamp().time()), conceptNid,
+							PrimitiveData.text(conceptNid));
+					processDefinition(lastActive.get());
+				}
+			}
+		}
+		if (found != 0)
+			LOG.info("Last active definitions used: {}", found);
+	}
+
+	/**
+	 * The latest active version of the concept's stated definition: under the view, or, when that
+	 * version is retired, as it stood just before the version that retired it.
+	 */
+	private Optional<SemanticEntityVersion> lastActiveDefinition(long conceptNid, long statedAxiomsPatternNid) {
+		MutableLongList semanticNids = LongLists.mutable.empty();
+		EntityService.get().forEachSemanticForComponentOfPattern(conceptNid, statedAxiomsPatternNid,
+				semantic -> semanticNids.add(semantic.nid()));
+		for (long semanticNid : semanticNids.toArray()) {
+			StampCalculator calculator = viewCalculator.stampCalculator();
+			Latest<SemanticEntityVersion> latest = calculator.latest(semanticNid);
+			while (latest.isPresent() && !latest.get().active()) {
+				calculator = calculator.stampCoordinate().toStampCoordinateRecord()
+						.withStampPositionTime(latest.get().stamp().time() - 1).stampCalculator();
+				latest = calculator.latest(semanticNid);
+			}
+			if (latest.isPresent())
+				return Optional.of(latest.get());
+		}
+		return Optional.empty();
 	}
 
 	/**
