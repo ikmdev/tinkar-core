@@ -17,7 +17,20 @@ package dev.ikm.tinkar.entity.changeset;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.IdentityAdvisories;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.entity.ConceptRecord;
+import dev.ikm.tinkar.entity.ConceptRecordBuilder;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.PatternRecord;
+import dev.ikm.tinkar.entity.PatternRecordBuilder;
+import dev.ikm.tinkar.entity.PublicIdentifierRecord;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.SemanticRecordBuilder;
+import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.StampRecordBuilder;
 import dev.ikm.tinkar.schema.ComponentEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,11 +39,14 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.LongConsumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -110,9 +126,10 @@ public final class ComponentTable {
      * What registration produced: the nid of each component by its sequence
      * ({@code nids[sequence]}, {@code nids[0]} unused), and the public id of each pattern by
      * its nid, so a reader resolves a semantic's pattern without the pattern's record, which
-     * another reader may still be storing.
+     * another reader may still be storing; and the UUIDs of each component the table names only
+     * by reference under more than one, by its nid, for {@link #addReferencedUuids}.
      */
-    public record Registration(long[] nids, Map<Long, PublicId> patternIdsByNid) {
+    public record Registration(long[] nids, Map<Long, PublicId> patternIdsByNid, Map<Long, UUID[]> referencedUuids) {
         /** The number of components registered. */
         public long count() {
             return nids.length - 1;
@@ -136,6 +153,7 @@ public final class ComponentTable {
         long[][] nids = {new long[(int) Math.max(16, Math.min(Integer.MAX_VALUE - 8, expectedComponents + 1))]};
         Map<Integer, PublicId> patternIds = new HashMap<>();
         Map<Long, PublicId> patternIdsByNid = new HashMap<>();
+        Map<Long, UUID[]> referencedUuids = new HashMap<>();
         int[] patternPattern = {-1};
         long[] count = {0};
         long[] lastReported = {0};
@@ -167,6 +185,9 @@ public final class ComponentTable {
                 nid = PrimitiveData.getEntityKey(pattern, id).nid();
             }
             nids[0][component.sequence()] = nid;
+            if (component.referencedOnly() && component.uuids().length > 1) {
+                referencedUuids.put(nid, component.uuids());
+            }
             if (component.patternSequence() == patternPattern[0]) {
                 patternIds.put(component.sequence(), id);
                 patternIdsByNid.put(nid, id);
@@ -182,7 +203,57 @@ public final class ComponentTable {
         }
         LOG.info("Registered {} nid(s) from the component table of {}", String.format("%,d", total), zip.getName());
         long[] bySequence = total + 1 == nids[0].length ? nids[0] : Arrays.copyOf(nids[0], (int) total + 1);
-        return new Registration(bySequence, patternIdsByNid);
+        return new Registration(bySequence, patternIdsByNid, referencedUuids);
+    }
+
+    /**
+     * Adds to each stored component the table names only by reference the UUIDs it is named by
+     * and its record lacks, as merging a carried record adds them, so the store and its exports
+     * keep every UUID the change set's source gave it: RxNorm names a concept it merges with
+     * SNOMED CT by both, and carries it only when it gives it a version. A component the store
+     * has no record of is left as it is. The components gaining UUIDs are counted and logged
+     * once, not advised one by one.
+     *
+     * @return the number of components that gained UUIDs
+     */
+    public static long addReferencedUuids(Registration registration, String changeSetName) {
+        LongAdder added = new LongAdder();
+        ScopedValue.where(IdentityAdvisories.COUNTED_NOT_ADVISED, added).run(() ->
+                registration.referencedUuids().forEach((nid, uuids) ->
+                        EntityHandle.get(nid).entity()
+                                .flatMap(entity -> withUuids(entity, uuids))
+                                .ifPresent(EntityService.get()::putEntity)));
+        if (added.sum() != 0) {
+            LOG.info("{} component(s) gained the UUIDs the reference table of {} names them by",
+                    String.format("%,d", added.sum()), changeSetName);
+        }
+        return added.sum();
+    }
+
+    /** The record with the UUIDs it lacks appended after its own; empty when it holds them all. */
+    private static Optional<Entity<?>> withUuids(Entity<?> entity, UUID[] uuids) {
+        List<UUID> merged = new ArrayList<>(Arrays.asList(entity.publicId().asUuidArray()));
+        int held = merged.size();
+        for (UUID uuid : uuids) {
+            if (!merged.contains(uuid)) {
+                merged.add(uuid);
+            }
+        }
+        if (merged.size() == held) {
+            return Optional.empty();
+        }
+        PublicIdentifierRecord id = PublicIdentifierRecord.make(PublicIds.of(merged.toArray(UUID[]::new)));
+        return Optional.ofNullable(switch (entity) {
+            case ConceptRecord record -> ConceptRecordBuilder.builder(record).mostSignificantBits(id.mostSignificantBits())
+                    .leastSignificantBits(id.leastSignificantBits()).additionalUuidLongs(id.additionalUuidLongs()).build();
+            case SemanticRecord record -> SemanticRecordBuilder.builder(record).mostSignificantBits(id.mostSignificantBits())
+                    .leastSignificantBits(id.leastSignificantBits()).additionalUuidLongs(id.additionalUuidLongs()).build();
+            case PatternRecord record -> PatternRecordBuilder.builder(record).mostSignificantBits(id.mostSignificantBits())
+                    .leastSignificantBits(id.leastSignificantBits()).additionalUuidLongs(id.additionalUuidLongs()).build();
+            case StampRecord record -> StampRecordBuilder.builder(record).mostSignificantBits(id.mostSignificantBits())
+                    .leastSignificantBits(id.leastSignificantBits()).additionalUuidLongs(id.additionalUuidLongs()).build();
+            default -> null;
+        });
     }
 
     /** The UUIDs of a component entry: two longs each, most significant bits first. */

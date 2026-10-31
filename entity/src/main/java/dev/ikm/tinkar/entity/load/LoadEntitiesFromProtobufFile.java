@@ -552,6 +552,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 updateProgress(Math.min(tableBytes, (long) ((double) registered / componentCount * tableBytes)), total);
             });
             long[] nids = registration.nids();
+            ComponentTable.addReferencedUuids(registration, importFile.getName());
             identifierCount.set(registration.count());
             usedIdentityIndex = true;
             updateMessage("Importing records (step 2 of 2)...");

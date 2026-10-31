@@ -38,6 +38,14 @@ public final class IdentityAdvisories {
     private static final Logger LOG = LoggerFactory.getLogger(IdentityAdvisories.class);
 
     private static final LongAdder UUIDS_ADDED = new LongAdder();
+
+    /**
+     * Bound while components gain UUIDs by design rather than by surprise, as when a loader adds
+     * the UUIDs a change set's reference table names components by: a layer that merges its
+     * concepts with another's names thousands. Each one is counted in the bound adder, not
+     * advised, and the caller reports the count once.
+     */
+    public static final ScopedValue<LongAdder> COUNTED_NOT_ADVISED = ScopedValue.newInstance();
     private static final LongAdder COMPONENTS_SHARING_UUIDS = new LongAdder();
     private static final LongAdder STAMP_VERSIONS_DROPPED = new LongAdder();
 
@@ -53,6 +61,10 @@ public final class IdentityAdvisories {
      */
     public static void uuidsAdded(long nid, Collection<UUID> held, Collection<UUID> added) {
         UUIDS_ADDED.increment();
+        if (COUNTED_NOT_ADVISED.isBound()) {
+            COUNTED_NOT_ADVISED.get().increment();
+            return;
+        }
         String description = "Component " + nid + " " + held + " gained UUIDs " + added
                 + ": a public id sharing one of its UUIDs carried them, so the component now holds them too.";
         LOG.warn(description);
