@@ -24,6 +24,7 @@ import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Which patterns' semantics the text index holds documents for: those with a field whose data
@@ -34,16 +35,41 @@ import java.util.Optional;
  * <p>A pattern is declined only when every field of every version has a data type known to hold
  * no text; a data type not known here is taken to hold text, so a new one costs an index its
  * speed, never its content. The decision is made once per pattern and kept in two immutable sets,
- * replaced whole when a pattern is decided or forgotten: a store asks on every write, from many
- * threads, and reads them without a lock or a boxed key. Patterns are few, so replacing a set is
- * cheap.
+ * replaced whole, together, when a pattern is decided or forgotten: a store asks on every write,
+ * from many threads, and reads them without a lock or a boxed key. Patterns are few, so replacing
+ * a set is cheap.
+ *
+ * <p>Nothing here takes a monitor. A parallel load asks from many virtual threads at once, and a
+ * contended monitor unmounts them; on JDK 27.0.1 a C1-compiled synchronized {@code decide} then
+ * failed its first interface call with an {@link IncompatibleClassChangeError}, in tiered code
+ * only, never interpreted or with continuations off. Two threads may decide the same pattern at
+ * once instead; both reach the same answer, and either keeps it.
  */
 final class TextPatterns {
 
-    /** Patterns with a field that may hold text. */
-    private volatile ImmutableLongSet withText = LongSets.immutable.empty();
-    /** Patterns whose every field holds something other than text. */
-    private volatile ImmutableLongSet withoutText = LongSets.immutable.empty();
+    /**
+     * The decisions so far, and how many forgets preceded them.
+     *
+     * @param withText    patterns with a field that may hold text
+     * @param withoutText patterns whose every field holds something other than text
+     * @param forgets     how many times a decision has been forgotten
+     */
+    private record Decisions(ImmutableLongSet withText, ImmutableLongSet withoutText, long forgets) {
+
+        static final Decisions NONE = new Decisions(LongSets.immutable.empty(), LongSets.immutable.empty(), 0);
+
+        Decisions with(long patternNid, boolean text) {
+            return text
+                    ? new Decisions(withText.newWith(patternNid), withoutText, forgets)
+                    : new Decisions(withText, withoutText.newWith(patternNid), forgets);
+        }
+
+        Decisions without(long patternNid) {
+            return new Decisions(withText.newWithout(patternNid), withoutText.newWithout(patternNid), forgets + 1);
+        }
+    }
+
+    private final AtomicReference<Decisions> decisions = new AtomicReference<>(Decisions.NONE);
     /** The field data types known to hold no text; read once the kernel concepts resolve. */
     private volatile ImmutableLongSet textFreeDataTypes;
 
@@ -54,13 +80,14 @@ final class TextPatterns {
      * @return {@code false} only when the pattern is known and no field of it may hold text
      */
     boolean indexes(long patternNid) {
-        if (withText.contains(patternNid)) {
+        Decisions known = decisions.get();
+        if (known.withText().contains(patternNid)) {
             return true;
         }
-        if (withoutText.contains(patternNid)) {
+        if (known.withoutText().contains(patternNid)) {
             return false;
         }
-        return decide(patternNid);
+        return decide(patternNid, known.forgets());
     }
 
     /**
@@ -68,18 +95,15 @@ final class TextPatterns {
      *
      * @param patternNid the pattern's nid
      */
-    synchronized void forget(long patternNid) {
-        withText = withText.newWithout(patternNid);
-        withoutText = withoutText.newWithout(patternNid);
+    void forget(long patternNid) {
+        decisions.updateAndGet(known -> known.without(patternNid));
     }
 
-    private synchronized boolean decide(long patternNid) {
-        if (withText.contains(patternNid)) {
-            return true;
-        }
-        if (withoutText.contains(patternNid)) {
-            return false;
-        }
+    /**
+     * Decides from the pattern as written now, keeping the decision only if no forget came
+     * between: one that did may have followed a rewrite of the pattern this read missed.
+     */
+    private boolean decide(long patternNid, long forgets) {
         Optional<PatternEntity> pattern = EntityHandle.get(patternNid).asPattern();
         if (pattern.isEmpty()) {
             // Not written yet, as when a parallel load writes a semantic before its pattern:
@@ -87,11 +111,7 @@ final class TextPatterns {
             return true;
         }
         boolean text = mayHoldText(pattern.get());
-        if (text) {
-            withText = withText.newWith(patternNid);
-        } else {
-            withoutText = withoutText.newWith(patternNid);
-        }
+        decisions.updateAndGet(known -> known.forgets() == forgets ? known.with(patternNid, text) : known);
         return text;
     }
 
