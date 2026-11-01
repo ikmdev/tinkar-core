@@ -306,6 +306,17 @@ public interface PrimitiveDataService {
 
     long writeSequence();
 
+    /**
+     * How many nids the store has issued: its size, for work that scales with the store, at the
+     * cost of a look at each pattern's counter. A nid issued for a component a reference named
+     * before the component arrived counts too, so it is the store's components plus a few.
+     *
+     * @return the nids issued, or -1, the default, for a store that cannot say without a scan
+     */
+    default long nidsIssued() {
+        return -1;
+    }
+
     void close();
 
     /**

@@ -816,20 +816,19 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         dev.ikm.tinkar.entity.LoadPhaseSearchPolicy policy =
                 dev.ikm.tinkar.entity.EntityService.get().loadPhaseSearchPolicy();
         if (!policy.recreateRequired()) {
-            // The change-set fit under the live-index threshold; per-merge
-            // calls during loadPhase wrote its documents, and endLoadPhase
-            // made them visible to searches. No post-load search work needed.
+            // The change-set fit under the store's live-index threshold;
+            // per-merge calls during loadPhase wrote its documents, and
+            // endLoadPhase made them visible to searches. No post-load search
+            // work needed.
             LOG.info("Change-set indexed live during load phase ({} entities, threshold {}) — no recreate needed",
-                    policy.liveIndexedCount(),
-                    dev.ikm.tinkar.entity.LoadPhaseSearchPolicy.threshold());
+                    policy.liveIndexedCount(), policy.threshold());
             return;
         }
         // Change-set exceeded the live-index threshold — fall back to a full
         // recreate so the entities merged after live indexing was abandoned
         // get into the index.
         LOG.info("Change-set exceeded live-index threshold ({} > {}); scheduling full recreate",
-                policy.liveIndexedCount(),
-                dev.ikm.tinkar.entity.LoadPhaseSearchPolicy.threshold());
+                policy.liveIndexedCount(), policy.threshold());
         Optional<SearchService> searchService = ServiceLifecycleManager.get()
                 .getRunningService(SearchService.class);
         if (searchService.isEmpty()) {

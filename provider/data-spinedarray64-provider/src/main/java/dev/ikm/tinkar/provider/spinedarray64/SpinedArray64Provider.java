@@ -324,6 +324,16 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
         return writeSequence.sum();
     }
 
+    /** The element sequences every pattern's table has issued. */
+    @Override
+    public long nidsIssued() {
+        long issued = 0;
+        for (int sequence : patternSequences()) {
+            issued += table(sequence).next() - PatternTable.FIRST_ELEMENT;
+        }
+        return issued;
+    }
+
     @Override
     public void close() {
         if (!open.compareAndSet(true, false)) {

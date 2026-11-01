@@ -682,7 +682,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
     @Override
     public void beginLoadPhase() {
         loadPhase = true;
-        loadPhaseSearchPolicy.reset();
+        loadPhaseSearchPolicy.reset(PrimitiveData.get().nidsIssued());
         PrimitiveData.get().setLoadPhase(true);
         runningSearchService().ifPresent(search -> search.setLoadPhase(true));
     }
