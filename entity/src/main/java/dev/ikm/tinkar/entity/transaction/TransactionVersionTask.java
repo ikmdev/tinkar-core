@@ -18,6 +18,7 @@ package dev.ikm.tinkar.entity.transaction;
 import dev.ikm.tinkar.common.alert.AlertObject;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.service.TrackingCallable;
+import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityText;
@@ -89,13 +90,13 @@ public abstract class TransactionVersionTask extends TrackingCallable<Void> {
                     transactionForVersion.addComponent(version.entity());
 
                     switch (version) {
-//                        case ConceptVersionRecord conceptVersionRecord -> {
-//                            ConceptRecord analogue = conceptVersionRecord.chronology()
-//                                    .without(conceptVersionRecord)
-//                                    .with(conceptVersionRecord.withStampNid(newStamp.nid()))
-//                                    .build();
-//                            Entity.provider().putEntity(analogue);
-//                        }
+                        case ConceptVersionRecord conceptVersionRecord -> {
+                            ConceptRecord analogue = conceptVersionRecord.chronology()
+                                    .without(conceptVersionRecord)
+                                    .with(conceptVersionRecord.withStampNid(newStamp.nid()))
+                                    .build();
+                            Entity.provider().putEntityReplacingVersion(analogue, oldStamp.nid());
+                        }
                         case SemanticVersionRecord semanticVersionRecord -> {
                             SemanticRecord analogue = semanticVersionRecord.chronology()
                                     .without(semanticVersionRecord)
