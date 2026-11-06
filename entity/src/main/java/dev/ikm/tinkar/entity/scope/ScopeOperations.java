@@ -323,12 +323,27 @@ public final class ScopeOperations {
         for (long nid : nids) {
             uuids.addAll(Arrays.asList(PrimitiveData.publicId(nid).asUuidArray()));
         }
+        closeChangeSetJournals();
         erasure.eraseComponents(nids);
         EntityService.get().invalidateCaches(nids);
         EntityBoundaries.clear();
         ScopeErasure.ChangeSetRemoval changeSets = remover.apply(uuids);
         return new Deleted(scope.members().size(), candidates.size(), dataStamps - candidates.size(), scope.outgoing().size(), changeSets,
                 indexed);
+    }
+
+    /**
+     * Closes the open change-set journals before anything is erased. A journal can still hold what
+     * was written moments ago, as when a document is rebuilt just after it was read in, and writing
+     * it out reads the public ids of what it references. A journal that cannot close stops the
+     * delete here, with nothing erased.
+     */
+    private static void closeChangeSetJournals() {
+        for (dev.ikm.tinkar.common.service.SaveState state : PrimitiveData.getStatesToSave()) {
+            if (state instanceof dev.ikm.tinkar.entity.ChangeSetWriterService) {
+                state.save().join();
+            }
+        }
     }
 
     /** The references into a scope from outside it: how many, and the first in words. */
