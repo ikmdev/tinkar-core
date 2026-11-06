@@ -6,7 +6,8 @@
 	<name>Importer: GSRS</name>
 	<description>The FDA Global Substance Registration System (GSRS) public data, the source of UNII: builds
 		a GSRS origin from the dump GSRS publishes, kept byte for byte beside a manifest that describes
-		the release, and reads its substance records back.</description>
+		the release, and reads its substance records back; imports such an origin, each substance a
+		concept named and identified by its UNII as GSRS publishes it.</description>
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -15,6 +16,10 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.collections</groupId>
+			<artifactId>eclipse-collections-api</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>

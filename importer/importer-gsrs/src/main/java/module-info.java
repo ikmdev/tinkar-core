@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 /**
- * The GSRS origin: its builder, and the reader the GSRS importer will read it through.
+ * The GSRS importer, and the builder of the origin it reads.
  */
 module dev.ikm.tinkar.importer.gsrs {
     requires dev.ikm.tinkar.importer;
     requires com.fasterxml.jackson.databind;
+    requires org.eclipse.collections.api;
     requires org.slf4j;
 
     exports dev.ikm.tinkar.importer.gsrs;
     opens dev.ikm.tinkar.importer.gsrs;
+
+    provides dev.ikm.tinkar.importer.KnowledgeImporter with dev.ikm.tinkar.importer.gsrs.GsrsImporter;
 }
