@@ -179,6 +179,29 @@ public record Scope(DataKind kind, ImmutableLongList roots, ImmutableLongList me
                 stamps.add(version.stampNid());
             }
         }));
+        // A comment on one of the scope's commits, as a git document's narration is, joins the scope when it is
+        // of the scope's kind, its STAMP with it; of another kind, it cites the scope from outside (ike-issues#1355).
+        MutableLongSet commitComments = LongSets.mutable.empty();
+        stamps.forEach(stamp -> store.forEachSemanticNidForComponent(stamp, citing -> {
+            if (members.contains(citing) || commitComments.contains(citing)) {
+                return;
+            }
+            DataKind citingKind = kindOf(citing, kinds);
+            if (citingKind == scopeKind) {
+                commitComments.add(citing);
+            } else {
+                incoming.add(describe(citing) + ", " + citingKind.word() + ", cites " + describe(stamp) + " in the scope");
+            }
+        }));
+        commitComments.forEach(comment -> {
+            members.add(comment);
+            semantics.add(comment);
+            read(comment).ifPresent(entity -> {
+                for (EntityVersion version : entity.versions()) {
+                    stamps.add(version.stampNid());
+                }
+            });
+        });
         MutableLongSet knowledge = LongSets.mutable.empty();
         members.forEach(nid -> read(nid).ifPresent(entity -> {
             for (EntityVersion version : entity.versions()) {
