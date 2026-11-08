@@ -24,6 +24,7 @@ import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
 import dev.ikm.tinkar.common.service.ExecutorController;
+import dev.ikm.tinkar.common.service.RenamedClasses;
 import dev.ikm.tinkar.common.service.PluginServiceLoader;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
@@ -96,6 +97,7 @@ module dev.ikm.tinkar.common {
     uses DataServiceController;
     uses DefaultDescriptionForNidService;
     uses ExecutorController;
+    uses RenamedClasses;
     uses PluginServiceLoader;
     uses PublicIdService;
 }

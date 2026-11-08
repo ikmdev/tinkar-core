@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.common.service;
 
+import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -75,12 +76,30 @@ public class PluggableService<S> {
      }
 
     /**
-     * Use the plugin class loader provided by the plugable service loader to
-     * @param className
-     * @return
-     * @throws ClassNotFoundException
+     * The class of a name, through the plugin class loader the pluggable service loader provides.
+     * A name no class has is looked up in the {@link RenamedClasses} providers, so a name stored
+     * before its class was renamed still resolves.
+     *
+     * @param className the binary name
+     * @return the class
+     * @throws ClassNotFoundException when no class has the name, now or after a rename
      */
      public static Class<?> forName(String className) throws ClassNotFoundException {
+         try {
+             return resolve(className);
+         } catch (ClassNotFoundException missing) {
+             // A name stored before its class was renamed, as a saved layout keeps a factory's name.
+             for (RenamedClasses renamed : load(RenamedClasses.class)) {
+                 Optional<String> current = renamed.current(className);
+                 if (current.isPresent() && !current.get().equals(className)) {
+                     return resolve(current.get());
+                 }
+             }
+             throw missing;
+         }
+     }
+
+     private static Class<?> resolve(String className) throws ClassNotFoundException {
          if (pluggableServiceAtomic.get() == null) {
              return Class.forName(className);
          }
