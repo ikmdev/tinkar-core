@@ -147,6 +147,30 @@ class CommitBoundaryIT {
         assertTrue(rules(refused).contains(Rule.CROSSES_KINDS), refused.getMessage());
     }
 
+    /**
+     * A STAMP is of the kind of the module it names: knowledge commenting on a git document's commit
+     * refers to ephemeral data, as the commit narrator once did (IKE-Network/ike-issues#1355).
+     */
+    @Test
+    void knowledgeCommentingOnAnEphemeralStampIsRefused() {
+        PublicId line = PublicIds.newRandom();
+        commit(writer(gitDocuments, "a git commit"), w -> comment(w, line, KernelConcept.USER.publicId(), "a document line"));
+        PublicId stamp = stampOf(line);
+        assertEquals(DataKind.EPHEMERAL, EntityBoundaries.kindOf(EntityHandle.get(stamp).expectEntity().nid()));
+        BoundaryViolationException refused = assertThrows(BoundaryViolationException.class,
+                () -> commit(knowledge("a narration of the git commit"), w -> comment(w, PublicIds.newRandom(), stamp, "narrates it")));
+        assertTrue(rules(refused).contains(Rule.KNOWLEDGE_REFERENCES_DATA), refused.getMessage());
+    }
+
+    @Test
+    void knowledgeMayCommentOnAKnowledgeStamp() {
+        PublicId concept = PublicIds.newRandom();
+        commit(knowledge("a knowledge commit"), w -> comment(w, concept, KernelConcept.USER.publicId(), "knowledge"));
+        PublicId stamp = stampOf(concept);
+        assertEquals(DataKind.KNOWLEDGE, EntityBoundaries.kindOf(EntityHandle.get(stamp).expectEntity().nid()));
+        commit(knowledge("a narration of the knowledge commit"), w -> comment(w, PublicIds.newRandom(), stamp, "narrates it"));
+    }
+
     @Test
     void birthIsFinal() {
         PublicId note = PublicIds.newRandom();
@@ -220,6 +244,11 @@ class CommitBoundaryIT {
             body.accept(writer);
             writer.commit();
         }
+    }
+
+    /** The public id of the STAMP a component's first version was written under. */
+    private static PublicId stampOf(PublicId component) {
+        return EntityHandle.get(component).expectEntity().versions().getFirst().stamp().publicId();
     }
 
     private static void comment(StampedWriter writer, PublicId semantic, PublicId about, String text) {

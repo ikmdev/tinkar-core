@@ -170,13 +170,20 @@ public record Scope(DataKind kind, ImmutableLongList roots, ImmutableLongList me
                 }
             });
         }
+        // The STAMPs the members are written under belong to the scope and go with it; a member
+        // referring to one, such as a line naming the commit that introduced it, stays inside. Since a
+        // STAMP takes its module's kind, an ephemeral document's STAMPs are ephemeral (ike-issues#1355).
         MutableLongSet stamps = LongSets.mutable.empty();
-        MutableLongSet knowledge = LongSets.mutable.empty();
         members.forEach(nid -> read(nid).ifPresent(entity -> {
             for (EntityVersion version : entity.versions()) {
                 stamps.add(version.stampNid());
+            }
+        }));
+        MutableLongSet knowledge = LongSets.mutable.empty();
+        members.forEach(nid -> read(nid).ifPresent(entity -> {
+            for (EntityVersion version : entity.versions()) {
                 References.of(version, (where, target) -> {
-                    if (members.contains(target) || target == 0) {
+                    if (members.contains(target) || stamps.contains(target) || target == 0) {
                         return;
                     }
                     if (read(target).isEmpty()) {
