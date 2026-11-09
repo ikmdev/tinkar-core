@@ -90,8 +90,13 @@ public final class EntityBoundaries {
             return cached;
         }
         Optional<? extends Entity<? extends EntityVersion>> held = read(nid);
-        if (held.isEmpty() || held.get() instanceof StampEntity<?>) {
+        if (held.isEmpty()) {
             return DataKind.KNOWLEDGE;
+        }
+        if (held.get() instanceof StampEntity<?>) {
+            // A STAMP is of the kind of the module it names: a git document's commit is ephemeral, so
+            // knowledge commenting on it refers to ephemeral data (IKE-Network/ike-issues#1355).
+            return stampKind(nid).kind();
         }
         EntityVersion first = null;
         for (EntityVersion version : held.get().versions()) {

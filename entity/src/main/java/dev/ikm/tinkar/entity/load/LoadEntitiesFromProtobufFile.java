@@ -132,6 +132,15 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      */
     private final Queue<Entity<? extends EntityVersion>> deferred = new ConcurrentLinkedQueue<>();
     private final Set<UUID> watchList = new CopyOnWriteArraySet<>(watchListFromProperty());
+    /** How many records the manifest says the file holds; known once {@link #compute()} has read it. */
+    private volatile long expectedCount = -1;
+    /**
+     * Why each record that was not imported was refused, in the order the refusals were found: a
+     * record that names a component the store does not hold and the file does not carry, or one
+     * that could not be transformed. A format-1 or format-2 import goes on past such a record and
+     * returns; {@link #complete()} says whether it imported everything.
+     */
+    private final List<String> failures = new CopyOnWriteArrayList<>();
 
     /**
      * The system property naming UUIDs to watch during every import, separated by commas or
@@ -262,6 +271,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             // Analyze Manifest and update tracking callable
             List<Map.Entry<PublicId, String>> manifestEntryData = new ArrayList<>(); // a public id is never a hash key
             long expectedImports = analyzeManifest(manifestEntryData);
+            expectedCount = expectedImports;
             LOG.info(expectedImports + " Entities to process, format version " + formatVersion + "...");
             if (formatVersion >= 3) {
                 return ScopedValue.where(SCOPED_WATCH_LIST, Collections.unmodifiableSet(watchList))
@@ -468,6 +478,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 traceIfWatched(entity);
             } catch (VertexDerivation.UnnamedComponentException unnamed) {
                 importCount.decrementAndGet();
+                failures.add(unnamed.getMessage());
                 LOG.error("Not imported: {}", unnamed.getMessage());
             }
         }
@@ -503,6 +514,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                             tick.run();
                         }
                     } catch (RuntimeException e) {
+                        failures.add(e.getMessage() == null ? e.toString() : e.getMessage());
                         if (e instanceof IllegalStateException && e.getMessage() != null
                                 && (e.getMessage().contains("No entity key found for UUIDs")
                                 || e.getMessage().contains("Entity byte[] not found"))) {
@@ -695,6 +707,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                     try {
                         entityTransformer.transform(pbTinkarMsg, entityConsumer, (stampEntity) -> {});
                     } catch (Exception e) {
+                        failures.add(e.getMessage() == null ? e.toString() : e.getMessage());
                         LOG.error("1-pass - Error transforming message: {}", e.getMessage(), e);
                         throw e; // Re-throw to fail the test
                     }
@@ -777,6 +790,38 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      */
     public boolean usedIdentityIndex() {
         return usedIdentityIndex;
+    }
+
+    /**
+     * How many records the file's manifest says it holds; known once {@link #compute()} has read it.
+     *
+     * @return the count, or -1 before the manifest is read
+     */
+    public long expectedCount() {
+        return expectedCount;
+    }
+
+    /**
+     * Why each record that was not imported was refused, in the order found: a record naming a
+     * component the store does not hold and the file does not carry, or one that could not be
+     * transformed.
+     *
+     * @return the refusals; empty when every record was imported
+     */
+    public List<String> failures() {
+        return List.copyOf(failures);
+    }
+
+    /**
+     * Whether {@link #compute()} imported every record the manifest counts: no record was refused,
+     * and the count matches. A format-3 import that falls short throws instead; a format-1 or
+     * format-2 import returns and answers false here, so a caller that must know the file is in
+     * the store, a change-set load that registers it for one, asks.
+     *
+     * @return true when the whole file is in the store
+     */
+    public boolean complete() {
+        return failures.isEmpty() && expectedCount >= 0 && importCount.get() == expectedCount;
     }
 
     protected void initCounts() {

@@ -83,6 +83,10 @@ import java.util.stream.Stream;
  * the checksum of what was written, stamped when it ran.</li>
  * </ul>
  *
+ * <p>The registrations are read back as well as written: {@link #loadedChecksums()} is what the
+ * store has loaded, and a change-set load skips the files it names (the {@code dev-ike-dashboard}
+ * topic, decision 20).
+ *
  * <p>A store whose starter set predates the registry gets no registrations: every method answers
  * empty, and {@link #declared()} says why.
  */
@@ -323,11 +327,68 @@ public final class Registry {
             return Optional.empty();
         }
         return registerAssembly(files.stream()
-                        .map(file -> new AssemblyInput("PB", String.valueOf(file.getFileName()), Optional.empty(),
+                        .map(file -> new AssemblyInput(LOAD_ROLE, String.valueOf(file.getFileName()), Optional.empty(),
                                 checksum(file)))
                         .toList(),
                 List.copyOf(releaseRegistrations()), Optional.empty(), when);
     }
+
+    /**
+     * Registers a load of one protobuf file whose checksum the caller has already taken, as
+     * {@link #registerLoad(List, Instant)} registers it.
+     *
+     * @param file     the file loaded
+     * @param checksum its checksum, {@code sha256:<hex>}, as {@link #checksum(Path)} gives it
+     * @param when     when the load ran
+     * @return the Registry stamp the registration was written under, by nid; empty when the store does
+     *         not declare the registry
+     */
+    public static Optional<Long> registerLoad(Path file, String checksum, Instant when) {
+        if (!declared()) {
+            return Optional.empty();
+        }
+        return registerAssembly(List.of(new AssemblyInput(LOAD_ROLE, String.valueOf(file.getFileName()),
+                Optional.empty(), checksum)), List.copyOf(releaseRegistrations()), Optional.empty(), when);
+    }
+
+    /** The role a protobuf file has among an assembly's inputs, a change set loaded into an open store among them. */
+    public static final String LOAD_ROLE = "PB";
+
+    /**
+     * The checksums of every input of every assembly registration the store holds: what the store
+     * has loaded, whether at its assembly or by a load registered since. A change-set file whose
+     * checksum is among them has been loaded into this store, so a load at open skips it
+     * ({@code dev-ike-dashboard}, decision 20).
+     *
+     * @return the checksums, each {@code sha256:<hex>}; empty when the store does not declare the
+     *         registry
+     */
+    public static Set<String> loadedChecksums() {
+        if (!present(KernelPattern.ASSEMBLY_REGISTRATION_PATTERN.publicId())) {
+            return Set.of();
+        }
+        Set<String> checksums = ConcurrentHashMap.newKeySet();
+        EntityService.get().forEachSemanticOfPattern(KernelPattern.ASSEMBLY_REGISTRATION_PATTERN.nid(), semantic -> {
+            for (SemanticEntityVersion version : semantic.versions()) {
+                if (version.fieldValues().size() > INPUTS_FIELD
+                        && version.fieldValues().get(INPUTS_FIELD) instanceof String inputs) {
+                    inputs.lines().map(String::strip).filter(line -> !line.isEmpty()).forEach(line -> {
+                        String last = line.substring(line.lastIndexOf(' ') + 1);
+                        if (last.startsWith(CHECKSUM_PREFIX)) {
+                            checksums.add(last);
+                        }
+                    });
+                }
+            }
+        });
+        return Set.copyOf(checksums);
+    }
+
+    /** The assembly registration's Inputs field, by position: one {@link AssemblyInput#line() line} per input. */
+    private static final int INPUTS_FIELD = 0;
+
+    /** What every checksum the registry writes starts with. */
+    private static final String CHECKSUM_PREFIX = "sha256:";
 
     // ── Export registration ──────────────────────────────────────────────────
 
@@ -378,7 +439,7 @@ public final class Registry {
             } else {
                 digestFile(digest, path);
             }
-            return "sha256:" + HexFormat.of().formatHex(digest.digest());
+            return CHECKSUM_PREFIX + HexFormat.of().formatHex(digest.digest());
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 is unavailable", e);
         } catch (IOException e) {

@@ -21,7 +21,6 @@ import dev.ikm.tinkar.common.id.LongIdList;
 import dev.ikm.tinkar.common.id.LongIdSet;
 import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.id.PublicIdSet;
-import dev.ikm.tinkar.common.id.VertexId;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.component.Component;
@@ -267,13 +266,16 @@ public class EntityToTinkarSchemaTransformer {
             case Object[] objectArray -> toPBFieldArray(objectArray);
             case Instant instant -> toPBInstant(instant);
             case Component component -> toPBComponent(component);
-            case VertexId vertexUUID -> toVertexUUID(vertexUUID);
+            // A vertex before a public id: an EntityVertex is also a VertexId, and so a PublicId,
+            // and written as either it would lose everything but its UUID. No field holds a bare
+            // vertex id, so a one-UUID public id (PublicId1, also a VertexId) is a component
+            // reference like any other public id.
+            case Vertex vertex -> toVertex(vertex);
             case dev.ikm.tinkar.common.id.PublicId publicId -> toPBPublicId(publicId);
             case PublicIdList publicIdList -> toPBPublicIdList(publicIdList);
             case PublicIdSet publicIdSet -> toPBPublicIdSet(publicIdSet);
             case DiTree diTree -> toPBDiTree(diTree);
             case DiGraph diGraph -> toPBDiGraph(diGraph);
-            case Vertex vertex -> toVertex(vertex);
             case PlanarPoint planarPoint -> toPlanarPoint(planarPoint);
             case SpatialPoint spatialPoint -> toSpatialPoint(spatialPoint);
             //TODO: we do not have a create undirected graph method [Ask Andrew]
@@ -332,10 +334,6 @@ public class EntityToTinkarSchemaTransformer {
     }
     protected Field toPBDiGraph(DiGraph value) {
         return Field.newBuilder().setDiGraph(createPBDiGraph((DiGraphEntity<EntityVertex>) value)).build();
-    }
-
-    protected Field toVertexUUID(VertexId value) {
-        return Field.newBuilder().setVertexUuid(createPBVertexUUID(value)).build();
     }
 
     protected Field toVertex(Vertex value) {

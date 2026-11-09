@@ -170,13 +170,43 @@ public record Scope(DataKind kind, ImmutableLongList roots, ImmutableLongList me
                 }
             });
         }
+        // The STAMPs the members are written under belong to the scope and go with it; a member
+        // referring to one, such as a line naming the commit that introduced it, stays inside. Since a
+        // STAMP takes its module's kind, an ephemeral document's STAMPs are ephemeral (ike-issues#1355).
         MutableLongSet stamps = LongSets.mutable.empty();
-        MutableLongSet knowledge = LongSets.mutable.empty();
         members.forEach(nid -> read(nid).ifPresent(entity -> {
             for (EntityVersion version : entity.versions()) {
                 stamps.add(version.stampNid());
+            }
+        }));
+        // A comment on one of the scope's commits, as a git document's narration is, joins the scope when it is
+        // of the scope's kind, its STAMP with it; of another kind, it cites the scope from outside (ike-issues#1355).
+        MutableLongSet commitComments = LongSets.mutable.empty();
+        stamps.forEach(stamp -> store.forEachSemanticNidForComponent(stamp, citing -> {
+            if (members.contains(citing) || commitComments.contains(citing)) {
+                return;
+            }
+            DataKind citingKind = kindOf(citing, kinds);
+            if (citingKind == scopeKind) {
+                commitComments.add(citing);
+            } else {
+                incoming.add(describe(citing) + ", " + citingKind.word() + ", cites " + describe(stamp) + " in the scope");
+            }
+        }));
+        commitComments.forEach(comment -> {
+            members.add(comment);
+            semantics.add(comment);
+            read(comment).ifPresent(entity -> {
+                for (EntityVersion version : entity.versions()) {
+                    stamps.add(version.stampNid());
+                }
+            });
+        });
+        MutableLongSet knowledge = LongSets.mutable.empty();
+        members.forEach(nid -> read(nid).ifPresent(entity -> {
+            for (EntityVersion version : entity.versions()) {
                 References.of(version, (where, target) -> {
-                    if (members.contains(target) || target == 0) {
+                    if (members.contains(target) || stamps.contains(target) || target == 0) {
                         return;
                     }
                     if (read(target).isEmpty()) {

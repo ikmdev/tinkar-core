@@ -22,6 +22,7 @@ module dev.ikm.tinkar.importer {
     requires transitive dev.ikm.tinkar.common;
     requires transitive dev.ikm.tinkar.terms;
     requires org.eclipse.collections.api;
+    requires org.slf4j;
 
     exports dev.ikm.tinkar.importer;
     exports dev.ikm.tinkar.importer.registry;

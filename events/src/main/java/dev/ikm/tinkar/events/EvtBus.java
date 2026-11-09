@@ -58,5 +58,14 @@ public interface EvtBus {
      */
     void unsubscribe(Subscriber<?> ...subscriber);
 
+    /**
+     * Removes every subscriber of {@code topic}, of every event class. For a topic that belongs to one
+     * owner (a window's, say), which drops it when it is discarded: the bus outlives every subscriber, so
+     * a subscription nobody removes keeps its subscriber, and whatever that refers to, reachable.
+     *
+     * @param topic the topic whose subscribers to remove
+     */
+    void unsubscribeAll(Object topic);
+
 
 }

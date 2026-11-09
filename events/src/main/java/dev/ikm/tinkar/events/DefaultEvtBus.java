@@ -48,13 +48,14 @@ public class DefaultEvtBus implements EvtBus {
         LOG.info(evt.getSource().toString());
         // event class name is the key -> List<Subscriber>
         String eventClassName = evt.getClass().getName();
-        subscribersMap.putIfAbsent(topic, new HashMap<>());
+        // Only subscribing makes an entry: an entry made here for a topic nobody hears would stay for good,
+        // holding the topic object.
         Map<String, List<Subscriber>> eventNameAndSubscribers = subscribersMap.get(topic);
-        eventNameAndSubscribers.putIfAbsent(eventClassName, new ArrayList<>());
-        List<Subscriber> subscribers = eventNameAndSubscribers.get(eventClassName).stream().toList();
-        if (null != subscribers && !subscribers.isEmpty()) {
-            subscribers.forEach(s -> s.handle(evt));
+        if (eventNameAndSubscribers == null || !eventNameAndSubscribers.containsKey(eventClassName)) {
+            return;
         }
+        List<Subscriber> subscribers = eventNameAndSubscribers.get(eventClassName).stream().toList();
+        subscribers.forEach(s -> s.handle(evt));
     }
 
     /**
@@ -95,8 +96,15 @@ public class DefaultEvtBus implements EvtBus {
     }
 
     @Override
+    public void unsubscribeAll(Object topic) {
+        subscribersMap.remove(topic);
+    }
+
+    @Override
     public <T extends Evt> void unsubscribe(Subscriber<T> subscriber) {
-        subscribersMap.forEach((k, v) -> v.remove(subscriber));
+        // Each topic maps event class names to subscriber lists; the subscriber is in the lists, not a key.
+        subscribersMap.values().forEach(byEventClass ->
+                byEventClass.values().forEach(subscribers -> subscribers.removeIf(subscriber::equals)));
     }
 
     @Override
