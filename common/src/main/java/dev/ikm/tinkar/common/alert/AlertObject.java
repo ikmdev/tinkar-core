@@ -32,6 +32,7 @@ public class AlertObject implements Comparable<AlertObject> {
     final Throwable throwable;
     final AlertCategory alertCategory;
     final Callable<Boolean> resolutionTester;
+    final boolean advisory;
     private final List<AlertResolver> alertResolvers = new ArrayList<>();
     public AlertObject(String alertTitle, String alertDescription, AlertType alertType, AlertCategory alertCategory, int... affectedComponents) {
         this(alertTitle, alertDescription, alertType, null, alertCategory, null, affectedComponents);
@@ -43,6 +44,19 @@ public class AlertObject implements Comparable<AlertObject> {
                        AlertCategory alertCategory,
                        Callable<Boolean> resolutionTester,
                        int... affectedComponents) {
+        this(false, alertTitle, alertDescription, alertType, throwable, alertCategory, resolutionTester,
+                affectedComponents);
+    }
+
+    private AlertObject(boolean advisory,
+                        String alertTitle,
+                        String alertDescription,
+                        AlertType alertType,
+                        Throwable throwable,
+                        AlertCategory alertCategory,
+                        Callable<Boolean> resolutionTester,
+                        int... affectedComponents) {
+        this.advisory = advisory;
         this.affectedComponents = affectedComponents;
         this.alertTitle = alertTitle;
         this.alertDescription = alertDescription;
@@ -54,6 +68,28 @@ public class AlertObject implements Comparable<AlertObject> {
 
     public static AlertObject makeWarning(String alertTitle, String alertDescription) {
         return new AlertObject(alertTitle, alertDescription, AlertType.WARNING, AlertCategory.UNSPECIFIED);
+    }
+
+    /**
+     * Makes an advisory: a warning that asks nothing of the person now. It tells of something
+     * the software met and dealt with, as when an import adds UUIDs to a component, so it is
+     * recorded in the {@link AlertLog} for reading later and no dialog interrupts the work.
+     *
+     * @param alertTitle       what happened, in a few words
+     * @param alertDescription what happened, in full
+     * @return the advisory
+     */
+    public static AlertObject makeAdvisory(String alertTitle, String alertDescription) {
+        return new AlertObject(true, alertTitle, alertDescription, AlertType.WARNING, null,
+                AlertCategory.UNSPECIFIED, null);
+    }
+
+    /**
+     * @return true if this alert only needs recording: nothing waits on the person, so a
+     * subscriber that shows dialogs leaves it to the {@link AlertLog}
+     */
+    public boolean isAdvisory() {
+        return advisory;
     }
 
     public static AlertObject makeError(String alertTitle, String alertDescription, Throwable throwable) {

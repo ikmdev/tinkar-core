@@ -27,8 +27,9 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  * Advisories about component identity: the rare events in which a store learns that a
  * component has more UUIDs than it held, or that components it held apart are one. Each is
- * logged as a warning and dispatched to the root alert stream; counts are kept for tests and
- * reports.
+ * logged as a warning and dispatched to the root alert stream as an advisory, which the
+ * {@link dev.ikm.tinkar.common.alert.AlertLog} records and no dialog shows; counts are kept for
+ * tests and reports.
  * <p>
  * Public ids match when they share any UUID. A change set may bring a component under UUIDs the
  * store does not yet hold: the store adds them to the existing component, so a later lookup by
@@ -68,7 +69,7 @@ public final class IdentityAdvisories {
         String description = "Component " + nid + " " + held + " gained UUIDs " + added
                 + ": a public id sharing one of its UUIDs carried them, so the component now holds them too.";
         LOG.warn(description);
-        AlertStreams.getRoot().dispatch(AlertObject.makeWarning("UUIDs added to a component", description));
+        AlertStreams.getRoot().dispatch(AlertObject.makeAdvisory("UUIDs added to a component", description));
     }
 
     /**
@@ -84,7 +85,7 @@ public final class IdentityAdvisories {
                 + ", which the store holds as distinct: they are one component by that public id,"
                 + " and the store has not reconciled them.";
         LOG.warn(description);
-        AlertStreams.getRoot().dispatch(AlertObject.makeWarning("Components share UUIDs", description));
+        AlertStreams.getRoot().dispatch(AlertObject.makeAdvisory("Components share UUIDs", description));
     }
 
     /**
@@ -100,7 +101,7 @@ public final class IdentityAdvisories {
         String description = "Stamp " + nid + " held versions at times " + dropped + " beyond the two a stamp may hold;"
                 + " the merge kept " + kept + " (a committed version over a canceled one, the earliest commit over later ones).";
         LOG.warn(description);
-        AlertStreams.getRoot().dispatch(AlertObject.makeWarning("Stamp versions dropped", description));
+        AlertStreams.getRoot().dispatch(AlertObject.makeAdvisory("Stamp versions dropped", description));
     }
 
     /**
