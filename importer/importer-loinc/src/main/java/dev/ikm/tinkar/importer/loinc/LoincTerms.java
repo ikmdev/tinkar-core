@@ -123,8 +123,8 @@ record LoincTerms(UUID namespace) {
     }
 
     private String roleGroupSome(String attribute, PublicId value) {
-        return " ObjectSomeValuesFrom(" + ref(KernelConcept.ROLE_GROUP.publicId().asUuidArray()[0])
-                + " ObjectSomeValuesFrom(" + ref(uuid(attribute)) + " " + ref(value.asUuidArray()[0]) + "))";
+        return " ObjectSomeValuesFrom(" + ref(KernelConcept.ROLE_GROUP.publicId().leastUuid())
+                + " ObjectSomeValuesFrom(" + ref(uuid(attribute)) + " " + ref(value.leastUuid()) + "))";
     }
 
     /**
@@ -136,7 +136,7 @@ record LoincTerms(UUID namespace) {
      * @return the OWL axiom, its concepts by public id
      */
     String componentAxiom(PublicId observableEntityOfComponent, PublicId code) {
-        return "EquivalentClasses(" + ref(observableEntityOfComponent.asUuidArray()[0])
+        return "EquivalentClasses(" + ref(observableEntityOfComponent.leastUuid())
                 + " ObjectIntersectionOf(" + ref(uuid(OBSERVABLE_ENTITY))
                 + roleGroupSome(COMPONENT, code) + "))";
     }

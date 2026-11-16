@@ -140,8 +140,9 @@ final class LoincStarterData {
         writer.semantic(stamp, PublicIds.of(UuidT5Generator.get(uuid, "uuid identifier")), KernelPattern.IDENTIFIER_PATTERN, nid,
                 Lists.immutable.of(UNIVERSALLY_UNIQUE_IDENTIFIER, uuid.toString()));
         if (parent.contains(ATTRIBUTE_UUID)) {
+            // The parent is Attribute, named by the UUID that says so.
             writer.semantic(stamp, PublicIds.of(UuidT5Generator.get(uuid, "owl axiom")), KernelPattern.OWL_AXIOM_SYNTAX_PATTERN, nid,
-                    Lists.immutable.of(String.format("SubObjectPropertyOf(:[%s] :[%s])", uuid, parent.asUuidArray()[0])));
+                    Lists.immutable.of(String.format("SubObjectPropertyOf(:[%s] :[%s])", uuid, ATTRIBUTE_UUID)));
             axiomConcepts.add(nid);
         } else {
             writer.statedParent(stamp, id, parent);
