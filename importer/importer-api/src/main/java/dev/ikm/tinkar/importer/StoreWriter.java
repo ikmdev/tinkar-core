@@ -51,6 +51,7 @@ import dev.ikm.tinkar.entity.builder.InactiveStamp;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.*;
 import org.eclipse.collections.api.factory.Lists;
@@ -305,13 +306,34 @@ public final class StoreWriter {
      * @return the axiom semantic's nid
      */
     public long statedParent(Stamp stamp, PublicId conceptId, PublicId parentId) {
+        return statedParents(stamp, conceptId, List.of(parentId));
+    }
+
+    /**
+     * States a concept's parents: its stated-axiom semantic says it is necessarily a kind of
+     * every one of them, and nothing more. With one parent it is the same semantic
+     * {@link #statedParent} writes. Written version-aware like any semantic.
+     *
+     * @param stamp     the stamp the version is written under
+     * @param conceptId the concept
+     * @param parentIds the parent concepts, at least one, in the order they are stated
+     * @return the axiom semantic's nid
+     */
+    public long statedParents(Stamp stamp, PublicId conceptId, List<PublicId> parentIds) {
+        if (parentIds.isEmpty()) {
+            throw new IllegalArgumentException("A stated axiom needs at least one parent");
+        }
         UUID conceptUuid = conceptId.leastUuid();
         PublicId axiomId = PublicIds.of(UuidT5Generator.get(conceptUuid, "stated axioms"));
         int[] ordinal = {0};
         LogicalExpressionBuilder builder = new LogicalExpressionBuilder(
                 UuidT5Generator.get(conceptUuid, "definition root"),
                 () -> UuidT5Generator.get(conceptUuid, "axiom vertex " + ordinal[0]++));
-        builder.NecessarySet(builder.And(builder.ConceptAxiom(EntityProxy.Concept.make(EntityService.get().nidForConcept(parentId)))));
+        List<LogicalAxiom.Atom> parents = new java.util.ArrayList<>();
+        for (PublicId parentId : parentIds) {
+            parents.add(builder.ConceptAxiom(EntityProxy.Concept.make(EntityService.get().nidForConcept(parentId))));
+        }
+        builder.NecessarySet(builder.And(parents.toArray(new LogicalAxiom.Atom[0])));
         DiTreeEntity tree = (DiTreeEntity) builder.build().sourceGraph();
         return semantic(stamp, axiomId, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, EntityService.get().nidForConcept(conceptId),
                 Lists.immutable.of(tree));

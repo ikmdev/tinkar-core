@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd">
+	<modelVersion>4.1.0</modelVersion>
+	<parent/>
+	<artifactId>importer-loinc</artifactId>
+	<name>Importer: LOINC</name>
+	<description>Imports the LOINC release (Regenstrief's Loinc.csv, Part.csv and
+		ComponentHierarchyBySystem.csv) into the running store: parts, components and LOINC codes with
+		their names, identifiers, status, class, example units and test-membership annotations, and
+		each code's definition by its six axes as an OWL axiom transformed into an EL++ stated axiom.
+		Ported from IKM's loinc-data transformation and starter-data plugins onto the store writer.</description>
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>importer-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>dev.ikm.tinkar.ext.owl</groupId>
+			<artifactId>owl-extension</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.collections</groupId>
+			<artifactId>eclipse-collections-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+	</dependencies>
+</project>

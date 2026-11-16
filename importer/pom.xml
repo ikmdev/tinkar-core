@@ -12,6 +12,7 @@
 		<subproject>importer-api</subproject>
 		<subproject>importer-snomed-rf2</subproject>
 		<subproject>importer-rxnorm-owl</subproject>
+		<subproject>importer-loinc</subproject>
 		<subproject>importer-gudid</subproject>
 		<subproject>importer-ncbi-gene</subproject>
 		<subproject>importer-gsrs</subproject>
