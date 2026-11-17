@@ -7,7 +7,7 @@
 	<description>The FDA Global Substance Registration System (GSRS) public data, the source of UNII: builds
 		a GSRS origin from the dump GSRS publishes, kept byte for byte beside a manifest that describes
 		the release, and reads its substance records back; imports such an origin, each substance a
-		concept named and identified by its UNII as GSRS publishes it.</description>
+		concept named by its names and identified by its UNII as GSRS publishes them.</description>
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>

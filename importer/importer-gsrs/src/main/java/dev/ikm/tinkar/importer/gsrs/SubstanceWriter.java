@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -43,9 +44,11 @@ import java.util.UUID;
  * sources under Identifier Source. Each is named by a fully qualified and a regular name.
  *
  * <p>Per substance: a concept, named in full by the name GSRS shows it by with the semantic tag
- * {@code (GSRS substance)} and by that name alone (preferred); identified by its GSRS UUID and,
- * when it has one, its UNII; and stated a kind of its class. Its other names, codes, structure
- * and relationships are not written yet.
+ * {@code (GSRS substance)} and by that name alone (preferred); also named by each of its
+ * {@linkplain Substance#otherNames() other names} (acceptable), each identified by the UUID GSRS
+ * gives the name; identified by its GSRS UUID and, when it has one, its UNII; and stated a kind of
+ * its class. Every name is written in English, as all but a handful of GSRS names are tagged. Its
+ * code names, other codes, structure and relationships are not written yet.
  *
  * <p>Every version is written under one stamp: the release date, GSRS's author and module, the
  * import's path.
@@ -61,6 +64,10 @@ final class SubstanceWriter {
     private long substances;
     private long uniiIdentifiers;
     private long unnamed;
+    private long otherNames;
+    private long codeNames;
+    private long duplicateNames;
+    private long otherLanguageNames;
     private boolean sharedWritten;
 
     /**
@@ -89,6 +96,10 @@ final class SubstanceWriter {
         byClass.forEach((substanceClass, count) -> details.put("substances: " + substanceClass, count));
         details.put("UNII identifiers", uniiIdentifiers);
         details.put("substances named by UNII or UUID", unnamed);
+        details.put("other names", otherNames);
+        details.put("code names left out", codeNames);
+        details.put("duplicate names left out", duplicateNames);
+        details.put("names tagged other than English, written in English", otherLanguageNames);
         return details;
     }
 
@@ -127,6 +138,16 @@ final class SubstanceWriter {
         long nid = writer.concept(stamp, PublicIds.of(uuid));
         String name = substance.name();
         describe(nid, uuid, name + " (GSRS substance)", name);
+        List<Substance.Name> others = substance.otherNames();
+        for (Substance.Name other : others) {
+            writer.describe(stamp, nid, UuidT5Generator.get(uuid, "name|" + other.uuid()), other.name(),
+                    KernelConcept.REGULAR_NAME_DESCRIPTION_TYPE, GsrsTerms.ACCEPTABLE);
+        }
+        long codes = substance.codeNames();
+        otherNames += others.size();
+        codeNames += codes;
+        duplicateNames += Math.max(0, substance.names().size() - (substance.named() ? 1 : 0) - codes - others.size());
+        otherLanguageNames += substance.names().stream().filter(Substance.Name::taggedOtherThanEnglish).count();
         writer.semantic(stamp, PublicIds.of(UuidT5Generator.get(uuid, "gsrs uuid")), KernelPattern.IDENTIFIER_PATTERN,
                 nid, Lists.immutable.of(Shared.GSRS_UUID.concept(namespace), substance.uuid().toString()));
         if (substance.unii().isPresent()) {

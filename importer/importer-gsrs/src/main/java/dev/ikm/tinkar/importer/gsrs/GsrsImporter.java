@@ -75,8 +75,8 @@ public final class GsrsImporter implements KnowledgeImporter {
 
     @Override
     public String description() {
-        return "GSRS: the FDA Global Substance Registration System's public data, each substance named and"
-                + " identified by its UNII";
+        return "GSRS: the FDA Global Substance Registration System's public data, each substance named by"
+                + " its names and identified by its UNII";
     }
 
     @Override

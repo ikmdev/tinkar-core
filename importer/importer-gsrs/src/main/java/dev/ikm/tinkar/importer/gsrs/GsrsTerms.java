@@ -46,6 +46,10 @@ public final class GsrsTerms {
     public static final EntityProxy.Concept MODULE_SOLOR =
             EntityProxy.Concept.make("Module (SOLOR)", PublicIds.of("40d1c869-b509-32f8-b735-836eac577a67"));
 
+    /** The starter set's Acceptable (SOLOR), the acceptability of a name that is not preferred. */
+    public static final EntityProxy.Concept ACCEPTABLE =
+            EntityProxy.Concept.make("Acceptable (SOLOR)", PublicIds.of("12b9e103-060e-3256-9982-18c1191af60e"));
+
     /**
      * The importer's own concepts, each minted from the import's namespace and its key, and
      * stated under a starter-set concept or another of these.
