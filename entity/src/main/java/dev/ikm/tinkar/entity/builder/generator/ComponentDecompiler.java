@@ -15,6 +15,9 @@
  */
 package dev.ikm.tinkar.entity.builder.generator;
 
+import dev.ikm.tinkar.common.id.LongIdList;
+import dev.ikm.tinkar.common.id.LongIdSet;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.terms.KernelPattern;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
@@ -238,13 +241,31 @@ public final class ComponentDecompiler {
     /**
      * Serializes one field value to a Java source expression. Supports the value
      * types this starter set's own semantics actually carry — {@link EntityFacade},
-     * {@link String}, {@link Instant}, {@link Integer}, {@link Long} — and reports
-     * (never guesses at) anything else, so a future starter set's unsupported field
-     * type surfaces as a manifest note, not a silently wrong or dropped value.
+     * {@link String}, {@link Instant}, {@link Integer}, {@link Long}, and a list or a
+     * set of components — and reports (never guesses at) anything else, so a future
+     * starter set's unsupported field type surfaces as a manifest note, not a
+     * silently wrong or dropped value.
+     *
+     * <p>A list or a set of components is stored as nids and authored as public ids
+     * ({@code PublicIds.list.of(…)}, {@code PublicIds.set.of(…)}), since nids are not
+     * the same from one store to the next. A list keeps its order; a set is written
+     * in the order of its members' public ids, so the same set is always written
+     * the same way.
      */
     private static String fieldValueExpression(Object value, BindingReferenceResolver resolver) {
         if (value instanceof EntityFacade facade) {
             return resolver.resolve(facade).sourceExpression();
+        }
+        if (value instanceof LongIdList list) {
+            List<String> members = new ArrayList<>();
+            list.forEach(nid -> members.add(BindingReferenceResolver.publicIdLiteral(PrimitiveData.publicId(nid))));
+            return members.isEmpty() ? "PublicIds.list.empty()" : "PublicIds.list.of(" + String.join(", ", members) + ")";
+        }
+        if (value instanceof LongIdSet set) {
+            List<String> members = new ArrayList<>();
+            set.forEach(nid -> members.add(BindingReferenceResolver.publicIdLiteral(PrimitiveData.publicId(nid))));
+            members.sort(null);
+            return members.isEmpty() ? "PublicIds.set.empty()" : "PublicIds.set.of(" + String.join(", ", members) + ")";
         }
         if (value instanceof String text) {
             return '"' + BindingReferenceResolver.escapeForJavaStringLiteral(text) + '"';
