@@ -142,6 +142,11 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
                 if (descriptionSemanticHandle.isSemantic() && descriptionSemanticHandle.expectEntity() instanceof SemanticEntity<?> descriptionSemantic) {
                     EntityHandle patternHandle = EntityHandle.get(descriptionSemantic.patternNid());
                     if (patternHandle.isPattern() && patternHandle.expectEntity() instanceof PatternEntity<?> pattern) {
+                        if (descriptionSemantic.versions().isEmpty() || pattern.versions().isEmpty()) {
+                            // A description whose only version was taken back, as an unpublished one
+                            // can be, is a record with no version: it gives no text, and that is no error.
+                            continue;
+                        }
                         // TODO: use version computer to get version
                         PatternEntityVersion patternEntityVersion = pattern.versions().get(0);
                         SemanticEntityVersion version = (SemanticEntityVersion) descriptionSemantic.versions().get(0);

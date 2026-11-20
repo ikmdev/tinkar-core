@@ -26,7 +26,9 @@ import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.transaction.CancelVersionTask;
 import dev.ikm.tinkar.entity.transaction.StampedWriter;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
@@ -45,6 +47,7 @@ import java.util.stream.Collectors;
 
 import static dev.ikm.tinkar.entity.transaction.StampedWriter.field;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -221,6 +224,26 @@ class StampedWriterIT {
         assertEquals(2, after.versions().size(), "uncommitted, then canceled");
         assertEquals(Long.MIN_VALUE, after.lastVersion().time());
         assertTrue(EntityHandle.get(semantic).expectSemantic().canceled());
+    }
+
+    @Test
+    void aConceptWhoseOnlyNameWasTakenBackHasNoTextAndAskingForItIsNoError() throws Exception {
+        ConceptFacade concept = EntityProxy.Concept.make(PublicIds.newRandom());
+        PublicId nameId = PublicIds.of(StampedWriter.fullyQualifiedNameUuid(concept.publicId()));
+        try (StampedWriter writer = StampedWriter.open("name taken back", State.ACTIVE,
+                KernelConcept.USER, IkeConcept.DEVELOPMENT_MODULE, KernelConcept.DEVELOPMENT_PATH)) {
+            writer.concept(concept.publicId());
+            writer.fullyQualifiedName(concept.publicId(), "Concept whose name is taken back");
+            SemanticEntity<SemanticEntityVersion> name = EntityHandle.get(nameId).expectSemantic();
+
+            // What taking back one unpublished version does: the name is left a record with no version.
+            new CancelVersionTask((SemanticVersionRecord) name.versions().getOnly()).call();
+
+            assertTrue(EntityHandle.get(nameId).expectSemantic().versions().isEmpty(), "the name has no version left");
+            assertNull(PrimitiveData.textFast(concept.nid()),
+                    "a description with no version gives no text, and asking for it throws nothing");
+            writer.cancel();
+        }
     }
 
     @Test
