@@ -392,6 +392,9 @@ public class StampCalculatorWithCache implements StampCalculator {
         if (chronicle == null) {
             return Latest.empty();
         }
+        if (chronicle instanceof StampEntity<?> stamp) {
+            return (Latest<V>) (Latest<?>) latestOfStamp(stamp, excludeDefaultsAndTemplates);
+        }
 
         final ImmutableList<V> versions = chronicle.versions();
 
@@ -427,6 +430,37 @@ public class StampCalculatorWithCache implements StampCalculator {
         }
 
         return (Latest<V>) new Latest<>(latestVersionList.get(0), latestVersionList.subList(1, latestVersionList.size()));
+    }
+
+    /**
+     * The latest version of a STAMP. A STAMP's versions are not changes made under other STAMPs
+     * but its own lifecycle: minted uncommitted, then committed or canceled, and each version names
+     * the STAMP itself as its stamp. Ordered by stamp, as the versions of other chronologies are,
+     * every pair sits at one position ({@link RelativePosition#EQUAL}), which for any other
+     * chronology means two versions at one time on one path, malformed data. Its latest version is
+     * the one {@link StampEntity#lastVersion()} makes effective, committed over uncommitted, when
+     * the view sees it: on the route, in an allowed state, and outside the defaults/templates module
+     * when that module is excluded. Komet reads a STAMP this way while a comment on it is pending,
+     * as the commit narrator's comment is before it commits.
+     *
+     * @param stamp                       the STAMP
+     * @param excludeDefaultsAndTemplates whether a STAMP in the defaults/templates module is excluded
+     * @return the STAMP's effective version, or none when the view does not see it
+     */
+    private Latest<StampEntityVersion> latestOfStamp(StampEntity<?> stamp, boolean excludeDefaultsAndTemplates) {
+        if (stamp.versions().isEmpty()) {
+            throw new IllegalStateException("No versions for: " + EntityText.diagnostic(stamp));
+        }
+        StampEntityVersion effective = stamp.lastVersion();
+        // A canceled stamp has the time Long.MIN_VALUE and is on no route.
+        if (effective.time() == Long.MIN_VALUE
+                || (excludeDefaultsAndTemplates
+                        && effective.moduleNid() == DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE.nid())
+                || !onRoute(stamp)
+                || !allowedStates.contains(effective.state())) {
+            return new Latest<>();
+        }
+        return new Latest<>(effective);
     }
 
     @Override
