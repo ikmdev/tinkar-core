@@ -56,7 +56,8 @@ import java.util.concurrent.TimeUnit;
  * the class path whichever way the parent was launched, and its output is printed through
  * the parent's, each line marked with its stage, so a test's log holds its stages' logs in
  * order. A stage that throws fails the
- * test with the stage's stack trace.
+ * test with the stage's stack trace. One that runs out of time is ended and fails the test, and
+ * where its threads were, the virtual ones included, is printed first.
  *
  * <p>The child also receives the parent's {@value #FORWARDED_PREFIX}* system properties,
  * which Maven's test plugins set from the command line rather than as JVM options, so a
@@ -100,7 +101,10 @@ public final class ForkedJvm {
         return run(stage, in, DEFAULT_TIMEOUT);
     }
 
-    /** Runs the stage in a new JVM, failing if it has not finished within the timeout. */
+    /**
+     * Runs the stage in a new JVM, failing if it has not finished within the timeout. Its threads
+     * are then printed before it is ended.
+     */
     public static Properties run(Class<? extends Stage> stage, Properties in, Duration timeout) {
         return run(stage, in, timeout, true);
     }
@@ -158,8 +162,13 @@ public final class ForkedJvm {
             pump.setDaemon(true);
             pump.start();
             if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-                process.destroyForcibly();
-                throw new AssertionError("Stage " + stage.getSimpleName() + " did not finish within " + timeout);
+                try {
+                    StageThreads.of(process.pid(), exchange).forEach(line -> System.out.println(mark + line));
+                } finally {
+                    process.destroyForcibly();
+                }
+                throw new AssertionError("Stage " + stage.getSimpleName() + " did not finish within " + timeout
+                        + "; where its threads were is in the test's output");
             }
             pump.join(TimeUnit.SECONDS.toMillis(10));
             if (process.exitValue() != 0) {
