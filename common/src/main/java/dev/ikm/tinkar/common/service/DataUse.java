@@ -18,9 +18,9 @@ package dev.ikm.tinkar.common.service;
 import java.util.function.LongConsumer;
 
 /**
- * A store's index of what uses its instance and ephemeral data (IKE-Network/ike-issues#1313;
+ * A store's index of what uses its shared and local data (IKE-Network/ike-issues#1313;
  * design {@code design-2026-10-20-instance-data}, "The data-use index"): the components written
- * under each instance or ephemeral STAMP, and the components referencing each instance or
+ * under each shared or local STAMP, and the components referencing each instance or
  * ephemeral component other than as their pattern or referenced component, which the pattern and
  * referencing indexes hold. A scope delete asks it instead of reading every other component.
  *
@@ -38,7 +38,7 @@ public interface DataUse {
     boolean current();
 
     /**
-     * Visits the components with a version written under an instance or ephemeral STAMP.
+     * Visits the components with a version written under an shared or local STAMP.
      *
      * @param stampNid the STAMP
      * @param users    receives each component's nid
@@ -49,8 +49,17 @@ public interface DataUse {
      * Visits the components whose versions reference a component other than as their pattern or
      * referenced component.
      *
-     * @param targetNid the referenced component, instance or ephemeral data
+     * @param targetNid the referenced component, shared or local data
      * @param referrers receives each referring component's nid
      */
     void forEachReferrer(long targetNid, LongConsumer referrers);
+
+    /**
+     * Visits the shared and local STAMPs that name a module, as a document's own module is named
+     * by the STAMPs of everything written under it (IKE-Network/ike-issues#1313).
+     *
+     * @param moduleNid the module
+     * @param stamps    receives each STAMP's nid
+     */
+    void forEachStampOfModule(long moduleNid, LongConsumer stamps);
 }

@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.common.service;
 
 /**
- * A store that can erase a scope of instance or ephemeral data (IKE-Network/ike-issues#1313):
+ * A store that can erase a scope of shared or local data (IKE-Network/ike-issues#1313):
  * components a scope operation has already proven closed, that nothing outside them cites.
  *
  * <p>Unlike {@link PrimitiveDataRepair#erase(long)}, a repair tool that scans the whole
@@ -57,7 +57,7 @@ public interface ScopeErasure {
     }
 
     /**
-     * Removes erased components' records from the instance and ephemeral change sets this store's
+     * Removes erased components' records from the shared and local change sets this store's
      * change-set writers keep, so the files no longer hold a deleted scope. A store that keeps no
      * change sets, as a memory-only one does not, removes nothing.
      *
@@ -69,7 +69,31 @@ public interface ScopeErasure {
     }
 
     /**
-     * The store's index of what uses its instance and ephemeral data, which a scope delete asks
+     * A new change-set file for data of a module, in the folder of the module's kind and named for the
+     * module; the file is not created. A store that keeps no change sets, as a memory-only one does
+     * not, names none.
+     *
+     * @param moduleNid the module
+     * @return the file, when the store keeps change sets
+     */
+    default java.util.Optional<java.io.File> newChangeSet(long moduleNid) {
+        return java.util.Optional.empty();
+    }
+
+    /**
+     * Removes knowledge components' records from the knowledge change sets: the one exception to
+     * their being immutable (IKE-Network/ike-issues#1313), for knowledge written before a rule it
+     * broke existed, once it is erased. A store that writes no change sets removes nothing.
+     *
+     * @param components the UUIDs of the erased components
+     * @return what was removed
+     */
+    default ChangeSetRemoval removeFromKnowledgeChangeSets(java.util.Set<java.util.UUID> components) {
+        return ChangeSetRemoval.NONE;
+    }
+
+    /**
+     * The store's index of what uses its shared and local data, which a scope delete asks
      * instead of reading every other component. A store that keeps none answers empty, and a
      * delete there reads every other component.
      *

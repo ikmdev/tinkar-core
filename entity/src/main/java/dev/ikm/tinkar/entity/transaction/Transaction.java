@@ -172,6 +172,32 @@ public class Transaction implements Comparable<Transaction> {
     }
 
     /**
+     * Whether a component is the record of a transaction that has ended, committed or cancelled: its
+     * bookkeeping, which keeps nothing it once listed from being removed (IKE-Network/ike-issues#1313).
+     *
+     * @param nid a component
+     * @return whether it is an ended transaction's record
+     */
+    public static boolean endedRecord(long nid) {
+        return TransactionRecords.ended(nid);
+    }
+
+    /**
+     * Takes components that are being erased out of the lists ended transactions' records wrote while
+     * the transactions were open, so the records keep their logs and refer to nothing that is gone
+     * (IKE-Network/ike-issues#1313).
+     *
+     * @param records the records, each one {@link #endedRecord} accepts
+     * @param erased  the components being erased
+     */
+    public static void forgetInRecords(long[] records, long[] erased) {
+        org.eclipse.collections.api.set.primitive.LongSet gone = org.eclipse.collections.api.factory.primitive.LongSets.immutable.of(erased);
+        for (long record : records) {
+            TransactionRecords.forget(EntityService.get(), record, gone);
+        }
+    }
+
+    /**
      * Retrieves the transaction associated with the given entity version, if any.
      *
      * @param version the entity version for which the associated transaction is to be determined
@@ -552,7 +578,7 @@ public class Transaction implements Comparable<Transaction> {
 
     /**
      * Checks every version written under this transaction's stamps against the boundary between
-     * knowledge, ephemeral and instance data before any stamp is finalized
+     * knowledge, shared and local data before any stamp is finalized
      * (IKE-Network/ike-issues#1313). In fail mode a violation refuses the commit, which leaves the
      * transaction open for its caller to cancel.
      */

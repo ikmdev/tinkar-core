@@ -767,6 +767,54 @@ public class ServiceLifecycleManager {
     }
 
     /**
+     * Tells every running service that the application is quitting, in reverse priority order,
+     * while all of them still run ({@link ServiceLifecycle#beforeShutdown()}). Called before the
+     * store saves and the services shut down; a failure is logged and the others are still told.
+     */
+    public synchronized void beforeShutdown() {
+        if (state != State.RUNNING) {
+            return;
+        }
+        List<Map.Entry<Class<?>, ServiceLifecycle>> sortedServices = getSortedActiveServices();
+        Collections.reverse(sortedServices);
+        for (Map.Entry<Class<?>, ServiceLifecycle> entry : sortedServices) {
+            try {
+                entry.getValue().beforeShutdown();
+            } catch (Exception e) {
+                LOG.error("  ✗ {} - Error before shutdown", getServiceName(entry.getKey()), e);
+            }
+        }
+    }
+
+    /** Tells every running service that a sync is about to send ({@link ServiceLifecycle#beforeSync()}). */
+    public void beforeSync() {
+        tell("before a sync", ServiceLifecycle::beforeSync);
+    }
+
+    /** Tells every running service that a sync changed the shared data ({@link ServiceLifecycle#afterSync()}). */
+    public void afterSync() {
+        tell("after a sync", ServiceLifecycle::afterSync);
+    }
+
+    /** Tells every running service something, in priority order; a failure is logged and the others are still told. */
+    private void tell(String when, java.util.function.Consumer<ServiceLifecycle> what) {
+        List<Map.Entry<Class<?>, ServiceLifecycle>> services;
+        synchronized (this) {                            // the list alone: a service may take its time, and use others
+            if (state != State.RUNNING) {
+                return;
+            }
+            services = getSortedActiveServices();
+        }
+        for (Map.Entry<Class<?>, ServiceLifecycle> entry : services) {
+            try {
+                what.accept(entry.getValue());
+            } catch (Exception e) {
+                LOG.error("  ✗ {} - Error {}", getServiceName(entry.getKey()), when, e);
+            }
+        }
+    }
+
+    /**
      * Shuts down all managed services in reverse priority order.
      * <p>     * Services with higher priority values shutdown first. All services
      * are shut down even if some fail - failures are logged but not rethrown.

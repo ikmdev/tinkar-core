@@ -25,8 +25,8 @@ public interface ChangeSetWriterService {
     void shutdown();
 
     /**
-     * Removes components' records from the change sets this writer keeps that hold instance or
-     * ephemeral data (IKE-Network/ike-issues#1313), once a scope of them has been deleted from the
+     * Removes components' records from the change sets this writer keeps that hold shared or
+     * local data (IKE-Network/ike-issues#1313), once a scope of them has been deleted from the
      * store. Knowledge change sets are immutable and exchanged, and are never rewritten. A writer
      * that keeps no such change sets removes nothing.
      *
@@ -35,5 +35,32 @@ public interface ChangeSetWriterService {
      */
     default dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval removeComponents(java.util.Set<java.util.UUID> components) {
         return dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval.NONE;
+    }
+
+    /**
+     * Removes knowledge components' records from the knowledge change sets this writer keeps: the
+     * one exception to their being immutable (IKE-Network/ike-issues#1313; the fourth question
+     * before step 2 of {@code design-2026-11-22-knowledge-shared-local}, settled by KEC on
+     * 2026-11-22), for knowledge written before a rule it broke existed, such as the narrations of
+     * documents written before 2026-11-08. A writer that keeps no knowledge change sets removes nothing.
+     *
+     * @param components the UUIDs of the erased components
+     * @return what was removed
+     */
+    default dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval removeKnowledgeComponents(java.util.Set<java.util.UUID> components) {
+        return dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval.NONE;
+    }
+
+    /**
+     * A new change-set file for data of a module, in the folder of the module's kind and named for
+     * the module, as this writer names its own; the file is not created
+     * (IKE-Network/ike-issues#1313). A writer that keeps no change sets, as in a memory-only store,
+     * names none.
+     *
+     * @param moduleNid the module
+     * @return the file, when this writer keeps change sets
+     */
+    default java.util.Optional<java.io.File> newChangeSet(long moduleNid) {
+        return java.util.Optional.empty();
     }
 }

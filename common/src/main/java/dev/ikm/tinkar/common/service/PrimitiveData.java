@@ -119,6 +119,9 @@ public class PrimitiveData {
         SimpleIndeterminateTracker progressTask = new SimpleIndeterminateTracker("Stop primitive data provider");
         TinkExecutor.threadPool().submit(progressTask);
         try {
+            // Services that still read or write the store as the application quits do it now,
+            // while every service runs, and before the store saves (IKE-Network/ike-issues#1313).
+            ServiceLifecycleManager.get().beforeShutdown();
             save();
 
             // Stop the service lifecycle manager (shuts down all services in reverse order).

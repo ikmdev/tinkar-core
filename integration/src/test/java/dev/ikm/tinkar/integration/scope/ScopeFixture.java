@@ -32,24 +32,27 @@ import network.ike.foundation.ike.bindings.IkeConcept;
  * Documents for the scope tests: each its own pattern, a root referencing the pattern, a line
  * referencing the root, a line referencing a knowledge concept, and a comment on the first line
  * in the shared comment pattern, as an annotation sits in a knowledge pattern. All are written
- * under a module that is a kind of Ephemeral module.
+ * under a module that is a kind of File module.
  */
 public final class ScopeFixture {
 
     /** One document's components. */
     public record Doc(String name, PublicId pattern, PublicId root, PublicId line, PublicId cited, PublicId comment) { }
 
-    /** The ephemeral module the documents are written under, and a knowledge concept they reference. */
+    /** The file module the documents are written under, and a knowledge concept they reference. */
     public final ConceptFacade documents = EntityProxy.Concept.make(PublicIds.newRandom());
+    /** A local module, as the one conversation journals are written under is. */
+    public final ConceptFacade journals = EntityProxy.Concept.make(PublicIds.newRandom());
     public final ConceptFacade term = EntityProxy.Concept.make(PublicIds.newRandom());
     private long time = 1_760_000_000_000L;
 
     /** Writes the module and its parents, and the knowledge concept, as knowledge. */
     public void seed() {
         try (StampedWriter writer = writer(IkeConcept.DEVELOPMENT_MODULE, "scope fixture knowledge")) {
-            module(writer, KernelConcept.EPHEMERAL_MODULE, KernelConcept.SOLOR_MODULE);
-            module(writer, KernelConcept.INSTANCE_MODULE, KernelConcept.SOLOR_MODULE);
-            module(writer, documents, KernelConcept.EPHEMERAL_MODULE);
+            module(writer, KernelConcept.FILE_MODULE, KernelConcept.SOLOR_MODULE);
+            module(writer, KernelConcept.LOCAL_MODULE, KernelConcept.SOLOR_MODULE);
+            module(writer, documents, KernelConcept.FILE_MODULE);
+            module(writer, journals, KernelConcept.LOCAL_MODULE);
             writer.concept(term.publicId());
             writer.fullyQualifiedName(term.publicId(), "Scope fixture term");
             writer.commit();
@@ -58,8 +61,17 @@ public final class ScopeFixture {
 
     /** Writes documents under one STAMP, so they share it. */
     public Doc[] documents(String... names) {
+        return documents(documents, names);
+    }
+
+    /** Writes documents of local data that is not saved in a file, under one STAMP. */
+    public Doc[] journals(String... names) {
+        return documents(journals, names);
+    }
+
+    private Doc[] documents(ConceptFacade module, String... names) {
         Doc[] docs = new Doc[names.length];
-        try (StampedWriter writer = writer(documents, "scope fixture documents")) {
+        try (StampedWriter writer = writer(module, "scope fixture documents")) {
             for (int i = 0; i < names.length; i++) {
                 docs[i] = document(writer, names[i]);
             }
@@ -70,7 +82,16 @@ public final class ScopeFixture {
 
     /** Revises a document's comment under a STAMP of its own. */
     public void revise(Doc doc, String text) {
-        try (StampedWriter writer = writer(documents, "scope fixture revision")) {
+        revise(documents, doc, text);
+    }
+
+    /** Revises the comment of a document of local data that is not saved in a file. */
+    public void reviseJournal(Doc doc, String text) {
+        revise(journals, doc, text);
+    }
+
+    private void revise(ConceptFacade module, Doc doc, String text) {
+        try (StampedWriter writer = writer(module, "scope fixture revision")) {
             writer.semantic(doc.comment(), KernelPattern.COMMENT_PATTERN.publicId(), doc.line(), text);
             writer.commit();
         }

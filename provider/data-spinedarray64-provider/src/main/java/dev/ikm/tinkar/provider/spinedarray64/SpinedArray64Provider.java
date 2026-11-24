@@ -91,7 +91,7 @@ import java.util.function.ObjLongConsumer;
  * records in entity format 3 (design-2026-10-20-instance-data, "The 64-bit spined-array engine";
  * IKE-Network/ike-issues#1313). Each pattern's elements are one range, a {@link PatternTable}, so a
  * component's pattern is read from its nid, a pattern's elements are enumerated by walking its
- * table, and a scope of instance data is erased by dropping its patterns' tables.
+ * table, and a scope of local data is erased by dropping its patterns' tables.
  *
  * <p>It shares no storage code with the sequential engine, which is frozen beside it. Persistent,
  * it is written to disk by changed spine ({@link StoreFiles}); memory-only, it keeps nothing on
@@ -118,7 +118,7 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
     private final Identities identities;
     private final LongAdder writeSequence = new LongAdder();
     private final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
-    /** What uses the store's instance and ephemeral data, for scope deletes (IKE-Network/ike-issues#1313). */
+    /** What uses the store's shared and local data, for scope deletes (IKE-Network/ike-issues#1313). */
     private final DataUseIndex dataUseIndex;
     private final SetOnce<SearchService> searchService = new SetOnce<>();
     private final AtomicBoolean open = new AtomicBoolean(true);
@@ -860,12 +860,34 @@ public class SpinedArray64Provider implements PrimitiveDataService, EntityStore,
         return Optional.of(dataUseIndex);
     }
 
+    /** A new change-set file for a module's data, from the first of this store's change-set writers that keeps any. */
+    @Override
+    public java.util.Optional<java.io.File> newChangeSet(long moduleNid) {
+        for (ChangeSetWriterService writer : changeSetWriterServices) {
+            java.util.Optional<java.io.File> file = writer.newChangeSet(moduleNid);
+            if (file.isPresent()) {
+                return file;
+            }
+        }
+        return java.util.Optional.empty();
+    }
+
     /** Removes the components' records from what each of this store's change-set writers keeps. */
     @Override
     public ChangeSetRemoval removeFromChangeSets(java.util.Set<UUID> components) {
         ChangeSetRemoval removal = ChangeSetRemoval.NONE;
         for (ChangeSetWriterService writer : changeSetWriterServices) {
             removal = removal.plus(writer.removeComponents(components));
+        }
+        return removal;
+    }
+
+    /** Removes knowledge components' records from what each of this store's change-set writers keeps as knowledge. */
+    @Override
+    public ChangeSetRemoval removeFromKnowledgeChangeSets(java.util.Set<UUID> components) {
+        ChangeSetRemoval removal = ChangeSetRemoval.NONE;
+        for (ChangeSetWriterService writer : changeSetWriterServices) {
+            removal = removal.plus(writer.removeKnowledgeComponents(components));
         }
         return removal;
     }

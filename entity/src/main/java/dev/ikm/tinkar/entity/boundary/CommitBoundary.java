@@ -29,21 +29,24 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * The commit validator of IKE-Network/ike-issues#1313 (design {@code design-2026-10-20-instance-data}):
- * before a transaction's stamps are finalized, every version it wrote is checked against the
- * boundary between knowledge, ephemeral and instance data.
+ * The commit validator of IKE-Network/ike-issues#1313 (designs {@code design-2026-10-20-instance-data}
+ * and {@code design-2026-11-22-knowledge-shared-local}): before a transaction's stamps are
+ * finalized, every version it wrote is checked against the boundary between knowledge, shared and
+ * local data.
  *
  * <ul>
- * <li><em>Knowledge never references ephemeral or instance data.</em> A version written under a
+ * <li><em>Knowledge never references shared or local data.</em> A version written under a
  * knowledge module must not carry a reference to a component of another kind.</li>
- * <li><em>The two kinds do not cross.</em> Ephemeral data does not reference instance data, nor the
- * reverse.</li>
+ * <li><em>Data refers only to data shared at least as widely.</em> Shared data does not reference
+ * local data. Local data saved in a file and other local data do not reference each other
+ * ({@link DataKind#mayReferTo}).</li>
  * <li><em>Birth is final.</em> A later version of a component is written under a module of its
  * first version's kind.</li>
- * <li><em>An instance pattern holds only its own kind.</em> An element of an ephemeral or instance
- * pattern is written under a module of that kind. A knowledge pattern may hold elements of any
- * kind, each of its own module's kind: the names of an instance pattern are descriptions.</li>
- * <li><em>The parents are disjoint.</em> No module is a kind of both.</li>
+ * <li><em>A shared or local pattern holds only its own kind.</em> An element of such a pattern is
+ * written under a module of that kind. A knowledge pattern may hold elements of any kind, each of
+ * its own module's kind: the names of a local pattern are descriptions.</li>
+ * <li><em>Shared and local are disjoint.</em> No module is a kind of both the Shared module and the
+ * Local module.</li>
  * </ul>
  *
  * <p>The mode is the system property {@value #MODE_PROPERTY}: {@code fail} (the default since
@@ -51,7 +54,7 @@ import java.util.stream.Collectors;
  * commit with a {@link BoundaryViolationException}, {@code warn} logs what a commit crosses and
  * lets it proceed, and {@code off} skips the check. A value it does not know is read as
  * {@code fail}, so a mistyped setting never loosens the boundary. The check costs nothing
- * until the store holds one of the two module parents, since before then every module is
+ * until the store holds one of the module parents, since before then every module is
  * knowledge and nothing can cross.
  */
 public final class CommitBoundary {
@@ -109,6 +112,35 @@ public final class CommitBoundary {
     }
 
     /**
+     * Refuses a version that would cross the boundary before it is stored, when others are to get it:
+     * a knowledge or shared version goes to change sets that are exchanged as soon as it is stored,
+     * and one under a STAMP minted with its time is committed at birth, so refusing it at the commit
+     * would leave it in the store and in the change set, where the component it refers to is unknown to
+     * everyone else (IKE-Network/ike-issues#1313). Local data is checked at the commit alone. Acts in
+     * fail mode only; in warn mode the commit reports it.
+     *
+     * @param transactionName the transaction's name, for the message
+     * @param version         the version, not stored yet
+     * @throws BoundaryViolationException when it crosses anything
+     */
+    public static void enforceBeforeStoring(String transactionName, EntityVersion version) {
+        if (mode() != Mode.FAIL || !ModuleKinds.parentsPresent()) {
+            return;
+        }
+        if (EntityBoundaries.stampKind(version.stampNid()).kind().local()) {
+            return;
+        }
+        boolean born = EntityBoundaries.read(version.nid()).isEmpty();
+        List<BoundaryViolation> violations = new ArrayList<>(check(List.of(version)));
+        if (born) {
+            violations.removeIf(violation -> violation.rule() == BoundaryViolation.Rule.BIRTH_IS_FINAL);   // born now, under this module
+        }
+        if (!violations.isEmpty()) {
+            throw new BoundaryViolationException(transactionName, violations);
+        }
+    }
+
+    /**
      * Checks versions against every rule, whatever the mode.
      *
      * @param versions the versions
@@ -125,7 +157,7 @@ public final class CommitBoundary {
             ModuleKinds.Resolution module = EntityBoundaries.stampKind(version.stampNid());
             if (module.conflicting()) {
                 violations.add(new BoundaryViolation(BoundaryViolation.Rule.MODULE_UNDER_BOTH_PARENTS, source, null,
-                        "its module is a kind of both the ephemeral and the instance module"));
+                        "its module is a kind of both the Shared module and the Local module"));
             }
             DataKind kind = module.kind();
             DataKind birth = EntityBoundaries.birthKind(entity.nid());
@@ -146,13 +178,13 @@ public final class CommitBoundary {
                     return;
                 }
                 DataKind targetKind = EntityBoundaries.kindOf(target);
-                if (targetKind == kind) {
+                if (kind.mayReferTo(targetKind)) {
                     return;
                 }
                 if (kind == DataKind.KNOWLEDGE) {
                     violations.add(new BoundaryViolation(BoundaryViolation.Rule.KNOWLEDGE_REFERENCES_DATA, source,
                             publicId(target), "knowledge references " + targetKind.word() + " data through its " + where));
-                } else if (targetKind != DataKind.KNOWLEDGE) {
+                } else {
                     violations.add(new BoundaryViolation(BoundaryViolation.Rule.CROSSES_KINDS, source,
                             publicId(target), kind.word() + " data references " + targetKind.word() + " data through its " + where));
                 }

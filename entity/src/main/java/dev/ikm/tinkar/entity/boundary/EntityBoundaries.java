@@ -30,9 +30,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * The {@link DataKind} of components (IKE-Network/ike-issues#1313). A component's kind is its
  * <em>birth kind</em>: the kind of the module its first version was written under. A pattern's
- * kind bounds its elements: every element of an ephemeral or instance pattern is of that kind,
- * while a knowledge pattern may hold elements of any kind, such as the names of an instance
- * pattern, each of the kind of its own first version.
+ * kind bounds its elements: every element of a shared or local pattern is of that kind, while a
+ * knowledge pattern may hold elements of any kind, such as the names of a local pattern, each of
+ * the kind of its own first version.
  */
 public final class EntityBoundaries {
 
@@ -94,8 +94,8 @@ public final class EntityBoundaries {
             return DataKind.KNOWLEDGE;
         }
         if (held.get() instanceof StampEntity<?>) {
-            // A STAMP is of the kind of the module it names: a git document's commit is ephemeral, so
-            // knowledge commenting on it refers to ephemeral data (IKE-Network/ike-issues#1355).
+            // A STAMP is of the kind of the module it names: a git document's commit is file data, so
+            // knowledge commenting on it refers to file data (IKE-Network/ike-issues#1355).
             return stampKind(nid).kind();
         }
         EntityVersion first = null;
@@ -138,7 +138,7 @@ public final class EntityBoundaries {
         if (held.isPresent() && held.get() instanceof SemanticEntity<?> semantic) {
             DataKind patternKind = birthKind(semantic.patternNid());
             if (patternKind != DataKind.KNOWLEDGE) {
-                return patternKind;                      // an instance pattern's elements are all of its kind
+                return patternKind;                      // a shared or local pattern's elements are all of its kind
             }
         }
         return birthKind(nid);

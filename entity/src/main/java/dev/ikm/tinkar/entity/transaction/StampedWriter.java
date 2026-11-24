@@ -23,7 +23,9 @@ import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptRecordBuilder;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
+import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.FieldDefinitionRecord;
 import dev.ikm.tinkar.entity.FieldDefinitionRecordBuilder;
 import dev.ikm.tinkar.entity.PatternRecord;
@@ -37,6 +39,7 @@ import dev.ikm.tinkar.entity.SemanticRecordBuilder;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.boundary.CommitBoundary;
 import dev.ikm.tinkar.terms.*;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -193,9 +196,7 @@ public final class StampedWriter implements AutoCloseable {
                 .chronology(concept)
                 .stampNid(stamp.nid())
                 .build());
-        transaction.addComponent(nid);
-        EntityService.get().putEntity(
-                ConceptRecordBuilder.builder(concept).versions(versions.toImmutable()).build());
+        put(nid, ConceptRecordBuilder.builder(concept).versions(versions.toImmutable()).build());
         return nid;
     }
 
@@ -239,9 +240,7 @@ public final class StampedWriter implements AutoCloseable {
                 .semanticPurposeNid(purpose.nid())
                 .fieldDefinitions(fieldDefinitions.toImmutable())
                 .build());
-        transaction.addComponent(nid);
-        EntityService.get().putEntity(
-                PatternRecordBuilder.builder(pattern).versions(versions.toImmutable()).build());
+        put(nid, PatternRecordBuilder.builder(pattern).versions(versions.toImmutable()).build());
         return nid;
     }
 
@@ -289,9 +288,7 @@ public final class StampedWriter implements AutoCloseable {
                 .stampNid(stamp.nid())
                 .fieldValues(values)
                 .build());
-        transaction.addComponent(nid);
-        EntityService.get().putEntity(
-                SemanticRecordBuilder.builder(semantic).versions(versions.toImmutable()).build());
+        put(nid, SemanticRecordBuilder.builder(semantic).versions(versions.toImmutable()).build());
         return nid;
     }
 
@@ -329,14 +326,16 @@ public final class StampedWriter implements AutoCloseable {
     }
 
     /**
-     * Commits every stamp the writer used, and with them what it wrote.
+     * Commits every stamp the writer used, and with them what it wrote. A commit the transaction
+     * refuses, such as one that crosses the data boundary, leaves the writer open, so closing it
+     * cancels what it wrote rather than leaving it uncommitted in the store (IKE-Network/ike-issues#1313).
      *
      * @throws IllegalStateException if the writer was already committed or cancelled
      */
     public void commit() {
         requireOpen();
-        finished = true;
         transaction.commit();
+        finished = true;
     }
 
     /**
@@ -356,6 +355,16 @@ public final class StampedWriter implements AutoCloseable {
         if (!finished) {
             cancel();
         }
+    }
+
+    /**
+     * Stores a component's new version, unless the data boundary refuses it: what others are to get is
+     * refused before it is stored, since a version under a STAMP with its own time cannot be cancelled.
+     */
+    private void put(long nid, Entity<? extends EntityVersion> entity) {
+        CommitBoundary.enforceBeforeStoring(transaction.getTransactionName(), entity.versions().getFirst());
+        transaction.addComponent(nid);
+        EntityService.get().putEntity(entity);
     }
 
     private void requireOpen() {

@@ -18,7 +18,7 @@ package dev.ikm.tinkar.entity.boundary;
 import java.util.List;
 
 /**
- * A commit refused because it crosses the boundary between knowledge, ephemeral and instance
+ * A commit refused because it crosses the boundary between knowledge, shared and local
  * data, in fail mode (IKE-Network/ike-issues#1313). The transaction stays open, so its caller
  * can cancel it.
  */

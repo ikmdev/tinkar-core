@@ -80,4 +80,14 @@ public interface StampService {
 
     ImmutableLongList getTimesInUse();
 
+    /**
+     * Lets go of erased STAMPs, and of the modules, authors, paths and times only they used, so what
+     * is in use names nothing that is gone (IKE-Network/ike-issues#1313). A service that keeps
+     * nothing in memory has nothing to let go.
+     *
+     * @param erased the nids of erased components, STAMPs among them
+     */
+    default void forget(long[] erased) {
+    }
+
 }

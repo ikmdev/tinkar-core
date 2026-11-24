@@ -26,6 +26,7 @@ import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.boundary.DataKind;
 import dev.ikm.tinkar.entity.boundary.EntityBoundaries;
 import dev.ikm.tinkar.entity.boundary.ModuleKinds;
+import dev.ikm.tinkar.entity.scope.DataInventory;
 import dev.ikm.tinkar.entity.scope.Scope;
 import dev.ikm.tinkar.entity.scope.ScopeOperations;
 import dev.ikm.tinkar.fixtures.TestConstants;
@@ -95,7 +96,7 @@ class ScopeOperationsIT {
     void aDocumentsScopeIsItsPatternAndWhatCitesIt() {
         Doc[] docs = fixture.documents("A1", "B1");
         Scope scope = Scope.of(nid(docs[0].pattern()));
-        assertEquals(DataKind.EPHEMERAL, scope.kind());
+        assertEquals(DataKind.FILE, scope.kind());
         assertTrue(scope.closed(), scope.incoming() + " " + scope.outgoing() + " " + scope.dangling());
         for (PublicId id : new PublicId[] {docs[0].pattern(), docs[0].root(), docs[0].line(), docs[0].cited(), docs[0].comment()}) {
             assertTrue(scope.contains(nid(id)), "the scope holds " + id.idString());
@@ -200,7 +201,7 @@ class ScopeOperationsIT {
         assertFalse(PrimitiveData.get().hasPublicId(c.root()));
 
         ScopeOperations.Imported imported = ScopeOperations.importScope(file);
-        assertEquals(DataKind.EPHEMERAL, imported.kind());
+        assertEquals(DataKind.FILE, imported.kind());
         assertEquals(1, imported.roots().size());
         assertTrue(PrimitiveData.get().hasPublicId(c.root()), "the root is back, under its public id");
         assertEquals("zebracornC4 revised", latest(c.comment()) instanceof dev.ikm.tinkar.entity.SemanticEntityVersion v
@@ -229,7 +230,132 @@ class ScopeOperationsIT {
         assertFalse(PrimitiveData.get().hasPublicId(d.root()), "nothing was loaded");
     }
 
+    // ── import, checked (step 2 of plan-2026-11-22-remove-export-import-data) ──
+
+    /** What was exported beside the components comes back with the manifest, and an import writes the store's own change set. */
+    @Test
+    void anImportWritesTheStoresOwnChangeSetAndGivesTheEntriesBack() throws Exception {
+        Doc j = fixture.journals("J8")[0];
+        File file = new File(WORK, "j8-scope.zip");
+        ScopeOperations.export(Scope.of(nid(j.pattern())), file, java.util.Map.of("conversation.json", "{}".getBytes(StandardCharsets.UTF_8)));
+        assertTrue(ScopeOperations.exportedScope(file));
+        ScopeOperations.Manifest manifest = ScopeOperations.manifest(file);
+        assertEquals(DataKind.LOCAL, manifest.kind());
+        assertEquals(java.util.List.of(fixture.journals.publicId()), manifest.modules());
+        assertEquals("{}", new String(manifest.entries().get("conversation.json"), StandardCharsets.UTF_8));
+
+        ScopeOperations.delete(Scope.of(nid(j.pattern())));
+        File written = new File(WORK, "j8-local ike-cs.zip");
+        java.util.List<Long> modules = new java.util.ArrayList<>();
+        ScopeOperations.Imported imported = ScopeOperations.importScope(file, false, _ -> dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval.NONE,
+                module -> {
+                    modules.add(module);
+                    return java.util.Optional.of(written);
+                });
+        assertEquals(java.util.List.of(written), imported.changeSets());
+        assertEquals(java.util.List.of(fixture.journals.nid()), modules, "one file, for the module it is written under");
+        assertFalse(imported.replaced());
+        assertFalse(ScopeOperations.exportedScope(written), "an ordinary change set");
+
+        // A store rebuilt from its folders has it: the file alone brings it back.
+        int members = Scope.of(nid(j.pattern())).members().size();
+        ScopeOperations.delete(Scope.of(nid(j.pattern())));
+        assertFalse(PrimitiveData.get().hasPublicId(j.root()));
+        new dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile(written).compute();
+        EntityBoundaries.clear();
+        assertEquals(members, Scope.of(nid(j.pattern())).members().size());
+    }
+
+    @Test
+    void whatIsHereAlreadyIsReplacedOnlyWhenAsked() {
+        Doc j = fixture.journals("J9")[0];
+        File older = new File(WORK, "j9-older.zip");
+        ScopeOperations.export(Scope.of(nid(j.pattern())), older);
+        fixture.reviseJournal(j, "said since");
+        assertThrows(ScopeOperations.AlreadyHereException.class, () -> ScopeOperations.importScope(older));
+        assertEquals("said since", ((dev.ikm.tinkar.entity.SemanticEntityVersion) latest(j.comment())).fieldValues().get(0), "nothing was changed");
+
+        ScopeOperations.Imported imported = ScopeOperations.importScope(older, true);
+        assertTrue(imported.replaced());
+        assertEquals("zebracornJ9 annotation", ((dev.ikm.tinkar.entity.SemanticEntityVersion) latest(j.comment())).fieldValues().get(0),
+                "the file's copy, and not the one that was here");
+    }
+
+    /** A file whose components cannot be read leaves the copy that was here as it was. */
+    @Test
+    void aReplacementThatCannotBeReadPutsBackWhatWasHere() throws Exception {
+        Doc j = fixture.journals("J10")[0];
+        fixture.reviseJournal(j, "said since");
+        int members = Scope.of(nid(j.pattern())).members().size();
+        File file = new File(WORK, "j10-scope.zip");
+        ScopeOperations.export(Scope.of(nid(j.pattern())), file);
+        try (FileSystem zip = FileSystems.newFileSystem(URI.create("jar:" + file.toURI()), Map.of());
+             java.util.stream.Stream<java.nio.file.Path> entries = Files.list(zip.getPath("records"))) {
+            for (java.nio.file.Path entry : entries.filter(Files::isRegularFile).toList()) {
+                Files.write(entry, new byte[] {42, 42, 42, 42, 42, 42, 42, 42});
+            }
+        }
+        assertThrows(RuntimeException.class, () -> ScopeOperations.importScope(file, true));
+        assertEquals(members, Scope.of(nid(j.pattern())).members().size());
+        assertEquals("said since", ((dev.ikm.tinkar.entity.SemanticEntityVersion) latest(j.comment())).fieldValues().get(0));
+    }
+
+    /** A file whose module is of another kind here would be taken for that kind: refused. */
+    @Test
+    void anImportIsRefusedWhenItsModuleIsOfAnotherKindHere() throws Exception {
+        Doc j = fixture.journals("J11")[0];
+        Scope scope = Scope.of(nid(j.pattern()));
+        File file = new File(WORK, "j11-scope.zip");
+        ScopeOperations.export(scope, file);
+        ScopeOperations.delete(scope);
+        rewriteManifest(file, text -> text.replace("Scope-Kind: local", "Scope-Kind: shared"));
+        ScopeOperations.ImportRefused refused = assertThrows(ScopeOperations.ImportRefused.class, () -> ScopeOperations.importScope(file));
+        assertTrue(refused.getMessage().startsWith("It was exported as shared data, and here its module, "), refused.getMessage());
+        assertTrue(refused.getMessage().endsWith("is a module of local data."), refused.getMessage());
+        assertFalse(PrimitiveData.get().hasPublicId(j.root()), "nothing was loaded");
+    }
+
+    /** A file exported before its modules were recorded cannot be checked: refused. */
+    @Test
+    void anImportIsRefusedWithoutTheModulesItIsWrittenUnder() throws Exception {
+        Doc j = fixture.journals("J12")[0];
+        Scope scope = Scope.of(nid(j.pattern()));
+        File file = new File(WORK, "j12-scope.zip");
+        ScopeOperations.export(scope, file);
+        ScopeOperations.delete(scope);
+        rewriteManifest(file, text -> text.replaceAll("(?m)^Module: .*\\R", ""));
+        ScopeOperations.ImportRefused refused = assertThrows(ScopeOperations.ImportRefused.class, () -> ScopeOperations.importScope(file));
+        assertTrue(refused.getMessage().contains("An earlier version of Komet"), refused.getMessage());
+        assertFalse(PrimitiveData.get().hasPublicId(j.root()), "nothing was loaded");
+    }
+
+    // ── what nothing lists (step 3) ───────────────────────────────────────────
+
+    @Test
+    void theInventoryListsEachGroupNothingElseListsOnce() {
+        Doc[] docs = fixture.documents("K13", "L13");
+        Doc journal = fixture.journals("M13")[0];
+        assertTrue(DataInventory.components().containsAll(nid(docs[0].root()), nid(docs[1].comment()), nid(journal.line())));
+        assertFalse(DataInventory.components().contains(fixture.term.nid()), "knowledge is not listed");
+
+        Scope listed = Scope.of(nid(docs[0].pattern()));
+        java.util.List<Scope> rest = DataInventory.unlisted(listed.members());
+        assertEquals(0, rest.stream().filter(scope -> scope.contains(nid(docs[0].root()))).count());
+        assertEquals(1, rest.stream().filter(scope -> scope.contains(nid(docs[1].root()))).count());
+        Scope found = rest.stream().filter(scope -> scope.contains(nid(journal.comment()))).findFirst().orElseThrow();
+        assertEquals(DataKind.LOCAL, found.kind());
+        assertEquals(nid(journal.pattern()), found.roots().getFirst(), "by the pattern it is under");
+        assertEquals(Scope.of(nid(journal.pattern())).members().size(), found.members().size(), "as one whole group");
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    private static void rewriteManifest(File file, java.util.function.UnaryOperator<String> change) throws Exception {
+        try (FileSystem zip = FileSystems.newFileSystem(URI.create("jar:" + file.toURI()), Map.of())) {
+            java.nio.file.Path manifest = zip.getPath(ScopeOperations.SCOPE_MANIFEST);
+            Files.writeString(manifest, change.apply(Files.readString(manifest, StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+        }
+    }
 
     private static long nid(PublicId id) {
         return PrimitiveData.nid(id);

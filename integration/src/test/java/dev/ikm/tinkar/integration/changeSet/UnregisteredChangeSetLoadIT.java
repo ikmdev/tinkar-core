@@ -128,10 +128,15 @@ class UnregisteredChangeSetLoadIT {
         assertFalse(PrimitiveData.get().hasPublicId(PublicIds.of(NOBODY_CARRIES)), "the ephemeral folder is not read");
 
         Set<String> loaded = Registry.loadedChecksums();
-        for (Path file : List.of(describesBeforeConcept, carriesConcept, instance)) {
+        for (Path file : List.of(describesBeforeConcept, carriesConcept)) {
             assertTrue(loaded.contains(Registry.checksum(file)), "registered: " + file.getFileName());
             assertTrue(result(report, file).registration().isPresent(), "under a Registry stamp: " + file.getFileName());
         }
+        // The registry is knowledge, which is synced: a file of local data, named for its module, is remembered
+        // in the knowledge base's own folder instead (IKE-Network/ike-issues#1313).
+        assertFalse(loaded.contains(Registry.checksum(instance)), "not registered: " + instance.getFileName());
+        assertTrue(result(report, instance).registration().isEmpty(), "under no Registry stamp");
+        assertTrue(Files.readString(storeRoot.resolve("loadedChangeSets.tsv")).startsWith(Registry.checksum(instance)));
         assertTrue(report.markdown().contains("| `changeSets/src/main/resources/a describes ike-cs.zip` | loaded after a retry |"),
                 report.markdown());
     }

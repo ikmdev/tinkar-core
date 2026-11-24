@@ -97,6 +97,56 @@ public class StampProvider extends EntityProcessor<StampEntity<StampEntityVersio
         stampNids.add(stampEntity.nid());
     }
 
+    /**
+     * Lets go of erased STAMPs, and keeps only the modules, authors, paths and times the STAMPs left
+     * still use (IKE-Network/ike-issues#1313): a document removed from the knowledge base took its
+     * own module with it, which no menu of modules in use may name.
+     *
+     * @param erased the nids of erased components, STAMPs among them
+     */
+    @Override
+    public void forget(long[] erased) {
+        java.util.Set<Long> gone = new java.util.HashSet<>();
+        for (long nid : erased) {
+            gone.add(nid);
+        }
+        boolean any = false;
+        for (long nid : erased) {
+            if (stamps.remove(nid) != null) {
+                stampNids.remove(nid);
+                any = true;
+            }
+        }
+        // A STAMP left behind that names what is gone, as a cancelled edit's does once its document's
+        // own module is erased, is in use by nothing that can be read.
+        for (java.util.Iterator<java.util.Map.Entry<Long, StampEntity>> it = stamps.entrySet().iterator(); it.hasNext(); ) {
+            java.util.Map.Entry<Long, StampEntity> entry = it.next();
+            StampEntity stamp = entry.getValue();
+            if (gone.contains(stamp.moduleNid()) || gone.contains(stamp.authorNid()) || gone.contains(stamp.pathNid())) {
+                it.remove();
+                stampNids.remove(entry.getKey());
+                any = true;
+            }
+        }
+        if (!any) {
+            return;
+        }
+        java.util.Set<Long> modulesNow = new java.util.HashSet<>();
+        java.util.Set<Long> authorsNow = new java.util.HashSet<>();
+        java.util.Set<Long> pathsNow = new java.util.HashSet<>();
+        java.util.Set<Long> timesNow = new java.util.HashSet<>();
+        for (StampEntity stamp : stamps.values()) {
+            modulesNow.add(stamp.moduleNid());
+            authorsNow.add(stamp.authorNid());
+            pathsNow.add(stamp.pathNid());
+            timesNow.add(stamp.time());
+        }
+        modules.retainAll(modulesNow);
+        authors.retainAll(authorsNow);
+        paths.retainAll(pathsNow);
+        times.retainAll(timesNow);
+    }
+
     public LongIdSet stampNids() {
         ensureInitialized();
         return LongIds.set.of(stampNids.stream().mapToLong(stampNid -> stampNid).toArray());

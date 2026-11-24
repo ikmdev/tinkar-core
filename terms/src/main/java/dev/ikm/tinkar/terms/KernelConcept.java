@@ -547,6 +547,21 @@ public enum KernelConcept implements ConceptEnumerationFacade<KernelConcept> {
     BOTTOM("Nothing (IkeFoundation)", "27c8360e-9654-5a2b-9a7a-aa31e9a63926"),
 
     /**
+     * A module whose data never syncs with the knowledge base, such as a conversation journal or the records of how the knowledge base changed. A module that is a kind of this one, at any depth, is a local module. Its data is written to change sets of its own, one file per module, and is never published with the knowledge base. Knowledge and shared data never refer to it.
+     */
+    LOCAL_MODULE("Local module (IkeFoundation)", "e6b26869-7335-5d29-9346-1b44d8423fbf"),
+
+    /**
+     * A local module whose data is saved in a file outside the knowledge base, such as the module of one document opened from a folder. A module that is a kind of this one, at any depth, is a file module. Komet removes its data when the knowledge base next opens, unless an edit is not yet saved to the file, and reads it from the file again when the document is next opened.
+     */
+    FILE_MODULE("File module (IkeFoundation)", "a0c10c95-fdd1-5a2a-83c5-4b34c1f019fb"),
+
+    /**
+     * A module whose data is synced with the knowledge base but kept apart from its knowledge, such as a set of documents a team works on together. A module that is a kind of this one, at any depth, is a shared module. Its data is written to change sets of its own, one file per module, so a document can be deleted or made local without touching the knowledge. Knowledge never refers to it, and it never refers to local data.
+     */
+    SHARED_MODULE("Shared module (IkeFoundation)", "f234ddfd-976a-5345-8cf8-4c83c5bfc6ed"),
+
+    /**
      * The author of every registration: the IKE tooling that records what a knowledge base is made of whenever it imports, assembles or exports, in Komet, in a Maven goal, or anywhere else.
      */
     REGISTRAR("IKE Registrar (IkeFoundation)", "2899066e-1896-5511-8da7-3a45c64eee50"),
@@ -562,7 +577,7 @@ public enum KernelConcept implements ConceptEnumerationFacade<KernelConcept> {
     REGISTRY_PATH("IKE Registry path (IkeFoundation)", "259c8239-9588-53be-a42b-cb3562eb15ed"),
 
     /**
-     * The module transaction records are written to: bookkeeping about how the knowledge base changed, not knowledge. It is an instance module: its records are the store's own, written to the instance change sets and never published with knowledge (IKE-Network/ike-issues#1313).
+     * The module transaction records are written to: bookkeeping about how the knowledge base changed, not knowledge. It is a local module, because its records belong to this knowledge base alone: they are written to its local change sets and never synced (IKE-Network/ike-issues#1313).
      */
     CHANGE_TRACKING_MODULE("Change tracking module (IkeFoundation)", "a6ef93c4-8e0b-5278-82a3-0fa30c4f1d95"),
 
@@ -584,17 +599,7 @@ public enum KernelConcept implements ConceptEnumerationFacade<KernelConcept> {
     /**
      * A field data type whose value is one vertex: its meaning concept and its properties keyed by concept, with no edges of its own. A semantic whose one field is a vertex is a vertex with an identity, its own STAMP versions and an address, which a directed tree held in one field does not give its vertices.
      */
-    VERTEX_FIELD("Vertex data type (IkeFoundation)", "91795efd-042a-5e37-9bde-b649a72f0b5a"),
-
-    /**
-     * A module whose data has its record elsewhere and can be rebuilt from it, as a document persisted in git is materialized from its repository. A module that is a kind of this one, at any depth, is ephemeral. Its data is written to ephemeral change sets named for the module, replays what happened since its record last held it, and can be dropped at any time; knowledge never references it.
-     */
-    EPHEMERAL_MODULE("Ephemeral module (IkeFoundation)", "a0c10c95-fdd1-5a2a-83c5-4b34c1f019fb"),
-
-    /**
-     * A module whose data has no record but the store: a conversation journal, a document not persisted in git, the record a transaction keeps. A module that is a kind of this one, at any depth, is an instance module. Its data is written to instance change sets, never published with knowledge, and can be deleted as a unit; knowledge never references it.
-     */
-    INSTANCE_MODULE("Instance module (IkeFoundation)", "e6b26869-7335-5d29-9346-1b44d8423fbf");
+    VERTEX_FIELD("Vertex data type (IkeFoundation)", "91795efd-042a-5e37-9bde-b649a72f0b5a");
 
     private final EntityProxy.Concept proxy;
 

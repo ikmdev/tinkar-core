@@ -15,6 +15,14 @@
  */
 package dev.ikm.tinkar.importer.registry;
 
+import java.util.UUID;
+import java.util.HashSet;
+import java.nio.file.StandardOpenOption;
+import java.nio.charset.StandardCharsets;
+import dev.ikm.tinkar.entity.scope.SharedFolder;
+import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.changeset.ChangeSetUpgrade;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
@@ -47,9 +55,11 @@ import java.util.Set;
  * always has.
  *
  * <p>The files load in the order given: for a store, its knowledge folder
- * ({@code changeSets/src/main/resources}) then its instance folder ({@code instanceChangeSets}),
- * each in file-name order, which the writer makes chronological. Not {@code ephemeralChangeSets},
- * which a session regenerates. A file refused in that pass, for a component no file before it
+ * ({@code changeSets/src/main/resources}), its shared folder ({@code sharedChangeSets}), the local
+ * folder of 2026-10-20 ({@code instanceChangeSets}) and its local folder ({@code localChangeSets}),
+ * each in file-name order, which the writer makes chronological. Not the change sets of local data
+ * saved in a file ({@code fileChangeSets}, {@code ephemeralChangeSets} before 2026-11-22), whose
+ * record is the file (design {@code design-2026-11-22-knowledge-shared-local}). A file refused in that pass, for a component no file before it
  * carried, is tried again after the rest; one still refused is reported as such and left
  * unregistered, so the next open tries it again.
  */
@@ -59,7 +69,11 @@ public final class ChangeSetLoad {
 
     /** The folder under a store's root its knowledge change sets are written to, and a release packages. */
     public static final Path KNOWLEDGE_FOLDER = Path.of("changeSets", "src", "main", "resources");
-    /** The folder under a store's root its instance change sets are written to. */
+    /** The folder under a store's root its shared change sets are written to. */
+    public static final Path SHARED_FOLDER = Path.of("sharedChangeSets");
+    /** The folder under a store's root its local change sets are written to. */
+    public static final Path LOCAL_FOLDER = Path.of("localChangeSets");
+    /** The folder its local change sets were written to before 2026-11-22, when they were called instance change sets. */
     public static final Path INSTANCE_FOLDER = Path.of("instanceChangeSets");
 
     private ChangeSetLoad() {
@@ -234,15 +248,16 @@ public final class ChangeSetLoad {
     }
 
     /**
-     * A store's change-set folders that exist, in load order: the knowledge folder, then the
-     * instance folder.
+     * A store's change-set folders that exist, in load order: the knowledge folder, the shared
+     * folder, the local folder of 2026-10-20, then the local folder.
      *
      * @param storeRoot the store's root
      * @return the folders
      */
     public static List<Path> folders(Path storeRoot) {
         List<Path> folders = new ArrayList<>();
-        for (Path folder : List.of(storeRoot.resolve(KNOWLEDGE_FOLDER), storeRoot.resolve(INSTANCE_FOLDER))) {
+        for (Path folder : List.of(storeRoot.resolve(KNOWLEDGE_FOLDER), storeRoot.resolve(SHARED_FOLDER),
+                storeRoot.resolve(INSTANCE_FOLDER), storeRoot.resolve(LOCAL_FOLDER))) {
             if (Files.isDirectory(folder)) {
                 folders.add(folder);
             }
@@ -260,8 +275,99 @@ public final class ChangeSetLoad {
      * @throws IOException if a folder cannot be listed
      */
     public static Report loadStore(Path storeRoot, Progress progress) throws IOException {
-        List<Path> folders = folders(storeRoot);
-        return load(storeRoot, folders, ChangeSetUpgrade.changeSets(folders), progress);
+        List<Path> folders = new ArrayList<>(folders(storeRoot));
+        Path shared = storeRoot.resolve(SHARED_FOLDER);
+        if (folders.contains(shared) && !SharedFolder.declared()) {
+            LOG.info("Not loading shared data: this knowledge base's starter set does not have the Shared module, and it"
+                    + " would be taken for knowledge");
+            folders.remove(shared);
+        }
+        Set<UUID> removed = new HashSet<>();
+        SharedFolder.removals(shared).forEach(removal -> removed.add(removal.module()));
+        List<Path> files = ChangeSetUpgrade.changeSets(folders).stream()
+                .filter(file -> !shared.equals(file.getParent()) || SharedFolder.moduleOf(file).filter(removed::contains).isEmpty())
+                .toList();
+        return load(storeRoot, List.copyOf(folders), files, progress, LoadedHere.of(storeRoot));
+    }
+
+    /**
+     * Loads the change sets of shared data the knowledge base has not loaded, as {@link #loadStore} does,
+     * and nothing else: after a sync brought some.
+     *
+     * @param storeRoot the store's root
+     * @param progress  told of each file as it loads
+     * @return the report
+     * @throws IOException if the folder cannot be listed
+     */
+    public static Report loadShared(Path storeRoot, Progress progress) throws IOException {
+        Path shared = storeRoot.resolve(SHARED_FOLDER);
+        if (!Files.isDirectory(shared) || !SharedFolder.declared()) {
+            return new Report(storeRoot, List.of(), Registry.declared(), List.of(), Instant.now());
+        }
+        Set<UUID> removed = new HashSet<>();
+        SharedFolder.removals(shared).forEach(removal -> removed.add(removal.module()));
+        List<Path> files = ChangeSetUpgrade.changeSets(List.of(shared)).stream()
+                .filter(file -> SharedFolder.moduleOf(file).filter(removed::contains).isEmpty()).toList();
+        return load(storeRoot, List.of(shared), files, progress, LoadedHere.of(storeRoot));
+    }
+
+    /**
+     * The change sets of shared and local data a knowledge base has loaded, in a file in its own folder
+     * that never syncs (IKE-Network/ike-issues#1313). The registry is knowledge, which is synced and
+     * never erased, and a registration names the file it is for: a local file is named for its module,
+     * and a shared one for its document, which may be deleted. A file is not carried into a new build of
+     * the knowledge base, which holds none of their data, so it loads them all again.
+     */
+    private record LoadedHere(Path root, Path file, Set<String> checksums) {
+
+        /** The file's name, in the store's root. */
+        private static final String NAME = "loadedChangeSets.tsv";
+
+        static LoadedHere of(Path storeRoot) {
+            Path file = storeRoot.resolve(NAME);
+            Set<String> checksums = new HashSet<>();
+            if (Files.isRegularFile(file)) {
+                try {
+                    for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
+                        checksums.add(line.split("\t", 2)[0]);
+                    }
+                } catch (IOException e) {
+                    LOG.warn("Could not read {}; its change sets load again", file, e);
+                }
+            }
+            return new LoadedHere(storeRoot, file, checksums);
+        }
+
+        /** Whether a change set is of shared or local data, which the registry does not name. */
+        boolean covers(Path changeSet) {
+            Path folder = changeSet.getParent();
+            return root.resolve(SHARED_FOLDER).equals(folder) || root.resolve(LOCAL_FOLDER).equals(folder)
+                    || root.resolve(INSTANCE_FOLDER).equals(folder);
+        }
+
+        /** Whether a change set need not be loaded: loaded before, and, when it is shared, the store still holds its module. */
+        boolean held(Path changeSet, String checksum, Set<String> registered) {
+            if (!checksums.contains(checksum) && !registered.contains(checksum)) {
+                return false;
+            }
+            if (!root.resolve(SHARED_FOLDER).equals(changeSet.getParent())) {
+                return true;
+            }
+            return SharedFolder.moduleOf(changeSet).map(PublicIds::of)
+                    .map(id -> PrimitiveData.get().hasPublicId(id) && EntityHandle.get(PrimitiveData.nid(id)).entity().isPresent())
+                    .orElse(true);
+        }
+
+        void add(Path changeSet, String checksum) {
+            if (checksums.add(checksum)) {
+                try {
+                    Files.writeString(file, checksum + "\t" + changeSet.getFileName() + "\n", StandardCharsets.UTF_8,
+                            StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                } catch (IOException e) {
+                    LOG.warn("Could not record that {} was loaded; it loads again when the knowledge base next opens", changeSet, e);
+                }
+            }
+        }
     }
 
     /**
@@ -273,10 +379,10 @@ public final class ChangeSetLoad {
      * @return the report
      */
     public static Report load(Path base, List<Path> files, Progress progress) {
-        return load(base, List.of(), files, progress);
+        return load(base, List.of(), files, progress, null);
     }
 
-    private static Report load(Path base, List<Path> folders, List<Path> files, Progress progress) {
+    private static Report load(Path base, List<Path> folders, List<Path> files, Progress progress, LoadedHere here) {
         Instant when = Instant.now();
         boolean declared = Registry.declared();
         Set<String> loadedBefore = declared ? Registry.loadedChecksums() : Set.of();
@@ -286,7 +392,8 @@ public final class ChangeSetLoad {
         for (Path file : files) {
             String checksum = Registry.checksum(file);
             checksums.put(file, checksum);
-            if (loadedBefore.contains(checksum)) {
+            boolean held = here != null && here.covers(file) ? here.held(file, checksum, loadedBefore) : loadedBefore.contains(checksum);
+            if (held) {
                 LOG.info("Registered before, not loaded again: {}", file.getFileName());
                 results.put(file, new Result(file, checksum, Outcome.REGISTERED_BEFORE, Optional.empty(), Optional.empty(),
                         Optional.empty()));
@@ -300,7 +407,7 @@ public final class ChangeSetLoad {
         for (Path file : pending) {
             progress.loading(++index, pending.size(), file, false);
             try {
-                results.put(file, loaded(file, checksums.get(file), Outcome.LOADED, Optional.empty()));
+                results.put(file, loaded(file, checksums.get(file), Outcome.LOADED, Optional.empty(), here));
             } catch (RuntimeException refused) {
                 String reason = reason(refused);
                 LOG.warn("Refused, to be tried again after the rest: {}: {}", file.getFileName(), reason);
@@ -312,7 +419,7 @@ public final class ChangeSetLoad {
             Path file = refusal.getKey();
             progress.loading(++index, refusals.size(), file, true);
             try {
-                results.put(file, loaded(file, checksums.get(file), Outcome.LOADED_AFTER_RETRY, Optional.of(refusal.getValue())));
+                results.put(file, loaded(file, checksums.get(file), Outcome.LOADED_AFTER_RETRY, Optional.of(refusal.getValue()), here));
             } catch (RuntimeException refused) {
                 String reason = reason(refused);
                 LOG.error("Refused again, not loaded: {}: {}", file.getFileName(), reason, refused);
@@ -335,7 +442,7 @@ public final class ChangeSetLoad {
     }
 
     /** Loads one file whole and registers the load. */
-    private static Result loaded(Path file, String checksum, Outcome outcome, Optional<String> firstRefusal) {
+    private static Result loaded(Path file, String checksum, Outcome outcome, Optional<String> firstRefusal, LoadedHere here) {
         LoadEntitiesFromProtobufFile loader = new LoadEntitiesFromProtobufFile(file.toFile());
         EntityCountSummary counts = loader.compute();
         if (!loader.complete()) {
@@ -344,7 +451,12 @@ public final class ChangeSetLoad {
                     ? String.format("%,d of %,d record(s) imported", counts.getTotalCount(), loader.expectedCount())
                     : failures.getFirst() + (failures.size() > 1 ? String.format(" (and %,d more)", failures.size() - 1) : ""));
         }
-        Optional<Long> registration = Registry.registerLoad(file, checksum, Instant.now());
+        Optional<Long> registration = Optional.empty();
+        if (here != null && here.covers(file)) {
+            here.add(file, checksum);
+        } else {
+            registration = Registry.registerLoad(file, checksum, Instant.now());
+        }
         LOG.info("Loaded {} ({} record(s)){}", file.getFileName(), String.format("%,d", counts.getTotalCount()),
                 registration.isPresent() ? ", registered" : "");
         return new Result(file, checksum, outcome, Optional.of(counts), firstRefusal, registration);

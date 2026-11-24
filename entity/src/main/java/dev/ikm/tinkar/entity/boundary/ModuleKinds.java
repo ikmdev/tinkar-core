@@ -27,6 +27,7 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.terms.KernelConcept;
 import dev.ikm.tinkar.terms.KernelPattern;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.set.mutable.primitive.LongHashSet;
@@ -39,9 +40,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Resolves a module's {@link DataKind} through the taxonomy, with inheritance: a module that is a
- * kind of {@code KernelConcept.EPHEMERAL_MODULE} at any depth is ephemeral, one that is a kind of
- * {@code KernelConcept.INSTANCE_MODULE} is instance, and every other module is knowledge
- * (IKE-Network/ike-issues#1313).
+ * kind of {@code KernelConcept.SHARED_MODULE} at any depth is shared, one that is a kind of
+ * {@code KernelConcept.FILE_MODULE} is local data saved in a file, any other kind of
+ * {@code KernelConcept.LOCAL_MODULE} is local, and every other module is knowledge
+ * (IKE-Network/ike-issues#1313; design {@code design-2026-11-22-knowledge-shared-local}). The File
+ * module is a kind of the Local module in the starter set of 2026-11-22; in a store loaded with an
+ * older one the two are separate parents, so reaching the File module is enough either way.
  *
  * <p>A module's parents are read from its stated axioms, every concept axiom of its latest version,
  * and from its stated and inferred navigation, the field whose meaning is
@@ -55,34 +59,37 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ModuleKinds {
 
     /**
-     * A module's kind, and whether it reaches both parents, which the two parents' disjointness
-     * forbids.
+     * A module's kind, and whether it reaches both the Shared module and the Local module, which
+     * their disjointness forbids.
      *
-     * @param kind        the kind: ephemeral or instance when it reaches that parent, else knowledge
-     * @param conflicting whether it reaches both parents
+     * @param kind        the kind: shared, file or local when it reaches that parent, else knowledge
+     * @param conflicting whether it reaches both the Shared module and the Local module
      */
     public record Resolution(DataKind kind, boolean conflicting) { }
 
     private static final Resolution KNOWLEDGE = new Resolution(DataKind.KNOWLEDGE, false);
     private static final ConcurrentHashMap<Long, Resolution> CACHE = new ConcurrentHashMap<>();
+    /** The parent each module now being written under itself is about to state. */
+    private static final ConcurrentHashMap<Long, Long> STATING = new ConcurrentHashMap<>();
     private static final int MAX_DEPTH = 64;
 
     private ModuleKinds() {
     }
 
     /**
-     * @return whether the store holds either parent; until one does, every module is knowledge
+     * @return whether the store holds any of the parents; until one does, every module is knowledge
      */
     public static boolean parentsPresent() {
-        return PrimitiveData.get().hasPublicId(KernelConcept.EPHEMERAL_MODULE.publicId())
-                || PrimitiveData.get().hasPublicId(KernelConcept.INSTANCE_MODULE.publicId());
+        return PrimitiveData.get().hasPublicId(KernelConcept.FILE_MODULE.publicId())
+                || PrimitiveData.get().hasPublicId(KernelConcept.LOCAL_MODULE.publicId())
+                || PrimitiveData.get().hasPublicId(KernelConcept.SHARED_MODULE.publicId());
     }
 
     /**
      * Resolves a module's kind.
      *
      * @param moduleNid the module concept's nid
-     * @return its kind, and whether it reaches both parents
+     * @return its kind, and whether it reaches both the Shared module and the Local module
      */
     public static Resolution resolve(long moduleNid) {
         if (moduleNid == 0 || !parentsPresent()) {
@@ -93,8 +100,44 @@ public final class ModuleKinds {
             return cached;
         }
         Resolution resolved = walk(moduleNid);
-        CACHE.put(moduleNid, resolved);
+        if (resolved != KNOWLEDGE || !parents(moduleNid).isEmpty()) {
+            // A module with no parent yet is being written, such as a document's own module before
+            // its parent is stated: knowledge for now, and not remembered, or another thread could read
+            // it as knowledge once it is file data (IKE-Network/ike-issues#1313).
+            CACHE.put(moduleNid, resolved);
+        }
         return resolved;
+    }
+
+    /**
+     * Runs a write that creates a module under itself, as a document's own module is created, with the
+     * parent it is about to state known from its first record. A module's kind is read from its stated
+     * parent, but its STAMP and its concept are stored before that parent can be, and each record goes to
+     * a change set, and into the data-use index, as it is stored. Without this they are taken for
+     * knowledge: written to the change sets that are synced, and loaded from them when the store next
+     * opens, so a module came back, bare, after its document was dropped (IKE-Network/ike-issues#1313).
+     * Once the write ends the kind is read from what the store holds, whether it ended well or not.
+     *
+     * <p>A write that states another parent for a module the store holds, which moves everything
+     * written under it to another kind, runs the same way: while it runs the module is of the new
+     * parent's kind alone, so what it writes goes where the rest is going.
+     *
+     * @param module the module's concept
+     * @param parent the parent the write states, such as {@code KernelConcept.FILE_MODULE}
+     * @param write  the write: the module's concept, its stated parent, and anything else of the module's own
+     */
+    public static void writeModule(ConceptFacade module, ConceptFacade parent, Runnable write) {
+        long nid = EntityService.get().nidForConcept(module.publicId());
+        STATING.put(nid, parent.nid());
+        CACHE.remove(nid);
+        EntityBoundaries.clear();                        // what is written under the module takes its kind
+        try {
+            write.run();
+        } finally {
+            STATING.remove(nid);
+            CACHE.remove(nid);
+            EntityBoundaries.clear();
+        }
     }
 
     /** Forgets every resolution, for a store that was reopened or a test that rewrites modules. */
@@ -103,9 +146,10 @@ public final class ModuleKinds {
     }
 
     private static Resolution walk(long moduleNid) {
-        long ephemeral = present(KernelConcept.EPHEMERAL_MODULE.publicId()) ? KernelConcept.EPHEMERAL_MODULE.nid() : Long.MIN_VALUE;
-        long instance = present(KernelConcept.INSTANCE_MODULE.publicId()) ? KernelConcept.INSTANCE_MODULE.nid() : Long.MIN_VALUE;
-        if (ephemeral == Long.MIN_VALUE && instance == Long.MIN_VALUE) {
+        long file = present(KernelConcept.FILE_MODULE.publicId()) ? KernelConcept.FILE_MODULE.nid() : Long.MIN_VALUE;
+        long local = present(KernelConcept.LOCAL_MODULE.publicId()) ? KernelConcept.LOCAL_MODULE.nid() : Long.MIN_VALUE;
+        long shared = present(KernelConcept.SHARED_MODULE.publicId()) ? KernelConcept.SHARED_MODULE.nid() : Long.MIN_VALUE;
+        if (file == Long.MIN_VALUE && local == Long.MIN_VALUE && shared == Long.MIN_VALUE) {
             return KNOWLEDGE;
         }
         Set<DataKind> reached = EnumSet.noneOf(DataKind.class);
@@ -118,18 +162,26 @@ public final class ModuleKinds {
             if (!seen.add(nid) || at[1] > MAX_DEPTH) {
                 continue;
             }
-            if (nid == ephemeral) {
-                reached.add(DataKind.EPHEMERAL);
+            if (nid == file) {
+                reached.add(DataKind.FILE);              // a kind of the Local module, so the walk stops here
                 continue;
             }
-            if (nid == instance) {
-                reached.add(DataKind.INSTANCE);
+            if (nid == local) {
+                reached.add(DataKind.LOCAL);
+                continue;
+            }
+            if (nid == shared) {
+                reached.add(DataKind.SHARED);
                 continue;
             }
             parents(nid).forEach(parent -> work.push(new long[] {parent, at[1] + 1}));
         }
-        if (reached.size() > 1) {
-            return new Resolution(DataKind.INSTANCE, true);
+        boolean isLocal = reached.contains(DataKind.LOCAL) || reached.contains(DataKind.FILE);
+        if (reached.contains(DataKind.SHARED) && isLocal) {
+            return new Resolution(DataKind.LOCAL, true);
+        }
+        if (reached.contains(DataKind.FILE)) {
+            return new Resolution(DataKind.FILE, false);  // also a kind of the Local module, by another route
         }
         return reached.isEmpty() ? KNOWLEDGE : new Resolution(reached.iterator().next(), false);
     }
@@ -138,9 +190,17 @@ public final class ModuleKinds {
         return PrimitiveData.get().hasPublicId(id);
     }
 
-    /** A concept's parents: the concept axioms of its stated axioms, and its navigation origins. */
+    /**
+     * A concept's parents: the concept axioms of its stated axioms and its navigation origins, or the
+     * parent it is about to state while it is being written ({@link #writeModule}).
+     */
     static MutableLongSet parents(long conceptNid) {
         MutableLongSet parents = new LongHashSet();
+        Long stating = STATING.get(conceptNid);
+        if (stating != null) {
+            parents.add(stating);
+            return parents;                              // not what it states now, when it is moving to another kind
+        }
         EntityService.get().semanticsForComponentOfPattern(conceptNid, KernelPattern.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
                 .forEach(semantic -> {
                     SemanticEntityVersion latest = latest(semantic);

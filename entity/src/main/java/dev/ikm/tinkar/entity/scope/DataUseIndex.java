@@ -53,7 +53,7 @@ import java.util.function.ObjLongConsumer;
 /**
  * The data-use index a store keeps for scope deletes (IKE-Network/ike-issues#1313; design
  * {@code design-2026-10-20-instance-data}, "The data-use index"): for every version written under
- * an instance or ephemeral STAMP, the STAMP's use, and each reference the version carries other
+ * an shared or local STAMP, the STAMP's use, and each reference the version carries other
  * than its semantic's pattern and referenced component whose target is not knowledge. Knowledge
  * versions are not read for references: the commit boundary refuses knowledge referencing data.
  *
@@ -333,7 +333,7 @@ public final class DataUseIndex implements DataUse {
     public String summary() {
         long uses = stampUse.values().stream().mapToLong(Set::size).sum();
         long references = referrers.values().stream().mapToLong(Set::size).sum();
-        return String.format("%,d instance or ephemeral STAMP(s) with %,d use(s), %,d referenced component(s) with %,d reference(s), %,d module(s)",
+        return String.format("%,d shared or local STAMP(s) with %,d use(s), %,d referenced component(s) with %,d reference(s), %,d module(s)",
                 stampUse.size(), uses, referrers.size(), references, moduleKinds.size());
     }
 
@@ -495,6 +495,15 @@ public final class DataUseIndex implements DataUse {
             set.remove(value);
             return set.isEmpty() ? null : set;
         });
+    }
+
+    @Override
+    public void forEachStampOfModule(long moduleNid, java.util.function.LongConsumer stamps) {
+        for (Map.Entry<Long, Long> stamp : stampModules.entrySet()) {
+            if (stamp.getValue() == moduleNid) {
+                stamps.accept(stamp.getKey());
+            }
+        }
     }
 
     private void write(DataOutputStream out) throws IOException {

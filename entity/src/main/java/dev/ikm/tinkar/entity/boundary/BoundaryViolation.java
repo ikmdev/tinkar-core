@@ -18,7 +18,7 @@ package dev.ikm.tinkar.entity.boundary;
 import dev.ikm.tinkar.common.id.PublicId;
 
 /**
- * One way a commit crosses the boundary between knowledge, ephemeral and instance data
+ * One way a commit crosses the boundary between knowledge, shared and local data
  * (IKE-Network/ike-issues#1313).
  *
  * @param rule   which rule it breaks
@@ -30,15 +30,15 @@ public record BoundaryViolation(Rule rule, PublicId source, PublicId target, Str
 
     /** The rules of the boundary. */
     public enum Rule {
-        /** Knowledge references ephemeral or instance data. */
+        /** Knowledge references shared or local data. */
         KNOWLEDGE_REFERENCES_DATA,
-        /** Ephemeral data references instance data, or instance data references ephemeral data. */
+        /** Data references data shared less widely, or local data saved in a file and other local data reference each other. */
         CROSSES_KINDS,
         /** A later version is written under a module of another kind than the component's first. */
         BIRTH_IS_FINAL,
-        /** An element of an ephemeral or instance pattern is written under a module of another kind. */
+        /** An element of a shared or local pattern is written under a module of another kind. */
         ELEMENT_OUTSIDE_ITS_PATTERN,
-        /** A module is a kind of both the ephemeral and the instance parent. */
+        /** A module is a kind of both the Shared module and the Local module. */
         MODULE_UNDER_BOTH_PARENTS
     }
 

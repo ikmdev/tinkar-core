@@ -99,6 +99,32 @@ public interface ServiceLifecycle {
     void shutdown();
 
     /**
+     * Invoked as the application quits, while every service is still running: before the data
+     * store saves and before any service shuts down. A service that must still read or write the
+     * store as the application quits does it here, since in {@link #shutdown()} the services it
+     * would use may no longer be available (IKE-Network/ike-issues#1313). Must not throw; an
+     * error is logged and the quit goes on.
+     */
+    default void beforeShutdown() {
+    }
+
+    /**
+     * Invoked before the knowledge base sends its change sets: a service whose shared data follows
+     * something outside the knowledge base, as a shared document follows its file, brings it up to
+     * date here (IKE-Network/ike-issues#1313). May take its time; must not throw, and an error is
+     * logged and the sync goes on.
+     */
+    default void beforeSync() {
+    }
+
+    /**
+     * Invoked after a sync brought shared data, or took some away: a service that shows shared data
+     * reads it again here (IKE-Network/ike-issues#1313). Must not throw; an error is logged.
+     */
+    default void afterSync() {
+    }
+
+    /**
      * Returns the lifecycle phase for this service.
      * <p>     * This method is used if no {@link LifecyclePhase} annotation is present.
      * The annotation takes precedence if both are specified.

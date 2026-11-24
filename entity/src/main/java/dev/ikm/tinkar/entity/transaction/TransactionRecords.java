@@ -259,6 +259,60 @@ final class TransactionRecords {
         return initiated;
     }
 
+    /**
+     * Whether a component is the record of a transaction that has ended, committed or cancelled
+     * (IKE-Network/ike-issues#1313). Its versions written while the transaction was open list what
+     * it wrote, but nothing reads that list once the transaction has ended: it is bookkeeping, and
+     * keeps nothing it lists from being removed.
+     *
+     * @param nid a component
+     * @return whether it is an ended transaction's record
+     */
+    static boolean ended(long nid) {
+        if (!present() || !(EntityHandle.get(nid).orNull() instanceof SemanticRecord record)
+                || record.patternNid() != KernelPattern.CHANGE_TRANSACTION_PATTERN.nid()) {
+            return false;
+        }
+        SemanticVersionRecord latest = null;
+        for (SemanticVersionRecord version : record.versions()) {
+            if (latest == null || version.stamp().time() > latest.stamp().time()) {
+                latest = version;
+            }
+        }
+        return latest != null && ((EntityFacade) latest.fieldValues().get(STATE)).nid() != KernelConcept.TRANSACTION_OPEN.nid();
+    }
+
+    /**
+     * Takes components that are being erased out of the lists an ended transaction's record wrote
+     * while the transaction was open, so the record keeps its log and refers to nothing that is gone
+     * (IKE-Network/ike-issues#1313).
+     *
+     * @param entities  the entity service to write through
+     * @param recordNid the record, which {@link #ended} accepts
+     * @param erased    the components being erased
+     */
+    static void forget(EntityService entities, long recordNid, org.eclipse.collections.api.set.primitive.LongSet erased) {
+        if (!((Object) entities.getChronology(recordNid).orElse(null) instanceof SemanticRecord record)) {
+            return;
+        }
+        RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
+        boolean changed = false;
+        for (SemanticVersionRecord version : record.versions()) {
+            Object listed = version.fieldValues().get(COMPONENTS);
+            if (listed instanceof LongIdCollection components && java.util.Arrays.stream(components.toArray()).anyMatch(erased::contains)) {
+                Object[] values = version.fieldValues().toArray();
+                values[COMPONENTS] = LongIds.set.of(java.util.Arrays.stream(components.toArray()).filter(nid -> !erased.contains(nid)).toArray());
+                versions.add(SemanticVersionRecordBuilder.builder(version).fieldValues(Lists.immutable.of(values)).build());
+                changed = true;
+            } else {
+                versions.add(version);
+            }
+        }
+        if (changed) {
+            entities.putEntity(SemanticRecordBuilder.builder(record).versions(versions.toImmutable()).build());
+        }
+    }
+
     /** A time later than every record version written in this JVM, and no earlier than now. */
     private static long nextTime() {
         return LAST_RECORD_TIME.updateAndGet(last -> Math.max(System.currentTimeMillis(), last + 1));

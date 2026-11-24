@@ -36,7 +36,7 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * A change set written again without some components' records (IKE-Network/ike-issues#1313):
- * how a deleted scope leaves the instance and ephemeral change sets, which otherwise keep its
+ * how a deleted scope leaves the shared and local change sets, which otherwise keep its
  * records. A format-3 change set is expanded to the format-2 layout, its records are copied but
  * those of the removed components, and the rest is compacted to format 3 again; a format-2 one
  * is filtered and compacted. The file is replaced only once the new one is whole, by a move in

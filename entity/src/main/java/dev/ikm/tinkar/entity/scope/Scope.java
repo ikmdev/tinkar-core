@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A scope of instance or ephemeral data (IKE-Network/ike-issues#1313; design
+ * A scope of shared or local data (IKE-Network/ike-issues#1313; design
  * {@code design-2026-10-20-instance-data}): what a scope operation exports, imports or deletes
  * whole. It is resolved from its roots, a document's own pattern or its anchor, as everything of
  * the roots' kind they lead to: a pattern's elements, and every semantic of that kind citing a
@@ -67,7 +67,7 @@ import java.util.Optional;
  * @param knowledge the knowledge it references, which a target store must hold to import it:
  *                  what its versions reference, and its STAMPs' authors, modules and paths
  * @param incoming  components outside the scope citing a member, in words
- * @param outgoing  members referencing instance or ephemeral data outside the scope, in words
+ * @param outgoing  members referencing shared or local data outside the scope, in words
  * @param dangling  members referencing components the store does not hold, in words
  */
 public record Scope(DataKind kind, ImmutableLongList roots, ImmutableLongList members, ImmutableLongList stamps,
@@ -96,7 +96,7 @@ public record Scope(DataKind kind, ImmutableLongList roots, ImmutableLongList me
     /**
      * Resolves the scope of roots.
      *
-     * @param roots the roots: a document's own pattern, an anchor, any instance or ephemeral component
+     * @param roots the roots: a document's own pattern, an anchor, any shared or local component
      * @return the scope
      * @throws IllegalArgumentException when a root is knowledge, is absent, or the roots differ in kind
      */
@@ -112,7 +112,7 @@ public record Scope(DataKind kind, ImmutableLongList roots, ImmutableLongList me
             }
             DataKind rootKind = kindOf(root, kinds);
             if (rootKind == DataKind.KNOWLEDGE) {
-                throw new IllegalArgumentException(describe(root) + " is knowledge; a scope holds instance or ephemeral data");
+                throw new IllegalArgumentException(describe(root) + " is knowledge; a scope holds shared or local data");
             }
             if (kind != null && kind != rootKind) {
                 throw new IllegalArgumentException("The roots differ in kind: " + kind.word() + " and " + rootKind.word());
@@ -134,6 +134,7 @@ public record Scope(DataKind kind, ImmutableLongList roots, ImmutableLongList me
             }
         }
         DataKind scopeKind = kind;
+        Runnable close = () -> {
         while (!queue.isEmpty()) {
             long nid = queue.poll();
             Optional<? extends Entity<? extends EntityVersion>> held = read(nid);
@@ -169,6 +170,28 @@ public record Scope(DataKind kind, ImmutableLongList roots, ImmutableLongList me
                     incoming.add(describe(citing) + ", " + citingKind.word() + ", cites " + describe(nid) + " in the scope");
                 }
             });
+        }
+        };
+        close.run();
+        // A document's own module, written under itself, belongs to the document: its concept, its name
+        // and its stated parent join the scope and go with it, rather than standing as knowledge a
+        // target store must hold (KEC, 2026-11-22; design-2026-11-22-knowledge-shared-local).
+        MutableLongSet ownModules = LongSets.mutable.empty();
+        members.forEach(nid -> read(nid).ifPresent(entity -> {
+            for (EntityVersion version : entity.versions()) {
+                long module = EntityBoundaries.moduleOf(version.stampNid());
+                if (module != 0 && !members.contains(module) && !ownModules.contains(module)
+                        && kindOf(module, kinds) == scopeKind && writtenUnderItself(module)) {
+                    ownModules.add(module);
+                }
+            }
+        }));
+        if (!ownModules.isEmpty()) {
+            ownModules.forEach(module -> {
+                members.add(module);
+                queue.add(module);
+            });
+            close.run();
         }
         // The STAMPs the members are written under belong to the scope and go with it; a member
         // referring to one, such as a line naming the commit that introduced it, stays inside. Since a
@@ -226,7 +249,9 @@ public record Scope(DataKind kind, ImmutableLongList roots, ImmutableLongList me
         stamps.forEach(stamp -> read(stamp).ifPresent(entity -> {
             if (entity instanceof StampEntity<?> stampEntity) {
                 knowledge.add(stampEntity.authorNid());
-                knowledge.add(stampEntity.moduleNid());
+                if (!members.contains(stampEntity.moduleNid())) {
+                    knowledge.add(stampEntity.moduleNid());
+                }
                 knowledge.add(stampEntity.pathNid());
             }
         }));
@@ -236,6 +261,21 @@ public record Scope(DataKind kind, ImmutableLongList roots, ImmutableLongList me
         ordered.addAll(semantics);
         return new Scope(scopeKind, LongLists.immutable.of(roots), ordered.toImmutable(), stamps.toSortedList().toImmutable(),
                 knowledge.toSortedList().toImmutable(), List.copyOf(incoming), List.copyOf(outgoing), List.copyOf(dangling));
+    }
+
+    /** Whether a module's concept was first written under the module itself, as a document's own module is. */
+    private static boolean writtenUnderItself(long module) {
+        Optional<? extends Entity<? extends EntityVersion>> held = read(module);
+        if (held.isEmpty() || !(held.get() instanceof ConceptEntity<?>)) {
+            return false;
+        }
+        EntityVersion first = null;
+        for (EntityVersion version : held.get().versions()) {
+            if (first == null || version.time() < first.time()) {
+                first = version;
+            }
+        }
+        return first != null && EntityBoundaries.moduleOf(first.stampNid()) == module;
     }
 
     private static DataKind kindOf(long nid, MutableLongObjectMap<DataKind> kinds) {

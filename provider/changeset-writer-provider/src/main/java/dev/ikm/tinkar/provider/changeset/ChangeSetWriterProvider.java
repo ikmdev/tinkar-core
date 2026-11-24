@@ -67,13 +67,17 @@ import java.util.zip.ZipOutputStream;
  * is designed to handle entities efficiently through a service thread, leveraging internal queues
  * for processing and persistence.
  *
- * <h2>Three streams (IKE-Network/ike-issues#1313)</h2>
+ * <h2>A folder per kind (IKE-Network/ike-issues#1313)</h2>
  *
  * Each entity goes to the stream of the kind of the module its latest version is written under,
- * read through {@link ModuleKinds}: knowledge to {@code changeSets/src/main/resources} under the
- * store root, as before, the folder a release packages and Komet's sync adds to git; instance
- * data to {@code instanceChangeSets}; ephemeral data to {@code ephemeralChangeSets}. An instance
- * or ephemeral stream is one file per module per session, named
+ * read through {@link ModuleKinds} (design {@code design-2026-11-22-knowledge-shared-local}):
+ * knowledge to {@code changeSets/src/main/resources} under the store root, as before, the folder a
+ * release packages and Komet's sync adds to git; shared data to {@code sharedChangeSets}, synced
+ * on a branch of its own in the knowledge base's remote; local data to {@code localChangeSets}, never synced; local data saved in
+ * a file to {@code fileChangeSets}, which no store loads on opening, since the file is its record.
+ * The folders of 2026-10-20, {@code instanceChangeSets} and {@code ephemeralChangeSets}, are no
+ * longer written, and are still read and cleaned as the local and file folders are. A shared,
+ * local or file stream is one file per module per session, named
  * {@code <module name> [<module public id>] <user> <time> <random> ike-cs.zip}, so a module's
  * files can be found, replayed or deleted together. A STAMP goes with the entities written under
  * it, so each file's journal keeps its ordering contract. Until a store holds a module parent,
@@ -84,16 +88,22 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     private static final long INACTIVITY_THRESHOLD_MILLIS = TimeUnit.MINUTES.toMillis(5);
     /** The suffix of a session's journal while it is being written; the sync layer matches only the finished name. */
     static final String SPOOL_SUFFIX = ".spool";
-    /** The folder under the store root instance change sets are written to. */
+    /** The folder under the store root shared change sets are written to, synced on a branch of its own in the knowledge base's remote. */
+    public static final String SHARED_FOLDER = "sharedChangeSets";
+    /** The folder under the store root local change sets are written to, never synced. */
+    public static final String LOCAL_FOLDER = "localChangeSets";
+    /** The folder under the store root change sets of local data saved in a file are written to, never loaded on opening. */
+    public static final String FILE_FOLDER = "fileChangeSets";
+    /** The folder local change sets were written to before 2026-11-22, when local data was called instance data: read, no longer written. */
     public static final String INSTANCE_FOLDER = "instanceChangeSets";
-    /** The folder under the store root ephemeral change sets are written to. */
+    /** The folder file change sets were written to before 2026-11-22, when such data was called ephemeral: read, no longer written. */
     public static final String EPHEMERAL_FOLDER = "ephemeralChangeSets";
 
     /**
-     * Where an entity is written: the knowledge stream, or one module's instance or ephemeral stream.
+     * Where an entity is written: the knowledge stream, or one module's shared, local or file stream.
      *
      * @param kind      the kind of the entity's module
-     * @param moduleNid the module, for an instance or ephemeral stream; {@code 0} for knowledge
+     * @param moduleNid the module, for a shared, local or file stream; {@code 0} for knowledge
      */
     record Stream(DataKind kind, long moduleNid) {
         static final Stream KNOWLEDGE = new Stream(DataKind.KNOWLEDGE, 0);
@@ -140,9 +150,14 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     }
 
     private final File changeSetFolder;
-    /** Where instance change sets go: beside the knowledge folder, never packaged or synced with it. */
+    /** Where shared change sets go, one stream per module: beside the knowledge folder, and synced as it is. */
+    private final File sharedChangeSetFolder;
+    /** Where local change sets go, one stream per module: beside the knowledge folder, never packaged or synced with it. */
+    private final File localChangeSetFolder;
+    /** Where change sets of local data saved in a file go, one stream per module. */
+    private final File fileChangeSetFolder;
+    /** The folders of 2026-10-20, still cleaned when components are removed. */
     private final File instanceChangeSetFolder;
-    /** Where ephemeral change sets go, one stream per module. */
     private final File ephemeralChangeSetFolder;
     private final LinkedBlockingQueue<Entity<EntityVersion>> entitiesToWrite = new LinkedBlockingQueue<>();
 
@@ -151,6 +166,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         if (optionalDataStoreRoot.isPresent()) {
             // TODO: Use Paths and Files classes to simplify code and handle file creation errors
             this.changeSetFolder = optionalDataStoreRoot.get().toPath().resolve("changeSets", "src", "main", "resources").toFile();
+            this.sharedChangeSetFolder = optionalDataStoreRoot.get().toPath().resolve(SHARED_FOLDER).toFile();
+            this.localChangeSetFolder = optionalDataStoreRoot.get().toPath().resolve(LOCAL_FOLDER).toFile();
+            this.fileChangeSetFolder = optionalDataStoreRoot.get().toPath().resolve(FILE_FOLDER).toFile();
             this.instanceChangeSetFolder = optionalDataStoreRoot.get().toPath().resolve(INSTANCE_FOLDER).toFile();
             this.ephemeralChangeSetFolder = optionalDataStoreRoot.get().toPath().resolve(EPHEMERAL_FOLDER).toFile();
             if (!changeSetFolder.exists()) {
@@ -258,20 +276,33 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     }
 
     /**
-     * The file a session's stream is written to. Knowledge keeps its name and folder; an instance
-     * or ephemeral stream is named for its module, by name for a person and by public id for a
+     * The file a session's stream is written to. Knowledge keeps its name and folder; a shared,
+     * local or file stream is named for its module, by name for a person and by public id for a
      * program, in its kind's folder.
      */
     File newZipFile(Stream stream) {
         if (stream.kind() == DataKind.KNOWLEDGE) {
             return newZipFile();
         }
-        File folder = stream.kind() == DataKind.INSTANCE ? instanceChangeSetFolder : ephemeralChangeSetFolder;
+        File folder = switch (stream.kind()) {
+            case SHARED -> sharedChangeSetFolder;
+            case FILE -> fileChangeSetFolder;
+            case LOCAL, KNOWLEDGE -> localChangeSetFolder;
+        };
         if (!folder.exists() && !folder.mkdirs()) {
             LOG.warn("Could not create the change set folder {}", folder);
         }
         return new File(folder, moduleFileName(stream.moduleNid()) + " " + KernelConcept.USER.description() + " "
                 + DateTimeUtil.nowWithZoneCompact().replace(':', '\uA789') + " " + generateRandomString(3) + " ike-cs.zip");
+    }
+
+    @Override
+    public Optional<File> newChangeSet(long moduleNid) {
+        DataKind kind = ModuleKinds.resolve(moduleNid).kind();
+        if (changeSetFolder == null) {
+            return Optional.empty();
+        }
+        return Optional.of(newZipFile(kind == DataKind.KNOWLEDGE ? Stream.KNOWLEDGE : new Stream(kind, moduleNid)));
     }
 
     /**
@@ -284,7 +315,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         String name;
         String id;
         try {
-            name = PrimitiveData.text(moduleNid);
+            name = PrimitiveData.textOptional(moduleNid).orElse("module");
             id = PrimitiveData.publicId(moduleNid).leastUuid().toString();
         } catch (RuntimeException e) {
             name = "module";
@@ -295,6 +326,24 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             safe = safe.substring(0, 80).strip();
         }
         return (safe.isEmpty() ? "module" : safe) + " [" + id + "]";
+    }
+
+    /**
+     * The name a finished change set takes: its module's name as the file is closed, since a file can be
+     * begun by a record stored before its module has a name, as a module's own STAMP is. A module with no
+     * name when the file is closed, such as one removed meanwhile, leaves the file the name it was begun with.
+     *
+     * @param stream what the file holds
+     * @param begun  the file as it was named when it was begun
+     * @return the file to finish into, in the same folder
+     */
+    static File finishedFile(Stream stream, File begun) {
+        if (stream.kind() == DataKind.KNOWLEDGE || !PrimitiveData.running()
+                || PrimitiveData.textOptional(stream.moduleNid()).isEmpty()) {
+            return begun;
+        }
+        int afterId = begun.getName().indexOf("] ");
+        return afterId < 0 ? begun : new File(begun.getParentFile(), moduleFileName(stream.moduleNid()) + begun.getName().substring(afterId + 1));
     }
 
     /**
@@ -369,7 +418,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 // One journal per stream, opened when its first entity arrives.
                 final Map<Stream, Journal> journals = new LinkedHashMap<>();
                 final Consumer<Entity<EntityVersion>> write = entityToWrite ->
-                        journals.computeIfAbsent(streamOf(entityToWrite), stream -> new Journal(newZipFile(stream)))
+                        journals.computeIfAbsent(streamOf(entityToWrite), stream -> new Journal(stream, newZipFile(stream)))
                                 .write(entityToWrite);
                 try {
                     try {
@@ -435,6 +484,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * described on {@link #startService()}.
      */
     private final class Journal {
+        private final Stream stream;
         private final File zipfile;
         private final File spool;
         private final ZipOutputStream zos;
@@ -453,7 +503,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         /** Whether the store's trees carry derived vertex identities, so the journal's do. */
         private final boolean vertexIdentityDerived;
 
-        Journal(File zipfile) {
+        Journal(Stream stream, File zipfile) {
+            this.stream = stream;
             this.zipfile = zipfile;
             // A journal opens on its first entity, while the store runs.
             this.vertexIdentityDerived = PrimitiveData.running() && PrimitiveData.vertexIdentityDerived();
@@ -541,7 +592,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             } finally {
                 closeQuietly(zos);
                 closeQuietly(identities);
-                finishSpool(spool, zipfile, entityCount.sum());
+                finishSpool(spool, finishedFile(stream, zipfile), entityCount.sum());
             }
         }
     }
@@ -706,11 +757,11 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      *   state. The reset writer will write to a new zip file.
      */
     /**
-     * Removes components' records from the instance and ephemeral change sets
-     * (IKE-Network/ike-issues#1313). The session's journals are closed first, so every record
-     * queued before is in a finished file; each finished file of the two folders is then written
-     * again without the components' records, or deleted when nothing is left in it. The knowledge
-     * folder is never touched: its change sets are immutable and exchanged.
+     * Removes components' records from the shared, local and file change sets, and from the
+     * folders of 2026-10-20 (IKE-Network/ike-issues#1313). The session's journals are closed first,
+     * so every record queued before is in a finished file; each finished file of those folders is
+     * then written again without the components' records, or deleted when nothing is left in it.
+     * The knowledge folder is never touched: its change sets are immutable and exchanged.
      */
     @Override
     public dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval removeComponents(java.util.Set<java.util.UUID> components) {
@@ -718,12 +769,40 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         if (components.isEmpty()) {
             return removal;
         }
+        removal = removeFrom(components, sharedChangeSetFolder, localChangeSetFolder, fileChangeSetFolder,
+                instanceChangeSetFolder, ephemeralChangeSetFolder);
+        LOG.info("Removed {} record(s) from shared, local and file change sets: {} file(s) rewritten, {} deleted",
+                removal.records(), removal.rewritten(), removal.deleted());
+        return removal;
+    }
+
+    /**
+     * Removes knowledge components' records from the knowledge change sets: the one exception to
+     * their being immutable (IKE-Network/ike-issues#1313; the fourth question before step 2 of
+     * {@code design-2026-11-22-knowledge-shared-local}, settled by KEC on 2026-11-22), for the
+     * narrations written before 2026-11-08 as knowledge about documents saved in files, once they
+     * are moved into the documents' repositories.
+     */
+    @Override
+    public dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval removeKnowledgeComponents(java.util.Set<java.util.UUID> components) {
+        if (components.isEmpty()) {
+            return dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval.NONE;
+        }
+        dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval removal = removeFrom(components, changeSetFolder);
+        LOG.info("Removed {} record(s) from knowledge change sets: {} file(s) rewritten, {} deleted",
+                removal.records(), removal.rewritten(), removal.deleted());
+        return removal;
+    }
+
+    /** Closes the journals, then writes each finished change set of the folders again without the components' records. */
+    private dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval removeFrom(java.util.Set<java.util.UUID> components, File... folders) {
+        dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval removal = dev.ikm.tinkar.common.service.ScopeErasure.ChangeSetRemoval.NONE;
         try {
             save().get(5, TimeUnit.MINUTES);
         } catch (InterruptedException | ExecutionException | java.util.concurrent.TimeoutException e) {
             throw new IllegalStateException("Could not close the change-set journals before removing records", e);
         }
-        for (File folder : new File[] {instanceChangeSetFolder, ephemeralChangeSetFolder}) {
+        for (File folder : folders) {
             if (folder == null || !folder.isDirectory()) {
                 continue;
             }
@@ -743,8 +822,6 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 }
             }
         }
-        LOG.info("Removed {} record(s) from instance and ephemeral change sets: {} file(s) rewritten, {} deleted",
-                removal.records(), removal.rewritten(), removal.deleted());
         return removal;
     }
 
