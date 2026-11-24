@@ -474,10 +474,13 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
 
         /** Writes one entity into this file, or holds it back while it is uncommitted. */
         void write(Entity<EntityVersion> entityToWrite) {
-            if (entityToWrite.uncommitted()) {
+            // Read once: it is read from the store, where the commit may land at any moment. Asked twice, the first
+            // answer can be to hold the record back and the second that there is no STAMP to hold it under, and the
+            // record was then written nowhere (IKE-Network/ike-issues#1313).
+            ImmutableLongList uncommittedStampNids = entityToWrite.uncommittedStampNids();
+            if (uncommittedStampNids.notEmpty()) {
                 // We will write uncommitted versions at the end of the thread to prevent bloat from uncommitted changes,
                 // unless they are committed before the thread stops.
-                ImmutableLongList uncommittedStampNids = entityToWrite.uncommittedStampNids();
                 uncommittedStampNids.forEach(stampNid -> {
                     LOG.trace("ChangeSetWriterProvider caching uncommitted entity for stampNid {}:\n{}", stampNid, entityToWrite);
                     uncommittedEntitiesByStamp.remove(stampNid, entityToWrite);
