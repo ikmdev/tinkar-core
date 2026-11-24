@@ -383,6 +383,7 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
                 ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
             }
         }
+        clearWhatWasReadDuringTheWrite(entity, addToCache);
         if (entity instanceof PatternEntity) {
             // A new version can add a field the search service indexes: it decides the pattern again.
             runningSearchService().ifPresent(search -> search.patternWritten(entity.nid()));
@@ -392,6 +393,28 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
             if (entity instanceof SemanticEntity semanticEntity) {
                 processor.dispatch(semanticEntity.referencedComponentNid());
             }
+        }
+    }
+
+    /**
+     * Clears what a read made while the entity was being written put back in the caches: the caches are cleared
+     * before the merge, so such a read caches the entity, or the text, of before it, and every read afterward
+     * would give that one until the next write. A read still in progress is waited for, and what it read is
+     * cleared; one that begins after this reads the merged entity (IKE-Network/ike-issues#1313).
+     *
+     * @param entity what was written
+     * @param cached whether the merged entity was put in the cache, which is then left there
+     */
+    private void clearWhatWasReadDuringTheWrite(Entity<?> entity, boolean cached) {
+        if (!cached) {
+            ENTITY_CACHE.invalidate(entity.nid());
+        }
+        STAMP_CACHE.invalidate(entity.nid());
+        STRING_CACHE.invalidate(entity.nid());
+        Entity<?> described = entity;
+        while (described instanceof SemanticEntity<?> semantic) {    // a description's concept, through a dialect's description
+            STRING_CACHE.invalidate(semantic.referencedComponentNid());
+            described = getEntityFast(semantic.referencedComponentNid());
         }
     }
 
