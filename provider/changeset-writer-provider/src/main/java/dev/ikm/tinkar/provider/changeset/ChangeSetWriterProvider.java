@@ -2,6 +2,8 @@ package dev.ikm.tinkar.provider.changeset;
 
 import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 
+import dev.ikm.tinkar.common.alert.AlertObject;
+import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -13,6 +15,7 @@ import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.entity.ChangeSetWriterService;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
@@ -30,6 +33,7 @@ import dev.ikm.tinkar.terms.KernelConcept;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.multimap.MutableMultimap;
 import org.eclipse.collections.impl.factory.Multimaps;
+import org.eclipse.collections.impl.list.mutable.primitive.LongArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +41,9 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -48,9 +54,10 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -82,6 +89,14 @@ import java.util.zip.ZipOutputStream;
  * files can be found, replayed or deleted together. A STAMP goes with the entities written under
  * it, so each file's journal keeps its ordering contract. Until a store holds a module parent,
  * every module is knowledge and everything goes to the knowledge stream, as it always has.
+ *
+ * <h2>A change set that cannot be written</h2>
+ *
+ * A record leaves the queue for good when the file that holds it is closed. When a file cannot be
+ * made, written or finished, as with a folder that is not writable or a disk that is full, what it
+ * was to hold is queued again, and the writer waits for the next {@link #save()}, which tries once
+ * more and fails when it cannot write it either. What is queued as the store closes, and still
+ * cannot be written, is in the store and in no change set.
  */
 public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveState {
     private static final Logger LOG = LoggerFactory.getLogger(ChangeSetWriterProvider.class);
@@ -159,7 +174,10 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     /** The folders of 2026-10-20, still cleaned when components are removed. */
     private final File instanceChangeSetFolder;
     private final File ephemeralChangeSetFolder;
-    private final LinkedBlockingQueue<Entity<EntityVersion>> entitiesToWrite = new LinkedBlockingQueue<>();
+    // What cannot be written goes back to its head.
+    private final LinkedBlockingDeque<Entity<EntityVersion>> entitiesToWrite = new LinkedBlockingDeque<>();
+    /** Why a session's change sets could not be written, until its checkpoint takes it. */
+    private final Map<Thread, RuntimeException> threadFailureMap = new ConcurrentHashMap<>();
 
     private ChangeSetWriterProvider() {
         Optional<File> optionalDataStoreRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT);
@@ -215,16 +233,18 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * compacted into the change set in format 3, one record per component with references by
      * sequence; should the compaction fail, the spool is kept under the change set's name in
      * its format-2 layout, which every reader still accepts.
+     *
+     * @throws IOException when the records are in no change set
      */
-    static void finishSpool(File spool, File changeSet, long entityCount) {
-        if (!spool.exists()) {
-            return;
-        }
+    static void finishSpool(File spool, File changeSet, long entityCount) throws IOException {
         if (entityCount == 0) {
-            if (!spool.delete()) {
+            if (spool.exists() && !spool.delete()) {
                 LOG.warn("Could not delete the empty change set spool {}", spool);
             }
             return;
+        }
+        if (!spool.exists()) {
+            throw new NoSuchFileException(spool.getPath(), null, "the journal of a change set is gone");
         }
         try {
             ChangeSetCompaction.Result result = new ChangeSetCompaction(spool, changeSet).call();
@@ -236,7 +256,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 Files.deleteIfExists(changeSet.toPath());
                 Files.move(spool.toPath(), changeSet.toPath());
             } catch (IOException moveFailure) {
-                LOG.error("Could not keep the journal {} as {}", spool, changeSet, moveFailure);
+                moveFailure.addSuppressed(e);
+                throw moveFailure;
             }
         }
     }
@@ -417,9 +438,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             try {
                 // One journal per stream, opened when its first entity arrives.
                 final Map<Stream, Journal> journals = new LinkedHashMap<>();
-                final Consumer<Entity<EntityVersion>> write = entityToWrite ->
-                        journals.computeIfAbsent(streamOf(entityToWrite), stream -> new Journal(stream, newZipFile(stream)))
-                                .write(entityToWrite);
+                final Consumer<Entity<EntityVersion>> write = entityToWrite -> write(journals, entityToWrite);
                 try {
                     try {
                         AtomicLong lastWriteTimeMillis = new AtomicLong(System.currentTimeMillis());
@@ -434,7 +453,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                             if (System.currentTimeMillis() - lastWriteTimeMillis.get() > INACTIVITY_THRESHOLD_MILLIS) {
                                 LOG.info("Rotating ChangeSetWriterProvider, no activity for {} minutes.",
                                         TimeUnit.MILLISECONDS.toMinutes(INACTIVITY_THRESHOLD_MILLIS));
-                                TinkExecutor.threadPool().submit(this::save);
+                                TinkExecutor.threadPool().submit(this::rotate);
                                 // Once per idle period, not at every poll until the rotation comes.
                                 lastWriteTimeMillis.set(System.currentTimeMillis());
                             }
@@ -445,16 +464,16 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     // files, so that when save() or shutdown() completes, everything written to the
                     // changeset before it is in a closed file. The next thread starts only after
                     // this one has closed its files (see checkpoint).
-                    List<Entity<EntityVersion>> queued = new ArrayList<>();
-                    this.entitiesToWrite.drainTo(queued);
-                    queued.forEach(write);
+                    // Taken one at a time, so what follows one that cannot be written stays queued.
+                    for (int queued = this.entitiesToWrite.size(); queued > 0; queued--) {
+                        write.accept(this.entitiesToWrite.remove());
+                    }
                 } finally {
                     RuntimeException failure = null;
                     for (Journal journal : journals.values()) {
                         try {
                             journal.close();
                         } catch (RuntimeException e) {
-                            threadStateMap.put(Thread.currentThread(), STATE.FAILED);
                             if (failure == null) {
                                 failure = e;
                             } else {
@@ -466,6 +485,13 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                         throw failure;
                     }
                 }
+            } catch (RuntimeException e) {
+                threadFailureMap.put(Thread.currentThread(), e);
+                boolean running = threadStateMap.put(Thread.currentThread(), STATE.FAILED) == STATE.RUNNING;
+                // A checkpoint that waits for this thread reports a file it could not write; otherwise no one would.
+                if (running || !(e instanceof UncheckedIOException)) {
+                    throw e;
+                }
             } finally {
                 changeSetWriter.release();
                 threadStateMap.remove(Thread.currentThread());
@@ -475,6 +501,32 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         threadStateMap.put(thread, STATE.RUNNING);
         serviceThread.set(thread);
         thread.start();
+    }
+
+    /**
+     * Saves without a caller that waits, so a failure is reported here.
+     */
+    private void rotate() {
+        save().exceptionally(failure -> {
+            Throwable cause = failure instanceof CompletionException && failure.getCause() != null ? failure.getCause() : failure;
+            AlertStreams.getRoot().dispatch(AlertObject.makeError("Change sets", cause.getMessage(), cause));
+            return null;
+        });
+    }
+
+    /**
+     * Writes one entity into the journal of its stream, begun when there is none. An entity whose
+     * journal cannot be begun goes back to the head of the queue.
+     */
+    private void write(Map<Stream, Journal> journals, Entity<EntityVersion> entityToWrite) {
+        Journal journal;
+        try {
+            journal = journals.computeIfAbsent(streamOf(entityToWrite), stream -> new Journal(stream, newZipFile(stream)));
+        } catch (UncheckedIOException e) {
+            entitiesToWrite.addFirst(entityToWrite);
+            throw e;
+        }
+        journal.write(entityToWrite);
     }
 
     /**
@@ -502,6 +554,10 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         private final EntityToTinkarSchemaTransformer entityTransformer = EntityToTinkarSchemaTransformer.getInstance();
         /** Whether the store's trees carry derived vertex identities, so the journal's do. */
         private final boolean vertexIdentityDerived;
+        /** Every entity given to this journal, queued again should its change set not be written. */
+        private final LongArrayList taken = new LongArrayList();
+        /** Why a record could not be written to the spool; then the journal cannot be finished. */
+        private IOException writeFailure;
 
         Journal(Stream stream, File zipfile) {
             this.stream = stream;
@@ -518,13 +574,22 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 this.identities = new IdentityIndex.Writer(true);
                 zos.putNextEntry(zipEntry);
             } catch (IOException e) {
-                threadStateMap.put(Thread.currentThread(), STATE.FAILED);
-                throw new RuntimeException(e);
+                throw new UncheckedIOException("The change set " + zipfile.getName() + " could not be begun", e);
             }
         }
 
         /** Writes one entity into this file, or holds it back while it is uncommitted. */
         void write(Entity<EntityVersion> entityToWrite) {
+            taken.add(entityToWrite.nid());
+            try {
+                writeOrHold(entityToWrite);
+            } catch (UncheckedIOException e) {
+                writeFailure = e.getCause();
+                throw e;
+            }
+        }
+
+        private void writeOrHold(Entity<EntityVersion> entityToWrite) {
             // Read once: it is read from the store, where the commit may land at any moment. Asked twice, the first
             // answer can be to hold the record back and the second that there is no STAMP to hold it under, and the
             // record was then written nowhere (IKE-Network/ike-issues#1313).
@@ -555,45 +620,80 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
 
         /**
          * Flushes what is held back, writes the identity index and the manifest, and turns the
-         * spool into the change set, or removes it when nothing was written.
+         * spool into the change set, or removes it when nothing was written. When that cannot be
+         * done, everything this journal was given is queued again; the spool is left, and no
+         * reader takes it for a change set.
          */
         void close() {
+            IOException failure = writeFailure;
             try {
-                // Rollover / shutdown flush. Group held-back entities by stamp nid so each
-                // stamp's snapshot is followed by the dependent uncommitted entities that
-                // referenced it — the same per-stamp shape as the on-commit drain. Snapshot the
-                // key set before iterating, since removeAll mutates it.
-                List<Long> stampNidsSnapshot = new ArrayList<>();
-                uncommittedEntitiesByStamp.keySet().forEach(stampNidsSnapshot::add);
-                for (Long stampNid : stampNidsSnapshot) {
-                    writeStampSnapshotsThenDependents(
-                            uncommittedEntitiesByStamp.removeAll(stampNid),
-                            entityCount, conceptsCount, semanticsCount, patternsCount,
-                            stampsCount, moduleList, authorList, entityTransformer, identities, zos);
+                if (failure == null) {
+                    finishJournal();
                 }
-                zos.closeEntry();
-                if (entityCount.sum() > 0) {
-                    LOG.debug("Data zipEntry size: " + zipEntry.getSize());
-                    LOG.debug("Data zipEntry compressed size: " + zipEntry.getCompressedSize());
-                    // So a store whose nids encode the pattern loads this changeset in one pass.
-                    identities.writeTo(zos);
-                    final ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
-                    zos.putNextEntry(manifestEntry);
-                    zos.write(generateManifestContent(entityCount, conceptsCount, semanticsCount, patternsCount,
-                            stampsCount, moduleList, authorList, vertexIdentityDerived).getBytes(StandardCharsets.UTF_8));
-                    zos.closeEntry();
-                }
-                zos.flush();
-                zos.finish();
-                zos.close();
-                identities.close();
+            } catch (UncheckedIOException e) {
+                failure = e.getCause();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                failure = e;
             } finally {
                 closeQuietly(zos);
                 closeQuietly(identities);
-                finishSpool(spool, finishedFile(stream, zipfile), entityCount.sum());
+                if (failure == null) {
+                    try {
+                        finishSpool(spool, finishedFile(stream, zipfile), entityCount.sum());
+                    } catch (IOException e) {
+                        failure = e;
+                    }
+                }
             }
+            if (failure != null) {
+                queueAgain();
+                throw new UncheckedIOException("The change set " + zipfile.getName() + " could not be written", failure);
+            }
+        }
+
+        /** Puts everything this journal was given back at the head of the queue, as it is in the store now. */
+        private void queueAgain() {
+            long[] nids = taken.distinct().toArray();
+            for (int i = nids.length - 1; i >= 0; i--) {
+                try {
+                    EntityHandle.get(nids[i]).entity()
+                            .ifPresent(entity -> entitiesToWrite.addFirst((Entity<EntityVersion>) (Entity<?>) entity));
+                } catch (RuntimeException e) {
+                    LOG.error("Component {} is in no change set, and cannot be read to be queued again", nids[i], e);
+                }
+            }
+        }
+
+        /** Writes what is held back, the identity index and the manifest. */
+        private void finishJournal() throws IOException {
+            // Rollover / shutdown flush. Group held-back entities by stamp nid so each
+            // stamp's snapshot is followed by the dependent uncommitted entities that
+            // referenced it — the same per-stamp shape as the on-commit drain. Snapshot the
+            // key set before iterating, since removeAll mutates it.
+            List<Long> stampNidsSnapshot = new ArrayList<>();
+            uncommittedEntitiesByStamp.keySet().forEach(stampNidsSnapshot::add);
+            for (Long stampNid : stampNidsSnapshot) {
+                writeStampSnapshotsThenDependents(
+                        uncommittedEntitiesByStamp.removeAll(stampNid),
+                        entityCount, conceptsCount, semanticsCount, patternsCount,
+                        stampsCount, moduleList, authorList, entityTransformer, identities, zos);
+            }
+            zos.closeEntry();
+            if (entityCount.sum() > 0) {
+                LOG.debug("Data zipEntry size: " + zipEntry.getSize());
+                LOG.debug("Data zipEntry compressed size: " + zipEntry.getCompressedSize());
+                // So a store whose nids encode the pattern loads this changeset in one pass.
+                identities.writeTo(zos);
+                final ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
+                zos.putNextEntry(manifestEntry);
+                zos.write(generateManifestContent(entityCount, conceptsCount, semanticsCount, patternsCount,
+                        stampsCount, moduleList, authorList, vertexIdentityDerived).getBytes(StandardCharsets.UTF_8));
+                zos.closeEntry();
+            }
+            zos.flush();
+            zos.finish();
+            zos.close();
+            identities.close();
         }
     }
 
@@ -654,7 +754,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             identities.add(tinkarMsg);
             LOG.debug("ChangeSetWriterProvider wrote Entity:\n{}", entityToWrite);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -825,6 +925,12 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         return removal;
     }
 
+    /**
+     * Closes the open change sets and begins new ones for what is written next.
+     *
+     * @return completes when everything queued before now is in a closed file, and fails with an
+     *         {@link UncheckedIOException} when it cannot be; it then stays queued for the next save
+     */
     @Override
     public CompletableFuture<Void> save() {
         if (serviceThread.get() != null) {
@@ -849,8 +955,14 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         LOG.info("Start shutdown of ChangeSetWriterProvider");
         try {
             checkpoint(false).get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            if (!(e.getCause() instanceof UncheckedIOException)) {
+                throw new RuntimeException(e);
+            }
+            // Not thrown: the store is saved after this, and it has what the change sets lack.
+            LOG.error("{} record(s) are in the store and in no change set", entitiesToWrite.size(), e.getCause());
         }
         LOG.info("Finish shutdown of ChangeSetWriterProvider");
     }
@@ -864,28 +976,26 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      *                If {@code true}, the service state transitions to {@code ROTATING},
      *                and a new service thread is started to continue operations.
      *                If {@code false}, the service state transitions to {@code STOPPED}.
+     * @return fails with an {@link UncheckedIOException} when what was queued could not be written
      */
     private CompletableFuture<Void> checkpoint(boolean restart) {
         return CompletableFuture.supplyAsync(() -> {
             synchronized (checkpointLock) {
-                Thread interruptedThread = null;
-                switch (serviceThread.get()) {
-                    case Thread thread -> {
-                        interruptedThread = thread;
-                    }
-                    case null -> {
-                    }
+                STATE state = restart ? STATE.ROTATING : STATE.STOPPED;
+                boolean inSession = threadSemaphoreMap.containsKey(serviceThread.get());
+                RuntimeException failure = endSession(state);
+                // What a session could not write is queued again and tried once more, since what was in the way may
+                // be gone by now: the session may have ended long before this checkpoint. A record that itself cannot
+                // be written is not queued again, and the rest is.
+                if (failure != null || !inSession && !entitiesToWrite.isEmpty()) {
+                    do {
+                        startService();
+                        failure = endSession(state);
+                    } while (failure != null && !(failure instanceof UncheckedIOException));
                 }
-                if (interruptedThread != null) {
-                    LOG.trace("Stopping ChangeSetWriterProvider on service thread: {}", interruptedThread);
-                    threadStateMap.put(interruptedThread, (restart?STATE.ROTATING:STATE.STOPPED));
-                    // Wait for the thread to drain the queue into its file and close it: when this
-                    // future completes, everything queued before the checkpoint is in a closed file.
-                    Semaphore changeSetWriter = threadSemaphoreMap.remove(interruptedThread);
-                    if (changeSetWriter != null) {
-                        changeSetWriter.acquireUninterruptibly();
-                        LOG.trace("Stopped ChangeSetWriterProvider on service thread: {}", interruptedThread);
-                    }
+                if (failure != null) {
+                    // No new session: it would only fail in turn. The next checkpoint tries again.
+                    throw failure;
                 }
                 if (restart) {
                     // Only now a new thread with a new file, so it takes nothing queued before the checkpoint.
@@ -894,5 +1004,26 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 return null;
             }
         }, TinkExecutor.ioThreadPool());
+    }
+
+    /**
+     * Ends the session of the service thread, if it has one, and waits for it to drain the queue into its files and
+     * close them: everything queued before is then in a closed file, or queued again.
+     *
+     * @param state the state that ends it
+     * @return why its change sets could not be written, or {@code null}
+     */
+    private RuntimeException endSession(STATE state) {
+        Thread thread = serviceThread.get();
+        Semaphore changeSetWriter = thread == null ? null : threadSemaphoreMap.remove(thread);
+        if (changeSetWriter == null) {
+            return null;
+        }
+        LOG.trace("Stopping ChangeSetWriterProvider on service thread: {}", thread);
+        threadStateMap.put(thread, state);
+        changeSetWriter.acquireUninterruptibly();
+        threadStateMap.remove(thread);
+        LOG.trace("Stopped ChangeSetWriterProvider on service thread: {}", thread);
+        return threadFailureMap.remove(thread);
     }
 }

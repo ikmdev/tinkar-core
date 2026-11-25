@@ -39,7 +39,8 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     String title;
     String message;
     V value;
-    boolean isCancelled = false;
+    /** Set by whoever cancels, and read by the thread that computes. */
+    volatile boolean isCancelled = false;
 
     // ---- Time: elapsed, and a remaining-time estimate any surface can show ----
     /** How many progress samples the rate is taken over; a ring, the oldest overwritten. */
