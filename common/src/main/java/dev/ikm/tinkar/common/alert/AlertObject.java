@@ -85,6 +85,21 @@ public class AlertObject implements Comparable<AlertObject> {
     }
 
     /**
+     * Makes the outcome of something a person asked for, which they are told of where they asked, so
+     * no dialog shows it: a success when it was done, and otherwise an
+     * {@linkplain #makeAdvisory advisory}. The {@link AlertLog} records either.
+     *
+     * @param done             whether it was done
+     * @param alertTitle       what was asked for, in a few words
+     * @param alertDescription how it went, in full
+     * @return the outcome
+     */
+    public static AlertObject makeOutcome(boolean done, String alertTitle, String alertDescription) {
+        return done ? new AlertObject(true, alertTitle, alertDescription, AlertType.SUCCESS, null,
+                AlertCategory.UNSPECIFIED, null) : makeAdvisory(alertTitle, alertDescription);
+    }
+
+    /**
      * @return true if this alert only needs recording: nothing waits on the person, so a
      * subscriber that shows dialogs leaves it to the {@link AlertLog}
      */

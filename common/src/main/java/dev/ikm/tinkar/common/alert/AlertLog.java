@@ -42,8 +42,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * earlier runs wrote there, so what an import reported last week can still be read today.
  * An alert that repeats the one before it is counted on that entry, not listed again.
  * <p>
- * An {@linkplain AlertObject#isAdvisory() advisory} reaches a person only through this log;
- * any other alert may also be shown at once by a subscriber that presents dialogs.
+ * An {@linkplain AlertObject#isAdvisory() advisory} reaches a person only through this log, or
+ * where they asked for what it reports; any other alert may also be shown at once by a subscriber
+ * that presents dialogs. A success is recorded but is not new to anyone.
  */
 public final class AlertLog {
     private static final Logger LOG = LoggerFactory.getLogger(AlertLog.class);
@@ -130,7 +131,9 @@ public final class AlertLog {
         Entry entry = new Entry(now, now, 1, alert.getAlertType(), title, description, detail, false);
         synchronized (this) {
             add(entry);
-            unseen++;
+            if (entry.type() != AlertType.SUCCESS) {
+                unseen++;
+            }
             write(entry);
         }
         changed();
@@ -156,7 +159,10 @@ public final class AlertLog {
         return List.copyOf(entries);
     }
 
-    /** @return how many alerts were recorded since the log was last {@linkplain #markSeen() seen} */
+    /**
+     * @return how many alerts were recorded since the log was last {@linkplain #markSeen() seen}; a
+     * success is not counted, since nothing in it waits to be read
+     */
     public synchronized int unseenCount() {
         return unseen;
     }

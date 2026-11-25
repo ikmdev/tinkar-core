@@ -42,6 +42,35 @@ class AlertLogTest {
     }
 
     @Test
+    void anOutcomeIsASuccessWhenItWasDoneAndOtherwiseAnAdvisory() {
+        AlertObject done = AlertObject.makeOutcome(true, "Share", "Shared notes/a.adoc.");
+        assertEquals(AlertType.SUCCESS, done.getAlertType());
+        assertTrue(done.isAdvisory(), "the person is told of it where they asked, so no dialog shows it");
+        assertFalse(done.failCommit());
+        AlertObject notDone = AlertObject.makeOutcome(false, "Share", "It is in a folder without git.");
+        assertEquals(AlertType.WARNING, notDone.getAlertType());
+        assertTrue(notDone.isAdvisory());
+    }
+
+    @Test
+    void aSuccessIsKeptButIsNotNew(@TempDir Path folder) {
+        AlertLog firstRun = new AlertLog();
+        firstRun.open(folder, Instant.now());
+        firstRun.record(AlertObject.makeOutcome(true, "Share", "Shared notes/a.adoc."));
+        assertEquals(0, firstRun.unseenCount(), "nothing in a success waits to be read");
+        firstRun.record(AlertObject.makeOutcome(false, "Share", "It is in a folder without git."));
+        assertEquals(1, firstRun.unseenCount());
+        firstRun.close();
+
+        AlertLog secondRun = new AlertLog();
+        secondRun.open(folder, Instant.now());
+        assertEquals(List.of(AlertType.SUCCESS, AlertType.WARNING),
+                secondRun.entries().stream().map(AlertLog.Entry::type).toList());
+        assertEquals("Shared notes/a.adoc.", secondRun.entries().getFirst().description());
+        secondRun.close();
+    }
+
+    @Test
     void recordsAlertsOldestFirstAndCountsTheUnseen() {
         AlertLog log = new AlertLog();
         AtomicInteger changes = new AtomicInteger();
